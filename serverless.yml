@@ -1,0 +1,33 @@
+service: cvs-svc-tsk-cert-gen
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+
+plugins:
+- serverless-plugin-typescript
+
+functions:
+  main:
+    handler: src/handler.handler
+    events:
+    - sqs:
+        arn: arn:aws:sqs:region:XXXXXX:cert-gen-q
+        batchSize: 10
+
+resources:
+  Resources:
+    CertBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: cvs-cert
+    SignatureBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: cvs-signature
+
+custom:
+  s3:
+    host: s3
+    port: 7000
+    directory: /tmp
