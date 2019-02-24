@@ -1,0 +1,43 @@
+invoke:
+  local:
+    params:
+      apiVersion: 2015-03-31
+      endpoint: http://localhost:3011
+    functions:
+      testResults:
+          name: cvs-svc-test-results
+          mock: tests/resources/test-results-response.json
+      techRecords:
+          name: cvs-svc-technical-records
+          mock: tests/resources/tech-records-response.json
+  remote:
+    params:
+      apiVersion: 2015-03-31
+    functions:
+      testResults:
+          name: test-results-${BRANCH}
+      techRecords:
+          name: technical-records-${BRANCH}
+s3:
+  local:
+    endpoint: http://localhost:7000
+    s3ForcePathStyle: true
+  remote: {}
+mot:
+  endpoint: https://9fjfatqw19.execute-api.eu-west-1.amazonaws.com/cvs-dev/CVS
+  documentNames:
+    vt20: VT20.pdf
+    vt20w: VT20W.pdf
+    vt30: VT30.pdf
+    vt30w: VT30W.pdf
+    vt32ve: VT32VE.pdf
+    vt32vew: VT32VEW.pdf
+    prs: PRS.pdf
+    prsw: PRSW.pdf
+    ct20: CT20.pdf
+    ct30: CT30.pdf
+    vtp20: VTP20.pdf
+    vtp30: VTP30.pdf
+    psv_prs: PSV_PRS.pdf
+    vtg5: VTG5.pdf
+    vtg5a: VTG5A.pdf

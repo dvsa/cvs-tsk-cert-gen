@@ -1,0 +1,50 @@
+# MacOS specific hidden files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Idea specific hidden files
+.idea/**
+
+# Node specific files
+node_modules/**
+
+# Serverless specific files
+.dynamodb/**
+
+# Build folder
+.build/**
+
+# Source maps
+*.map
+
+# S3 local storage
+.tmp/**
+
+# Configuration files
+src/config/secrets.yml
+
+# Dependencies
+dependencies/**
+
+#coverage
+.nyc_output/**
+coverage/**
+
+#sonarqube
+.scannerwork/**
+report.json
