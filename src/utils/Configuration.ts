@@ -72,7 +72,7 @@ class Configuration {
      * Retrieves the S3 config
      * @returns IS3Config
      */
-    public getS3Config(): IS3Config {
+    public getS3Config(bucket: string): IS3Config {
         if (!this.config.s3) {
             throw new Error("DynamoDB config is not defined in the config file.");
         }
@@ -80,7 +80,7 @@ class Configuration {
         // Not defining BRANCH will default to local
         const env: string = (!process.env.BRANCH || process.env.BRANCH === "local") ? "local" : "remote";
 
-        return this.config.s3[env];
+        return this.config.s3[env][bucket];
     }
 
     /**

@@ -20,8 +20,12 @@ invoke:
           name: technical-records-${BRANCH}
 s3:
   local:
-    endpoint: http://localhost:7000
-    s3ForcePathStyle: true
+    cvs-signature:
+      endpoint: http://localhost:7000
+      s3ForcePathStyle: true
+    cvs-cert:
+      endpoint: http://localhost:7001
+      s3ForcePathStyle: true
   remote: {}
 mot:
   endpoint: https://9fjfatqw19.execute-api.eu-west-1.amazonaws.com/cvs-dev/CVS

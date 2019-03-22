@@ -15,9 +15,15 @@ class S3BucketService {
     public readonly s3Client: S3;
 
     constructor(s3Client: S3) {
-        const config: IS3Config = Configuration.getInstance().getS3Config();
         this.s3Client = s3Client;
+    }
 
+    /**
+     * Setup the configuration of S3 Bucket
+     * @param bucketName
+     */
+    private getS3Config(bucketName: string): void {
+        const config: IS3Config = Configuration.getInstance().getS3Config(bucketName);
         AWSConfig.s3 = config;
     }
 
@@ -29,6 +35,7 @@ class S3BucketService {
      * @param metadata - optional metadata
      */
     public upload(bucketName: string, fileName: string, content: Buffer|Uint8Array|Blob|string|Readable, metadata?: Metadata): Promise<ManagedUpload.SendData> {
+        this.getS3Config(bucketName);
         return this.s3Client.upload({
             Bucket: bucketName,
             Key: fileName,
@@ -43,6 +50,7 @@ class S3BucketService {
      * @param fileName - the name of the file
      */
     public download(bucketName: string, fileName: string): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
+        this.getS3Config(bucketName);
         return this.s3Client.getObject({
             Bucket: bucketName,
             Key: fileName,

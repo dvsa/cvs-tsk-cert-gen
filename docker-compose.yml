@@ -18,3 +18,12 @@ services:
     ports:
     - "7000:7000" # s3 server
     - "9991:9991" # data store
+  s4:
+    container_name: s4
+    image: scality/s3server
+    volumes:
+      - ./s3-conf1.json:/usr/src/app/config.json
+      - ./s3-location-conf1.json:/usr/src/app/locationConfig.json
+    ports:
+      - "7001:7000" # s3 server
+      - "9995:9991" # data store
