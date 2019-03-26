@@ -29,9 +29,13 @@ resources:
         BucketName: cvs-signature
 
 custom:
-  s3:
-    host: s3
+  s3-cert:
+    host: s3-cert
     port: 7000
+    directory: /tmp
+  s3-signature:
+    host: s3-signature
+    port: 7001
     directory: /tmp
   serverless-offline:
     port: 3011

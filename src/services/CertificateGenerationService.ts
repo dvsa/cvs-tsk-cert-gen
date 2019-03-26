@@ -34,6 +34,7 @@ class CertificateGenerationService {
     private readonly lambdaClient: LambdaService;
 
     constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
+        console.log("constructor")
         this.s3Client = s3Client;
         this.config = Configuration.getInstance();
         this.lambdaClient = lambdaClient;
@@ -91,11 +92,14 @@ class CertificateGenerationService {
      * @returns the signature as a base64 encoded string
      */
     public async getSignature(testerStaffId: string): Promise<string | null> {
+        console.log("semnatura")
         return this.s3Client.download("cvs-signature", `${testerStaffId}.base64`)
         .then((result: S3.Types.GetObjectOutput) => {
+            console.log("THEN")
             return result.Body!.toString();
         })
         .catch((error: AWSError) => {
+            console.log("eroare")
             console.error(`Unable to fetch signature for staff id ${testerStaffId}. ${error.message}`);
             return null;
         });

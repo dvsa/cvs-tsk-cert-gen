@@ -50,7 +50,11 @@ class S3BucketService {
      * @param fileName - the name of the file
      */
     public download(bucketName: string, fileName: string): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
+        console.log(bucketName);
+        console.log(fileName);
         this.getS3Config(bucketName);
+        console.log(AWSConfig.s3);
+        console.log(AWSConfig.credentials);
         return this.s3Client.getObject({
             Bucket: bucketName,
             Key: fileName,

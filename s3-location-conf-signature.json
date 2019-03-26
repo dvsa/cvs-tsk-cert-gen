@@ -4,7 +4,7 @@
     "legacyAwsBehavior": true,
     "details": {}
   },
-  "s3": {
+  "s3-signature": {
     "type": "file",
     "legacyAwsBehavior": false,
     "details": {}

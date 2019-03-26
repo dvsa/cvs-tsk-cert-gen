@@ -1,0 +1,53 @@
+{
+  "port": 7000,
+  "listenOn": [],
+  "restEndpoints": {
+    "s3-cert": "s3-cert",
+    "localhost": "s3-cert"
+  },
+  "backbeat": {
+    "host": "s3-cert",
+    "port": 8900
+  },
+  "cdmi": {
+    "host": "s3-cert",
+    "port": 81,
+    "path": "/dewpoint",
+    "readonly": true
+  },
+  "bucketd": {
+    "bootstrap": ["s3-cert"]
+  },
+  "vaultd": {
+    "host": "s3-cert",
+    "port": 8500
+  },
+  "clusters": 1,
+  "log": {
+    "logLevel": "info",
+    "dumpLevel": "error"
+  },
+  "healthChecks": {
+    "allowFrom": ["127.0.0.1/8", "::1"]
+  },
+  "metadataClient": {
+    "host": "s3-cert",
+    "port": 9990
+  },
+  "dataClient": {
+    "host": "s3-cert",
+    "port": 9991
+  },
+  "metadataDaemon": {
+    "bindAddress": "s3-cert",
+    "port": 9990
+  },
+  "dataDaemon": {
+    "bindAddress": "s3-cert",
+    "port": 9991
+  },
+  "recordLog": {
+    "enabled": true,
+    "recordLogName": "s3-cert-recordlog"
+  }
+}

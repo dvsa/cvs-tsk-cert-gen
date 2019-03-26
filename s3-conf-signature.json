@@ -1,25 +1,25 @@
 {
-  "port": 7000,
+  "port": 7001,
   "listenOn": [],
   "restEndpoints": {
-    "s3": "s3",
-    "localhost": "s3"
+    "s3-signature": "s3-signature",
+    "localhost": "s3-signature"
   },
   "backbeat": {
-    "host": "s3",
+    "host": "s3-signature",
     "port": 8900
   },
   "cdmi": {
-    "host": "s3",
+    "host": "s3-signature",
     "port": 81,
     "path": "/dewpoint",
     "readonly": true
   },
   "bucketd": {
-    "bootstrap": ["s3"]
+    "bootstrap": ["s3-signature"]
   },
   "vaultd": {
-    "host": "s3",
+    "host": "s3-signature",
     "port": 8500
   },
   "clusters": 1,
@@ -31,23 +31,23 @@
     "allowFrom": ["127.0.0.1/8", "::1"]
   },
   "metadataClient": {
-    "host": "s3",
-    "port": 9990
+    "host": "s3-signature",
+    "port": 9992
   },
   "dataClient": {
-    "host": "s3",
-    "port": 9991
+    "host": "s3-signature",
+    "port": 9993
   },
   "metadataDaemon": {
-    "bindAddress": "s3",
-    "port": 9990
+    "bindAddress": "s3-signature",
+    "port": 9992
   },
   "dataDaemon": {
-    "bindAddress": "s3",
-    "port": 9991
+    "bindAddress": "s3-signature",
+    "port": 9993
   },
   "recordLog": {
     "enabled": true,
-    "recordLogName": "s3-recordlog"
+    "recordLogName": "s3-signature-recordlog"
   }
 }
