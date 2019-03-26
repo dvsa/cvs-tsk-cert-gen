@@ -1,0 +1,53 @@
+{
+  "port": 7000,
+  "listenOn": [],
+  "restEndpoints": {
+    "s3": "s3",
+    "localhost": "s3"
+  },
+  "backbeat": {
+    "host": "s3",
+    "port": 8900
+  },
+  "cdmi": {
+    "host": "s3",
+    "port": 81,
+    "path": "/dewpoint",
+    "readonly": true
+  },
+  "bucketd": {
+    "bootstrap": ["s3"]
+  },
+  "vaultd": {
+    "host": "s3",
+    "port": 8500
+  },
+  "clusters": 1,
+  "log": {
+    "logLevel": "info",
+    "dumpLevel": "error"
+  },
+  "healthChecks": {
+    "allowFrom": ["127.0.0.1/8", "::1"]
+  },
+  "metadataClient": {
+    "host": "s3",
+    "port": 9990
+  },
+  "dataClient": {
+    "host": "s3",
+    "port": 9991
+  },
+  "metadataDaemon": {
+    "bindAddress": "s3",
+    "port": 9990
+  },
+  "dataDaemon": {
+    "bindAddress": "s3",
+    "port": 9991
+  },
+  "recordLog": {
+    "enabled": true,
+    "recordLogName": "s3-recordlog"
+  }
+}

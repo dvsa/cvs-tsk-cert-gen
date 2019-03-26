@@ -1,0 +1,12 @@
+{
+  "us-east-1": {
+    "type": "file",
+    "legacyAwsBehavior": true,
+    "details": {}
+  },
+  "s3": {
+    "type": "file",
+    "legacyAwsBehavior": false,
+    "details": {}
+  }
+}

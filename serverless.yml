@@ -1,0 +1,67 @@
+service: cvs-svc-tsk-cert-gen
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-dependency-invoke
+
+functions:
+  main:
+    handler: src/handler.handler
+    events:
+    - sqs:
+        arn: arn:aws:sqs:region:XXXXXX:cert-gen-q
+        batchSize: 10
+
+resources:
+  Resources:
+    CertBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: cvs-cert
+    SignatureBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: cvs-signature
+
+custom:
+  s3:
+    host: s3
+    port: 7000
+    directory: /tmp
+  serverless-offline:
+    port: 3011
+  dependency-invoke:
+    storage: dependencies
+    dependencies:
+      - name: cvs-svc-technical-records
+        lang: javascript
+        git: git@github.com:dvsa/cvs-svc-technical-records.git
+        branch: develop
+        handler: src/handler.handler
+        commands:
+          - npm install
+          - lsof -i tcp:8003 | awk 'NR!=1 {print $2}' | xargs kill || true
+          - node_modules/serverless/bin/serverless dynamodb install
+          - "sed -i '' 's/migrate: false/migrate: true/g' serverless.yml"
+          - "sed -i '' 's/seed: false/seed: true/g' serverless.yml"
+          - "sed -i '' 's/noStart: true/noStart: false/g' serverless.yml"
+          - node_modules/serverless/bin/serverless dynamodb start
+      - name: cvs-svc-test-results
+        lang: javascript
+        git: git@github.com:dvsa/cvs-svc-test-results.git
+        branch: develop
+        handler: src/handler.handler
+        commands:
+          - npm install
+          - lsof -i tcp:8004 | awk 'NR!=1 {print $2}' | xargs kill || true
+          - node_modules/serverless/bin/serverless dynamodb install
+          - "sed -i '' 's/migrate: false/migrate: true/g' serverless.yml"
+          - "sed -i '' 's/seed: false/seed: true/g' serverless.yml"
+          - "sed -i '' 's/noStart: true/noStart: false/g' serverless.yml"
+          - node_modules/serverless/bin/serverless dynamodb start
+

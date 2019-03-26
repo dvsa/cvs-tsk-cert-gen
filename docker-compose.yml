@@ -1,0 +1,20 @@
+version: "2"
+services:
+  aws-cli:
+    container_name: aws-cli
+    build: .
+    depends_on:
+    - s3
+    links:
+    - s3
+    environment:
+      WAIT_HOSTS: s3:9991
+  s3:
+    container_name: s3
+    image: scality/s3server
+    volumes:
+      - ./s3-conf.json:/usr/src/app/config.json
+      - ./s3-location-conf.json:/usr/src/app/locationConfig.json
+    ports:
+    - "7000:7000" # s3 server
+    - "9991:9991" # data store

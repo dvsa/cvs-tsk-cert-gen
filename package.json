@@ -1,0 +1,69 @@
+{
+  "name": "cvs-tsk-cert-gen",
+  "version": "0.0.1",
+  "description": "Certificate generation initiation task",
+  "main": "handler.js",
+  "scripts": {
+    "start": "npm run kill:offline && npm run start:offline && node_modules/serverless/bin/serverless invoke local -f main --path tests/resources/queue-event.json",
+    "start:offline": "node_modules/gulp/bin/gulp.js start-serverless",
+    "kill:offline": "node_modules/gulp/bin/gulp.js kill-serverless",
+    "start:docker": "docker-compose -f docker-compose.yml up -d",
+    "build": "node_modules/typescript/bin/tsc --rootDir ./ --outDir .build --sourceMap false && npm run build:copy",
+    "build:dev": "node_modules/typescript/bin/tsc && npm run build:copy",
+    "build:copy": "find src -type f \\( -name \"*.yml\" -or -name \"*.json\" \\) | cpio -pdm .build && find tests -type f \\( -name \"*.yml\" -or -name \"*.json\" -or -name \"*.base64\" \\)  | cpio -pdm .build",
+    "build:docker": "docker-compose -f docker-compose.yml up -d --build",
+    "test": "node_modules/.bin/mocha .build/tests/**/*.unitTest.js",
+    "tslint": "node_modules/tslint/bin/tslint --project tsconfig.json -q",
+    "prepush": "npm test && npm run lint",
+    "sonar-scanner": "npm run tslint && npm run coverage && sonar-scanner",
+    "coverage": "nyc mocha tests/unit/*.unitTest.ts && nyc report --reporter=lcov"
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.tsx"
+    ],
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-lambda": "^0.1.2",
+    "aws-sdk": "^2.416.0",
+    "moment": "^2.24.0",
+    "node-yaml": "^3.1.1",
+    "reflect-metadata": "^0.1.13",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "ts-node-register": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.21",
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.30",
+    "@types/request-promise": "^4.1.42",
+    "chai": "^4.2.0",
+    "gulp": "^4.0.0",
+    "mocha": "^5.2.0",
+    "nyc": "^13.3.0",
+    "serverless": "^1.36.3",
+    "serverless-dependency-invoke": "^0.0.9",
+    "serverless-offline": "^4.8.1",
+    "serverless-plugin-typescript": "^1.1.5",
+    "tslint": "^5.13.1",
+    "typescript": "^3.3.3333"
+  }
+}
