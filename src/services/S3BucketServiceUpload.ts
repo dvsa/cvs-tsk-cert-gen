@@ -1,31 +1,24 @@
 import S3, {Metadata} from "aws-sdk/clients/s3";
-import {AWSError, config as AWSConfig} from "aws-sdk";
+import {config as AWSConfig} from "aws-sdk";
 import {Service} from "../models/injector/ServiceDecorator";
 import {Readable} from "stream";
 import {Configuration} from "../utils/Configuration";
 import {IS3Config} from "../models";
 import {ManagedUpload} from "aws-sdk/lib/s3/managed_upload";
-import {PromiseResult} from "aws-sdk/lib/request";
 
 /**
  * Service class for communicating with Simple Storage Service
  */
 @Service()
-class S3BucketService {
+class S3BucketServiceUpload {
     public readonly s3Client: S3;
 
     constructor(s3Client: S3) {
+        const config: IS3Config = Configuration.getInstance().getS3Config("cvs-cert");
         this.s3Client = s3Client;
-    }
-
-    /**
-     * Setup the configuration of S3 Bucket
-     * @param bucketName
-     */
-    private getS3Config(bucketName: string): void {
-        const config: IS3Config = Configuration.getInstance().getS3Config(bucketName);
         AWSConfig.s3 = config;
     }
+
 
     /**
      * Uploads a file to an S3 bucket
@@ -35,7 +28,6 @@ class S3BucketService {
      * @param metadata - optional metadata
      */
     public upload(bucketName: string, fileName: string, content: Buffer|Uint8Array|Blob|string|Readable, metadata?: Metadata): Promise<ManagedUpload.SendData> {
-        this.getS3Config(bucketName);
         return this.s3Client.upload({
             Bucket: bucketName,
             Key: fileName,
@@ -43,23 +35,6 @@ class S3BucketService {
             Metadata: metadata
         }).promise();
     }
-
-    /**
-     * Downloads a file from an S3 bucket
-     * @param bucketName - the bucket from which to download
-     * @param fileName - the name of the file
-     */
-    public download(bucketName: string, fileName: string): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
-        console.log(bucketName);
-        console.log(fileName);
-        this.getS3Config(bucketName);
-        console.log(AWSConfig.s3);
-        console.log(AWSConfig.credentials);
-        return this.s3Client.getObject({
-            Bucket: bucketName,
-            Key: fileName,
-        }).promise();
-    }
 }
 
-export {S3BucketService};
+export {S3BucketServiceUpload};

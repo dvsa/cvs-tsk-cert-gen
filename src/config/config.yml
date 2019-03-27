@@ -21,14 +21,19 @@ invoke:
 s3:
   local:
     cvs-cert:
-      endpoint: http://localhost:7000
-      s3ForcePathStyle: true
-    cvs-signature:
       endpoint: http://localhost:7001
       s3ForcePathStyle: true
-  remote: {}
+    cvs-signature:
+      endpoint: http://localhost:7000
+      s3ForcePathStyle: true
+  remote:
+    cvs-cert:
+      endpoint: cvs-cert-nonprod/${BRANCH}
+      s3ForcePathStyle: true
+    cvs-signature:
+      endpoint: cvs-signature-nonprod/${BRANCH}
+      s3ForcePathStyle: true
 mot:
-  endpoint: https://9fjfatqw19.execute-api.eu-west-1.amazonaws.com/cvs-dev/CVS
   documentNames:
     vt20: VT20.pdf
     vt20w: VT20W.pdf

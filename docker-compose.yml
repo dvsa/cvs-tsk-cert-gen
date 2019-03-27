@@ -9,11 +9,6 @@ services:
     environment:
       WAIT_HOSTS: s3-cert:9991, s3-signature:9993
       AWS_DEFAULT_REGION: us-east-1
-    entrypoint:
-    - /bin/sh
-    - -c
-    - bash
-    tty: true
   s3-cert:
     container_name: s3-cert
     image: scality/s3server

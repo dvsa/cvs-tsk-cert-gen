@@ -12,7 +12,7 @@ interface IBucket {
 }
 
 /**
- * Service for mocking the S3BucketService
+ * Service for mocking the S3BucketServiceUpload
  */
 class S3BucketMockService {
     public static buckets: IBucket[] = [];

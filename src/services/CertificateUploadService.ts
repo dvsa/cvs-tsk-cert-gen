@@ -1,5 +1,5 @@
 import {Service} from "../models/injector/ServiceDecorator";
-import {S3BucketService} from "./S3BucketService";
+import {S3BucketServiceUpload} from "./S3BucketServiceUpload";
 import {IGeneratedCertificateResponse} from "./CertificateGenerationService";
 import {ManagedUpload, Metadata} from "aws-sdk/clients/s3";
 import moment from "moment";
@@ -9,9 +9,9 @@ import moment from "moment";
  */
 @Service()
 class CertificateUploadService {
-    private readonly s3BucketService: S3BucketService;
+    public readonly s3BucketService: S3BucketServiceUpload;
 
-    constructor(s3BucketService: S3BucketService) {
+    constructor(s3BucketService: S3BucketServiceUpload) {
         this.s3BucketService = s3BucketService;
     }
 

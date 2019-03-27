@@ -1,7 +1,7 @@
 import rp, {OptionsWithUri} from "request-promise";
 import {IInvokeConfig, IMOTConfig} from "../models";
 import {Configuration} from "../utils/Configuration";
-import {S3BucketService} from "./S3BucketService";
+import {S3BucketServiceDownload} from "./S3BucketServiceDownload";
 import S3 from "aws-sdk/clients/s3";
 import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
 import moment from "moment";
@@ -29,12 +29,11 @@ interface IGeneratedCertificateResponse {
  */
 @Service()
 class CertificateGenerationService {
-    private readonly s3Client: S3BucketService;
+    public s3Client: S3BucketServiceDownload;
     private readonly config: Configuration;
     private readonly lambdaClient: LambdaService;
 
-    constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
-        console.log("constructor")
+    constructor(s3Client: S3BucketServiceDownload, lambdaClient: LambdaService) {
         this.s3Client = s3Client;
         this.config = Configuration.getInstance();
         this.lambdaClient = lambdaClient;
@@ -92,14 +91,11 @@ class CertificateGenerationService {
      * @returns the signature as a base64 encoded string
      */
     public async getSignature(testerStaffId: string): Promise<string | null> {
-        console.log("semnatura")
         return this.s3Client.download("cvs-signature", `${testerStaffId}.base64`)
         .then((result: S3.Types.GetObjectOutput) => {
-            console.log("THEN")
             return result.Body!.toString();
         })
         .catch((error: AWSError) => {
-            console.log("eroare")
             console.error(`Unable to fetch signature for staff id ${testerStaffId}. ${error.message}`);
             return null;
         });
