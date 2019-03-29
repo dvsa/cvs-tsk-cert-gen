@@ -28,10 +28,10 @@ s3:
       s3ForcePathStyle: true
   remote:
     cvs-cert:
-      endpoint: cvs-cert-${BUCKET}/${BRANCH}
+      endpoint: cvs-signature-${BUCKET}/${BRANCH}
       s3ForcePathStyle: true
     cvs-signature:
-      endpoint: cvs-signature-${BUCKET}/${BRANCH}
+      endpoint: cvs-cert-${BUCKET}/${BRANCH}
       s3ForcePathStyle: true
 mot:
   documentNames:
