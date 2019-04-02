@@ -91,7 +91,7 @@ class CertificateGenerationService {
      * @returns the signature as a base64 encoded string
      */
     public async getSignature(testerStaffId: string): Promise<string | null> {
-        return this.s3Client.download("cvs-signature-".concat(process.env.BUCKET,"/",process.env.BRANCH), `${testerStaffId}.base64`)
+        return this.s3Client.download(`cvs-signature-${process.env.BUCKET}`, `${testerStaffId}.base64`)
         .then((result: S3.Types.GetObjectOutput) => {
             return result.Body!.toString();
         })
@@ -315,6 +315,8 @@ class CertificateGenerationService {
      * @param defect - defect for which to generate the formatted string
      */
     private formatDefect(defect: any) {
+        const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+
         let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
 
         if (defect.deficiencyText) {
@@ -323,20 +325,21 @@ class CertificateGenerationService {
 
         if (defect.additionalInformation.location) {
             Object.keys(defect.additionalInformation.location).forEach((location: string, index: number, array: string[]) => {
-
-                switch (location) {
-                    case "rowNumber":
-                        defectString += ` Rows: ${defect.additionalInformation.location.rowNumber}.`;
-                        break;
-                    case "seatNumber":
-                        defectString += ` Seats: ${defect.additionalInformation.location.seatNumber}.`;
-                        break;
-                    case "axleNumber":
-                        defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
-                        break;
-                    default:
-                        defectString += ` ${defect.additionalInformation.location[location]}`;
-                        break;
+                if (defect.additionalInformation.location[location]) {
+                    switch (location) {
+                        case "rowNumber":
+                            defectString += ` Rows: ${defect.additionalInformation.location.rowNumber}.`;
+                            break;
+                        case "seatNumber":
+                            defectString += ` Seats: ${defect.additionalInformation.location.seatNumber}.`;
+                            break;
+                        case "axleNumber":
+                            defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
+                            break;
+                        default:
+                            defectString += ` ${toUpperFirstLetter(defect.additionalInformation.location[location])}`;
+                            break;
+                    }
                 }
 
                 if (index === array.length - 1) {

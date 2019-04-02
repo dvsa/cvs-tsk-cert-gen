@@ -1,0 +1,6 @@
+.build
+.nyc_output
+.scannerwork
+coverage
+dependencies
+node_modules

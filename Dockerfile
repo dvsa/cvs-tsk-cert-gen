@@ -18,7 +18,7 @@ RUN chmod +x /wait
 ## Create buckets and add the signature
 ## Start
 CMD /wait && \
-aws --endpoint-url=http://s3:7000 s3 mb s3://cvs-cert && \
-aws --endpoint-url=http://s3:7000 s3 mb s3://cvs-signature && \
+aws --endpoint-url=http://s3:7000 s3 mb s3://cvs-cert-dev && \
+aws --endpoint-url=http://s3:7000 s3 mb s3://cvs-signature-dev && \
 echo "Adding signatures" && \
-aws s3api put-object --endpoint-url=http://s3:7000 --bucket cvs-signature --key 1.base64 --body /usr/src/cvs-tsk-cert-gen/signatures/1.base64
+aws s3api put-object --endpoint-url=http://s3:7000 --bucket cvs-signature-dev/local --key 1.base64 --body /usr/src/cvs-tsk-cert-gen/signatures/1.base64
