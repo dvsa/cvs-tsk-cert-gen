@@ -91,7 +91,7 @@ class CertificateGenerationService {
      * @returns the signature as a base64 encoded string
      */
     public async getSignature(testerStaffId: string): Promise<string | null> {
-        return this.s3Client.download("cvs-signature-".concat(process.env.BUCKET,"/",process.env.BRANCH), `${testerStaffId}.base64`)
+        return this.s3Client.download(`cvs-signature-${process.env.BUCKET}`, `${testerStaffId}.base64`)
         .then((result: S3.Types.GetObjectOutput) => {
             return result.Body!.toString();
         })
@@ -315,6 +315,7 @@ class CertificateGenerationService {
      * @param defect - defect for which to generate the formatted string
      */
     private formatDefect(defect: any) {
+
         let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
 
         if (defect.deficiencyText) {
