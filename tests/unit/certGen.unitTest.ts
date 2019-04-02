@@ -167,7 +167,7 @@ describe("cert-gen", () => {
                         };
                         // Add a new signature
                         S3BucketMockService.buckets.push({
-                            bucketName: "cvs-signature",
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"]
                         });
 
@@ -377,7 +377,7 @@ describe("cert-gen", () => {
                         };
                         // Add a new signature
                         S3BucketMockService.buckets.push({
-                            bucketName: "cvs-signature",
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"]
                         });
 
@@ -667,7 +667,7 @@ describe("cert-gen", () => {
                         };
                         // Add a new signature
                         S3BucketMockService.buckets.push({
-                            bucketName: "cvs-signature",
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"]
                         });
 
@@ -710,13 +710,13 @@ describe("cert-gen", () => {
                     it("should successfully upload the certificate", async () => {
                         const generatedCertificateResponse: IGeneratedCertificateResponse = await certificateGenerationService.generateCertificate(testResult);
                         S3BucketMockService.buckets.push({
-                            bucketName: "cvs-cert",
+                            bucketName: `cvs-cert-${process.env.BUCKET}`,
                             files: []
                         });
 
                         return certificateUploadService.uploadCertificate(generatedCertificateResponse)
                         .then((response: ManagedUpload.SendData) => {
-                            expect(response.Key).to.equal(generatedCertificateResponse.fileName);
+                            expect(response.Key).to.equal(`${process.env.BRANCH}/${generatedCertificateResponse.fileName}`);
 
                             S3BucketMockService.buckets.pop();
                         });
