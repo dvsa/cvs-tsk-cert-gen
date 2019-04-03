@@ -61,7 +61,6 @@ s3:
 The MOT configuration contains the certificate generation endpoint URL and the expected document names. For more information, please visit the [Confluence page](https://wiki.i-env.net/display/MP/Document+Generation+Service+Contract)
 ```
 mot:
-  endpoint: https://9fjfatqw19.execute-api.eu-west-1.amazonaws.com/cvs-dev/CVS
   documentNames:
     vt20: VT20.pdf
     vt20w: VT20W.pdf

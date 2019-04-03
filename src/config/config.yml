@@ -24,7 +24,6 @@ s3:
     s3ForcePathStyle: true
   remote: {}
 mot:
-  endpoint: https://9fjfatqw19.execute-api.eu-west-1.amazonaws.com/cvs-dev/CVS
   documentNames:
     vt20: VT20.pdf
     vt20w: VT20W.pdf

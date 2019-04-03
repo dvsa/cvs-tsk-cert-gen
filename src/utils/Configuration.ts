@@ -30,7 +30,7 @@ class Configuration {
         }
 
         this.config = JSON.parse(stringifiedConfig);
-        Object.assign(this.config.mot, { api_key: secretConfig.mot.api_key });
+        Object.assign(this.config.mot, { api_key: secretConfig.mot.api_key, endpoint: secretConfig.mot.endpoint });
     }
 
     /**
