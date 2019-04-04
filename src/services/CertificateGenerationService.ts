@@ -137,7 +137,6 @@ class CertificateGenerationService {
     private async generateCertificateData(testResult: any, type: string) {
         const testType: any = testResult.testTypes;
         const defects: any = this.generateDefects(testResult.testTypes, type);
-
         return {
             TestNumber: testType.testNumber,
             TestStationPNumber: testResult.testStationPNumber,
@@ -154,7 +153,7 @@ class CertificateGenerationService {
             RawVRM: testResult.vrm,
             ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
             EarliestDateOfTheNextTest: (testType.testAnniversaryDate) ? moment(testType.testAnniversaryDate).format("DD.MM.YYYY") : undefined,
-            SeatBeltTested: (testResult.seatbeltInstallationCheckDate) ? "Yes" : "No",
+            SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
             SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate,
             SeatBeltNumber: testType.numberOfSeatbeltsFitted,
             ...defects
