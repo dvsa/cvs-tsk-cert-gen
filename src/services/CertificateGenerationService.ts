@@ -154,7 +154,7 @@ class CertificateGenerationService {
             ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
             EarliestDateOfTheNextTest: (testType.testAnniversaryDate) ? moment(testType.testAnniversaryDate).format("DD.MM.YYYY") : undefined,
             SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
-            SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate,
+            SeatBeltPreviousCheckDate: moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY"),
             SeatBeltNumber: testType.numberOfSeatbeltsFitted,
             ...defects
         };
@@ -212,7 +212,7 @@ class CertificateGenerationService {
                     return {
                         value: testResult.odometerReading,
                         unit: testResult.odometerReadingUnits,
-                        date: moment(testResult.testEndTimestamp).format("YYYY-MM-DD")
+                        date: moment(testResult.testEndTimestamp).format("DD.MM.YYYY")
                     };
                 })
             };
