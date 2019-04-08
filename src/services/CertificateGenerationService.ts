@@ -111,7 +111,6 @@ class CertificateGenerationService {
         const failData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.FAIL) ? await this.generateCertificateData(testResult, "FAIL_DATA") : undefined;
         const makeAndModel: any = await this.getVehicleMakeAndModel(testResult.vin);
         const odometerHistory: any = await this.getOdometerHistory(testResult.vin);
-
         let payload: any = {
             Watermark: "NOT VALID",
             DATA: (passData) ? {...passData, ...makeAndModel, ...odometerHistory} : undefined,
@@ -187,15 +186,14 @@ class CertificateGenerationService {
             if (!testResults || testResults.length === 0) {
                 throw new Error(`Lambda invocation returned bad data: ${JSON.stringify(payload)}.`);
             }
-
             // Sort results by testEndTimestamp
             testResults.sort((first: any, second: any): number => {
                 if (moment(first.testEndTimestamp).isBefore(second.testEndTimestamp)) {
-                    return -1;
+                    return 1;
                 }
 
                 if (moment(first.testEndTimestamp).isAfter(second.testEndTimestamp)) {
-                    return 1;
+                    return -1;
                 }
 
                 return 0;
