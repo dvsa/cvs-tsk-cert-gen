@@ -153,7 +153,7 @@ class CertificateGenerationService {
             ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
             EarliestDateOfTheNextTest: (testType.testAnniversaryDate) ? moment(testType.testAnniversaryDate).format("DD.MM.YYYY") : undefined,
             SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
-            SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "None",
+            SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
             SeatBeltNumber: testType.numberOfSeatbeltsFitted,
             ...defects
         };
