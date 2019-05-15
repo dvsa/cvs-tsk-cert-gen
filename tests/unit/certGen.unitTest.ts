@@ -39,8 +39,8 @@ describe("cert-gen", () => {
                                 RawVRM: "BQ91YHQ",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
-                                SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "Plaxton",
                                 Model: "Tourismo",
@@ -48,17 +48,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -97,8 +97,8 @@ describe("cert-gen", () => {
                                 RawVRM: "BQ91YHQ",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
-                                SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2
                             },
                             Signature: {
@@ -138,7 +138,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "Plaxton",
                                 Model: "Tourismo",
@@ -146,17 +146,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -223,7 +223,7 @@ describe("cert-gen", () => {
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 ExpiryDate: "25.02.2020",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 DangerousDefects: [
                                     "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
@@ -240,17 +240,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -290,7 +290,7 @@ describe("cert-gen", () => {
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 ExpiryDate: "25.02.2020",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 DangerousDefects: [
                                     "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
@@ -339,7 +339,7 @@ describe("cert-gen", () => {
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 ExpiryDate: "25.02.2020",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 DangerousDefects: [
                                     "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
@@ -356,17 +356,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -433,7 +433,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "Plaxton",
                                 Model: "Tourismo",
@@ -441,17 +441,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -472,7 +472,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
@@ -483,17 +483,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -533,7 +533,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2
                             },
                             FAIL_DATA: {
@@ -553,7 +553,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
@@ -596,7 +596,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "Plaxton",
                                 Model: "Tourismo",
@@ -604,17 +604,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
@@ -635,7 +635,7 @@ describe("cert-gen", () => {
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "No",
-                                SeatBeltPreviousCheckDate: "2019-02-26",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
@@ -646,17 +646,17 @@ describe("cert-gen", () => {
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     },
                                     {
                                         value: 350000,
                                         unit: "kilometres",
-                                        date: "2019-01-14"
+                                        date: "14.01.2019"
                                     }
                                 ]
                             },
