@@ -3,11 +3,20 @@ service: cvs-svc-tsk-cert-gen
 provider:
   name: aws
   runtime: nodejs8.10
+  tracing: true # enable tracing
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "xray:PutTraceSegments"
+        - "xray:PutTelemetryRecords"
+      Resource:
+        - "*"
 
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
   - serverless-dependency-invoke
+  - serverless-plugin-tracing
 
 functions:
   main:
