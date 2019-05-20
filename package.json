@@ -16,7 +16,8 @@
     "tslint": "node_modules/tslint/bin/tslint --project tsconfig.json -q",
     "prepush": "npm test && npm run lint",
     "sonar-scanner": "BRANCH=local npm run tslint && npm run coverage && sonar-scanner",
-    "coverage": "BRANCH=local nyc mocha tests/unit/*.unitTest.ts && nyc report --reporter=lcov"
+    "coverage": "BRANCH=local nyc mocha tests/unit/*.unitTest.ts && nyc report --reporter=lcov",
+    "audit-dep": "npm audit"
   },
   "nyc": {
     "include": [
