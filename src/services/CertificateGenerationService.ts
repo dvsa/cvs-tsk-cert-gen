@@ -112,7 +112,7 @@ class CertificateGenerationService {
         const makeAndModel: any = await this.getVehicleMakeAndModel(testResult.vin);
         const odometerHistory: any = await this.getOdometerHistory(testResult.vin);
         let payload: any = {
-            Watermark: (process.env.BRANCH === "prod") ? "": "NOT VALID",
+            Watermark: (process.env.BRANCH === "prod") ? "" : "NOT VALID",
             DATA: (passData) ? {...passData, ...makeAndModel, ...odometerHistory} : undefined,
             FAIL_DATA: (failData) ? {...failData, ...makeAndModel, ...odometerHistory} : undefined,
             Signature: {
