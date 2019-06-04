@@ -23,7 +23,6 @@ const certGen: Handler = async (event: any, context?: Context, callback?: Callba
 
     event.Records.forEach(async (record: any) => {
         const testResult: any = JSON.parse(record.body);
-        console.log(testResult.testResultId)
         if (testResult.testResultId.match("\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b")) {
             const generatedCertificateResponse: Promise<ManagedUpload.SendData> = certificateGenerationService.generateCertificate(testResult)
                 .then((response: IGeneratedCertificateResponse) => {
