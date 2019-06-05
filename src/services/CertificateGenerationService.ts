@@ -219,7 +219,6 @@ class CertificateGenerationService {
         })
         .catch((error: AWSError | Error) => {
             console.log(error);
-            throw (error);
         });
     }
 
@@ -258,7 +257,6 @@ class CertificateGenerationService {
         })
         .catch((error: AWSError | Error) => {
             console.log(error);
-            throw (error);
         });
     }
 
