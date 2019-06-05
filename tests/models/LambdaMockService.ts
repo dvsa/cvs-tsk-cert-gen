@@ -41,7 +41,6 @@ class LambdaMockService {
      */
     public async invoke(params: Lambda.Types.InvocationRequest): Promise<PromiseResult<Lambda.Types.InvocationResponse, AWSError>> {
         const mockFunction: IMockFunctions | undefined = LambdaMockService.responses.find((item: IMockFunctions) => item.functionName === params.FunctionName);
-
         if (!mockFunction) {
             const error: Error = new Error();
             Object.assign(error, {

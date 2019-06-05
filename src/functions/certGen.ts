@@ -2,8 +2,9 @@ import {Callback, Context, Handler} from "aws-lambda";
 import {Injector} from "../models/injector/Injector";
 import {ManagedUpload} from "aws-sdk/clients/s3";
 import {CertificateGenerationService, IGeneratedCertificateResponse} from "../services/CertificateGenerationService";
-import {AWSError} from "aws-sdk";
 import {CertificateUploadService} from "../services/CertificateUploadService";
+import {HTTPError} from "../models/HTTPError";
+import {ERRORS} from "../assets/enum";
 
 /**
  * λ function to process an SQS message detailing info for certificate generation
@@ -31,13 +32,14 @@ const certGen: Handler = async (event: any, context?: Context, callback?: Callba
 
             certificateUploadPromises.push(generatedCertificateResponse);
         } else {
-            certificateUploadPromises.push(Promise.reject(new Error("Record does not have valid testResultId for certificate generation")));
+            certificateUploadPromises.push(Promise.reject(new HTTPError(500, ERRORS.TESTRESULT_ID)));
         }
     });
 
     return Promise.all(certificateUploadPromises)
         .catch((error: Error) => {
             console.error(error);
+            throw error;
         });
 };
 
