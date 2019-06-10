@@ -9,6 +9,8 @@ import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
 import {TestResultType} from "../models/Enums";
+import {ERRORS} from "../assets/enum";
+import {HTTPError} from "../models/HTTPError";
 
 interface IGeneratedCertificateResponse {
     fileName: string;
@@ -184,7 +186,7 @@ class CertificateGenerationService {
             let testResults: any[] = JSON.parse(payload.body);
 
             if (!testResults || testResults.length === 0) {
-                throw new Error(`Lambda invocation returned bad data: ${JSON.stringify(payload)}.`);
+                throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
             }
             // Sort results by testEndTimestamp
             testResults.sort((first: any, second: any): number => {

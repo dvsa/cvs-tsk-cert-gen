@@ -3,6 +3,8 @@ import {Configuration} from "../utils/Configuration";
 import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
 import {Service} from "../models/injector/ServiceDecorator";
 import {PromiseResult} from "aws-sdk/lib/request";
+import {HTTPError} from "../models/HTTPError";
+import {ERRORS} from "../assets/enum";
 /* tslint:disable */
 const AWSXRay = require("aws-xray-sdk");
 /* tslint:enable */
@@ -36,17 +38,17 @@ class LambdaService {
      */
     public validateInvocationResponse(response: Lambda.Types.InvocationResponse): Promise<any> {
         if (!response.Payload || response.Payload === "" || (response.StatusCode && response.StatusCode >= 400)) {
-            throw new Error(`Lambda invocation returned error: ${response.StatusCode} with empty payload.`);
+            throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`);
         }
 
         const payload: any = JSON.parse(response.Payload as string);
 
         if (payload.statusCode >= 400) {
-            throw new Error(`Lambda invocation returned error: ${payload.statusCode} ${payload.body}`);
+            throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`);
         }
 
         if (!payload.body) {
-            throw new Error(`Lambda invocation returned bad data: ${JSON.stringify(payload)}.`);
+            throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
         }
 
         return payload;
