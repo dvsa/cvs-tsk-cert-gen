@@ -32,7 +32,8 @@ const certGen: Handler = async (event: any, context?: Context, callback?: Callba
 
             certificateUploadPromises.push(generatedCertificateResponse);
         } else {
-            certificateUploadPromises.push(Promise.reject(new HTTPError(500, ERRORS.TESTRESULT_ID)));
+            console.error(`${ERRORS.TESTRESULT_ID}`);
+            // certificateUploadPromises.push(Promise.reject(new HTTPError(500, ERRORS.TESTRESULT_ID)));
         }
     });
 
