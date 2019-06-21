@@ -65,9 +65,13 @@ class CertificateGenerationService {
             json: true
         };
 
+        console.log("What we send to MOT: ", reqParams)
+
         return rp(reqParams)
         .then((response: string) => {
             const responseBuffer: Buffer = Buffer.from(response, "base64");
+
+            console.log("What we get back from MOT", responseBuffer);
 
             return {
                 vrm: testResult.vrm,
