@@ -21,6 +21,7 @@ plugins:
 functions:
   main:
     handler: src/handler.handler
+    timeout: 15
     events:
     - sqs:
         arn: arn:aws:sqs:region:XXXXXX:cert-gen-q
