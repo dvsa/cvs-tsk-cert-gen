@@ -10,6 +10,9 @@ import {CertificateUploadService} from "../../src/services/CertificateUploadServ
 import {ManagedUpload} from "aws-sdk/clients/s3";
 
 describe("cert-gen-dev", () => {
+    before(function() {
+        this.timeout(10000); // 10 second timeout for setup
+    });
     context("CertificateGenerationService", () => {
         const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
         LambdaMockService.populateFunctions();
