@@ -9,7 +9,7 @@ import {LambdaMockService} from "../models/LambdaMockService";
 import {CertificateUploadService} from "../../src/services/CertificateUploadService";
 import {ManagedUpload} from "aws-sdk/clients/s3";
 
-describe("cert-gen", () => {
+describe("cert-gen-dev", () => {
     context("CertificateGenerationService", () => {
         const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
         LambdaMockService.populateFunctions();
