@@ -12,17 +12,17 @@ import {ERRORS} from "../assets/enum";
  * @param context - λ Context
  * @param callback - callback function
  */
-const certGen: Handler = async (event: any, context?: Context, callback?: Callback): Promise<void | ManagedUpload.SendData[]> => {
-    if (!event) {
+const certGen: Handler = async (event: any, context?: Context, callback?: Callback): Promise<ManagedUpload.SendData[]> => {
+    if (!event || !event.Records || !Array.isArray(event.Records) || !event.Records.length) {
         console.error("ERROR: event is not defined.");
-        return;
+        throw new Error("Event is empty");
     }
 
     const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService);
     const certificateUploadService: CertificateUploadService = Injector.resolve<CertificateUploadService>(CertificateUploadService);
     const certificateUploadPromises: Array<Promise<ManagedUpload.SendData>> = [];
 
-    event.Records.forEach(async (record: any) => {
+    event.Records.forEach((record: any) => {
         const testResult: any = JSON.parse(record.body);
         if (testResult.testResultId.match("\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b")) {
             const generatedCertificateResponse: Promise<ManagedUpload.SendData> = certificateGenerationService.generateCertificate(testResult)
@@ -32,7 +32,8 @@ const certGen: Handler = async (event: any, context?: Context, callback?: Callba
 
             certificateUploadPromises.push(generatedCertificateResponse);
         } else {
-            console.error(`${ERRORS.TESTRESULT_ID}`);
+            console.error(`${ERRORS.TESTRESULT_ID}`, testResult.testResultId);
+            throw new Error("Bad Test Record: " + testResult.testResultId);
         }
     });
 
