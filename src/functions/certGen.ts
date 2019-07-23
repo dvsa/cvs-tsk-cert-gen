@@ -1,4 +1,4 @@
-import {Callback, Context, Handler} from "aws-lambda";
+import {Callback, Context, Handler, SQSEvent, SQSRecord} from "aws-lambda";
 import {Injector} from "../models/injector/Injector";
 import {ManagedUpload} from "aws-sdk/clients/s3";
 import {CertificateGenerationService, IGeneratedCertificateResponse} from "../services/CertificateGenerationService";
@@ -12,7 +12,7 @@ import {ERRORS} from "../assets/enum";
  * @param context - λ Context
  * @param callback - callback function
  */
-const certGen: Handler = async (event: any, context?: Context, callback?: Callback): Promise<ManagedUpload.SendData[]> => {
+const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<ManagedUpload.SendData[]> => {
     if (!event || !event.Records || !Array.isArray(event.Records) || !event.Records.length) {
         console.error("ERROR: event is not defined.");
         throw new Error("Event is empty");
@@ -22,7 +22,7 @@ const certGen: Handler = async (event: any, context?: Context, callback?: Callba
     const certificateUploadService: CertificateUploadService = Injector.resolve<CertificateUploadService>(CertificateUploadService);
     const certificateUploadPromises: Array<Promise<ManagedUpload.SendData>> = [];
 
-    event.Records.forEach((record: any) => {
+    event.Records.forEach((record: SQSRecord) => {
         const testResult: any = JSON.parse(record.body);
         if (testResult.testResultId.match("\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b")) {
             const generatedCertificateResponse: Promise<ManagedUpload.SendData> = certificateGenerationService.generateCertificate(testResult)
