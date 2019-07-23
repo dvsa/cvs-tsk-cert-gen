@@ -25,12 +25,17 @@ const certGen: Handler = async (event: any, context?: Context, callback?: Callba
     event.Records.forEach(async (record: any) => {
         const testResult: any = JSON.parse(record.body);
         if (testResult.testResultId.match("\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b")) {
-            const generatedCertificateResponse: Promise<ManagedUpload.SendData> = certificateGenerationService.generateCertificate(testResult)
-                .then((response: IGeneratedCertificateResponse) => {
-                    return certificateUploadService.uploadCertificate(response);
-                });
+            //Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
+            if (!testResult.retroError === true && !testResult.testTypes.cvsTestUpdated === true) {
+                const generatedCertificateResponse: Promise<ManagedUpload.SendData> = certificateGenerationService.generateCertificate(testResult)
+                    .then((response: IGeneratedCertificateResponse) => {
+                        return certificateUploadService.uploadCertificate(response);
+                    });
 
-            certificateUploadPromises.push(generatedCertificateResponse);
+                certificateUploadPromises.push(generatedCertificateResponse);
+            } else {
+                console.error(`${ERRORS.RETRO_ERROR_OR_CVS_UPDATED}`);
+            }
         } else {
             console.error(`${ERRORS.TESTRESULT_ID}`);
         }
