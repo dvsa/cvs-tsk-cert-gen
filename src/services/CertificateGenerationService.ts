@@ -87,14 +87,18 @@ class CertificateGenerationService {
             };
         });
         */
-
+        const docName = certificateTypes[testType.testResult];
+        console.log(`Doc Name: ${docName}`);
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
             InvocationType: "RequestResponse",
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "POST",
-                path: `/${certificateTypes[testType.testResult]}`,
+                path: `/${docName}`,
+                pathParameters: {
+                    docName
+                },
                 body: payload
             }),
         };
