@@ -18,6 +18,8 @@ invoke:
           name: test-results-${BRANCH}
       techRecords:
           name: technical-records-${BRANCH}
+      certGen:
+        name: doc-gen-${BRANCH}
 s3:
   local:
     endpoint: http://localhost:7000

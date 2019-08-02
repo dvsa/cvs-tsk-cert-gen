@@ -49,6 +49,7 @@ class CertificateGenerationService {
      */
     public async generateCertificate(testResult: any): Promise<IGeneratedCertificateResponse> {
         const config: IMOTConfig = this.config.getMOTConfig();
+        const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: any = await this.generatePayload(testResult);
         const certificateTypes: any = {
@@ -56,7 +57,7 @@ class CertificateGenerationService {
             fail: config.documentNames.vtp30,
             prs: config.documentNames.psv_prs
         };
-
+        /*
         const reqParams: OptionsWithUri = {
             method: "POST",
             uri: `${config.endpoint}/${certificateTypes[testType.testResult]}`,
@@ -85,6 +86,43 @@ class CertificateGenerationService {
                 email: testResult.testerEmailAddress
             };
         });
+        */
+
+        const invokeParams: any = {
+            FunctionName: iConfig.functions.certGen.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "POST",
+                path: `/${certificateTypes[testType.testResult]}`,
+                body: payload
+            }),
+        };
+
+        return this.lambdaClient.invoke(invokeParams)
+            .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+                const payload: any = this.lambdaClient.validateInvocationResponse(response);
+                const responseBuffer: Buffer = Buffer.from(payload, "base64");
+
+                return {
+                    vrm: testResult.vrm,
+                    testTypeName: testResult.testTypes.testTypeName,
+                    testTypeResult: testResult.testTypes.testResult,
+                    dateOfIssue: moment().format("D MMMM YYYY"),
+                    certificateType: certificateTypes[testType.testResult].split(".")[0],
+                    fileFormat: "pdf",
+                    fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
+                    fileSize: responseBuffer.byteLength.toString(),
+                    certificate: responseBuffer,
+                    certificateOrder: testResult.order,
+                    email: testResult.testerEmailAddress
+                };
+            })
+            .catch((error: AWSError | Error) => {
+                console.log(error);
+                throw error;
+            });
+
     }
 
     /**
