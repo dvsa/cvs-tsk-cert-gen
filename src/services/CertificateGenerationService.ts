@@ -88,7 +88,7 @@ class CertificateGenerationService {
         });
         */
         const docName = certificateTypes[testType.testResult];
-        const documentDirectory = "cvsb-5211"
+        const documentDirectory = "CVS"
         console.log(`Doc Name: ${docName}`);
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
