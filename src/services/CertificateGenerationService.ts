@@ -51,7 +51,7 @@ class CertificateGenerationService {
         const config: IMOTConfig = this.config.getMOTConfig();
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
-        const payload: any = await this.generatePayload(testResult);
+        const payload: string = await this.generatePayload(testResult);
         const certificateTypes: any = {
             pass: config.documentNames.vtp20,
             fail: config.documentNames.vtp30,
@@ -87,6 +87,7 @@ class CertificateGenerationService {
             };
         });
         */
+        console.log(`Body: ${payload}`);
         const docName = certificateTypes[testType.testResult];
         const documentDirectory = "CVS"
         console.log(`Doc Name: ${docName}`);
@@ -101,6 +102,7 @@ class CertificateGenerationService {
                     documentName: docName,
                     documentDirectory: documentDirectory
                 },
+                json: true,
                 body: payload
             }),
         };
