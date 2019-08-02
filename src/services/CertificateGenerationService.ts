@@ -51,7 +51,7 @@ class CertificateGenerationService {
         const config: IMOTConfig = this.config.getMOTConfig();
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
-        const payload: string = await this.generatePayload(testResult);
+        const payload: String = await this.generatePayload(testResult);
         const certificateTypes: any = {
             pass: config.documentNames.vtp20,
             fail: config.documentNames.vtp30,
