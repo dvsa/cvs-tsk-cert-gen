@@ -88,6 +88,7 @@ class CertificateGenerationService {
         });
         */
         const docName = certificateTypes[testType.testResult];
+        const documentDirectory = "/cvs-dev/CVS"
         console.log(`Doc Name: ${docName}`);
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
@@ -95,7 +96,7 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "POST",
-                path: `/${docName}`,
+                path: `/cvs-dev/CVS/${docName}`,
                 pathParameters: {
                     docName
                 },
