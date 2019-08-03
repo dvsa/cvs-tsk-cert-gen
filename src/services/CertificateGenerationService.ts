@@ -107,26 +107,6 @@ class CertificateGenerationService {
             }),
         };
 
-        return rp(invokeParams)
-            .then((response: string) => {
-                const responseBuffer: Buffer = Buffer.from(response, "base64");
-
-                return {
-                    vrm: testResult.vrm,
-                    testTypeName: testResult.testTypes.testTypeName,
-                    testTypeResult: testResult.testTypes.testResult,
-                    dateOfIssue: moment().format("D MMMM YYYY"),
-                    certificateType: certificateTypes[testType.testResult].split(".")[0],
-                    fileFormat: "pdf",
-                    fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
-                    fileSize: responseBuffer.byteLength.toString(),
-                    certificate: responseBuffer,
-                    certificateOrder: testResult.order,
-                    email: testResult.testerEmailAddress
-                };
-            });
-
-        /*
         return this.lambdaClient.invoke(invokeParams)
             .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
@@ -150,7 +130,7 @@ class CertificateGenerationService {
                 console.log(error);
                 throw error;
             });
-         */
+
 
     }
 
