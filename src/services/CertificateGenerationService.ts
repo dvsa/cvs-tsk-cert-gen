@@ -107,6 +107,30 @@ class CertificateGenerationService {
             }),
         };
 
+        try{
+            const response = await this.lambdaClient.invoke(invokeParams);
+            //const payload: any = this.lambdaClient.validateInvocationResponse(response);
+            const resPayload: any = JSON.parse(response.Payload as string);
+            const responseBuffer: Buffer = Buffer.from(resPayload, "base64");
+
+            return {
+                vrm: testResult.vrm,
+                testTypeName: testResult.testTypes.testTypeName,
+                testTypeResult: testResult.testTypes.testResult,
+                dateOfIssue: moment().format("D MMMM YYYY"),
+                certificateType: certificateTypes[testType.testResult].split(".")[0],
+                fileFormat: "pdf",
+                fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
+                fileSize: responseBuffer.byteLength.toString(),
+                certificate: responseBuffer,
+                certificateOrder: testResult.order,
+                email: testResult.testerEmailAddress
+            };
+        }catch(error){
+            console.log(error);
+            throw error;
+        };
+        /*
         return this.lambdaClient.invoke(invokeParams)
             .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
@@ -130,6 +154,7 @@ class CertificateGenerationService {
                 console.log(error);
                 throw error;
             });
+         */
 
     }
 
