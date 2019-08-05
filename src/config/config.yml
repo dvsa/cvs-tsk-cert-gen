@@ -42,3 +42,4 @@ mot:
     psv_prs: PSV_PRS.pdf
     vtg5: VTG5.pdf
     vtg5a: VTG5A.pdf
+  documentDir: CVS
