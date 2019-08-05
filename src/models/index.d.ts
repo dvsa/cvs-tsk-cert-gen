@@ -5,6 +5,7 @@ interface IInvokeConfig {
 
 interface IMOTConfig {
     endpoint: string;
+    documentDir: "CVS";
     documentNames: {
         vt20: "VT20.pdf";
         vt20w: "VT20W.pdf";
