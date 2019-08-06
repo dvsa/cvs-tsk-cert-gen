@@ -75,8 +75,11 @@ class CertificateGenerationService {
 
         return this.lambdaClient.invoke(invokeParams)
             .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+                const res: string = JSON.stringify(response);
+                console.log(`Output Response: ${res}`);
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
                 const resBody: string = payload.body;
+                console.log(`Output Body: ${resBody}`);
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
                 return {
