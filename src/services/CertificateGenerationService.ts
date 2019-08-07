@@ -51,7 +51,7 @@ class CertificateGenerationService {
         const config: IMOTConfig = this.config.getMOTConfig();
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
-        const payload: any = JSON.stringify(await this.generatePayload(testResult));
+        const payload: string = JSON.stringify(await this.generatePayload(testResult));
         const certificateTypes: any = {
             pass: config.documentNames.vtp20,
             fail: config.documentNames.vtp30,
@@ -76,10 +76,8 @@ class CertificateGenerationService {
         return this.lambdaClient.invoke(invokeParams)
             .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
                 const res: string = JSON.stringify(response);
-                console.log(`Output Response: ${res}`);
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
                 const resBody: string = payload.body;
-                console.log(`Output Body: ${resBody}`);
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
                 return {
