@@ -1,10 +1,11 @@
 interface IInvokeConfig {
     params: { apiVersion: string; endpoint?: string; };
-    functions: { testResults: { name: string }, techRecords: { name: string; mock: string } };
+    functions: { testResults: { name: string }, techRecords: { name: string; mock: string }, certGen: { name: string } };
 }
 
 interface IMOTConfig {
     endpoint: string;
+    documentDir: "CVS";
     documentNames: {
         vt20: "VT20.pdf";
         vt20w: "VT20W.pdf";

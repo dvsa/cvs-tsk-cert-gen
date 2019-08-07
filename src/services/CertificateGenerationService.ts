@@ -49,42 +49,58 @@ class CertificateGenerationService {
      */
     public async generateCertificate(testResult: any): Promise<IGeneratedCertificateResponse> {
         const config: IMOTConfig = this.config.getMOTConfig();
+        const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
-        const payload: any = await this.generatePayload(testResult);
+        const payload: any = JSON.stringify(await this.generatePayload(testResult));
         const certificateTypes: any = {
             pass: config.documentNames.vtp20,
             fail: config.documentNames.vtp30,
             prs: config.documentNames.psv_prs
         };
 
-        const reqParams: OptionsWithUri = {
-            method: "POST",
-            uri: `${config.endpoint}/${certificateTypes[testType.testResult]}`,
-            body: payload,
-            headers: {
-                "x-api-key": config.api_key
-            },
-            json: true
+        const invokeParams: any = {
+            FunctionName: iConfig.functions.certGen.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "POST",
+                pathParameters: {
+                    documentName: certificateTypes[testType.testResult],
+                    documentDirectory: config.documentDir
+                },
+                json: true,
+                body: payload
+            }),
         };
 
-        return rp(reqParams)
-        .then((response: string) => {
-            const responseBuffer: Buffer = Buffer.from(response, "base64");
+        return this.lambdaClient.invoke(invokeParams)
+            .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+                const res: string = JSON.stringify(response);
+                console.log(`Output Response: ${res}`);
+                const payload: any = this.lambdaClient.validateInvocationResponse(response);
+                const resBody: string = payload.body;
+                console.log(`Output Body: ${resBody}`);
+                const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
-            return {
-                vrm: testResult.vrm,
-                testTypeName: testResult.testTypes.testTypeName,
-                testTypeResult: testResult.testTypes.testResult,
-                dateOfIssue: moment().format("D MMMM YYYY"),
-                certificateType: certificateTypes[testType.testResult].split(".")[0],
-                fileFormat: "pdf",
-                fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
-                fileSize: responseBuffer.byteLength.toString(),
-                certificate: responseBuffer,
-                certificateOrder: testResult.order,
-                email: testResult.testerEmailAddress
-            };
-        });
+                return {
+                    vrm: testResult.vrm,
+                    testTypeName: testResult.testTypes.testTypeName,
+                    testTypeResult: testResult.testTypes.testResult,
+                    dateOfIssue: moment().format("D MMMM YYYY"),
+                    certificateType: certificateTypes[testType.testResult].split(".")[0],
+                    fileFormat: "pdf",
+                    fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
+                    fileSize: responseBuffer.byteLength.toString(),
+                    certificate: responseBuffer,
+                    certificateOrder: testResult.order,
+                    email: testResult.testerEmailAddress
+                };
+            })
+            .catch((error: AWSError | Error) => {
+                console.log(error);
+                throw error;
+            });
+
     }
 
     /**
