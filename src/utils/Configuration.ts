@@ -12,7 +12,6 @@ class Configuration {
 
     private constructor(configPath: string) {
         const config = yml.readSync(configPath);
-        const secretConfig = yml.readSync("../config/secrets.yml");
 
         // Replace environment variable references
         let stringifiedConfig: string = JSON.stringify(config);
@@ -30,7 +29,6 @@ class Configuration {
         }
 
         this.config = JSON.parse(stringifiedConfig);
-        Object.assign(this.config.mot, { api_key: secretConfig.mot.api_key, endpoint: secretConfig.mot.endpoint });
     }
 
     /**
