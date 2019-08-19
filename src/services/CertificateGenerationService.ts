@@ -102,7 +102,7 @@ class CertificateGenerationService {
                     testTypeName: testResult.testTypes.testTypeName,
                     testTypeResult: testResult.testTypes.testResult,
                     dateOfIssue: moment().format("D MMMM YYYY"),
-                    certificateType: certificateTypes[testType.testResult].split(".")[0],
+                    certificateType: certificateTypes[vehicleTestRes].split(".")[0],
                     fileFormat: "pdf",
                     fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
                     fileSize: responseBuffer.byteLength.toString(),
