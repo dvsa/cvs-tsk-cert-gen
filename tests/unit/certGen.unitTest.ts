@@ -8,6 +8,16 @@ import {S3BucketMockService} from "../models/S3BucketMockService";
 import {LambdaMockService} from "../models/LambdaMockService";
 import {CertificateUploadService} from "../../src/services/CertificateUploadService";
 import {ManagedUpload} from "aws-sdk/clients/s3";
+import {certGen} from "../../src/functions/certGen";
+import mockContext from "aws-lambda-mock-context";
+import sinon from "sinon";
+// tslint:disable
+const queueEventPass = require("../resources/queue-event-pass.json");
+const queueEventFail = require("../resources/queue-event-fail.json");
+const queueEvent = require("../resources/queue-event");
+// tslint:enable
+const ctx = mockContext();
+const sandbox = sinon.createSandbox();
 
 describe("cert-gen", () => {
     context("CertificateGenerationService", () => {
@@ -15,7 +25,7 @@ describe("cert-gen", () => {
         LambdaMockService.populateFunctions();
 
         context("when a passing test result is read from the queue", () => {
-            const event: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/queue-event-pass.json"), "utf8"));
+            const event: any = {...queueEventPass};
             const testResult: any = JSON.parse(event.Records[0].body);
 
             context("and a payload is generated", () => {
@@ -198,7 +208,7 @@ describe("cert-gen", () => {
         });
 
         context("when a failing test result is read from the queue", () => {
-            const event: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/queue-event-fail.json"), "utf8"));
+            const event: any = {...queueEventFail};
             const testResult: any = JSON.parse(event.Records[0].body);
 
             context("and a payload is generated", () => {
@@ -734,6 +744,60 @@ describe("cert-gen", () => {
                             expect(error).to.be.instanceOf(Error);
                         });
                     });
+                });
+            });
+        });
+    });
+
+    context("CertGen function", () => {
+        context("when a passing test result is read from the queue", () => {
+
+            context("and the payload generation throws an error", () => {
+                it("should bubble that error up", async () => {
+                    const event: any = {Records: [{...queueEvent.Records[0]}]};
+
+                    sandbox.stub(CertificateUploadService.prototype, "uploadCertificate").throws(new Error("It broke"));
+                    try {
+                        await certGen(event, ctx, () => { return; });
+                        expect.fail();
+                    } catch (err) {
+                        expect(err.message).to.equal("It broke");
+                    }
+                    sandbox.restore();
+                });
+            });
+        });
+
+        context("when a failing test result is read from the queue", () => {
+            const event: any = {...queueEventFail};
+            context("and the testResultId is malformed", () => {
+                it("should thrown an error", async () => {
+                    try {
+                        await certGen(event, ctx, () => { return; });
+                        expect.fail();
+                    } catch (err) {
+                        expect(err.message).to.deep.equal("Bad Test Record: 1");
+                    }
+                });
+            });
+            context("and the event is empty", () => {
+                it("should thrown an error", async () => {
+                    try {
+                        await certGen({}, ctx, () => { return; });
+                        expect.fail();
+                    } catch (err) {
+                        expect(err.message).to.deep.equal("Event is empty");
+                    }
+                });
+            });
+            context("and the event has no records", () => {
+                it("should thrown an error", async () => {
+                    try {
+                        await certGen({otherStuff: "hi", Records: []}, ctx, () => { return; });
+                        expect.fail();
+                    } catch (err) {
+                        expect(err.message).to.deep.equal("Event is empty");
+                    }
                 });
             });
         });
