@@ -138,7 +138,6 @@ class CertificateGenerationService {
         const failData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.FAIL) ? await this.generateCertificateData(testResult, "FAIL_DATA") : undefined;
         const makeAndModel: any = await this.getVehicleMakeAndModel(testResult.vin);
         const odometerHistory: any = testResult.vehicleType === VehicleType.TRL ? undefined : await this.getOdometerHistory(testResult.vin);
-        console.log(`Odometer Reading: ${odometerHistory}`);
         let payload: any = {
             Watermark: (process.env.BRANCH === "prod") ? "" : "NOT VALID",
             DATA: (passData) ? {...passData, ...makeAndModel, ...odometerHistory} : undefined,
