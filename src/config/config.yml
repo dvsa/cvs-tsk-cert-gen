@@ -10,6 +10,9 @@ invoke:
       techRecords:
           name: cvs-svc-technical-records
           mock: tests/resources/tech-records-response.json
+      certGen:
+          name: cvs-svc-doc-gen
+          mock: tests/resources/cert-gen-response.json
   remote:
     params:
       apiVersion: 2015-03-31
@@ -19,7 +22,7 @@ invoke:
       techRecords:
           name: technical-records-${BRANCH}
       certGen:
-        name: doc-gen-${BRANCH}
+          name: doc-gen-${BRANCH}
 s3:
   local:
     endpoint: http://localhost:7000
