@@ -52,27 +52,12 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: any = JSON.stringify(await this.generatePayload(testResult));
-        /*
         const certificateTypes: any = {
             pass: config.documentNames.vtp20,
             fail: config.documentNames.vtp30,
             prs: config.documentNames.psv_prs
         };
-         */
-        const certificateTypes: any = {
-            psv_pass: config.documentNames.vtp20,
-            psv_fail: config.documentNames.vtp30,
-            psv_prs: config.documentNames.psv_prs,
-            hgv_pass: config.documentNames.vtg5,
-            hgv_fail: config.documentNames.vtg30,
-            hgv_prs: config.documentNames.hgv_prs,
-            trl_pass: config.documentNames.vtg5a,
-            trl_fail: config.documentNames.vtg30,
-            trl_prs: config.documentNames.trl_prs
-        };
 
-        const vehicleTestRes: string = testResult.vehicleType + "_" + testType.testResult;
-        console.log(`CertType: ${vehicleTestRes}: ${certificateTypes[vehicleTestRes]}`);
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
             InvocationType: "RequestResponse",
@@ -80,7 +65,7 @@ class CertificateGenerationService {
             Payload: JSON.stringify({
                 httpMethod: "POST",
                 pathParameters: {
-                    documentName: certificateTypes[vehicleTestRes],
+                    documentName: certificateTypes[testType.testResult],
                     documentDirectory: config.documentDir
                 },
                 json: true,
