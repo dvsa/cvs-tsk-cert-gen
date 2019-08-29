@@ -66,7 +66,6 @@ class CertificateGenerationService {
         };
 
         const vehicleTestRes: string = testResult.vehicleType + "_" + testType.testResult;
-        console.log(`CertType: ${vehicleTestRes}: ${certificateTypes[vehicleTestRes]}`);
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
             InvocationType: "RequestResponse",
@@ -90,7 +89,6 @@ class CertificateGenerationService {
 
                 //Assign trailerId to vrm for trl vehicle type
                 const vrmId: any = testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm;
-                console.log(`VRM: ${vrmId}`);
                 return {
                     vrm: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
