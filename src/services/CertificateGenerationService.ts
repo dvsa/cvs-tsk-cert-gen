@@ -14,7 +14,7 @@ import {HTTPError} from "../models/HTTPError";
 
 interface IGeneratedCertificateResponse {
     fileName: string;
-    vrm: string;
+    vrm: string | undefined;
     testTypeName: string;
     testTypeResult: string;
     dateOfIssue: string;
