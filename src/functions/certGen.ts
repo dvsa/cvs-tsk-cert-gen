@@ -29,6 +29,7 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
             if (!testResult.retroError === true && !testResult.testTypes.cvsTestUpdated === true) {
                 const generatedCertificateResponse: Promise<ManagedUpload.SendData> = certificateGenerationService.generateCertificate(testResult)
                     .then((response: IGeneratedCertificateResponse) => {
+                        console.log(`Response: ${response}`);
                         return certificateUploadService.uploadCertificate(response);
                     });
 
