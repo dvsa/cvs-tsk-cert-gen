@@ -8,7 +8,7 @@ import moment from "moment";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
-import {TestResultType} from "../models/Enums";
+import {TestResultType, VehicleType} from "../models/Enums";
 import {ERRORS} from "../assets/enum";
 import {HTTPError} from "../models/HTTPError";
 
@@ -52,13 +52,7 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: any = JSON.stringify(await this.generatePayload(testResult));
-        /*
-        const certificateTypes: any = {
-            pass: config.documentNames.vtp20,
-            fail: config.documentNames.vtp30,
-            prs: config.documentNames.psv_prs
-        };
-         */
+
         const certificateTypes: any = {
             psv_pass: config.documentNames.vtp20,
             psv_fail: config.documentNames.vtp30,
@@ -98,10 +92,10 @@ class CertificateGenerationService {
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
                 //Assign trailerId to vrm for trl vehicle type
-                const vrmId: any = testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm;
+                const vrmId: any = testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm;
                 console.log(`VRM: ${vrmId}`);
                 return {
-                    vrm: vrmId,
+                    vrm: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
                     testTypeResult: testResult.testTypes.testResult,
                     dateOfIssue: moment().format("D MMMM YYYY"),
@@ -187,7 +181,7 @@ class CertificateGenerationService {
             CountryOfRegistrationCode: testResult.countryOfRegistration,
             VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
             RawVIN: testResult.vin,
-            RawVRM: testResult.vrm,
+            RawVRM: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
             ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
             EarliestDateOfTheNextTest: (testType.testAnniversaryDate) ? moment(testType.testAnniversaryDate).format("DD.MM.YYYY") : undefined,
             SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
