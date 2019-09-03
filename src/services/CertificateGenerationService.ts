@@ -97,6 +97,17 @@ class CertificateGenerationService {
                 console.log(`Output Body: ${resBody}`);
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
+                console.log(`testTypeName: ${testResult.testTypes.testTypeName}`);
+                console.log(`testTypeResult: ${testResult.testTypes.testResult}`);
+                console.log(`dateOfIssue: ${moment().format("D MMMM YYYY")}`);
+                console.log(`certificateType: ${certificateTypes[vehicleTestRes].split(".")[0]}`);
+                console.log(`VRM: ${testResult.vrm}`);
+                console.log(`fileSize: ${responseBuffer.byteLength.toString()}`);
+                console.log(`certificate: ${responseBuffer}`);
+                console.log(`certificateOrder: ${testResult.order}`);
+                console.log(`email: ${testResult.testerEmailAddress}`);
+
+                console.log(`testTypeName: ${testResult.testTypes.testTypeName}`);
                 return {
                     vrm: testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
