@@ -164,7 +164,7 @@ class CertificateGenerationService {
      * @param testResult - the source test result for certificate generation
      * @param type - the certificate type
      */
-    public async generateCertificateData(testResult: any, type: string) {
+    private async generateCertificateData(testResult: any, type: string) {
         const testType: any = testResult.testTypes;
         const defects: any = this.generateDefects(testResult.testTypes, type);
         return {
@@ -316,18 +316,22 @@ class CertificateGenerationService {
         rawDefects.forEach((defect: any) => {
             switch (defect.deficiencyCategory.toLowerCase()) {
                 case "dangerous":
+                    /*
                     if ((testTypes.testResult === TestResultType.PRS || defect.prs)  && type === "FAIL_DATA") {
                         defects.PRSDefects.push(this.formatDefect(defect));
                     } else if (testTypes.testResult === "fail") {
                         defects.DangerousDefects.push(this.formatDefect(defect));
-                    }
+                    }*/
+                    defect.prs ? defects.PRSDefects.push(this.formatDefect(defect)): defects.DangerousDefects.push(this.formatDefect(defect));
                     break;
                 case "major":
+                    /*
                     if ((testTypes.testResult === TestResultType.PRS || defect.prs) && type === "FAIL_DATA") {
                         defects.PRSDefects.push(this.formatDefect(defect));
                     } else if (testTypes.testResult === "fail") {
                         defects.MajorDefects.push(this.formatDefect(defect));
-                    }
+                    }*/
+                    defect.prs ? defects.PRSDefects.push(this.formatDefect(defect)): defects.MajorDefects.push(this.formatDefect(defect));
                     break;
                 case "minor":
                     defects.MinorDefects.push(this.formatDefect(defect));
