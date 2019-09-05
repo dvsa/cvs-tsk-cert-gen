@@ -6,5 +6,5 @@ export enum TestResultType {
 export enum VehicleType {
     TRL = "trl",
     HGV = "hgv",
-    PRV = "psv"
+    PSV = "psv"
 }

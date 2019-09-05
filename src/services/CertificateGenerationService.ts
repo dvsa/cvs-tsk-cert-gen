@@ -140,8 +140,7 @@ class CertificateGenerationService {
         const passData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.PASS) ? await this.generateCertificateData(testResult, "DATA") : undefined;
         const failData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.FAIL) ? await this.generateCertificateData(testResult, "FAIL_DATA") : undefined;
         const makeAndModel: any = await this.getVehicleMakeAndModel(testResult.vin);
-        console.log(`Skipping Odometer reading for Trailers.`);
-        const odometerHistory: any = testResult.vehicleType === 'trl' ? undefined : await this.getOdometerHistory(testResult.vin);
+        const odometerHistory: any = testResult.vehicleType === VehicleType.TRL ? undefined : await this.getOdometerHistory(testResult.vin);
         console.log(`Odometer Reading: ${odometerHistory}`);
         let payload: any = {
             Watermark: (process.env.BRANCH === "prod") ? "" : "NOT VALID",
@@ -280,10 +279,19 @@ class CertificateGenerationService {
                 throw new Error(`Lambda invocation returned bad data: ${JSON.stringify(payload)}.`);
             }
 
-            return {
-                Make: techRecord.techRecord[0].chassisMake,
-                Model: techRecord.techRecord[0].chassisModel
-            };
+            // Return bodyMake and bodyModel values for PSVs
+            if(techRecord.techRecord[0].vehicleType === VehicleType.PSV) {
+                return {
+                    Make: techRecord.techRecord[0].chassisMake,
+                    Model: techRecord.techRecord[0].chassisModel
+                }
+            } else {
+                // Return make and model values for HGV and TRL vehicle types
+                return {
+                    Make: techRecord.techRecord[0].make,
+                    Model: techRecord.techRecord[0].model
+                }
+            }
         })
         .catch((error: AWSError | Error) => {
             console.log(error);
