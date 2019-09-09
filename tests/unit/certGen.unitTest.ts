@@ -455,6 +455,9 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
+                                PRSDefects: [
+                                    "1.1.a A registration plate: missing. Front."
+                                ],
                                 Make: "Plaxton",
                                 Model: "Tourismo",
                                 OdometerHistoryList: [
