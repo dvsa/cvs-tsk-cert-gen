@@ -14,6 +14,7 @@ import sinon from "sinon";
 // tslint:disable
 const queueEventPass = require("../resources/queue-event-pass.json");
 const queueEventFail = require("../resources/queue-event-fail.json");
+const queueEventFailPRS = require("../resources/queue-event-fail-prs.json");
 const queueEvent = require("../resources/queue-event");
 // tslint:enable
 const ctx = mockContext();
@@ -413,6 +414,100 @@ describe("cert-gen", () => {
                     .catch((error: any) => {
                         expect.fail(error);
                     });
+                });
+            });
+        });
+
+        context("when a failing test result is read from the queue", () => {
+            const event: any = {...queueEventFailPRS};
+            const testResult: any = JSON.parse(event.Records[0].body);
+
+            context("and a payload is generated with PRS Defects list populated", () => {
+                context("and signatures were found in the bucket", () => {
+                    it("should return a VTP30 payload with signature", () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres"
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                MinorDefects: [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                AdvisoryDefects: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                Make: "Plaxton",
+                                Model: "Tourismo",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    },
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    },
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    }
+                                ]
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: fs.readFileSync(path.resolve(__dirname, `../resources/signatures/1.base64`)).toString()
+                            }
+                        };
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"]
+                        });
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).to.eql(expectedResult);
+
+                                // Remove the signature
+                                S3BucketMockService.buckets.pop();
+                            });
+                    });
+                });
+            });
+
+            context("and the generated payload is used to call the MOT service", () => {
+                it("successfully generate a certificate", () => {
+                    return certificateGenerationService.generateCertificate(testResult)
+                        .then((response: any) => {
+                            expect(response.fileName).to.equal("1_XMGDE02FS0H012345_2.pdf");
+                            expect(response.certificateType).to.equal("VTP30");
+                            expect(response.certificateOrder).to.eql({ current: 2, total: 2 });
+                        })
+                        .catch((error: any) => {
+                            expect.fail(error);
+                        });
                 });
             });
         });
