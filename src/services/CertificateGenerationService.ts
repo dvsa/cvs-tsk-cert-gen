@@ -149,7 +149,7 @@ class CertificateGenerationService {
      * @param testResult - the source test result for certificate generation
      * @param type - the certificate type
      */
-    private async generateCertificateData(testResult: any, type: string) {
+    public async generateCertificateData(testResult: any, type: string) {
         const testType: any = testResult.testTypes;
         const defects: any = this.generateDefects(testResult.testTypes, type);
         return {
