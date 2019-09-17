@@ -321,7 +321,6 @@ class CertificateGenerationService {
                     } else if (testTypes.testResult === "fail") {
                         defects.DangerousDefects.push(this.formatDefect(defect));
                     }
-                    defect.prs ? defects.PRSDefects.push(this.formatDefect(defect)): defects.DangerousDefects.push(this.formatDefect(defect));
                     break;
                 case "major":
                     if ((testTypes.testResult === TestResultType.PRS || defect.prs) && type === "FAIL_DATA") {
@@ -329,7 +328,6 @@ class CertificateGenerationService {
                     } else if (testTypes.testResult === "fail") {
                         defects.MajorDefects.push(this.formatDefect(defect));
                     }
-                    defect.prs ? defects.PRSDefects.push(this.formatDefect(defect)): defects.MajorDefects.push(this.formatDefect(defect));
                     break;
                 case "minor":
                     defects.MinorDefects.push(this.formatDefect(defect));
