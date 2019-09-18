@@ -51,7 +51,7 @@ class CertificateGenerationService {
         const config: IMOTConfig = this.config.getMOTConfig();
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
-        const payload: any = JSON.stringify(await this.generatePayload(testResult));
+        const payload: string = JSON.stringify(await this.generatePayload(testResult));
 
         const certificateTypes: any = {
             psv_pass: config.documentNames.vtp20,
@@ -85,10 +85,8 @@ class CertificateGenerationService {
         return this.lambdaClient.invoke(invokeParams)
             .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
                 const res: string = JSON.stringify(response);
-                console.log(`Output Response: ${res}`);
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
                 const resBody: string = payload.body;
-                console.log(`Output Body: ${resBody}`);
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
                 //Assign trailerId to vrm for trl vehicle type
@@ -164,7 +162,7 @@ class CertificateGenerationService {
      * @param testResult - the source test result for certificate generation
      * @param type - the certificate type
      */
-    private async generateCertificateData(testResult: any, type: string) {
+    public async generateCertificateData(testResult: any, type: string) {
         const testType: any = testResult.testTypes;
         const defects: any = this.generateDefects(testResult.testTypes, type);
         return {
@@ -194,7 +192,7 @@ class CertificateGenerationService {
      * Retrieves the odometer history for a given VIN from the Test Results microservice
      * @param vin - VIN for which to retrieve odometer history
      */
-    private async getOdometerHistory(vin: string) {
+    public async getOdometerHistory(vin: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.testResults.name,
@@ -255,7 +253,7 @@ class CertificateGenerationService {
      * Retrieves the vehicle make and model for a given VIN from the Technical Records microservice
      * @param vin - the VIN for which to fetch the vehicle make and model
      */
-    private async getVehicleMakeAndModel(vin: string) {
+    public async getVehicleMakeAndModel(vin: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.techRecords.name,
