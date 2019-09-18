@@ -4,6 +4,7 @@ import {Injector} from "../../src/models/injector/Injector";
 import * as fs from "fs";
 import * as path from "path";
 import {CertificateGenerationService, IGeneratedCertificateResponse} from "../../src/services/CertificateGenerationService";
+import moment from "moment";
 import {S3BucketMockService} from "../models/S3BucketMockService";
 import {LambdaMockService} from "../models/LambdaMockService";
 import {CertificateUploadService} from "../../src/services/CertificateUploadService";
@@ -195,7 +196,7 @@ describe("cert-gen", () => {
 
 
             });
-/*
+
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
                     return certificateGenerationService.generateCertificate(testResult)
@@ -209,8 +210,6 @@ describe("cert-gen", () => {
                     });
                 });
             });
-
- */
 
         });
 
@@ -410,7 +409,7 @@ describe("cert-gen", () => {
                     });
                 });
             });
-/*
+
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
                     return certificateGenerationService.generateCertificate(testResult)
@@ -425,13 +424,13 @@ describe("cert-gen", () => {
                 });
             });
 
- */
+
         });
 
         context("when a prs test result is read from the queue", () => {
             const event: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/queue-event-prs.json"), "utf8"));
             const testResult: any = JSON.parse(event.Records[0].body);
-
+            let resBody: string = "";
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", () => {
@@ -696,14 +695,14 @@ describe("cert-gen", () => {
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
                             expect(payload).to.eql(expectedResult);
-
+                            resBody = payload.body;
                             // Remove the signature
                             S3BucketMockService.buckets.pop();
                         });
                     });
                 });
             });
-/*
+
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
                     return certificateGenerationService.generateCertificate(testResult)
@@ -717,7 +716,6 @@ describe("cert-gen", () => {
                     });
                 });
             });
-*/
         });
 
         context("when a failing test result is read from the queue", () => {
@@ -908,13 +906,12 @@ describe("cert-gen", () => {
     });
 
     context("CertGen function", () => {
-        /*
         context("when a passing test result is read from the queue", () => {
             context("and the payload generation throws an error", () => {
                 it("should bubble that error up", async () => {
                     const event: any = {Records: [{...queueEvent.Records[0]}]};
 
-                    sandbox.stub(CertificateUploadService.prototype, "uploadCertificate").throws(new Error("It broke"));
+                    sinon.stub(CertificateUploadService.prototype, "uploadCertificate").throws(new Error("It broke"));
                     try {
                         await certGen(event, ctx, () => { return; });
                         expect.fail();
@@ -925,7 +922,7 @@ describe("cert-gen", () => {
                 });
             });
         });
- */
+
 
         context("when a failing test result is read from the queue", () => {
             const event: any = {...queueEventFail};
