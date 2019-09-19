@@ -862,6 +862,191 @@ describe("cert-gen", () => {
                 });
             });
         });
+
+        context("when a passing test result for HGV is read from the queue", () => {
+            const event: any = {...queueEventPass};
+            const testResult: any = JSON.parse(event.Records[1].body);
+
+            context("and a payload is generated", () => {
+                context("and no signatures were found in the bucket", () => {
+                    it("should return a VTP20 payload without signature", () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres"
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "JY58FPP",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Plaxton",
+                                Model: "Tourismo",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    },
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    },
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    }
+                                ]
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            }
+                        };
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).to.eql(expectedResult);
+                            });
+                    });
+                });
+
+                context("and lambda-to-lambda calls were unsuccessful", () => {
+                    it("should return a VTP20 payload without bodyMake, bodyModel and odometer history", () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres"
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "JY58FPP",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
+                                SeatBeltNumber: 2
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            }
+                        };
+                        // Make the functions return undefined
+                        // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
+                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
+                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).to.eql(expectedResult);
+                                getOdometerHistoryStub.restore();
+                                getVehicleMakeAndModelStub.restore();
+                            });
+                    });
+                });
+
+                context("and signatures were found in the bucket", () => {
+                    it("should return a VTP20 payload with signature", () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres"
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "JY58FPP",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate:  "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Plaxton",
+                                Model: "Tourismo",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    },
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    },
+                                    {
+                                        value: 350000,
+                                        unit: "kilometres",
+                                        date: "14.01.2019"
+                                    }
+                                ]
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: fs.readFileSync(path.resolve(__dirname, `../resources/signatures/1.base64`)).toString()
+                            }
+                        };
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"]
+                        });
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).to.deep.equal(expectedResult);
+
+                                // Remove the signature
+                                S3BucketMockService.buckets.pop();
+                            });
+                    });
+                });
+
+            });
+
+            context("and the generated payload is used to call the MOT service", () => {
+                it("successfully generate a certificate", () => {
+                    return certificateGenerationService.generateCertificate(testResult)
+                        .then((response: any) => {
+                            expect(response.fileName).to.equal("1_XMGDE02FS0H012345_1.pdf");
+                            expect(response.certificateType).to.equal("VTG5");
+                            expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
+                        })
+                        .catch((error: any) => {
+                            expect.fail(error);
+                        });
+                });
+            });
+        });
     });
 
     context("CertificateUploadService", () => {
