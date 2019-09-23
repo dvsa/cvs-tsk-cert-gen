@@ -862,14 +862,16 @@ describe("cert-gen", () => {
                 });
             });
         });
+    });
 
+    context("CertGenService for HGV",() => {
         context("when a passing test result for HGV is read from the queue", () => {
             const event: any = {...queueEventPass};
             const testResult: any = JSON.parse(event.Records[1].body);
 
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
-                    it("should return a VTP20 payload without signature", () => {
+                    it("should return a VTG5 payload without signature", () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -884,8 +886,8 @@ describe("cert-gen", () => {
                                 DateOfTheTest: "26.02.2019",
                                 CountryOfRegistrationCode: "gb",
                                 VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "JY58FPP",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "Yes",
@@ -925,7 +927,7 @@ describe("cert-gen", () => {
                 });
 
                 context("and lambda-to-lambda calls were unsuccessful", () => {
-                    it("should return a VTP20 payload without bodyMake, bodyModel and odometer history", () => {
+                    it("should return a VTG5 payload without bodyMake, bodyModel and odometer history", () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -940,8 +942,8 @@ describe("cert-gen", () => {
                                 DateOfTheTest: "26.02.2019",
                                 CountryOfRegistrationCode: "gb",
                                 VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "JY58FPP",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "Yes",
@@ -968,7 +970,7 @@ describe("cert-gen", () => {
                 });
 
                 context("and signatures were found in the bucket", () => {
-                    it("should return a VTP20 payload with signature", () => {
+                    it("should return a VTG5 payload with signature", () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -983,8 +985,8 @@ describe("cert-gen", () => {
                                 DateOfTheTest: "26.02.2019",
                                 CountryOfRegistrationCode: "gb",
                                 VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "JY58FPP",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "26.12.2019",
                                 SeatBeltTested: "Yes",
@@ -1037,7 +1039,7 @@ describe("cert-gen", () => {
                 it("successfully generate a certificate", () => {
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_XMGDE02FS0H012345_1.pdf");
+                            expect(response.fileName).to.equal("1_P012301098765_1.pdf");
                             expect(response.certificateType).to.equal("VTG5");
                             expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
                         })
