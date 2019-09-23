@@ -265,8 +265,8 @@ class CertificateGenerationService {
             }
 
             return {
-                Make: techRecord.techRecord[0].bodyMake,
-                Model: techRecord.techRecord[0].bodyModel
+                Make: techRecord.techRecord[0].chassisMake,
+                Model: techRecord.techRecord[0].chassisModel
             };
         })
         .catch((error: AWSError | Error) => {

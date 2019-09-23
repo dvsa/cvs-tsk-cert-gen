@@ -53,8 +53,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -151,8 +151,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -245,8 +245,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -361,8 +361,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -446,8 +446,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -488,8 +488,8 @@ describe("cert-gen", () => {
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -609,8 +609,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -651,8 +651,8 @@ describe("cert-gen", () => {
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
