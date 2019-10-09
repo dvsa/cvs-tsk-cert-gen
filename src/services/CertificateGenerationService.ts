@@ -87,7 +87,7 @@ class CertificateGenerationService {
                 const resBody: string = payload.body;
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
-                //Assign trailerId to vrm for trl vehicle type
+                // Assign trailerId to vrm for trl vehicle type
                 const vrmId: any = testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm;
                 return {
                     vrm: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
@@ -246,10 +246,50 @@ class CertificateGenerationService {
     }
 
     /**
-     * Retrieves the vehicle make and model for a given VIN from the Technical Records microservice
-     * @param vin - the VIN for which to fetch the vehicle make and model
+     * Retrieves the vehicle make and model for a given vehicle from the Technical Records microservice.
+     * Dramatically altered in CVSB-8582, in order to manage failure of vin data to conform to agreed formats
+     * @param testResult - the full test result record, from which vehicle attributes to search on can be obtained
      */
-    public async getVehicleMakeAndModel(vin: string) {
+    public async getVehicleMakeAndModel(testResult: any) {
+        let techRecord = await this.queryTechRecords(testResult.vin);
+        if (!techRecord && testResult.partialVin) {
+            console.log("No Tech Record found for vin ", testResult.vin, ". Trying Partial Vin");
+            techRecord = await this.queryTechRecords(testResult.partialVin);
+        }
+        if (!techRecord && testResult.vrm) {
+            console.log("No Tech Record found for partial vin ", testResult.partialVin, ". Trying VRM");
+            techRecord = await this.queryTechRecords(testResult.vrm);
+        }
+        if (!techRecord && testResult.trailerId) {
+            console.log("No Tech Record found for vrm ", testResult.vrm, ". Trying TrailerID");
+            techRecord = await this.queryTechRecords(testResult.trailerId);
+        }
+        if (!techRecord || !techRecord.techRecord) {
+            console.error(`Unable to retrieve Tech Record for Test Result:`, testResult);
+            throw new Error(`Unable to retrieve Tech Record for Test Result`);
+        }
+
+        // Return bodyMake and bodyModel values for PSVs
+        if (techRecord.techRecord[0].vehicleType === VehicleType.PSV) {
+            return {
+                Make: techRecord.techRecord[0].chassisMake,
+                Model: techRecord.techRecord[0].chassisModel
+            };
+        } else {
+            // Return make and model values for HGV and TRL vehicle types
+            return {
+                Make: techRecord.techRecord[0].make,
+                Model: techRecord.techRecord[0].model
+            };
+        }
+    }
+
+    /**
+     * Helper method for Technical Records Lambda calls. Accepts any search term now, rather than just the VIN
+     * Created as part of CVSB-8582
+     * @param searchTerm
+     */
+    public async queryTechRecords(searchTerm: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.techRecords.name,
@@ -257,38 +297,21 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/vehicles/${vin}/tech-records`,
+                path: `/vehicles/${searchTerm}/tech-records`,
                 pathParameters: {
-                    proxy: `${vin}/tech-records`
+                    proxy: `${searchTerm}/tech-records`
                 }
             }),
         };
 
-        return this.lambdaClient.invoke(invokeParams)
-        .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
-            const payload: any = this.lambdaClient.validateInvocationResponse(response);
-            const techRecord: any = JSON.parse(payload.body);
-
-            if (!techRecord || !techRecord.techRecord) {
-                throw new Error(`Lambda invocation returned bad data: ${JSON.stringify(payload)}.`);
+        return this.lambdaClient.invoke(invokeParams).then((response) => {
+            try {
+                const payload: any = this.lambdaClient.validateInvocationResponse(response);
+                return JSON.parse(payload.body);
+            } catch (e) {
+                return undefined;
             }
 
-            // Return bodyMake and bodyModel values for PSVs
-            if(techRecord.techRecord[0].vehicleType === VehicleType.PSV) {
-                return {
-                    Make: techRecord.techRecord[0].chassisMake,
-                    Model: techRecord.techRecord[0].chassisModel
-                }
-            } else {
-                // Return make and model values for HGV and TRL vehicle types
-                return {
-                    Make: techRecord.techRecord[0].make,
-                    Model: techRecord.techRecord[0].model
-                }
-            }
-        })
-        .catch((error: AWSError | Error) => {
-            console.log(error);
         });
     }
 
