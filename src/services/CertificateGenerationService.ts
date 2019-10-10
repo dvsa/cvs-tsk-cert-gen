@@ -8,7 +8,7 @@ import moment from "moment";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
-import {TestResultType} from "../models/Enums";
+import {TestResultType, VehicleType} from "../models/Enums";
 import {ERRORS} from "../assets/enum";
 import {HTTPError} from "../models/HTTPError";
 
@@ -52,12 +52,21 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: string = JSON.stringify(await this.generatePayload(testResult));
+
         const certificateTypes: any = {
-            pass: config.documentNames.vtp20,
-            fail: config.documentNames.vtp30,
-            prs: config.documentNames.psv_prs
+            psv_pass: config.documentNames.vtp20,
+            psv_fail: config.documentNames.vtp30,
+            psv_prs: config.documentNames.psv_prs,
+            hgv_pass: config.documentNames.vtg5,
+            hgv_fail: config.documentNames.vtg30,
+            hgv_prs: config.documentNames.hgv_prs,
+            trl_pass: config.documentNames.vtg5a,
+            trl_fail: config.documentNames.vtg30,
+            trl_prs: config.documentNames.trl_prs
         };
 
+        const vehicleTestRes: string = testResult.vehicleType + "_" + testType.testResult;
+        console.log(`CertType: ${vehicleTestRes}: ${certificateTypes[vehicleTestRes]}`);
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
             InvocationType: "RequestResponse",
@@ -65,7 +74,7 @@ class CertificateGenerationService {
             Payload: JSON.stringify({
                 httpMethod: "POST",
                 pathParameters: {
-                    documentName: certificateTypes[testType.testResult],
+                    documentName: certificateTypes[vehicleTestRes],
                     documentDirectory: config.documentDir
                 },
                 json: true,
@@ -75,17 +84,19 @@ class CertificateGenerationService {
 
         return this.lambdaClient.invoke(invokeParams)
             .then((response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
-                const res: string = JSON.stringify(response);
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
                 const resBody: string = payload.body;
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
+                //Assign trailerId to vrm for trl vehicle type
+                const vrmId: any = testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm;
+                console.log(`VRM: ${vrmId}`);
                 return {
-                    vrm: testResult.vrm,
+                    vrm: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
                     testTypeResult: testResult.testTypes.testResult,
                     dateOfIssue: moment().format("D MMMM YYYY"),
-                    certificateType: certificateTypes[testType.testResult].split(".")[0],
+                    certificateType: certificateTypes[vehicleTestRes].split(".")[0],
                     fileFormat: "pdf",
                     fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
                     fileSize: responseBuffer.byteLength.toString(),
@@ -126,7 +137,8 @@ class CertificateGenerationService {
         const passData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.PASS) ? await this.generateCertificateData(testResult, "DATA") : undefined;
         const failData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.FAIL) ? await this.generateCertificateData(testResult, "FAIL_DATA") : undefined;
         const makeAndModel: any = await this.getVehicleMakeAndModel(testResult.vin);
-        const odometerHistory: any = await this.getOdometerHistory(testResult.vin);
+        const odometerHistory: any = testResult.vehicleType === VehicleType.TRL ? undefined : await this.getOdometerHistory(testResult.vin);
+        console.log(`Odometer Reading: ${odometerHistory}`);
         let payload: any = {
             Watermark: (process.env.BRANCH === "prod") ? "" : "NOT VALID",
             DATA: (passData) ? {...passData, ...makeAndModel, ...odometerHistory} : undefined,
@@ -165,7 +177,7 @@ class CertificateGenerationService {
             CountryOfRegistrationCode: testResult.countryOfRegistration,
             VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
             RawVIN: testResult.vin,
-            RawVRM: testResult.vrm,
+            RawVRM: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
             ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
             EarliestDateOfTheNextTest: (testType.testAnniversaryDate) ? moment(testType.testAnniversaryDate).format("DD.MM.YYYY") : undefined,
             SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
@@ -179,7 +191,7 @@ class CertificateGenerationService {
      * Retrieves the odometer history for a given VIN from the Test Results microservice
      * @param vin - VIN for which to retrieve odometer history
      */
-    private async getOdometerHistory(vin: string) {
+    public async getOdometerHistory(vin: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.testResults.name,
@@ -240,7 +252,7 @@ class CertificateGenerationService {
      * Retrieves the vehicle make and model for a given VIN from the Technical Records microservice
      * @param vin - the VIN for which to fetch the vehicle make and model
      */
-    private async getVehicleMakeAndModel(vin: string) {
+    public async getVehicleMakeAndModel(vin: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.techRecords.name,
@@ -264,10 +276,19 @@ class CertificateGenerationService {
                 throw new Error(`Lambda invocation returned bad data: ${JSON.stringify(payload)}.`);
             }
 
-            return {
-                Make: techRecord.techRecord[0].chassisMake,
-                Model: techRecord.techRecord[0].chassisModel
-            };
+            // Return bodyMake and bodyModel values for PSVs
+            if(techRecord.techRecord[0].vehicleType === VehicleType.PSV) {
+                return {
+                    Make: techRecord.techRecord[0].chassisMake,
+                    Model: techRecord.techRecord[0].chassisModel
+                }
+            } else {
+                // Return make and model values for HGV and TRL vehicle types
+                return {
+                    Make: techRecord.techRecord[0].make,
+                    Model: techRecord.techRecord[0].model
+                }
+            }
         })
         .catch((error: AWSError | Error) => {
             console.log(error);
