@@ -866,6 +866,23 @@ describe("cert-gen", () => {
                 });
             });
         });
+
+        // This needs to be fixed when we have proper jest stubs to use for this.
+        //
+        // context("generatePayload method", () => {
+        //     context("when invoking getVehicleMakeAndModel, passes entire testResult object", () =>  {
+        //         let stub = sandbox.stub().resolves({
+        //             Make: "make",
+        //             Model: "model"
+        //         });
+        //         certificateGenerationService.getVehicleMakeAndModel = stub;
+        //         const event: any = {...queueEventPass};
+        //         const testResult: any = JSON.parse(event.Records[0].body);
+        //         certificateGenerationService.generatePayload(testResult);
+        //         console.log("XXX stub", stub);
+        //         expect(stub.getCall(0).args[0]).to.equal(testResult);
+        //     })
+        // });
     });
 
     context("CertGenService for HGV", () => {
