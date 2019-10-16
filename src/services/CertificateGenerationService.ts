@@ -135,7 +135,7 @@ class CertificateGenerationService {
         const signature: string | null = await this.getSignature(testResult.testerStaffId);
         const passData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.PASS) ? await this.generateCertificateData(testResult, "DATA") : undefined;
         const failData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.FAIL) ? await this.generateCertificateData(testResult, "FAIL_DATA") : undefined;
-        const makeAndModel: any = await this.getVehicleMakeAndModel(testResult.vin);
+        const makeAndModel: any = await this.getVehicleMakeAndModel(testResult);
         const odometerHistory: any = testResult.vehicleType === VehicleType.TRL ? undefined : await this.getOdometerHistory(testResult.vin);
         let payload: any = {
             Watermark: (process.env.BRANCH === "prod") ? "" : "NOT VALID",
