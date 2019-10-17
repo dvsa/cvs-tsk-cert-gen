@@ -32,7 +32,7 @@ class CertificateUploadService {
             "total-certs": payload.certificateOrder.total.toString(),
             "email": payload.email
         };
-       
+
         return this.s3BucketService.upload(`cvs-cert-${process.env.BUCKET}`, payload.fileName, payload.certificate, metadata);
     }
 

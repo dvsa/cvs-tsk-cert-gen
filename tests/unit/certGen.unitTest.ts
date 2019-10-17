@@ -12,6 +12,7 @@ import {ManagedUpload} from "aws-sdk/clients/s3";
 import {certGen} from "../../src/functions/certGen";
 import mockContext from "aws-lambda-mock-context";
 import sinon from "sinon";
+import {LambdaService} from "../../src/services/LambdaService";
 // tslint:disable
 const queueEventPass = require("../resources/queue-event-pass.json");
 const queueEventFail = require("../resources/queue-event-fail.json");
@@ -23,6 +24,9 @@ const sandbox = sinon.createSandbox();
 
 describe("cert-gen", () => {
     const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
+    after(() => {
+        sandbox.restore();
+    });
     context("CertificateGenerationService", () => {
         LambdaMockService.populateFunctions();
 
@@ -80,7 +84,7 @@ describe("cert-gen", () => {
                             }
                         };
 
-                         return certificateGenerationService.generatePayload(testResult)
+                        return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
                             expect(payload).to.eql(expectedResult);
                         });
@@ -118,9 +122,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
                             expect(payload).to.eql(expectedResult);
@@ -323,9 +327,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
@@ -584,9 +588,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
                             expect(payload).to.eql(expectedResult);
@@ -862,9 +866,26 @@ describe("cert-gen", () => {
                 });
             });
         });
+
+        // This needs to be fixed when we have proper jest stubs to use for this.
+        //
+        // context("generatePayload method", () => {
+        //     context("when invoking getVehicleMakeAndModel, passes entire testResult object", () =>  {
+        //         let stub = sandbox.stub().resolves({
+        //             Make: "make",
+        //             Model: "model"
+        //         });
+        //         certificateGenerationService.getVehicleMakeAndModel = stub;
+        //         const event: any = {...queueEventPass};
+        //         const testResult: any = JSON.parse(event.Records[0].body);
+        //         certificateGenerationService.generatePayload(testResult);
+        //         console.log("XXX stub", stub);
+        //         expect(stub.getCall(0).args[0]).to.equal(testResult);
+        //     })
+        // });
     });
 
-    context("CertGenService for HGV",() => {
+    context("CertGenService for HGV", () => {
         context("when a passing test result for HGV is read from the queue", () => {
             const event: any = {...queueEventPass};
             const testResult: any = JSON.parse(event.Records[1].body);
@@ -957,9 +978,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).to.eql(expectedResult);
@@ -1207,9 +1228,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).to.eql(expectedResult);
@@ -1451,9 +1472,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
@@ -1554,7 +1575,7 @@ describe("cert-gen", () => {
         });
     });
 
-    context("CertGenService for TRL",() => {
+    context("CertGenService for TRL", () => {
         context("when a passing test result for TRL is read from the queue", () => {
             const event: any = {...queueEventPass};
             const testResult: any = JSON.parse(event.Records[2].body);
@@ -1628,9 +1649,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).to.eql(expectedResult);
@@ -1822,9 +1843,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).to.eql(expectedResult);
@@ -2011,9 +2032,9 @@ describe("cert-gen", () => {
                         };
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        let getOdometerHistoryStub = sinon.stub(CertificateGenerationService.prototype, 'getOdometerHistory').resolves(undefined)
+                        const getOdometerHistoryStub = sandbox.stub(CertificateGenerationService.prototype, "getOdometerHistory").resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        let getVehicleMakeAndModelStub = sinon.stub(CertificateGenerationService.prototype, 'getVehicleMakeAndModel').resolves(undefined);
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
@@ -2101,6 +2122,7 @@ describe("cert-gen", () => {
             const event: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/queue-event-prs.json"), "utf8"));
             const testResult: any = JSON.parse(event.Records[0].body);
             const certificateUploadService: CertificateUploadService = Injector.resolve<CertificateUploadService>(CertificateUploadService, [S3BucketMockService]);
+            // tslint:disable-next-line:no-shadowed-variable
             const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
 
             context("when uploading a certificate", () => {
@@ -2143,7 +2165,7 @@ describe("cert-gen", () => {
                 it("should bubble that error up", async () => {
                     const event: any = {Records: [{...queueEvent.Records[0]}]};
 
-                    sinon.stub(CertificateUploadService.prototype, "uploadCertificate").throws(new Error("It broke"));
+                    sandbox.stub(LambdaService.prototype, "invoke").throws(new Error("It broke"));
                     try {
                         await certGen(event, ctx, () => { return; });
                         expect.fail();
