@@ -9,7 +9,7 @@ import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
 import {TestResultType, VehicleType} from "../models/Enums";
-import {ERRORS} from "../assets/enum";
+import {ERRORS, TEST_RESULTS, VEHICLE_TYPES} from "../assets/enum";
 import {HTTPError} from "../models/HTTPError";
 
 interface IGeneratedCertificateResponse {
@@ -177,7 +177,9 @@ class CertificateGenerationService {
             RawVIN: testResult.vin,
             RawVRM: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
             ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
-            EarliestDateOfTheNextTest: (testType.testAnniversaryDate) ? moment(testType.testAnniversaryDate).format("DD.MM.YYYY") : undefined,
+            EarliestDateOfTheNextTest: ((testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL) && testResult.testTypes.testResult === TEST_RESULTS.PASS) ?
+                moment(testType.testAnniversaryDate).subtract(2, "months").add(1, "days").format("DD.MM.YYYY") :
+                moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
             SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
             SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
             SeatBeltNumber: testType.numberOfSeatbeltsFitted,
