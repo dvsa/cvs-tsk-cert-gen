@@ -5,3 +5,15 @@ export enum ERRORS {
     LAMBDA_INVOCATION_BAD_DATA = "Lambda invocation returned bad data:",
     RETRO_ERROR_OR_CVS_UPDATED = "Not eligible for certificate generation."
 }
+
+export enum VEHICLE_TYPES {
+    PSV = "psv",
+    HGV = "hgv",
+    TRL = "trl"
+}
+
+export enum TEST_RESULTS {
+    PASS = "pass",
+    FAIL = "fail",
+    PRS = "prs"
+}
