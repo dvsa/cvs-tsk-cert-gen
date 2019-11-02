@@ -1,4 +1,3 @@
-import {describe} from "mocha";
 import {CertificateGenerationService} from "../../src/services/CertificateGenerationService";
 import {CertificateUploadService} from "../../src/services/CertificateUploadService";
 import { certGen } from "../../src/functions/certGen";
@@ -185,7 +184,7 @@ describe("Invoke certGen Function", () => {
             // Stub CertificateUploadService uploadCertificate method
             const certUploadServiceStub = sandbox.stub(CertificateUploadService.prototype, "uploadCertificate");
 
-            return lambda.event(payload).expectResolve((response: any) => {
+            return lambda.event(payload).expectReject((response: any) => {
                 sinon.assert.callCount(certGenServiceStub, 0);
                 sinon.assert.callCount(certUploadServiceStub, 0);
                 certGenServiceStub.restore();

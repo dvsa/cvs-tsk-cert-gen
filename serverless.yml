@@ -15,7 +15,6 @@ provider:
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
-  - serverless-dependency-invoke
   - serverless-plugin-tracing
 
 functions:
@@ -44,33 +43,3 @@ custom:
     directory: /tmp
   serverless-offline:
     port: 3011
-  dependency-invoke:
-    storage: dependencies
-    dependencies:
-      - name: cvs-svc-technical-records
-        lang: javascript
-        git: git@github.com:dvsa/cvs-svc-technical-records.git
-        branch: develop
-        handler: src/handler.handler
-        commands:
-          - npm install
-          - lsof -i tcp:8003 | awk 'NR!=1 {print $2}' | xargs kill || true
-          - node_modules/serverless/bin/serverless dynamodb install
-          - "sed -i '' 's/migrate: false/migrate: true/g' serverless.yml"
-          - "sed -i '' 's/seed: false/seed: true/g' serverless.yml"
-          - "sed -i '' 's/noStart: true/noStart: false/g' serverless.yml"
-          - node_modules/serverless/bin/serverless dynamodb start
-      - name: cvs-svc-test-results
-        lang: javascript
-        git: git@github.com:dvsa/cvs-svc-test-results.git
-        branch: develop
-        handler: src/handler.handler
-        commands:
-          - npm install
-          - lsof -i tcp:8004 | awk 'NR!=1 {print $2}' | xargs kill || true
-          - node_modules/serverless/bin/serverless dynamodb install
-          - "sed -i '' 's/migrate: false/migrate: true/g' serverless.yml"
-          - "sed -i '' 's/seed: false/seed: true/g' serverless.yml"
-          - "sed -i '' 's/noStart: true/noStart: false/g' serverless.yml"
-          - node_modules/serverless/bin/serverless dynamodb start
-
