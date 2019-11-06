@@ -1,10 +1,7 @@
-import {describe} from "mocha";
-import {expect} from "chai";
 import {Injector} from "../../src/models/injector/Injector";
 import * as fs from "fs";
 import * as path from "path";
 import {CertificateGenerationService, IGeneratedCertificateResponse} from "../../src/services/CertificateGenerationService";
-import moment from "moment";
 import {S3BucketMockService} from "../models/S3BucketMockService";
 import {LambdaMockService} from "../models/LambdaMockService";
 import {CertificateUploadService} from "../../src/services/CertificateUploadService";
@@ -13,18 +10,16 @@ import {certGen} from "../../src/functions/certGen";
 import mockContext from "aws-lambda-mock-context";
 import sinon from "sinon";
 import {LambdaService} from "../../src/services/LambdaService";
-// tslint:disable
-const queueEventPass = require("../resources/queue-event-pass.json");
-const queueEventFail = require("../resources/queue-event-fail.json");
-const queueEventFailPRS = require("../resources/queue-event-fail-prs.json");
-const queueEvent = require("../resources/queue-event");
-// tslint:enable
+import queueEventPass from "../resources/queue-event-pass.json";
+import queueEventFail from "../resources/queue-event-fail.json";
+import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
+import queueEvent from "../resources/queue-event.json";
 const ctx = mockContext();
 const sandbox = sinon.createSandbox();
 
 describe("cert-gen", () => {
     const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
-    after(() => {
+    afterAll(() => {
         sandbox.restore();
     });
     context("CertificateGenerationService", () => {
@@ -86,7 +81,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                         });
                     });
                 });
@@ -127,7 +122,7 @@ describe("cert-gen", () => {
                         const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                             getOdometerHistoryStub.restore();
                             getVehicleMakeAndModelStub.restore();
                         });
@@ -190,7 +185,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.deep.equal(expectedResult);
+                            expect(payload).toEqual(expectedResult);
 
                             // Remove the signature
                             S3BucketMockService.buckets.pop();
@@ -203,14 +198,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                     .then((response: any) => {
-                        expect(response.fileName).to.equal("1_XMGDE02FS0H012345_1.pdf");
-                        expect(response.certificateType).to.equal("VTP20");
-                        expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
-                    })
-                    .catch((error: any) => {
-                        expect.fail(error);
+                        expect(response.fileName).toEqual("1_XMGDE02FS0H012345_1.pdf");
+                        expect(response.certificateType).toEqual("VTP20");
+                        expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                     });
                 });
             });
@@ -282,7 +275,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                         });
                     });
                 });
@@ -333,7 +326,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                             getOdometerHistoryStub.restore();
                             getVehicleMakeAndModelStub.restore();
                         });
@@ -405,7 +398,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
 
                             // Remove the signature
                             S3BucketMockService.buckets.pop();
@@ -416,14 +409,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                     .then((response: any) => {
-                        expect(response.fileName).to.equal("1_XMGDE02FS0H012345_2.pdf");
-                        expect(response.certificateType).to.equal("VTP30");
-                        expect(response.certificateOrder).to.eql({ current: 2, total: 2 });
-                    })
-                    .catch((error: any) => {
-                        expect.fail(error);
+                        expect(response.fileName).toEqual("1_XMGDE02FS0H012345_2.pdf");
+                        expect(response.certificateType).toEqual("VTP30");
+                        expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                     });
                 });
             });
@@ -529,7 +520,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                         });
                     });
                 });
@@ -593,7 +584,7 @@ describe("cert-gen", () => {
                         const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                             getOdometerHistoryStub.restore();
                             getVehicleMakeAndModelStub.restore();
                         });
@@ -698,7 +689,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                         .then((payload: any) => {
-                            expect(payload).to.eql(expectedResult);
+                            expect(payload).toEqual(expectedResult);
                             resBody = payload.body;
                             // Remove the signature
                             S3BucketMockService.buckets.pop();
@@ -709,14 +700,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                     .then((response: any) => {
-                        expect(response.fileName).to.equal("1_XMGDE02FS0H012345_1.pdf");
-                        expect(response.certificateType).to.equal("PSV_PRS");
-                        expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
-                    })
-                    .catch((error: any) => {
-                        expect.fail(error);
+                        expect(response.fileName).toEqual("1_XMGDE02FS0H012345_1.pdf");
+                        expect(response.certificateType).toEqual("PSV_PRS");
+                        expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                     });
                 });
             });
@@ -765,8 +754,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generateCertificateData(testResult, "FAIL_DATA")
                             .then((payload: any) => {
-                                expect(payload).to.deep.equal(expectedResult);
-
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -812,7 +800,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generateCertificateData(testResult2, "FAIL_DATA")
                             .then((payload: any) => {
-                                expect(payload).to.deep.equal(expectedResult);
+                                expect(payload).toEqual(expectedResult);
 
                             });
                     });
@@ -859,7 +847,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generateCertificateData(testResult3, "FAIL_DATA")
                             .then((payload: any) => {
-                                expect(payload).to.deep.equal(expectedResult);
+                                expect(payload).toEqual(expectedResult);
 
                             });
                     });
@@ -880,7 +868,7 @@ describe("cert-gen", () => {
         //         const testResult: any = JSON.parse(event.Records[0].body);
         //         certificateGenerationService.generatePayload(testResult);
         //         console.log("XXX stub", stub);
-        //         expect(stub.getCall(0).args[0]).to.equal(testResult);
+        //         expect(stub.getCall(0).args[0]).toEqual(testResult);
         //     })
         // });
     });
@@ -914,8 +902,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -942,7 +930,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -983,7 +971,7 @@ describe("cert-gen", () => {
                         const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
                                 getVehicleMakeAndModelStub.restore();
                             });
@@ -1013,8 +1001,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1046,7 +1034,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.deep.equal(expectedResult);
+                                expect(payload).toEqual(expectedResult);
 
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
@@ -1058,14 +1046,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_P012301098765_1.pdf");
-                            expect(response.certificateType).to.equal("VTG5");
-                            expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
-                        })
-                        .catch((error: any) => {
-                            expect.fail(error);
+                            expect(response.fileName).toEqual("1_P012301098765_1.pdf");
+                            expect(response.certificateType).toEqual("VTG5");
+                            expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
                 });
             });
@@ -1099,8 +1085,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1141,8 +1127,8 @@ describe("cert-gen", () => {
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1169,7 +1155,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -1193,7 +1179,7 @@ describe("cert-gen", () => {
                                 RawVIN: "P012301098765",
                                 RawVRM: "VM14MDT",
                                 ExpiryDate: "25.02.2020",
-                                EarliestDateOfTheNextTest: "26.12.2019",
+                                EarliestDateOfTheNextTest: "27.10.2019",
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2
@@ -1213,7 +1199,7 @@ describe("cert-gen", () => {
                                 RawVIN: "P012301098765",
                                 RawVRM: "VM14MDT",
                                 ExpiryDate: "25.02.2020",
-                                EarliestDateOfTheNextTest: "26.12.2019",
+                                EarliestDateOfTheNextTest: "27.10.2019",
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
@@ -1233,7 +1219,7 @@ describe("cert-gen", () => {
                         const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
                                 getVehicleMakeAndModelStub.restore();
                             });
@@ -1263,8 +1249,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1305,8 +1291,8 @@ describe("cert-gen", () => {
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1338,7 +1324,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 resBody = payload.body;
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
@@ -1349,14 +1335,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_P012301098765_1.pdf");
-                            expect(response.certificateType).to.equal("HGV_PRS");
-                            expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
-                        })
-                        .catch((error: any) => {
-                            expect.fail(error);
+                            expect(response.fileName).toEqual("1_P012301098765_1.pdf");
+                            expect(response.certificateType).toEqual("HGV_PRS");
+                            expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
                 });
             });
@@ -1399,8 +1383,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1427,7 +1411,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -1478,7 +1462,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
                                 getVehicleMakeAndModelStub.restore();
                             });
@@ -1517,8 +1501,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo",
+                                Make: "Mercedes",
+                                Model: "632,01",
                                 OdometerHistoryList: [
                                     {
                                         value: 350000,
@@ -1550,7 +1534,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
 
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
@@ -1561,14 +1545,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_P012301098765_2.pdf");
-                            expect(response.certificateType).to.equal("VTG30");
-                            expect(response.certificateOrder).to.eql({ current: 2, total: 2 });
-                        })
-                        .catch((error: any) => {
-                            expect.fail(error);
+                            expect(response.fileName).toEqual("1_P012301098765_2.pdf");
+                            expect(response.certificateType).toEqual("VTG30");
+                            expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                         });
                 });
             });
@@ -1603,8 +1585,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1614,7 +1596,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -1637,7 +1619,7 @@ describe("cert-gen", () => {
                                 VehicleEuClassification: "M1",
                                 RawVIN: "T12876765",
                                 ExpiryDate: "25.02.2020",
-                                EarliestDateOfTheNextTest: "26.12.2019",
+                                EarliestDateOfTheNextTest: "27.10.2019",
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2
@@ -1654,7 +1636,7 @@ describe("cert-gen", () => {
                         const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
                                 getVehicleMakeAndModelStub.restore();
                             });
@@ -1683,8 +1665,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1699,7 +1681,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.deep.equal(expectedResult);
+                                expect(payload).toEqual(expectedResult);
 
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
@@ -1711,14 +1693,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_T12876765_1.pdf");
-                            expect(response.certificateType).to.equal("VTG5A");
-                            expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
-                        })
-                        .catch((error: any) => {
-                            expect.fail(error);
+                            expect(response.fileName).toEqual("1_T12876765_1.pdf");
+                            expect(response.certificateType).toEqual("VTG5A");
+                            expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
                 });
             });
@@ -1751,8 +1731,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -1775,8 +1755,8 @@ describe("cert-gen", () => {
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1786,7 +1766,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -1848,7 +1828,7 @@ describe("cert-gen", () => {
                         const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
                                 getVehicleMakeAndModelStub.restore();
                             });
@@ -1877,8 +1857,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -1901,8 +1881,8 @@ describe("cert-gen", () => {
                                 PRSDefects: [
                                     "1.1.a A registration plate: missing. Front."
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1917,7 +1897,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 resBody = payload.body;
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
@@ -1928,14 +1908,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_T12876765_1.pdf");
-                            expect(response.certificateType).to.equal("TRL_PRS");
-                            expect(response.certificateOrder).to.eql({ current: 1, total: 2 });
-                        })
-                        .catch((error: any) => {
-                            expect.fail(error);
+                            expect(response.fileName).toEqual("1_T12876765_1.pdf");
+                            expect(response.certificateType).toEqual("TRL_PRS");
+                            expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
                 });
             });
@@ -1977,8 +1955,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1988,7 +1966,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                             });
                     });
                 });
@@ -2038,7 +2016,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
                                 getVehicleMakeAndModelStub.restore();
                             });
@@ -2076,8 +2054,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
-                                Make: "Plaxton",
-                                Model: "Tourismo"
+                                Make: "Mercedes",
+                                Model: "632,01"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2092,7 +2070,7 @@ describe("cert-gen", () => {
 
                         return certificateGenerationService.generatePayload(testResult)
                             .then((payload: any) => {
-                                expect(payload).to.eql(expectedResult);
+                                expect(payload).toEqual(expectedResult);
 
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
@@ -2103,14 +2081,12 @@ describe("cert-gen", () => {
 
             context("and the generated payload is used to call the MOT service", () => {
                 it("successfully generate a certificate", () => {
+                    expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).to.equal("1_T12876765_2.pdf");
-                            expect(response.certificateType).to.equal("VTG30");
-                            expect(response.certificateOrder).to.eql({ current: 2, total: 2 });
-                        })
-                        .catch((error: any) => {
-                            expect.fail(error);
+                            expect(response.fileName).toEqual("1_T12876765_2.pdf");
+                            expect(response.certificateType).toEqual("VTG30");
+                            expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                         });
                 });
             });
@@ -2136,22 +2112,20 @@ describe("cert-gen", () => {
 
                         return certificateUploadService.uploadCertificate(generatedCertificateResponse)
                         .then((response: ManagedUpload.SendData) => {
-                            expect(response.Key).to.equal(`${process.env.BRANCH}/${generatedCertificateResponse.fileName}`);
+                            expect(response.Key).toEqual(`${process.env.BRANCH}/${generatedCertificateResponse.fileName}`);
 
                             S3BucketMockService.buckets.pop();
                         });
                     });
                 });
 
-                context("and the S3 bucket does not exist or is not accesible", async () => {
+                context("and the S3 bucket does not exist or is not accesible", () => {
                     it("should throw an error", async () => {
                         const generatedCertificateResponse: IGeneratedCertificateResponse = await certificateGenerationService.generateCertificate(testResult);
+                        expect.assertions(1);
                         return certificateUploadService.uploadCertificate(generatedCertificateResponse)
-                        .then(() => {
-                            expect.fail();
-                        })
                         .catch((error: any) => {
-                            expect(error).to.be.instanceOf(Error);
+                            expect(error).toBeInstanceOf(Error);
                         });
                     });
                 });
@@ -2166,11 +2140,11 @@ describe("cert-gen", () => {
                     const event: any = {Records: [{...queueEvent.Records[0]}]};
 
                     sandbox.stub(LambdaService.prototype, "invoke").throws(new Error("It broke"));
+                    expect.assertions(1);
                     try {
                         await certGen(event, ctx, () => { return; });
-                        expect.fail();
                     } catch (err) {
-                        expect(err.message).to.equal("It broke");
+                        expect(err.message).toEqual("It broke");
                     }
                     sandbox.restore();
                 });
@@ -2182,31 +2156,31 @@ describe("cert-gen", () => {
             const event: any = {...queueEventFail};
             context("and the testResultId is malformed", () => {
                 it("should thrown an error", async () => {
+                    expect.assertions(1);
                     try {
                         await certGen(event, ctx, () => { return; });
-                        expect.fail();
                     } catch (err) {
-                        expect(err.message).to.deep.equal("Bad Test Record: 1");
+                        expect(err.message).toEqual("Bad Test Record: 1");
                     }
                 });
             });
             context("and the event is empty", () => {
                 it("should thrown an error", async () => {
+                    expect.assertions(1);
                     try {
                         await certGen({}, ctx, () => { return; });
-                        expect.fail();
                     } catch (err) {
-                        expect(err.message).to.deep.equal("Event is empty");
+                        expect(err.message).toEqual("Event is empty");
                     }
                 });
             });
             context("and the event has no records", () => {
                 it("should thrown an error", async () => {
+                    expect.assertions(1);
                     try {
                         await certGen({otherStuff: "hi", Records: []}, ctx, () => { return; });
-                        expect.fail();
                     } catch (err) {
-                        expect(err.message).to.deep.equal("Event is empty");
+                        expect(err.message).toEqual("Event is empty");
                     }
                 });
             });

@@ -1,4 +1,3 @@
-import {expect} from "chai";
 import {CertificateGenerationService} from "../../src/services/CertificateGenerationService";
 import sinon from "sinon";
 import techRecordResp from "../resources/tech-records-response.json";
@@ -21,8 +20,8 @@ describe("Certificate Generation Service", () => {
           vin: "abc123"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
-        expect(LambdaStub.calledOnce).to.be.true;
-        expect(makeAndModel).to.deep.equal({Make: "Plaxton", Model: "Tourismo"});
+        expect(LambdaStub.calledOnce).toBeTruthy();
+        expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
 
@@ -38,9 +37,9 @@ describe("Certificate Generation Service", () => {
           partialVin: "abc123"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
-        expect(LambdaStub.calledOnce).to.be.false;
-        expect(LambdaStub.calledTwice).to.be.true;
-        expect(makeAndModel).to.deep.equal({Make: "Plaxton", Model: "Tourismo"});
+        expect(LambdaStub.calledOnce).toBeFalsy();
+        expect(LambdaStub.calledTwice).toBeTruthy();
+        expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
 
@@ -58,10 +57,10 @@ describe("Certificate Generation Service", () => {
           vrm: "testvrm"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
-        expect(LambdaStub.calledOnce).to.be.false;
-        expect(LambdaStub.calledTwice).to.be.false;
-        expect(LambdaStub.calledThrice).to.be.true;
-        expect(makeAndModel).to.deep.equal({Make: "Plaxton", Model: "Tourismo"});
+        expect(LambdaStub.calledOnce).toBeFalsy();
+        expect(LambdaStub.calledTwice).toBeFalsy();
+        expect(LambdaStub.calledThrice).toBeTruthy();
+        expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
 
@@ -81,8 +80,8 @@ describe("Certificate Generation Service", () => {
           trailerId: "testTrailerId"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
-        expect(LambdaStub.callCount).to.equal(4);
-        expect(makeAndModel).to.deep.equal({Make: "Plaxton", Model: "Tourismo"});
+        expect(LambdaStub.callCount).toEqual(4);
+        expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
 
@@ -100,9 +99,9 @@ describe("Certificate Generation Service", () => {
         try {
           await certGenSvc.getVehicleMakeAndModel(testResultMock);
         } catch (e) {
-          expect(LambdaStub.callCount).to.equal(4);
-          expect(e).to.be.instanceOf(Error);
-          expect(e.message).to.equal("Unable to retrieve Tech Record for Test Result");
+          expect(LambdaStub.callCount).toEqual(4);
+          expect(e).toBeInstanceOf(Error);
+          expect(e.message).toEqual("Unable to retrieve Tech Record for Test Result");
         }
       });
     });
@@ -119,9 +118,9 @@ describe("Certificate Generation Service", () => {
         try {
           await certGenSvc.getVehicleMakeAndModel(testResultMock);
         } catch (e) {
-          expect(LambdaStub.callCount).to.equal(2);
-          expect(e).to.be.instanceOf(Error);
-          expect(e.message).to.equal("Unable to retrieve Tech Record for Test Result");
+          expect(LambdaStub.callCount).toEqual(2);
+          expect(e).toBeInstanceOf(Error);
+          expect(e.message).toEqual("Unable to retrieve Tech Record for Test Result");
         }
       });
     });
