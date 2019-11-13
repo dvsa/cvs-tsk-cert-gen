@@ -4,7 +4,7 @@ import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
 import {Service} from "../models/injector/ServiceDecorator";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {HTTPError} from "../models/HTTPError";
-import {ERRORS} from "../assets/enum";
+import {ERRORS} from "../models/Enums";
 /* tslint:disable */
 const AWSXRay = require("aws-xray-sdk");
 /* tslint:enable */
