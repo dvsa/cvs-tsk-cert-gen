@@ -47,4 +47,6 @@ coverage/**
 
 #sonarqube
 .scannerwork/**
-report.json
+
+#reports
+.reports/**

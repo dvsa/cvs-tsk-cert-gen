@@ -1,0 +1,32 @@
+{
+  "Watermark": "NOT VALID",
+  "ADR_DATA": {
+    "ChasisNumber": "P012301098765",
+    "ApplicantDetails": {
+      "name": "string",
+      "street": "string",
+      "town": "string",
+      "city": "string",
+      "postcode": "string"
+    },
+    "PermittedDangerousGoods": [ "FP <61 (FL)" ],
+    "TankManufacturer": "string",
+    "Tc2InitApprovalNo": "string",
+    "TankManufactureSerialNo": "string",
+    "YearOfManufacture": "string",
+    "TankCode": "string",
+    "SpecialProvisions": "string",
+    "TankStatement": {
+      "substancesPermitted": "Substances permitted under the tank code and any special provisions specified in 9 may be carried",
+      "statement": "string",
+      "productList": "string"
+    },
+    "RegistrationNumber": "VM14MDT",
+    "VehicleType": "string",
+    "ExpiryDate": "2020-02-25T15:29:40.032Z",
+    "AtfNameAtfPNumber": "Abshire-Kub 09-4129632" },
+  "Signature": {
+    "ImageType": "png",
+    "ImageData": null
+  }
+}

@@ -3,7 +3,7 @@ import {Injector} from "../models/injector/Injector";
 import {ManagedUpload} from "aws-sdk/clients/s3";
 import {CertificateGenerationService, IGeneratedCertificateResponse} from "../services/CertificateGenerationService";
 import {CertificateUploadService} from "../services/CertificateUploadService";
-import {ERRORS} from "../assets/enum";
+import {ERRORS} from "../models/Enums";
 
 /**
  * λ function to process an SQS message detailing info for certificate generation
