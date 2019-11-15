@@ -96,7 +96,7 @@
           "07/09 3mth leak ext"
         ],
         "additionalNotes": {
-          "number": 0,
+          "number": ["0"],
           "guidanceNotes": [
             "M145 Statement"
           ]
@@ -104,10 +104,16 @@
         "tank": {
           "tankDetails": {
             "tankManufacturer": "string",
-            "tc2IntermediateApprovalNo": "string",
-            "tc2IntermediateExpiryDate": "2019-10-01",
-            "tc3PeriodicNumber": "string",
-            "tc3PeriodicExpiryDate": "2019-10-01",
+            "tc2Details": {
+              "tc2Type": "string",
+              "tc2IntermediateApprovalNo": "string",
+              "tc2IntermediateExpiryDate": "2019-10-01"
+            },
+            "tc3Details": [{
+              "tc3Type": "string",
+              "tc3PeriodicNumber": "string",
+              "tc3PeriodicExpiryDate": "2019-10-01"
+            }],
             "yearOfManufacture": "string",
             "tankCode": "string",
             "specialProvisions": "string",
