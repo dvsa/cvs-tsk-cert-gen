@@ -81,6 +81,15 @@
           "type": "string",
           "approvalDate": "2019-10-01"
         },
+        "listStatementApplicable": false,
+        "batteryListNumber":  "124",
+        "declarationsSeen": true,
+        "brakeDeclarationsSeen": true,
+        "brakeDeclarationIssuer": "demoBrakeDeclarationIssuer",
+        "brakeEndurance": true,
+        "weight": "123",
+        "compatibilityGroupJ": false,
+        "documents": ["documentOne", "documentTwo"],
         "permittedDangerousGoods": [
           "FP <61 (FL)"
         ],
@@ -101,6 +110,7 @@
             "M145 Statement"
           ]
         },
+        "adrTypeApprovalNo": "adrTypeApprovalNodemo",
         "tank": {
           "tankDetails": {
             "tankManufacturer": "string",
@@ -123,7 +133,9 @@
           "tankStatement": {
             "substancesPermitted": "Substances permitted under the tank code and any special provisions specified in 9 may be carried",
             "statement": "string",
-            "productList": "string"
+            "productList": "string",
+            "productListUnNo": ["demo1", "demo2"],
+            "productListRefNo": "refNoDemo"
           }
         }
       },
