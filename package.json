@@ -62,6 +62,7 @@
     "@types/sinon": "^7.5.0",
     "aws-lambda-mock-context": "^3.2.1",
     "gulp": "^4.0.2",
+    "husky": "^3.0.9",
     "jest": "^24.9.0",
     "jest-plugin-context": "^2.9.0",
     "jest-sonar-reporter": "^2.0.0",
@@ -87,5 +88,10 @@
     "collectCoverage": true,
     "testResultsProcessor": "jest-sonar-reporter",
     "testURL": "http://localhost"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run security-checks"
+    }
   }
 }
