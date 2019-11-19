@@ -13,7 +13,7 @@
     "TankManufacturer": "string",
     "Tc2InitApprovalNo": "string",
     "TankManufactureSerialNo": "string",
-    "YearOfManufacture": "string",
+    "YearOfManufacture": "2019",
     "TankCode": "string",
     "SpecialProvisions": "string",
     "TankStatement": {

@@ -124,7 +124,7 @@
               "tc3PeriodicNumber": "string",
               "tc3PeriodicExpiryDate": "2019-10-01"
             }],
-            "yearOfManufacture": "string",
+            "yearOfManufacture": 2019,
             "tankCode": "string",
             "specialProvisions": "string",
             "tankManufacturerSerialNo": "string",
