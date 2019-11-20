@@ -1,7 +1,7 @@
 {
   "Watermark": "NOT VALID",
   "ADR_DATA": {
-    "ChasisNumber": "P012301098765",
+    "ChassisNumber": "P012301098765",
     "ApplicantDetails": {
       "name": "string",
       "street": "string",

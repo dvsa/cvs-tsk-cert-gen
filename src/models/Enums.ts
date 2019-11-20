@@ -21,5 +21,6 @@ export enum TEST_RESULTS {
 export enum CERTIFICATE_DATA {
     ADR_DATA = "ADR_DATA",
     PASS_DATA = "PASS_DATA",
-    FAIL_DATA = "FAIL_DATA"
+    FAIL_DATA = "FAIL_DATA",
+    LEC_DATA = "LEC_DATA"
 }
