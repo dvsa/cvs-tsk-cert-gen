@@ -125,6 +125,79 @@ describe("Certificate Generation Service", () => {
       });
     });
   });
+
+  describe("generateCertificateData function", () => {
+    describe("when passed a LEC type and record", () => {
+      it("returns an LEC style object with correct mappings", async () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(null, null);
+        const input: any = {
+          testStationName: "testStation",
+          testStationPNumber: "P123456",
+          testTypes: {
+            certificateNumber:  "A654321",
+            createdAt: "2019-02-26T15:29:39.537Z",
+            testExpiryDate: "2020-02-26T15:29:39.537Z",
+            emissionStandard: "Low",
+            particulateTrapFitted: "vGood",
+            particulateTrapSerialNumber: "abc123",
+            modType: "P",
+            smokeTestKLimitApplied: 5
+          },
+          vin: "12345678",
+          vrm: "AA00AAA"
+        };
+        expect.assertions(6);
+        let output = await certGenSvc.generateCertificateData(input, "LEC_DATA");
+        expect(output.PrescribedEmissionStandard).toEqual(input.testTypes.emissionStandard);
+        expect(output.TestStationName).toEqual(input.testStationName);
+        expect(output.ExpiryDate).toEqual("26.02.2020");
+        expect(output.DateOfTheTest).toEqual("26.02.2019");
+        expect(output.ModificationTypeUsed).toEqual(undefined);
+
+        input.testTypes.testExpiryDate = null;
+        output = await certGenSvc.generateCertificateData(input, "LEC_DATA");
+        expect(output.ExpiryDate).toEqual(undefined);
+      });
+    });
+  });
+
+  describe("generatePayload function", () => {
+    describe("LEC Test type", () => {
+      it("returns an LEC_DATA payload", async () => {
+        const input: any = {
+          testStationName: "testStation",
+          testStationPNumber: "P123456",
+          vehicleType: "PSV",
+          testTypes: {
+            certificateNumber:  "A654321",
+            createdAt: "2019-02-26T15:29:39.537Z",
+            testExpiryDate: "2020-02-26T15:29:39.537Z",
+            emissionStandard: "Low",
+            particulateTrapFitted: "vGood",
+            particulateTrapSerialNumber: "abc123",
+            modType: "P",
+            smokeTestKLimitApplied: 5,
+            testTypeId: "39"
+          },
+          vin: "12345678",
+          vrm: "AA00AAA"
+        };
+
+        CertificateGenerationService.prototype.getSignature = jest.fn().mockResolvedValue("signatureString");
+        CertificateGenerationService.prototype.getVehicleMakeAndModel = jest.fn().mockResolvedValue({Make: "make", Model: "model"});
+        CertificateGenerationService.prototype.getOdometerHistory = jest.fn().mockResolvedValue({value: 1234});
+
+        expect.assertions(3);
+        // @ts-ignore
+        const svc = new CertificateGenerationService(null, null);
+        const output = await svc.generatePayload(input);
+        expect(output.LEC_DATA).toBeTruthy(); // Don't care about details - test that elsewhere.
+        expect(output.ADR_DATA).toBeFalsy();
+        expect(output.DATA).toBeFalsy();
+      });
+    });
+  });
 });
 
 const AWSResolve = (payload: any) => {

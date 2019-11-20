@@ -61,12 +61,16 @@ class CertificateGenerationService {
             trl_pass: config.documentNames.vtg5a,
             trl_fail: config.documentNames.vtg30,
             trl_prs: config.documentNames.trl_prs,
-            adr_pass: config.documentNames.adr_pass
+            adr_pass: config.documentNames.adr_pass,
+            lec_pass: config.documentNames.lec_pass,
+            lec_fail: config.documentNames.lec_fail
         };
 
         let vehicleTestRes: string;
         if (this.isTestTypeAdr(testResult.testTypes)) {
             vehicleTestRes = "adr_pass";
+        } else if (this.isTestTypeLec(testResult.testTypes)) {
+            vehicleTestRes = "lec_" + testType.testResult;
         } else {
             vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
         }
@@ -135,11 +139,14 @@ class CertificateGenerationService {
      */
     public async generatePayload(testResult: any) {
         let adrData;
+        let lecData;
         let passData;
         let failData;
 
         if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testResult.testTypes)) {
             adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
+        } else if (this.isTestTypeLec(testResult.testTypes)) {
+            lecData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.LEC_DATA);
         } else {
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
                 passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
@@ -158,6 +165,7 @@ class CertificateGenerationService {
             DATA: (passData) ? {...passData, ...makeAndModel, ...odometerHistory} : undefined,
             FAIL_DATA: (failData) ? {...failData, ...makeAndModel, ...odometerHistory} : undefined,
             ADR_DATA : (adrData) ? {...adrData, ...makeAndModel, } : undefined,
+            LEC_DATA : (lecData) ? {...lecData, ...makeAndModel, } : undefined,
             Signature: {
                 ImageType: "png",
                 ImageData: signature
@@ -179,36 +187,29 @@ class CertificateGenerationService {
     public async generateCertificateData(testResult: any, type: string) {
         const testType: any = testResult.testTypes;
 
-        if (type !== CERTIFICATE_DATA.ADR_DATA) {
-            const defects: any = this.generateDefects(testResult.testTypes, type);
+        if (type === CERTIFICATE_DATA.LEC_DATA) {
             return {
-                TestNumber: testType.testNumber,
+                SerialNumber: testType.certificateNumber,
                 TestStationPNumber: testResult.testStationPNumber,
                 TestStationName: testResult.testStationName,
-                CurrentOdometer: {
-                    value: testResult.odometerReading,
-                    unit: testResult.odometerReadingUnits
-                },
-                IssuersName: testResult.testerName,
                 DateOfTheTest: moment(testType.createdAt).format("DD.MM.YYYY"),
-                CountryOfRegistrationCode: testResult.countryOfRegistration,
-                VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
-                RawVIN: testResult.vin,
-                RawVRM: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
                 ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
-                EarliestDateOfTheNextTest: ((testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL) &&
-                    (testResult.testTypes.testResult === TEST_RESULTS.PASS || testResult.testTypes.testResult === TEST_RESULTS.PRS)) ?
-                    moment(testType.testAnniversaryDate).subtract(2, "months").add(1, "days").format("DD.MM.YYYY") :
-                    moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
-                SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
-                SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
-                SeatBeltNumber: testType.numberOfSeatbeltsFitted,
-                ...defects
+                VRM: testResult.vrm,
+                VIN: testResult.vin,
+                PrescribedEmissionStandard: testType.emissionStandard,
+                ParticulateTrapFitted: testType.particulateTrapFitted,
+                ParticulateTrapSerialNumber: testType.particulateTrapSerialNumber,
+                ModificationType: testType.modType,
+                ModificationTypeUsed: testType.modificationTypeUsed,
+                SmokeTestLimit: testType.smokeTestKLimitApplied,
+                AdditionalNotesRequired: testType.additionalNotesRecorded
             };
-        } else {
+        }
+
+        if (type === CERTIFICATE_DATA.ADR_DATA) {
             const adrDetails = await this.getAdrDetails(testResult);
             return {
-                ChasisNumber: testResult.vin,
+                ChassisNumber: testResult.vin,
                 RegistrationNumber: testResult.vrm,
                 ApplicantDetails: adrDetails.applicantDetails,
                 VehicleType: adrDetails.vehicleDetails.type,
@@ -226,6 +227,33 @@ class CertificateGenerationService {
                 AtfNameAtfPNumber: testResult.testStationName + " " + testResult.testStationPNumber,
             };
         }
+
+        // Otherwise
+        const defects: any = this.generateDefects(testResult.testTypes, type);
+        return {
+            TestNumber: testType.testNumber,
+            TestStationPNumber: testResult.testStationPNumber,
+            TestStationName: testResult.testStationName,
+            CurrentOdometer: {
+                value: testResult.odometerReading,
+                unit: testResult.odometerReadingUnits
+            },
+            IssuersName: testResult.testerName,
+            DateOfTheTest: moment(testType.createdAt).format("DD.MM.YYYY"),
+            CountryOfRegistrationCode: testResult.countryOfRegistration,
+            VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
+            RawVIN: testResult.vin,
+            RawVRM: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
+            ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
+            EarliestDateOfTheNextTest: ((testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL) &&
+                (testResult.testTypes.testResult === TEST_RESULTS.PASS || testResult.testTypes.testResult === TEST_RESULTS.PRS)) ?
+                moment(testType.testAnniversaryDate).subtract(2, "months").add(1, "days").format("DD.MM.YYYY") :
+                moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
+            SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
+            SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
+            SeatBeltNumber: testType.numberOfSeatbeltsFitted,
+            ...defects
+        };
     }
 
     /**
@@ -481,10 +509,17 @@ class CertificateGenerationService {
      */
     public isTestTypeAdr(testType: any): boolean {
         const adrTestTypeIds = ["50", "59", "60"];
-
         return adrTestTypeIds.includes(testType.testTypeId);
     }
 
+  /**
+   * Returns true if the passed in test is an LEC type, otherwise false
+   * @param testType
+   */
+  public isTestTypeLec(testType: {testTypeId: string}): boolean {
+        const lecTestTypes = ["39", "43"];
+        return lecTestTypes.includes(testType.testTypeId);
+    }
 }
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };
