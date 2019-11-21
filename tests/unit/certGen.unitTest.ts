@@ -16,6 +16,7 @@ import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
 import queueEvent from "../resources/queue-event.json";
 const ctx = mockContext();
 const sandbox = sinon.createSandbox();
+import {cloneDeep} from "lodash";
 
 describe("cert-gen", () => {
     const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
@@ -2088,6 +2089,62 @@ describe("cert-gen", () => {
                             expect(response.certificateType).toEqual("VTG30");
                             expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                         });
+                });
+            });
+        });
+    });
+
+    context("CertGenService for ADR", () => {
+        context("when a passing test result for ADR is read from the queue", () => {
+            const event: any = cloneDeep(queueEventPass);
+            const testResult: any = JSON.parse(event.Records[1].body);
+            testResult.testTypes.testTypeId = "50";
+
+            context("and a payload is generated", () => {
+                context("and no signatures were found in the bucket", () => {
+                    it("should return an ADR_PASS payload without signature", () => {
+                        const expectedResult: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/doc-gen-payload-adr.json"), "utf8"));
+
+                        const techRecordResponseAdrMock = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/tech-records-response-adr.json"), "utf8"));
+
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseAdrMock);
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getVehicleMakeAndModelStub.restore();
+                            });
+                    });
+                });
+
+                context("and signatures were found in the bucket", () => {
+                    it("should return an ADR_PASS payload with signature", () => {
+                        const expectedResult: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/doc-gen-payload-adr.json"), "utf8"));
+                        expectedResult.Signature.ImageType = "png";
+                        expectedResult.Signature.ImageData = fs.readFileSync(path.resolve(__dirname, `../resources/signatures/1.base64`)).toString();
+
+                        const techRecordResponseAdrMock = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/tech-records-response-adr.json"), "utf8"));
+
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"]
+                        });
+
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseAdrMock);
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getVehicleMakeAndModelStub.restore();
+                            });
+
+                        S3BucketMockService.buckets.pop();
+                    });
                 });
             });
         });

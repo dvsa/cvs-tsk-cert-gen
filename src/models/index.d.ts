@@ -25,6 +25,9 @@ interface IMOTConfig {
         vtg30: "VTG30.pdf";
         hgv_prs: "HGV_PRS.pdf";
         trl_prs: "TRL_PRS.pdf";
+        adr_pass: "ADR_PASS.pdf";
+        lec_pass: "LEC_PASS.pdf";
+        lec_fail: "LEC_FAIL.pdf";
     };
     api_key: string;
 }
