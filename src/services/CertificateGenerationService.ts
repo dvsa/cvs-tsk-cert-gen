@@ -517,7 +517,7 @@ class CertificateGenerationService {
    * @param testType
    */
   public isTestTypeLec(testType: {testTypeId: string}): boolean {
-        const lecTestTypes = ["39", "43"];
+        const lecTestTypes = ["39", "44", "45"];
         return lecTestTypes.includes(testType.testTypeId);
     }
 }
