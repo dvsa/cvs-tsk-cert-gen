@@ -21,6 +21,8 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
     const certificateUploadService: CertificateUploadService = Injector.resolve<CertificateUploadService>(CertificateUploadService);
     const certificateUploadPromises: Array<Promise<ManagedUpload.SendData>> = [];
 
+    console.log("Event: ", event);
+
     event.Records.forEach((record: SQSRecord) => {
         const testResult: any = JSON.parse(record.body);
         if (testResult.testResultId.match("\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b")) {
