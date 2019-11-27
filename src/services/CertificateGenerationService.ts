@@ -199,7 +199,7 @@ class CertificateGenerationService {
                 PrescribedEmissionStandard: testType.emissionStandard,
                 ParticulateTrapFitted: testType.particulateTrapFitted,
                 ParticulateTrapSerialNumber: testType.particulateTrapSerialNumber,
-                ModificationType: testType.modType,
+                ModificationType: testType.modType.code,
                 ModificationTypeUsed: testType.modificationTypeUsed,
                 SmokeTestLimit: testType.smokeTestKLimitApplied,
                 AdditionalNotesRequired: testType.additionalNotesRecorded

@@ -141,7 +141,10 @@ describe("Certificate Generation Service", () => {
             emissionStandard: "Low",
             particulateTrapFitted: "vGood",
             particulateTrapSerialNumber: "abc123",
-            modType: "P",
+            modType: {
+              code: "p",
+              description: "Particulate trap"
+            },
             smokeTestKLimitApplied: 5
           },
           vin: "12345678",
@@ -176,7 +179,10 @@ describe("Certificate Generation Service", () => {
             emissionStandard: "Low",
             particulateTrapFitted: "vGood",
             particulateTrapSerialNumber: "abc123",
-            modType: "P",
+            modType: {
+              code: "p",
+              description: "Particulate trap"
+            },
             smokeTestKLimitApplied: 5,
             testTypeId: "39"
           },
