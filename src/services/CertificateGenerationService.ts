@@ -1,5 +1,4 @@
-import rp, {OptionsWithUri} from "request-promise";
-import {IInvokeConfig, IMOTConfig} from "../models";
+import {IInvokeConfig, IMOTConfig, IGeneratedCertificateResponse, ICertificatePayload, IRoadworthinessCertificateData, IWeightDetails, ITestResult} from "../models";
 import {Configuration} from "../utils/Configuration";
 import {S3BucketService} from "./S3BucketService";
 import S3 from "aws-sdk/clients/s3";
@@ -8,23 +7,8 @@ import moment from "moment";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
-import {TestResultType, VehicleType} from "../models/Enums";
-import {ERRORS, TEST_RESULTS, VEHICLE_TYPES} from "../assets/enum";
+import {ERRORS, TEST_RESULTS, VEHICLE_TYPES, CERTIFICATE_DATA, HGV_TRL_ROADWORTHINESS_TEST_TYPES} from "../models/Enums";
 import {HTTPError} from "../models/HTTPError";
-
-interface IGeneratedCertificateResponse {
-    fileName: string;
-    vrm: string;
-    testTypeName: string;
-    testTypeResult: string;
-    dateOfIssue: string;
-    certificateType: string;
-    fileFormat: string;
-    fileSize: string;
-    certificate: Buffer;
-    certificateOrder: { current: number; total: number; };
-    email: string;
-}
 
 /**
  * Service class for Certificate Generation
@@ -62,10 +46,16 @@ class CertificateGenerationService {
             hgv_prs: config.documentNames.hgv_prs,
             trl_pass: config.documentNames.vtg5a,
             trl_fail: config.documentNames.vtg30,
-            trl_prs: config.documentNames.trl_prs
+            trl_prs: config.documentNames.trl_prs,
+            rwt: config.documentNames.rwt
         };
 
-        const vehicleTestRes: string = testResult.vehicleType + "_" + testType.testResult;
+        let vehicleTestRes: string;
+        if (CertificateGenerationService.isRoadworthinessTestType(testType.testTypeId)) { // CVSB-7677 is roadworthisness test
+            vehicleTestRes = "rwt";
+        } else  {
+        vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
+        }
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
             InvocationType: "RequestResponse",
@@ -88,10 +78,8 @@ class CertificateGenerationService {
                 const resBody: string = payload.body;
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
 
-                // Assign trailerId to vrm for trl vehicle type
-                const vrmId: any = testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm;
                 return {
-                    vrm: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
+                    vrm: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
                     testTypeResult: testResult.testTypes.testResult,
                     dateOfIssue: moment().format("D MMMM YYYY"),
@@ -133,25 +121,39 @@ class CertificateGenerationService {
      */
     public async generatePayload(testResult: any) {
         const signature: string | null = await this.getSignature(testResult.testerStaffId);
-        const passData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.PASS) ? await this.generateCertificateData(testResult, "DATA") : undefined;
-        const failData: any = (testResult.testTypes.testResult === TestResultType.PRS || testResult.testTypes.testResult === TestResultType.FAIL) ? await this.generateCertificateData(testResult, "FAIL_DATA") : undefined;
-        const makeAndModel: any = await this.getVehicleMakeAndModel(testResult);
-        const odometerHistory: any = testResult.vehicleType === VehicleType.TRL ? undefined : await this.getOdometerHistory(testResult.vin);
-        let payload: any = {
+        let makeAndModel: any = null;
+        if (!CertificateGenerationService.isRoadworthinessTestType(testResult.testTypes.testTypeId)) {
+            makeAndModel = await this.getVehicleMakeAndModel(testResult);
+        }
+        let payload: ICertificatePayload =  {
             Watermark: (process.env.BRANCH === "prod") ? "" : "NOT VALID",
-            DATA: (passData) ? {...passData, ...makeAndModel, ...odometerHistory} : undefined,
-            FAIL_DATA: (failData) ? {...failData, ...makeAndModel, ...odometerHistory} : undefined,
+            DATA: undefined,
+            FAIL_DATA: undefined,
+            RWT_DATA: undefined,
             Signature: {
                 ImageType: "png",
                 ImageData: signature
             }
         };
-
+        if (CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)) {
+            // CVSB-7677 for roadworthiness test for hgv or trl.
+            const rwtData = await this.generateCertificateData(testResult, "RWT_DATA");
+            payload.RWT_DATA =  {...rwtData};
+        } else {
+            const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.vin);
+            if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
+                const passData = await this.generateCertificateData(testResult, "DATA");
+                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
+            }
+            if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
+                const failData = await this.generateCertificateData(testResult, "FAIL_DATA");
+                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
+            }
+        }
         // Purge undefined values
         payload = JSON.parse(JSON.stringify(payload));
 
         return payload;
-
     }
 
     /**
@@ -159,37 +161,99 @@ class CertificateGenerationService {
      * @param testResult - the source test result for certificate generation
      * @param type - the certificate type
      */
-    public async generateCertificateData(testResult: any, type: string) {
+    public async generateCertificateData(testResult: ITestResult, type: string) {
         const testType: any = testResult.testTypes;
-        const defects: any = this.generateDefects(testResult.testTypes, type);
-        return {
-            TestNumber: testType.testNumber,
-            TestStationPNumber: testResult.testStationPNumber,
-            TestStationName: testResult.testStationName,
-            CurrentOdometer: {
-                value: testResult.odometerReading,
-                unit: testResult.odometerReadingUnits
-            },
-            IssuersName: testResult.testerName,
-            DateOfTheTest: moment(testType.createdAt).format("DD.MM.YYYY"),
-            CountryOfRegistrationCode: testResult.countryOfRegistration,
-            VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
-            RawVIN: testResult.vin,
-            RawVRM: testResult.vehicleType === VehicleType.TRL ? testResult.trailerId : testResult.vrm,
-            ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
-            EarliestDateOfTheNextTest: (
-              (testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL)
-              && (testResult.testTypes.testResult === TEST_RESULTS.PASS || testResult.testTypes.testResult === TEST_RESULTS.PRS)
-            ) ?
-                moment(testType.testAnniversaryDate).subtract(2, "months").add(1, "days").format("DD.MM.YYYY") :
-                moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
-            SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
-            SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
-            SeatBeltNumber: testType.numberOfSeatbeltsFitted,
-            ...defects
-        };
+        switch (type) {
+            case "DATA":
+            case "FAIL_DATA":
+                const defects: any = this.generateDefects(testResult.testTypes, type);
+                return  {
+                        TestNumber: testType.testNumber,
+                        TestStationPNumber: testResult.testStationPNumber,
+                        TestStationName: testResult.testStationName,
+                        CurrentOdometer: {
+                            value: testResult.odometerReading,
+                            unit: testResult.odometerReadingUnits
+                        },
+                        IssuersName: testResult.testerName,
+                        DateOfTheTest: moment(testType.createdAt).format("DD.MM.YYYY"),
+                        CountryOfRegistrationCode: testResult.countryOfRegistration,
+                        VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
+                        RawVIN: testResult.vin,
+                        RawVRM: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
+                        ExpiryDate: (testType.testExpiryDate) ? moment(testType.testExpiryDate).format("DD.MM.YYYY") : undefined,
+                        EarliestDateOfTheNextTest: (
+                          (testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL)
+                          && (testResult.testTypes.testResult === TEST_RESULTS.PASS || testResult.testTypes.testResult === TEST_RESULTS.PRS)
+                        ) ?
+                            moment(testType.testAnniversaryDate).subtract(2, "months").add(1, "days").format("DD.MM.YYYY") :
+                            moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
+                        SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
+                        SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
+                        SeatBeltNumber: testType.numberOfSeatbeltsFitted,
+                        ...defects
+                    };
+            case "RWT_DATA":
+                const weightDetails = await this.getWeightDetails(testResult);
+                let defectRWTList: any;
+                if (testResult.testTypes.testResult === TEST_RESULTS.FAIL) {
+                                defectRWTList = [];
+                                testResult.testTypes.defects.forEach((defect: any) => {
+                                       defectRWTList.push(this.formatDefect(defect));
+                                   });
+                } else {
+                    defectRWTList = undefined;
+                }
+
+                const resultPass: IRoadworthinessCertificateData = {
+                    Dgvw: weightDetails.dgvw,
+                    Weight2: weightDetails.weight2,
+                    VehicleNumber:  testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
+                    Vin:  testResult.vin,
+                    IssuersName: testResult.testerName,
+                    DateOfInspection: moment(testType.testTypeStartTimestamp).format("DD.MM.YYYY"),
+                    TestStationPNumber: testResult.testStationPNumber,
+                    DocumentNumber: testType.certificateNumber,
+                    Date: moment(testType.testTypeStartTimestamp).format("DD.MM.YYYY"),
+                    Month: moment(testType.testTypeStartTimestamp).format("MMMM"),
+                    Year: moment(testType.testTypeStartTimestamp).year(),
+                    Defects: defectRWTList,
+                    IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL
+                };
+                return resultPass;
+        }
     }
 
+    /**
+     * Retrieves the vehicle weight details for Roadworthisness certificates
+     * @param testResult
+     */
+    public async getWeightDetails(testResult: any) {
+        const result = await this.getTechRecord(testResult);
+        if (result ) {
+            console.log("techRecord for weight details found");
+            const weightDetails: IWeightDetails = {
+                dgvw: result.techRecord[0].grossDesignWeight,
+                weight2: 0
+            };
+            if (testResult.vehicleType === VEHICLE_TYPES.HGV) {
+                weightDetails.weight2 = result.techRecord[0].trainDesignWeight;
+            } else {
+                if ( result.techRecord[0].axles && result.techRecord[0].axles.length > 0) {
+                    const initialValue = 0;
+                    weightDetails.weight2 = result.techRecord[0].axles.reduce(
+                        (accumulator: number, currentValue: { weights: { designWeight: number; }; }) =>
+                        accumulator + currentValue.weights.designWeight, initialValue);
+             } else {
+                throw new HTTPError(500, "No axle weights for Roadworthiness test certificates!");
+             }
+            }
+            return weightDetails;
+         } else {
+             console.log("No techRecord found for weight details");
+             throw new HTTPError(500, "No vehicle found for Roadworthiness test certificate!");
+    }
+    }
     /**
      * Retrieves the odometer history for a given VIN from the Test Results microservice
      * @param vin - VIN for which to retrieve odometer history
@@ -252,11 +316,31 @@ class CertificateGenerationService {
     }
 
     /**
-     * Retrieves the vehicle make and model for a given vehicle from the Technical Records microservice.
-     * Dramatically altered in CVSB-8582, in order to manage failure of vin data to conform to agreed formats
-     * @param testResult - the full test result record, from which vehicle attributes to search on can be obtained
+     * Method for getting make and model based on the vehicle from a test-result
+     * @param testResult - the testResult for which the tech record search is done for
      */
     public async getVehicleMakeAndModel(testResult: any) {
+        const techRecord = await this.getTechRecord(testResult);
+        // Return bodyMake and bodyModel values for PSVs
+        if (techRecord.techRecord[0].vehicleType === VEHICLE_TYPES.PSV) {
+            return {
+                Make: techRecord.techRecord[0].chassisMake,
+                Model: techRecord.techRecord[0].chassisModel
+            };
+        } else {
+            // Return make and model values for HGV and TRL vehicle types
+            return {
+                Make: techRecord.techRecord[0].make,
+                Model: techRecord.techRecord[0].model
+            };
+        }
+    }
+
+    /**
+     * Method for getting techRecord to which the test-results reffer to
+     * @param testResult - the testResult for which the tech record search is done for
+     */
+    public async getTechRecord(testResult: any) {
         let techRecord = await this.queryTechRecords(testResult.vin);
         if (!techRecord && testResult.partialVin) {
             console.log("No Tech Record found for vin ", testResult.vin, ". Trying Partial Vin");
@@ -275,19 +359,7 @@ class CertificateGenerationService {
             throw new Error(`Unable to retrieve Tech Record for Test Result`);
         }
 
-        // Return bodyMake and bodyModel values for PSVs
-        if (techRecord.techRecord[0].vehicleType === VehicleType.PSV) {
-            return {
-                Make: techRecord.techRecord[0].chassisMake,
-                Model: techRecord.techRecord[0].chassisModel
-            };
-        } else {
-            // Return make and model values for HGV and TRL vehicle types
-            return {
-                Make: techRecord.techRecord[0].make,
-                Model: techRecord.techRecord[0].model
-            };
-        }
+        return techRecord;
     }
 
     /**
@@ -339,14 +411,14 @@ class CertificateGenerationService {
         rawDefects.forEach((defect: any) => {
             switch (defect.deficiencyCategory.toLowerCase()) {
                 case "dangerous":
-                    if ((testTypes.testResult === TestResultType.PRS || defect.prs)  && type === "FAIL_DATA") {
+                    if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs)  && type === CERTIFICATE_DATA.FAIL_DATA) {
                         defects.PRSDefects.push(this.formatDefect(defect));
                     } else if (testTypes.testResult === "fail") {
                         defects.DangerousDefects.push(this.formatDefect(defect));
                     }
                     break;
                 case "major":
-                    if ((testTypes.testResult === TestResultType.PRS || defect.prs) && type === "FAIL_DATA") {
+                    if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
                         defects.PRSDefects.push(this.formatDefect(defect));
                     } else if (testTypes.testResult === "fail") {
                         defects.MajorDefects.push(this.formatDefect(defect));
@@ -414,6 +486,27 @@ class CertificateGenerationService {
 
         return defectString;
     }
+
+
+    //#region Private Static Functions
+
+    /**
+     * Returns true if testType is roadworthiness test for HGV or TRL and false if not
+     * @param testTypeId - testType which is tested
+     */
+    private static isRoadworthinessTestType(testTypeId: string): boolean {
+        return HGV_TRL_ROADWORTHINESS_TEST_TYPES.IDS.includes(testTypeId);
+        }
+    /**
+     * Returns true if provided testResult is HGV or TRL Roadworthiness test otherwise false
+     * @param testResult - testResult of the vehicle
+     */
+    private static isHgvTrlRoadworthinessCertificate(testResult: any): boolean {
+       return (testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL)
+                &&
+            CertificateGenerationService.isRoadworthinessTestType(testResult.testTypes.testTypeId);
+    }
+    //#endregion
 
 }
 
