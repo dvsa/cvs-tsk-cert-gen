@@ -14,8 +14,12 @@ import queueEventPass from "../resources/queue-event-pass.json";
 import queueEventFail from "../resources/queue-event-fail.json";
 import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
 import queueEvent from "../resources/queue-event.json";
+import techRecordsRwt from "../resources/tech-records-response-rwt.json";
+import docGenRwt from "../resources/doc-gen-payload-rwt.json";
 const ctx = mockContext();
 const sandbox = sinon.createSandbox();
+import {cloneDeep} from "lodash";
+import { ITestResult, ICertificatePayload } from "../../src/models";
 
 describe("cert-gen", () => {
     const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
@@ -2088,6 +2092,106 @@ describe("cert-gen", () => {
                             expect(response.certificateType).toEqual("VTG30");
                             expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                         });
+                });
+            });
+        });
+    });
+
+    context("CertGenService for Roadworthiness test", () => {
+        context("when a passing test result for Roadworthiness test for HGV or TRL is read from the queue", () => {
+            const event: any = cloneDeep(queueEventPass);
+            const testResult: ITestResult = JSON.parse(event.Records[1].body);
+            testResult.testTypes.testTypeId = "122";
+            testResult.vin = "GYFC26269R240355";
+            testResult.vrm = "NKPILNCN";
+            context("and a payload is generated", () => {
+                context("and no signatures were found in the bucket", () => {
+                    it("should return an RWT_DATA payload without signature", () => {
+                        const expectedResult: ICertificatePayload = docGenRwt[0];
+
+                        const techRecordResponseRwtMock = techRecordsRwt[1];
+
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                            });
+                    });
+                });
+
+                context("and signatures were found in the bucket", () => {
+                    it("should return an RWT_DATA payload with signature", () => {
+                        const expectedResult: ICertificatePayload = docGenRwt[1];
+
+                        const techRecordResponseRwtMock = techRecordsRwt[1];
+
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
+
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"]
+                        });
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                S3BucketMockService.buckets.pop();
+                            });
+                    });
+                });
+            });
+        });
+    });
+
+    context("CertGenService for Roadworthiness test", () => {
+        context("when a failing test result for Roadworthiness test for HGV or TRL is read from the queue", () => {
+            const event: any = cloneDeep(queueEventFail);
+            const testResult: ITestResult = JSON.parse(event.Records[2].body);
+            testResult.testTypes.testTypeId = "91";
+            testResult.vin = "T12768594";
+            testResult.trailerId = "0285678";
+            context("and a payload is generated", () => {
+                context("and no signatures were found in the bucket", () => {
+                    it("should return an RWT_DATA payload without signature", () => {
+                        const expectedResult: ICertificatePayload = cloneDeep(docGenRwt[4]);
+
+                        const techRecordResponseRwtMock = techRecordsRwt[0];
+
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                            });
+                    });
+                });
+
+                context("and signatures were found in the bucket", () => {
+                    it("should return an RWT_DATA payload with signature", () => {
+                        const expectedResult: ICertificatePayload = docGenRwt[3];
+
+                        const techRecordResponseRwtMock = techRecordsRwt[0];
+
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
+
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"]
+                        });
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                S3BucketMockService.buckets.pop();
+                            });
+                    });
                 });
             });
         });
