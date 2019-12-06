@@ -2145,6 +2145,20 @@ describe("cert-gen", () => {
                 });
             });
         });
+        context("and the generate certificate is used to call the doc generation service", () => {
+            it("should pass certificateType as RWT", () => {
+                const event: any = cloneDeep(queueEventPass);
+                const testResult: ITestResult = JSON.parse(event.Records[1].body);
+                testResult.testTypes.testTypeId = "122";
+                testResult.vin = "GYFC26269R240355";
+                testResult.vrm = "NKPILNCN";
+                expect.assertions(1);
+                return certificateGenerationService.generateCertificate(testResult)
+                .then((response: any) => {
+                    expect(response.certificateType).toEqual("RWT");
+                });
+            });
+        });
     });
 
     context("CertGenService for Roadworthiness test", () => {
