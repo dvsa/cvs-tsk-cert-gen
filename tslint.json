@@ -18,6 +18,7 @@
     "member-ordering": false,
     "ordered-imports": false,
     "jsdoc-format": true,
+    "whitespace": false,
     "completed-docs": [
       true,
       {
