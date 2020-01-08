@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+    <file path="/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/tests/unit/CertificateGenerationService.unitTest.ts">
+        <testCase name="Certificate Generation Service getVehicleMakeAndModel function when given a vin with matching record should return the record &amp; only invoke the LambdaService once" duration="9"/>
+        <testCase name="Certificate Generation Service getVehicleMakeAndModel function when given a vin with no matching record but a matching partialVin should return the record &amp; invoke the LambdaService twice" duration="22"/>
+        <testCase name="Certificate Generation Service getVehicleMakeAndModel function when given a vin and partialVin with no matching record but a matching VRM should return the record &amp; invoke the LambdaService three times" duration="13"/>
+        <testCase name="Certificate Generation Service getVehicleMakeAndModel function when given a vin, partialVin and VRM with no matching record but a matching TrailerID should return the record &amp; invoke the LambdaService four times" duration="14"/>
+        <testCase name="Certificate Generation Service getVehicleMakeAndModel function when given a vehicle details with no matching records should call Tech Records Lambda 4 times and then throw an error" duration="12"/>
+        <testCase name="Certificate Generation Service getVehicleMakeAndModel function when given a vehicle details with missing vehicle detail fields and no match should call Tech Records Lambda matching number (2) times and then throw an error" duration="9"/>
+    </file>
+    <file path="/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/tests/unit/certGen.unitTest.ts">
+        <testCase name="cert-gen CertificateGenerationService when a passing test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a VTP20 payload without signature" duration="39"/>
+        <testCase name="cert-gen CertificateGenerationService when a passing test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a VTP20 payload without bodyMake, bodyModel and odometer history" duration="14"/>
+        <testCase name="cert-gen CertificateGenerationService when a passing test result is read from the queue and a payload is generated and signatures were found in the bucket should return a VTP20 payload with signature" duration="6"/>
+        <testCase name="cert-gen CertificateGenerationService when a passing test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="12"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a VTP30 payload without signature" duration="12"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a VTP30 payload without bodyMake, bodyModel and odometer history" duration="3"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and a payload is generated and signatures were found in the bucket should return a VTP30 payload with signature" duration="5"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="7"/>
+        <testCase name="cert-gen CertificateGenerationService when a prs test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a PRS payload without signature" duration="9"/>
+        <testCase name="cert-gen CertificateGenerationService when a prs test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a PRS payload without bodyMake, bodyModel and odometer history" duration="4"/>
+        <testCase name="cert-gen CertificateGenerationService when a prs test result is read from the queue and a payload is generated and signatures were found in the bucket should return a PRS payload with signature" duration="4"/>
+        <testCase name="cert-gen CertificateGenerationService when a prs test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="6"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and certificate Data is generated and test-result contains a Dagerous Defect with Major defect rectified should return Certificate Data with PRSDefects list in Fail data" duration="1"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and certificate Data is generated and test-result contains a Major Defect with Dangerous defect rectified should return Certificate Data with PRSDefects list in Fail Data" duration="1"/>
+        <testCase name="cert-gen CertificateGenerationService when a failing test result is read from the queue and certificate Data is generated and test-result contains a Major and Dagerous Defect with no Major or Dagerous defect rectified should return Certificate Data with 0 PRSDefects list in Fail Data" duration="0"/>
+        <testCase name="cert-gen CertGenService for HGV when a passing test result for HGV is read from the queue and a payload is generated and no signatures were found in the bucket should return a VTG5 payload without signature" duration="7"/>
+        <testCase name="cert-gen CertGenService for HGV when a passing test result for HGV is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a VTG5 payload without bodyMake, bodyModel and odometer history" duration="3"/>
+        <testCase name="cert-gen CertGenService for HGV when a passing test result for HGV is read from the queue and a payload is generated and signatures were found in the bucket should return a VTG5 payload with signature" duration="5"/>
+        <testCase name="cert-gen CertGenService for HGV when a passing test result for HGV is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="7"/>
+        <testCase name="cert-gen CertGenService for HGV when a prs test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a PRS payload without signature" duration="6"/>
+        <testCase name="cert-gen CertGenService for HGV when a prs test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a PRS payload without bodyMake, bodyModel and odometer history" duration="4"/>
+        <testCase name="cert-gen CertGenService for HGV when a prs test result is read from the queue and a payload is generated and signatures were found in the bucket should return a PRS payload with signature" duration="4"/>
+        <testCase name="cert-gen CertGenService for HGV when a prs test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="7"/>
+        <testCase name="cert-gen CertGenService for HGV when a failing test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a VTG30 payload without signature" duration="5"/>
+        <testCase name="cert-gen CertGenService for HGV when a failing test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a VTG30 payload without bodyMake, bodyModel and odometer history" duration="5"/>
+        <testCase name="cert-gen CertGenService for HGV when a failing test result is read from the queue and a payload is generated and signatures were found in the bucket should return a VTG30 payload with signature" duration="4"/>
+        <testCase name="cert-gen CertGenService for HGV when a failing test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="7"/>
+        <testCase name="cert-gen CertGenService for TRL when a passing test result for TRL is read from the queue and a payload is generated and no signatures were found in the bucket should return a VTG5A payload without signature" duration="4"/>
+        <testCase name="cert-gen CertGenService for TRL when a passing test result for TRL is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a VTG5A payload without bodyMake, bodyModel and odometer history" duration="3"/>
+        <testCase name="cert-gen CertGenService for TRL when a passing test result for TRL is read from the queue and a payload is generated and signatures were found in the bucket should return a VTG5A payload with signature" duration="1"/>
+        <testCase name="cert-gen CertGenService for TRL when a passing test result for TRL is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="4"/>
+        <testCase name="cert-gen CertGenService for TRL when a prs test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a PRS payload without signature" duration="3"/>
+        <testCase name="cert-gen CertGenService for TRL when a prs test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a PRS payload without bodyMake, bodyModel and odometer history" duration="3"/>
+        <testCase name="cert-gen CertGenService for TRL when a prs test result is read from the queue and a payload is generated and signatures were found in the bucket should return a PRS payload with signature" duration="1"/>
+        <testCase name="cert-gen CertGenService for TRL when a prs test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="4"/>
+        <testCase name="cert-gen CertGenService for TRL when a failing test result is read from the queue and a payload is generated and no signatures were found in the bucket should return a VTG30 payload without signature" duration="3"/>
+        <testCase name="cert-gen CertGenService for TRL when a failing test result is read from the queue and a payload is generated and lambda-to-lambda calls were unsuccessful should return a VTG30 payload without bodyMake, bodyModel and odometer history" duration="2"/>
+        <testCase name="cert-gen CertGenService for TRL when a failing test result is read from the queue and a payload is generated and signatures were found in the bucket should return a VTG30 payload with signature" duration="2"/>
+        <testCase name="cert-gen CertGenService for TRL when a failing test result is read from the queue and the generated payload is used to call the MOT service successfully generate a certificate" duration="3"/>
+        <testCase name="cert-gen CertificateUploadService when a valid event is received when uploading a certificate and the S3 bucket exists and is accesible should successfully upload the certificate" duration="8"/>
+        <testCase name="cert-gen CertificateUploadService when a valid event is received when uploading a certificate and the S3 bucket does not exist or is not accesible should throw an error" duration="6"/>
+        <testCase name="cert-gen CertGen function when a passing test result is read from the queue and the payload generation throws an error should bubble that error up" duration="2673">
+            <failure message="Error: Task timed out after 3.00 seconds"><![CDATA[Error: Task timed out after 3.00 seconds
+    at Timeout.setTimeout (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/node_modules/aws-lambda-mock-context/index.js:68:17)
+    at Timeout._onTimeout (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/node_modules/async-listener/glue.js:188:31)
+    at listOnTimeout (timers.js:327:15)
+    at processTimers (timers.js:271:5)]]></failure>
+            <failure message="Error: expect.assertions(1)"><![CDATA[Error: expect.assertions(1)
+
+Expected one assertion to be called but received zero assertion calls.
+    at Object.it (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/tests/unit/certGen.unitTest.ts:2143:28)
+    at Object.asyncJestTest (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/node_modules/jest-jasmine2/build/jasmineAsyncInstall.js:102:37)
+    at resolve (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/node_modules/jest-jasmine2/build/queueRunner.js:43:12)
+    at new Promise (<anonymous>)
+    at mapper (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/node_modules/jest-jasmine2/build/queueRunner.js:26:19)
+    at promise.then (/Users/nblore/Projects/dvsa/services/cvs-tsk-cert-gen/node_modules/jest-jasmine2/build/queueRunner.js:73:41)
+    at processTicksAndRejections (internal/process/next_tick.js:81:5)]]></failure>
+        </testCase>
+        <testCase name="cert-gen CertGen function when a failing test result is read from the queue and the testResultId is malformed should thrown an error" duration="3"/>
+        <testCase name="cert-gen CertGen function when a failing test result is read from the queue and the event is empty should thrown an error" duration="2"/>
+        <testCase name="cert-gen CertGen function when a failing test result is read from the queue and the event has no records should thrown an error" duration="1"/>
+    </file>
+</testExecutions>
