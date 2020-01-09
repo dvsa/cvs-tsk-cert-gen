@@ -11,8 +11,6 @@
     "TestStationPNumber": "09-4129632",
     "DocumentNumber": "123",
     "Date": "26.02.2019",
-    "Month": "February",
-    "Year": 2019,
     "IsTrailer": false
     },
     "Signature": {
@@ -32,8 +30,6 @@
     "TestStationPNumber": "09-4129632",
     "DocumentNumber": "123",
     "Date": "26.02.2019",
-    "Month": "February",
-    "Year": 2019,
     "IsTrailer": false
     },
     "Signature": {
@@ -53,8 +49,6 @@
     "TestStationPNumber": "09-4129632",
     "DocumentNumber": "123",
     "Date": "26.02.2019",
-    "Month": "February",
-    "Year": 2019,
     "IsTrailer": true
     },
     "Signature": {
@@ -74,8 +68,6 @@
     "TestStationPNumber": "09-4129632",
     "DocumentNumber": "321",
     "Date": "26.02.2019",
-    "Month": "February",
-    "Year": 2019,
     "Defects":["54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
       "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.", 
       "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"],
@@ -98,8 +90,6 @@
     "TestStationPNumber": "09-4129632",
     "DocumentNumber": "321",
     "Date": "26.02.2019",
-    "Month": "February",
-    "Year": 2019,
     "Defects":["54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
                "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.", 
                "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"],

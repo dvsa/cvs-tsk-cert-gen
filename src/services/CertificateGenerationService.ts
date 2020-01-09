@@ -215,8 +215,6 @@ class CertificateGenerationService {
                     TestStationPNumber: testResult.testStationPNumber,
                     DocumentNumber: testType.certificateNumber,
                     Date: moment(testType.testTypeStartTimestamp).format("DD.MM.YYYY"),
-                    Month: moment(testType.testTypeStartTimestamp).format("MMMM"),
-                    Year: moment(testType.testTypeStartTimestamp).year(),
                     Defects: defectRWTList,
                     IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL
                 };

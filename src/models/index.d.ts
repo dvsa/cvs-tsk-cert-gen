@@ -101,8 +101,6 @@ interface IRoadworthinessCertificateData {
     TestStationPNumber: string;
     DocumentNumber: string;
     Date: string;
-    Month: string;
-    Year: number;
     Defects: string[] | undefined;
     IsTrailer: boolean;
 }
