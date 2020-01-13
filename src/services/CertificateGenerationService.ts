@@ -307,9 +307,9 @@ class CertificateGenerationService {
     }
     /**
      * Retrieves the odometer history for a given VIN from the Test Results microservice
-     * @param vin - VIN for which to retrieve odometer history
+     * @param systemNumber - systemNumber for which to retrieve odometer history
      */
-    public async getOdometerHistory(vin: string) {
+    public async getOdometerHistory(systemNumber: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.testResults.name,
@@ -317,9 +317,9 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/test-results/${vin}`,
+                path: `/test-results/${systemNumber}`,
                 pathParameters: {
-                    vin
+                    systemNumber
                 }
             }),
         };
