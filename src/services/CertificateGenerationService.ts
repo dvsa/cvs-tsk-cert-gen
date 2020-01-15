@@ -339,23 +339,31 @@ class CertificateGenerationService {
      * @param testResult - the testResult for which the tech record search is done for
      */
     public async getTechRecord(testResult: any) {
-        let techRecord = await this.queryTechRecords(testResult.vin);
-        if (!techRecord && testResult.partialVin) {
-            console.log("No Tech Record found for vin ", testResult.vin, ". Trying Partial Vin");
-            techRecord = await this.queryTechRecords(testResult.partialVin);
+        let techRecords: any | any[] = testResult.systemNumber ? await this.queryTechRecords(testResult.systemNumber) : undefined;
+        if (!isSingleRecord(techRecords) && testResult.vin) {
+            console.log("No unique Tech Record found for systemNumber ", testResult.systemNumber, ". Trying vin");
+            techRecords = await this.queryTechRecords(testResult.vin);
         }
-        if (!techRecord && testResult.vrm) {
-            console.log("No Tech Record found for partial vin ", testResult.partialVin, ". Trying VRM");
-            techRecord = await this.queryTechRecords(testResult.vrm);
+        if (!isSingleRecord(techRecords) && testResult.partialVin) {
+            console.log("No unique Tech Record found for vin ", testResult.vin, ". Trying Partial Vin");
+            techRecords = await this.queryTechRecords(testResult.partialVin);
         }
-        if (!techRecord && testResult.trailerId) {
-            console.log("No Tech Record found for vrm ", testResult.vrm, ". Trying TrailerID");
-            techRecord = await this.queryTechRecords(testResult.trailerId);
+        if (!isSingleRecord(techRecords) && testResult.vrm) {
+            console.log("No unique Tech Record found for partial vin ", testResult.partialVin, ". Trying VRM");
+            techRecords = await this.queryTechRecords(testResult.vrm);
         }
-        if (!techRecord || !techRecord.techRecord) {
-            console.error(`Unable to retrieve Tech Record for Test Result:`, testResult);
-            throw new Error(`Unable to retrieve Tech Record for Test Result`);
+        if (!isSingleRecord(techRecords) && testResult.trailerId) {
+            console.log("No unique Tech Record found for vrm ", testResult.vrm, ". Trying TrailerID");
+            techRecords = await this.queryTechRecords(testResult.trailerId);
         }
+        // @ts-ignore - already handled undefined case.
+        if (!isSingleRecord(techRecords) || !techRecords.techRecord) {
+            console.error(`Unable to retrieve unique Tech Record for Test Result:`, testResult);
+            throw new Error(`Unable to retrieve unique Tech Record for Test Result`);
+        }
+
+        // @ts-ignore - already handled undefined case.
+        const techRecord = techRecords instanceof Array ? techRecords[0] : techRecords;
 
         return techRecord;
     }
@@ -507,5 +515,14 @@ class CertificateGenerationService {
     //#endregion
 
 }
+
+/**
+ * Checks a techRecord to  see if it's a single, valid record
+ * @param techRecord
+ */
+const isSingleRecord = (techRecords: any): boolean => {
+    if (!techRecords) { return false; }
+    return (techRecords && techRecords instanceof Array) ? techRecords.length === 1 : true;
+};
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };
