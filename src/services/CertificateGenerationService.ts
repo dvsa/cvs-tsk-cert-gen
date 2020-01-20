@@ -237,7 +237,7 @@ class CertificateGenerationService {
                     BrakeEndurance: (adrDetails) ? adrDetails.brakeEndurance : undefined,
                     Weight: (adrDetails) ? adrDetails.weight : undefined,
                     TankManufacturer: (adrDetails) ? adrDetails.tank.tankDetails.tankManufacturer : undefined,
-                    Tc2InitApprovalNo: (adrDetails) ? adrDetails.tank.tankDetails.tc2IntermediateApprovalNo : undefined,
+                    Tc2InitApprovalNo: (adrDetails) ? adrDetails.tank.tankDetails.tc2Details.tc2IntermediateApprovalNo : undefined,
                     TankManufactureSerialNo: (adrDetails) ? adrDetails.tank.tankDetails.tankManufacturerSerialNo : undefined,
                     YearOfManufacture: (adrDetails) ? adrDetails.tank.tankDetails.yearOfManufacture : undefined,
                     TankCode: (adrDetails) ? adrDetails.tank.tankDetails.tankCode : undefined,
