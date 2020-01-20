@@ -49,4 +49,5 @@ mot:
     hgv_prs: HGV_PRS.pdf;
     trl_prs: TRL_PRS.pdf;
     rwt: RWT.pdf
+    adr_pass: ADR_PASS.pdf;
   documentDir: CVS
