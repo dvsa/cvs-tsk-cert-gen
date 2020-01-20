@@ -47,14 +47,17 @@ class CertificateGenerationService {
             trl_pass: config.documentNames.vtg5a,
             trl_fail: config.documentNames.vtg30,
             trl_prs: config.documentNames.trl_prs,
-            rwt: config.documentNames.rwt
+            rwt: config.documentNames.rwt,
+            adr_pass: config.documentNames.adr_pass
         };
 
         let vehicleTestRes: string;
         if (CertificateGenerationService.isRoadworthinessTestType(testType.testTypeId)) { // CVSB-7677 is roadworthisness test
             vehicleTestRes = "rwt";
-        } else  {
-        vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
+        } else  if (this.isTestTypeAdr(testResult.testTypes)) {
+            vehicleTestRes = "adr_pass";
+        } else {
+            vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
         }
         const invokeParams: any = {
             FunctionName: iConfig.functions.certGen.name,
@@ -130,6 +133,7 @@ class CertificateGenerationService {
             DATA: undefined,
             FAIL_DATA: undefined,
             RWT_DATA: undefined,
+            ADR_DATA: undefined,
             Signature: {
                 ImageType: "png",
                 ImageData: signature
@@ -137,16 +141,19 @@ class CertificateGenerationService {
         };
         if (CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)) {
             // CVSB-7677 for roadworthiness test for hgv or trl.
-            const rwtData = await this.generateCertificateData(testResult, "RWT_DATA");
-            payload.RWT_DATA =  {...rwtData};
+            const rwtData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.RWT_DATA);
+            payload.RWT_DATA = {...rwtData};
+        } else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testResult.testTypes)) {
+            const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
+            payload.ADR_DATA = {...adrData};
         } else {
             const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.vin);
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
-                const passData = await this.generateCertificateData(testResult, "DATA");
+                const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
                 payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
             }
             if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
-                const failData = await this.generateCertificateData(testResult, "FAIL_DATA");
+                const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
                 payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
             }
         }
@@ -164,8 +171,8 @@ class CertificateGenerationService {
     public async generateCertificateData(testResult: ITestResult, type: string) {
         const testType: any = testResult.testTypes;
         switch (type) {
-            case "DATA":
-            case "FAIL_DATA":
+            case CERTIFICATE_DATA.PASS_DATA:
+            case CERTIFICATE_DATA.FAIL_DATA:
                 const defects: any = this.generateDefects(testResult.testTypes, type);
                 return  {
                         TestNumber: testType.testNumber,
@@ -193,7 +200,7 @@ class CertificateGenerationService {
                         SeatBeltNumber: testType.numberOfSeatbeltsFitted,
                         ...defects
                     };
-            case "RWT_DATA":
+            case CERTIFICATE_DATA.RWT_DATA:
                 const weightDetails = await this.getWeightDetails(testResult);
                 let defectRWTList: any;
                 if (testResult.testTypes.testResult === TEST_RESULTS.FAIL) {
@@ -219,7 +226,39 @@ class CertificateGenerationService {
                     IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL
                 };
                 return resultPass;
+            case CERTIFICATE_DATA.ADR_DATA:
+                const adrDetails = await this.getAdrDetails(testResult);
+                return {
+                    ChasisNumber: testResult.vin,
+                    RegistrationNumber: testResult.vrm,
+                    ApplicantDetails: (adrDetails) ? adrDetails.applicantDetails : undefined,
+                    VehicleType: (adrDetails) ? adrDetails.vehicleDetails.type : undefined,
+                    PermittedDangerousGoods: (adrDetails) ? adrDetails.permittedDangerousGoods : undefined,
+                    BrakeEndurance: (adrDetails) ? adrDetails.brakeEndurance : undefined,
+                    Weight: (adrDetails) ? adrDetails.weight : undefined,
+                    TankManufacturer: (adrDetails) ? adrDetails.tank.tankDetails.tankManufacturer : undefined,
+                    Tc2InitApprovalNo: (adrDetails) ? adrDetails.tank.tankDetails.tc2IntermediateApprovalNo : undefined,
+                    TankManufactureSerialNo: (adrDetails) ? adrDetails.tank.tankDetails.tankManufacturerSerialNo : undefined,
+                    YearOfManufacture: (adrDetails) ? adrDetails.tank.tankDetails.yearOfManufacture : undefined,
+                    TankCode: (adrDetails) ? adrDetails.tank.tankDetails.tankCode : undefined,
+                    SpecialProvisions: (adrDetails) ? adrDetails.tank.tankDetails.specialProvisions : undefined,
+                    TankStatement: (adrDetails) ? adrDetails.tank.tankStatement : undefined,
+                    ExpiryDate: testResult.testTypes.testExpiryDate,
+                    AtfNameAtfPNumber: testResult.testStationName + " " + testResult.testStationPNumber,
+                    Notes: testResult.testTypes.additionalNotesRecorded,
+                    TestTypeDate: testResult.testTypes.testTypeStartTimestamp
+                };
         }
+    }
+
+    /**
+     * Retrieves the adrDetails from a techRecord searched by vin
+     * @param testResult - testResult from which the VIN is used to search a tech-record
+     */
+    public async getAdrDetails(testResult: any) {
+        const techRecord = await this.getTechRecord(testResult);
+
+        return techRecord.techRecord[0].adrDetails;
     }
 
     /**
@@ -483,6 +522,16 @@ class CertificateGenerationService {
         }
 
         return defectString;
+    }
+
+    /**
+     * Returns true if testType is adr and false if not
+     * @param testType - testType which is tested
+     */
+    public isTestTypeAdr(testType: any): boolean {
+        const adrTestTypeIds = ["50", "59", "60"];
+
+        return adrTestTypeIds.includes(testType.testTypeId);
     }
 
 
