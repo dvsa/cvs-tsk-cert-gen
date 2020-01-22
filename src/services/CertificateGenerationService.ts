@@ -228,7 +228,8 @@ class CertificateGenerationService {
                 return resultPass;
             case CERTIFICATE_DATA.ADR_DATA:
                 const adrDetails = await this.getAdrDetails(testResult);
-                return {
+
+                const docGenPayloadAdr = {
                     ChasisNumber: testResult.vin,
                     RegistrationNumber: testResult.vrm,
                     ApplicantDetails: (adrDetails) ? adrDetails.applicantDetails : undefined,
@@ -249,6 +250,10 @@ class CertificateGenerationService {
                     Notes: testResult.testTypes.additionalNotesRecorded,
                     TestTypeDate: testResult.testTypes.testTypeStartTimestamp
                 };
+
+                console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
+
+                return docGenPayloadAdr;
         }
     }
 
