@@ -145,7 +145,7 @@ class CertificateGenerationService {
             payload.RWT_DATA = {...rwtData};
         } else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testResult.testTypes)) {
             const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
-            payload.ADR_DATA = {...adrData};
+            payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
             const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.vin);
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
