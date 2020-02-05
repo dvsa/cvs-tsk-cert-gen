@@ -237,13 +237,13 @@ class CertificateGenerationService {
                     PermittedDangerousGoods: (adrDetails) ? adrDetails.permittedDangerousGoods : undefined,
                     BrakeEndurance: (adrDetails) ? adrDetails.brakeEndurance : undefined,
                     Weight: (adrDetails) ? adrDetails.weight : undefined,
-                    TankManufacturer: (adrDetails && adrDetails.tank && adrDetails.tank.tankDetails) ? adrDetails.tank.tankDetails.tankManufacturer : undefined,
-                    Tc2InitApprovalNo: (adrDetails && adrDetails.tank && adrDetails.tank.tankDetails && adrDetails && adrDetails.tank && adrDetails.tank.tankDetails.tc2Details)
+                    TankManufacturer: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.tankManufacturer : undefined,
+                    Tc2InitApprovalNo: (this.containsTankDetails(adrDetails) && adrDetails.tank.tankDetails.tc2Details)
                         ? adrDetails.tank.tankDetails.tc2Details.tc2IntermediateApprovalNo : undefined,
-                    TankManufactureSerialNo: (adrDetails && adrDetails.tank && adrDetails.tank.tankDetails) ? adrDetails.tank.tankDetails.tankManufacturerSerialNo : undefined,
-                    YearOfManufacture: (adrDetails && adrDetails.tank && adrDetails.tank.tankDetails) ? adrDetails.tank.tankDetails.yearOfManufacture : undefined,
-                    TankCode: (adrDetails && adrDetails.tank && adrDetails.tank.tankDetails) ? adrDetails.tank.tankDetails.tankCode : undefined,
-                    SpecialProvisions: (adrDetails && adrDetails.tank && adrDetails.tank.tankDetails) ? adrDetails.tank.tankDetails.specialProvisions : undefined,
+                    TankManufactureSerialNo: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.tankManufacturerSerialNo : undefined,
+                    YearOfManufacture: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.yearOfManufacture : undefined,
+                    TankCode: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.tankCode : undefined,
+                    SpecialProvisions: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.specialProvisions : undefined,
                     TankStatement: (adrDetails && adrDetails.tank) ? adrDetails.tank.tankStatement : undefined,
                     ExpiryDate: testResult.testTypes.testExpiryDate,
                     AtfNameAtfPNumber: testResult.testStationName + " " + testResult.testStationPNumber,
@@ -265,6 +265,14 @@ class CertificateGenerationService {
         const techRecord = await this.getTechRecord(testResult);
 
         return techRecord.techRecord[0].adrDetails;
+    }
+
+    /**
+     * Returns true if an adrDetails object contains a tankDetails object
+     * @param testResult - testResult from which the VIN is used to search a tech-record
+     */
+    public containsTankDetails(adrDetails: any) {
+        return adrDetails && adrDetails.tank && adrDetails.tank.tankDetails;
     }
 
     /**

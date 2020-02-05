@@ -20,7 +20,6 @@ const ctx = mockContext();
 const sandbox = sinon.createSandbox();
 import {cloneDeep} from "lodash";
 import { ITestResult, ICertificatePayload } from "../../src/models";
-import {clone} from "@babel/types";
 
 describe("cert-gen", () => {
     const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService, [S3BucketMockService, LambdaMockService]);
