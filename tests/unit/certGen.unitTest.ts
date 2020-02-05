@@ -2097,6 +2097,61 @@ describe("cert-gen", () => {
         });
     });
 
+    context("CertGenService for ADR", () => {
+        context("when a passing test result for ADR is read from the queue", () => {
+            const event: any = cloneDeep(queueEventPass);
+            const testResult: any = JSON.parse(event.Records[1].body);
+            testResult.testTypes.testTypeId = "50";
+
+            context("and a payload is generated", () => {
+                context("and no signatures were found in the bucket", () => {
+                    it("should return an ADR_PASS payload without signature", () => {
+                        const expectedResult: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/doc-gen-payload-adr.json"), "utf8"));
+
+                        const techRecordResponseAdrMock = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/tech-records-response-adr.json"), "utf8"));
+
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseAdrMock);
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getVehicleMakeAndModelStub.restore();
+                            });
+                    });
+                });
+
+                context("and signatures were found in the bucket", () => {
+                    it("should return an ADR_PASS payload with signature", () => {
+                        const expectedResult: any = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/doc-gen-payload-adr.json"), "utf8"));
+                        expectedResult.Signature.ImageType = "png";
+                        expectedResult.Signature.ImageData = fs.readFileSync(path.resolve(__dirname, `../resources/signatures/1.base64`)).toString();
+
+                        const techRecordResponseAdrMock = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../resources/tech-records-response-adr.json"), "utf8"));
+
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"]
+                        });
+
+                        const getVehicleMakeAndModelStub = sandbox.stub(CertificateGenerationService.prototype, "getVehicleMakeAndModel").resolves(undefined);
+                        const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseAdrMock);
+
+                        return certificateGenerationService.generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getVehicleMakeAndModelStub.restore();
+                                S3BucketMockService.buckets.pop();
+                            });
+                    });
+                });
+            });
+        });
+    });
+
     context("CertGenService for Roadworthiness test", () => {
         context("when a passing test result for Roadworthiness test for HGV or TRL is read from the queue", () => {
             const event: any = cloneDeep(queueEventPass);
@@ -2107,9 +2162,9 @@ describe("cert-gen", () => {
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return an RWT_DATA payload without signature", () => {
-                        const expectedResult: ICertificatePayload = docGenRwt[0];
+                        const expectedResult: ICertificatePayload = cloneDeep(docGenRwt[0]);
 
-                        const techRecordResponseRwtMock = techRecordsRwt[1];
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[1]);
 
                         const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
 
@@ -2123,9 +2178,9 @@ describe("cert-gen", () => {
 
                 context("and signatures were found in the bucket", () => {
                     it("should return an RWT_DATA payload with signature", () => {
-                        const expectedResult: ICertificatePayload = docGenRwt[1];
+                        const expectedResult: ICertificatePayload = cloneDeep(docGenRwt[1]);
 
-                        const techRecordResponseRwtMock = techRecordsRwt[1];
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[1]);
 
                         const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
 
@@ -2173,7 +2228,7 @@ describe("cert-gen", () => {
                     it("should return an RWT_DATA payload without signature", () => {
                         const expectedResult: ICertificatePayload = cloneDeep(docGenRwt[4]);
 
-                        const techRecordResponseRwtMock = techRecordsRwt[0];
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[0]);
 
                         const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
 
@@ -2187,9 +2242,9 @@ describe("cert-gen", () => {
 
                 context("and signatures were found in the bucket", () => {
                     it("should return an RWT_DATA payload with signature", () => {
-                        const expectedResult: ICertificatePayload = docGenRwt[3];
+                        const expectedResult: ICertificatePayload = cloneDeep(docGenRwt[3]);
 
-                        const techRecordResponseRwtMock = techRecordsRwt[0];
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[0]);
 
                         const getTechRecordStub = sandbox.stub(CertificateGenerationService.prototype, "getTechRecord").resolves(techRecordResponseRwtMock);
 

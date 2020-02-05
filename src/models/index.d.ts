@@ -25,6 +25,7 @@ interface IMOTConfig {
         vtg30: "VTG30.pdf";
         hgv_prs: "HGV_PRS.pdf";
         trl_prs: "TRL_PRS.pdf";
+        adr_pass: "ADR_PASS.pdf";
         rwt: "RWT.pdf;";
     };
     api_key: string;
@@ -83,6 +84,7 @@ interface ICertificatePayload {
     DATA?: any;
     FAIL_DATA?: any;
     RWT_DATA?: any;
+    ADR_DATA?: any;
     Signature: ISignature;
 }
 
