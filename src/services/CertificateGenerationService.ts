@@ -193,7 +193,7 @@ class CertificateGenerationService {
                           (testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL)
                           && (testResult.testTypes.testResult === TEST_RESULTS.PASS || testResult.testTypes.testResult === TEST_RESULTS.PRS)
                         ) ?
-                            moment(testType.testAnniversaryDate).subtract(2, "months").add(1, "days").format("DD.MM.YYYY") :
+                            moment(testType.testAnniversaryDate).subtract(1, "months").startOf("month").format("DD.MM.YYYY") :
                             moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
                         SeatBeltTested: (testType.seatbeltInstallationCheckDate) ? "Yes" : "No",
                         SeatBeltPreviousCheckDate: (testType.lastSeatbeltInstallationCheckDate) ? moment(testType.lastSeatbeltInstallationCheckDate).format("DD.MM.YYYY") : "\u00A0",
