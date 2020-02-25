@@ -437,9 +437,11 @@ class CertificateGenerationService {
                 httpMethod: "GET",
                 path: `/vehicles/${searchTerm}/tech-records`,
                 pathParameters: {
-                    proxy: `${searchTerm}/tech-records`,
-                    searchIdentifier: searchType
+                    proxy: `${searchTerm}/tech-records`
                 },
+                queryStringParameters: {
+                    searchCriteria: searchType
+                }
             }),
         };
 
