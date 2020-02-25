@@ -392,7 +392,7 @@ class CertificateGenerationService {
      * @param testResult - the testResult for which the tech record search is done for
      */
     public async getTechRecord(testResult: any) {
-        let techRecords: any | any[] = testResult.systemNumber ? await this.queryTechRecords(testResult.systemNumber) : undefined;
+        let techRecords: any | any[] = testResult.systemNumber ? await this.queryTechRecords(testResult.systemNumber, "systemNumber") : undefined;
         if (!isSingleRecord(techRecords) && testResult.vin) {
             console.log("No unique Tech Record found for systemNumber ", testResult.systemNumber, ". Trying vin");
             techRecords = await this.queryTechRecords(testResult.vin);
@@ -424,9 +424,10 @@ class CertificateGenerationService {
     /**
      * Helper method for Technical Records Lambda calls. Accepts any search term now, rather than just the VIN
      * Created as part of CVSB-8582
-     * @param searchTerm
+     * @param searchTerm - the value of your search term
+     * @param searchType - the kind of value your searchTerm represents in camel case e.g. vin, vrm, systemNumber
      */
-    public async queryTechRecords(searchTerm: string) {
+    public async queryTechRecords(searchTerm: string, searchType: string = "all") {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.techRecords.name,
@@ -436,8 +437,9 @@ class CertificateGenerationService {
                 httpMethod: "GET",
                 path: `/vehicles/${searchTerm}/tech-records`,
                 pathParameters: {
-                    proxy: `${searchTerm}/tech-records`
-                }
+                    proxy: `${searchTerm}/tech-records`,
+                    searchIdentifier: searchType
+                },
             }),
         };
 
