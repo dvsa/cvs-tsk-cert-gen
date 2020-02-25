@@ -157,7 +157,7 @@ describe("Certificate Generation Service", () => {
           systemNumber: "12345678"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
-        expect(makeAndModel).toEqual({Make: techRecord.techRecord[0].chassisMake, Model: techRecord.techRecord[0].chassisModel});
+        expect(makeAndModel).toEqual({Make: techRecord[0].techRecord[0].chassisMake, Model: techRecord[0].techRecord[0].chassisModel});
       });
     });
 
@@ -171,7 +171,7 @@ describe("Certificate Generation Service", () => {
           systemNumber: "12345678"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
-        expect(makeAndModel).toEqual({Make: techRecord.techRecord[0].make, Model: techRecord.techRecord[0].model});
+        expect(makeAndModel).toEqual({Make: techRecord[0].techRecord[0].make, Model: techRecord[0].techRecord[0].model});
       });
     });
   });

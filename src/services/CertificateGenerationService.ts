@@ -410,7 +410,7 @@ class CertificateGenerationService {
             techRecords = await this.queryTechRecords(testResult.trailerId);
         }
         // @ts-ignore - already handled undefined case.
-        if (!isSingleRecord(techRecords) || !techRecords.techRecord) {
+        if (!isSingleRecord(techRecords) || !techRecords[0].techRecord) {
             console.error(`Unable to retrieve unique Tech Record for Test Result:`, testResult);
             throw new Error(`Unable to retrieve unique Tech Record for Test Result`);
         }
