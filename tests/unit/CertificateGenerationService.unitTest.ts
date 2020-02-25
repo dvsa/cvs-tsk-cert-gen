@@ -22,6 +22,8 @@ describe("Certificate Generation Service", () => {
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
         expect(LambdaStub.calledOnce).toBeTruthy();
+        const lambdaArgs = JSON.parse(LambdaStub.firstCall.args[0].Payload as string);
+        expect(lambdaArgs.pathParameters.searchIdentifier).toEqual("systemNumber");
         expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
@@ -39,6 +41,8 @@ describe("Certificate Generation Service", () => {
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
         expect(LambdaStub.calledTwice).toBeTruthy();
+        const lambdaArgs = JSON.parse(LambdaStub.secondCall.args[0].Payload as string);
+        expect(lambdaArgs.pathParameters.searchIdentifier).toEqual("all");
         expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
