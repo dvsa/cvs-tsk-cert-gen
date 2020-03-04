@@ -307,9 +307,9 @@ class CertificateGenerationService {
     }
     /**
      * Retrieves the odometer history for a given VIN from the Test Results microservice
-     * @param vin - VIN for which to retrieve odometer history
+     * @param systemNumber - systemNumber for which to retrieve odometer history
      */
-    public async getOdometerHistory(vin: string) {
+    public async getOdometerHistory(systemNumber: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.testResults.name,
@@ -317,9 +317,9 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/test-results/${vin}`,
+                path: `/test-results/${systemNumber}`,
                 pathParameters: {
-                    vin
+                    systemNumber
                 }
             }),
         };
@@ -392,23 +392,31 @@ class CertificateGenerationService {
      * @param testResult - the testResult for which the tech record search is done for
      */
     public async getTechRecord(testResult: any) {
-        let techRecord = await this.queryTechRecords(testResult.vin);
-        if (!techRecord && testResult.partialVin) {
-            console.log("No Tech Record found for vin ", testResult.vin, ". Trying Partial Vin");
-            techRecord = await this.queryTechRecords(testResult.partialVin);
+        let techRecords: any | any[] = testResult.systemNumber ? await this.queryTechRecords(testResult.systemNumber, "systemNumber") : undefined;
+        if (!isSingleRecord(techRecords) && testResult.vin) {
+            console.log("No unique Tech Record found for systemNumber ", testResult.systemNumber, ". Trying vin");
+            techRecords = await this.queryTechRecords(testResult.vin);
         }
-        if (!techRecord && testResult.vrm) {
-            console.log("No Tech Record found for partial vin ", testResult.partialVin, ". Trying VRM");
-            techRecord = await this.queryTechRecords(testResult.vrm);
+        if (!isSingleRecord(techRecords) && testResult.partialVin) {
+            console.log("No unique Tech Record found for vin ", testResult.vin, ". Trying Partial Vin");
+            techRecords = await this.queryTechRecords(testResult.partialVin);
         }
-        if (!techRecord && testResult.trailerId) {
-            console.log("No Tech Record found for vrm ", testResult.vrm, ". Trying TrailerID");
-            techRecord = await this.queryTechRecords(testResult.trailerId);
+        if (!isSingleRecord(techRecords) && testResult.vrm) {
+            console.log("No unique Tech Record found for partial vin ", testResult.partialVin, ". Trying VRM");
+            techRecords = await this.queryTechRecords(testResult.vrm);
         }
-        if (!techRecord || !techRecord.techRecord) {
-            console.error(`Unable to retrieve Tech Record for Test Result:`, testResult);
-            throw new Error(`Unable to retrieve Tech Record for Test Result`);
+        if (!isSingleRecord(techRecords) && testResult.trailerId) {
+            console.log("No unique Tech Record found for vrm ", testResult.vrm, ". Trying TrailerID");
+            techRecords = await this.queryTechRecords(testResult.trailerId);
         }
+        // @ts-ignore - already handled undefined case.
+        if (!isSingleRecord(techRecords) || !techRecords[0].techRecord) {
+            console.error(`Unable to retrieve unique Tech Record for Test Result:`, testResult);
+            throw new Error(`Unable to retrieve unique Tech Record for Test Result`);
+        }
+
+        // @ts-ignore - already handled undefined case.
+        const techRecord = techRecords instanceof Array ? techRecords[0] : techRecords;
 
         return techRecord;
     }
@@ -416,9 +424,10 @@ class CertificateGenerationService {
     /**
      * Helper method for Technical Records Lambda calls. Accepts any search term now, rather than just the VIN
      * Created as part of CVSB-8582
-     * @param searchTerm
+     * @param searchTerm - the value of your search term
+     * @param searchType - the kind of value your searchTerm represents in camel case e.g. vin, vrm, systemNumber
      */
-    public async queryTechRecords(searchTerm: string) {
+    public async queryTechRecords(searchTerm: string, searchType: string = "all") {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.techRecords.name,
@@ -429,6 +438,9 @@ class CertificateGenerationService {
                 path: `/vehicles/${searchTerm}/tech-records`,
                 pathParameters: {
                     proxy: `${searchTerm}/tech-records`
+                },
+                queryStringParameters: {
+                    searchCriteria: searchType
                 }
             }),
         };
@@ -570,5 +582,14 @@ class CertificateGenerationService {
     //#endregion
 
 }
+
+/**
+ * Checks a techRecord to  see if it's a single, valid record
+ * @param techRecord
+ */
+const isSingleRecord = (techRecords: any): boolean => {
+    if (!techRecords) { return false; }
+    return (techRecords && techRecords instanceof Array) ? techRecords.length === 1 : true;
+};
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };

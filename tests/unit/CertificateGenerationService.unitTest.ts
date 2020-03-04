@@ -1,6 +1,7 @@
 import {CertificateGenerationService} from "../../src/services/CertificateGenerationService";
 import sinon from "sinon";
 import techRecordResp from "../resources/tech-records-response.json";
+import techRecordRespHGV from "../resources/tech-records-response-HGV.json";
 import {AWSError, Lambda, Response} from "aws-sdk";
 import {LambdaService} from "../../src/services/LambdaService";
 
@@ -11,16 +12,37 @@ describe("Certificate Generation Service", () => {
   });
 
   describe("getVehicleMakeAndModel function", () => {
-    context("when given a vin with matching record", () => {
+    context("when given a systemNumber with matching record", () => {
       it("should return the record & only invoke the LambdaService once", async () => {
         const LambdaStub = sandbox.stub(LambdaService.prototype, "invoke").resolves(AWSResolve(JSON.stringify(techRecordResp)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(null, new LambdaService(new Lambda()));
         const testResultMock = {
-          vin: "abc123"
+          systemNumber: "12345678"
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
         expect(LambdaStub.calledOnce).toBeTruthy();
+        const lambdaArgs = JSON.parse(LambdaStub.firstCall.args[0].Payload as string);
+        expect(lambdaArgs.queryStringParameters.searchCriteria).toEqual("systemNumber");
+        expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
+      });
+    });
+
+    context("when given a systemNumber  with no matching record and a vin with matching record", () => {
+      it("should return the record & invoke the LambdaService twice", async () => {
+        const LambdaStub = sandbox.stub(LambdaService.prototype, "invoke")
+          .onFirstCall().resolves(AWSReject("no"))
+          .onSecondCall().resolves(AWSResolve(JSON.stringify(techRecordResp)));
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(null, new LambdaService(new Lambda()));
+        const testResultMock = {
+          systemNumber: "134567889",
+          vin: "abc123"
+        };
+        const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
+        expect(LambdaStub.calledTwice).toBeTruthy();
+        const lambdaArgs = JSON.parse(LambdaStub.secondCall.args[0].Payload as string);
+        expect(lambdaArgs.queryStringParameters.searchCriteria).toEqual("all");
         expect(makeAndModel).toEqual({Make: "Mercedes", Model: "632,01"});
       });
     });
@@ -101,7 +123,7 @@ describe("Certificate Generation Service", () => {
         } catch (e) {
           expect(LambdaStub.callCount).toEqual(4);
           expect(e).toBeInstanceOf(Error);
-          expect(e.message).toEqual("Unable to retrieve Tech Record for Test Result");
+          expect(e.message).toEqual("Unable to retrieve unique Tech Record for Test Result");
         }
       });
     });
@@ -120,8 +142,36 @@ describe("Certificate Generation Service", () => {
         } catch (e) {
           expect(LambdaStub.callCount).toEqual(2);
           expect(e).toBeInstanceOf(Error);
-          expect(e.message).toEqual("Unable to retrieve Tech Record for Test Result");
+          expect(e.message).toEqual("Unable to retrieve unique Tech Record for Test Result");
         }
+      });
+    });
+
+    context("when lookup returns a PSV tech record", () => {
+      it("should return make and model from chassis details", async () => {
+        const techRecord = JSON.parse(techRecordResp.body);
+        const LambdaStub = sandbox.stub(LambdaService.prototype, "invoke").resolves(AWSResolve(JSON.stringify(techRecordResp)));
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(null, new LambdaService(new Lambda()));
+        const testResultMock = {
+          systemNumber: "12345678"
+        };
+        const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
+        expect(makeAndModel).toEqual({Make: techRecord[0].techRecord[0].chassisMake, Model: techRecord[0].techRecord[0].chassisModel});
+      });
+    });
+
+    context("when lookup returns a non-PSV tech record", () => {
+      it("should return make and model from not-chassis details", async () => {
+        const techRecord = JSON.parse(techRecordRespHGV.body);
+        const LambdaStub = sandbox.stub(LambdaService.prototype, "invoke").resolves(AWSResolve(JSON.stringify(techRecordRespHGV)));
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(null, new LambdaService(new Lambda()));
+        const testResultMock = {
+          systemNumber: "12345678"
+        };
+        const makeAndModel = await certGenSvc.getVehicleMakeAndModel(testResultMock);
+        expect(makeAndModel).toEqual({Make: techRecord[0].techRecord[0].make, Model: techRecord[0].techRecord[0].model});
       });
     });
   });
