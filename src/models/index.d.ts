@@ -47,6 +47,7 @@ interface IGeneratedCertificateResponse {
     certificate: Buffer;
     certificateOrder: { current: number; total: number; };
     email: string;
+    shouldEmailCertificate: string;
 }
 interface ICertificateData {
     TestNumber: string;

@@ -80,7 +80,6 @@ class CertificateGenerationService {
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
                 const resBody: string = payload.body;
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
-
                 return {
                     vrm: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
@@ -92,7 +91,8 @@ class CertificateGenerationService {
                     fileSize: responseBuffer.byteLength.toString(),
                     certificate: responseBuffer,
                     certificateOrder: testResult.order,
-                    email: testResult.testerEmailAddress
+                    email: testResult.testerEmailAddress,
+                    shouldEmailCertificate: testResult.shouldEmailCertificate ? testResult.shouldEmailCertificate : "true"
                 };
             })
             .catch((error: AWSError | Error) => {
