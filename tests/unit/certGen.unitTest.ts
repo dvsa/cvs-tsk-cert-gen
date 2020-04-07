@@ -205,7 +205,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                     .then((response: any) => {
-                        expect(response.fileName).toEqual("1_XMGDE02FS0H012345_1.pdf");
+                        expect(response.fileName).toEqual("W01A00310_XMGDE02FS0H012345_1.pdf");
                         expect(response.certificateType).toEqual("VTP20");
                         expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                     });
@@ -416,7 +416,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                     .then((response: any) => {
-                        expect(response.fileName).toEqual("1_XMGDE02FS0H012345_2.pdf");
+                        expect(response.fileName).toEqual("W01A00310_XMGDE02FS0H012345_2.pdf");
                         expect(response.certificateType).toEqual("VTP30");
                         expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                     });
@@ -707,7 +707,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                     .then((response: any) => {
-                        expect(response.fileName).toEqual("1_XMGDE02FS0H012345_1.pdf");
+                        expect(response.fileName).toEqual("W01A00310_XMGDE02FS0H012345_1.pdf");
                         expect(response.certificateType).toEqual("PSV_PRS");
                         expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                     });
@@ -1053,7 +1053,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).toEqual("1_P012301098765_1.pdf");
+                            expect(response.fileName).toEqual("W01A00310_P012301098765_1.pdf");
                             expect(response.certificateType).toEqual("VTG5");
                             expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
@@ -1342,7 +1342,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).toEqual("1_P012301098765_1.pdf");
+                            expect(response.fileName).toEqual("W01A00310_P012301098765_1.pdf");
                             expect(response.certificateType).toEqual("HGV_PRS");
                             expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
@@ -1552,7 +1552,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).toEqual("1_P012301098765_2.pdf");
+                            expect(response.fileName).toEqual("W01A00310_P012301098765_2.pdf");
                             expect(response.certificateType).toEqual("VTG30");
                             expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                         });
@@ -1700,7 +1700,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).toEqual("1_T12876765_1.pdf");
+                            expect(response.fileName).toEqual("W01A00310_T12876765_1.pdf");
                             expect(response.certificateType).toEqual("VTG5A");
                             expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
@@ -1915,7 +1915,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).toEqual("1_T12876765_1.pdf");
+                            expect(response.fileName).toEqual("W01A00310_T12876765_1.pdf");
                             expect(response.certificateType).toEqual("TRL_PRS");
                             expect(response.certificateOrder).toEqual({ current: 1, total: 2 });
                         });
@@ -2088,7 +2088,7 @@ describe("cert-gen", () => {
                     expect.assertions(3);
                     return certificateGenerationService.generateCertificate(testResult)
                         .then((response: any) => {
-                            expect(response.fileName).toEqual("1_T12876765_2.pdf");
+                            expect(response.fileName).toEqual("W01A00310_T12876765_2.pdf");
                             expect(response.certificateType).toEqual("VTG30");
                             expect(response.certificateOrder).toEqual({ current: 2, total: 2 });
                         });
