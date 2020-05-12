@@ -80,7 +80,6 @@ class CertificateGenerationService {
                 const payload: any = this.lambdaClient.validateInvocationResponse(response);
                 const resBody: string = payload.body;
                 const responseBuffer: Buffer = Buffer.from(resBody, "base64");
-
                 return {
                     vrm: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
@@ -88,11 +87,12 @@ class CertificateGenerationService {
                     dateOfIssue: moment().format("D MMMM YYYY"),
                     certificateType: certificateTypes[vehicleTestRes].split(".")[0],
                     fileFormat: "pdf",
-                    fileName: `${testResult.testResultId}_${testResult.vin}_${testResult.order.current}.pdf`,
+                    fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
                     fileSize: responseBuffer.byteLength.toString(),
                     certificate: responseBuffer,
                     certificateOrder: testResult.order,
-                    email: testResult.testerEmailAddress
+                    email: testResult.testerEmailAddress,
+                    shouldEmailCertificate: testResult.shouldEmailCertificate ? testResult.shouldEmailCertificate : "true"
                 };
             })
             .catch((error: AWSError | Error) => {
