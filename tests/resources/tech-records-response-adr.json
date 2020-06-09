@@ -83,6 +83,7 @@
         },
         "listStatementApplicable": false,
         "batteryListNumber":  "124",
+        "adrCertificateNotes": "Test ADR certificate notes",
         "declarationsSeen": true,
         "brakeDeclarationsSeen": true,
         "brakeDeclarationIssuer": "demoBrakeDeclarationIssuer",
@@ -131,7 +132,8 @@
           "tankStatement": {
             "substancesPermitted": "Substances permitted under the tank code and any special provisions specified in 9 may be carried",
             "statement": "string",
-            "productList": "string"
+            "productList": "string",
+            "productListUnNo": ["UN123"]
           }
         }
       },
