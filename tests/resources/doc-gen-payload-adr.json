@@ -19,12 +19,15 @@
     "TankStatement": {
       "substancesPermitted": "Substances permitted under the tank code and any special provisions specified in 9 may be carried",
       "statement": "string",
-      "productList": "string"
+      "productList": "string",
+      "productListUnNo": ["UN123"]
     },
     "RegistrationNumber": "VM14MDT",
     "VehicleType": "string",
     "ExpiryDate": "2020-02-25T15:29:40.032Z",
     "AtfNameAtfPNumber": "Abshire-Kub 09-4129632",
+    "BatteryListNumber": "124",
+    "AdrCertificateNotes": "Test ADR certificate notes",
     "TestTypeDate": "2019-02-26T15:37:32.917Z"
   },
   "Signature": {

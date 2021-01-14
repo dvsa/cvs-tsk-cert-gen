@@ -245,6 +245,9 @@ class CertificateGenerationService {
                     TankCode: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.tankCode : undefined,
                     SpecialProvisions: this.containsTankDetails(adrDetails) ? adrDetails.tank.tankDetails.specialProvisions : undefined,
                     TankStatement: (adrDetails && adrDetails.tank) ? adrDetails.tank.tankStatement : undefined,
+                    AdrCertificateNotes: adrDetails && adrDetails.adrCertificateNotes,
+                    BatteryListNumber: adrDetails && adrDetails.batteryListNumber,
+
                     ExpiryDate: testResult.testTypes.testExpiryDate,
                     AtfNameAtfPNumber: testResult.testStationName + " " + testResult.testStationPNumber,
                     Notes: testResult.testTypes.additionalNotesRecorded,
