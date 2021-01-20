@@ -72,7 +72,7 @@
     "aws-lambda-mock-context": "^3.2.1",
     "gulp": "^4.0.2",
     "husky": "^3.0.9",
-    "jest": "^24.9.0",
+    "jest": "^26.6.3",
     "jest-plugin-context": "^2.9.0",
     "jest-sonar-reporter": "^2.0.0",
     "lambda-tester": "^3.5.0",
@@ -82,10 +82,10 @@
     "serverless-plugin-tracing": "^2.0.0",
     "serverless-plugin-typescript": "^1.1.9",
     "sinon": "^7.5.0",
-    "ts-jest": "^24.1.0",
+    "ts-jest": "^26.4.4",
     "tslint": "^5.20.0",
     "tslint-no-unused-expression-chai": "^0.1.4",
-    "typescript": "^3.6.4"
+    "typescript": "^3.9.7"
   },
   "jestSonar": {
     "reportPath": ".reports",
