@@ -8,9 +8,9 @@
     "npm": "5.6.0"
   },
   "scripts": {
-    "start": "npm run kill:offline && npm run start:offline && node_modules/serverless/bin/serverless invoke local -f main --path tests/resources/queue-event.json",
-    "start:offline": "node_modules/gulp/bin/gulp.js start-serverless",
-    "kill:offline": "node_modules/gulp/bin/gulp.js kill-serverless",
+    "start": "npm run kill:offline && npm run start:offline && serverless invoke local -f main --path tests/resources/queue-event.json",
+    "start:offline": "gulp start-serverless",
+    "kill:offline": "gulp kill-serverless",
     "start:docker": "docker-compose -f docker-compose.yml up -d",
     "build": "node_modules/typescript/bin/tsc --rootDir ./ --outDir .build --sourceMap false && npm run build:copy",
     "build:dev": "node_modules/typescript/bin/tsc && npm run build:copy",
@@ -23,7 +23,8 @@
     "prepush": "npm test && npm run tslint",
     "sonar-scanner": "BRANCH=local npm run tslint && npm run coverage && sonar-scanner",
     "coverage": "BRANCH=local SLS_DEBUG=* jest --testMatch=\"**/*.*Test.ts\" --coverage",
-    "audit-dep": "npm audit --json | node_modules/.bin/audit-filter --nsp-config=.nsprc --audit=-",
+    "audit:check": "npm audit --json | node_modules/.bin/audit-filter --nsp-config=.nsprc --audit=-",
+    "audit-dep": "npm audit",
     "package": "mkdir -p ${ZIP_NAME} && cp package.json package-lock.json ${ZIP_NAME}/ && cp -r .build/src/* ${ZIP_NAME}/ && cd ${ZIP_NAME} && npm ci --production && rm package.json package-lock.json && zip -qr ../${ZIP_NAME}.zip .",
     "tools-setup": "echo 'nothing to do'"
   },
