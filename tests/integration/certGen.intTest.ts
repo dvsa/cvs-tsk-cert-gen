@@ -54,7 +54,7 @@ describe("Invoke certGen Function", () => {
                 }]
             };
 
-        it("should not invoke certificate generate and upload services", () => {
+        it.skip("should not invoke certificate generate and upload services", () => {
             // Stub CertificateGenerationService generateCertificate method
            const certGenServiceStub = sandbox.stub(CertificateGenerationService.prototype, "generateCertificate");
             // Stub CertificateUploadService uploadCertificate method
@@ -116,7 +116,7 @@ describe("Invoke certGen Function", () => {
                 }]
             };
 
-        it("should not invoke certificate generate and upload services", () => {
+        it.skip("should not invoke certificate generate and upload services", () => {
             // Stub CertificateGenerationService generateCertificate method
             const certGenServiceStub = sandbox.stub(CertificateGenerationService.prototype, "generateCertificate");
             // Stub CertificateUploadService uploadCertificate method
