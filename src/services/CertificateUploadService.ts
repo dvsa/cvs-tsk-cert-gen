@@ -19,6 +19,12 @@ class CertificateUploadService {
      * @param payload
      */
     public uploadCertificate(payload: IGeneratedCertificateResponse): Promise<ManagedUpload.SendData> {
+        let shouldEmailCertificate = payload.shouldEmailCertificate;
+
+        if (shouldEmailCertificate !== "true") {
+            shouldEmailCertificate = "false";
+        }
+
         const metadata: Metadata = {
             "vrm": payload.vrm,
             "test-type-name": payload.testTypeName,
@@ -30,7 +36,7 @@ class CertificateUploadService {
             "cert-index": payload.certificateOrder.current.toString(),
             "total-certs": payload.certificateOrder.total.toString(),
             "email": payload.email,
-            "should-email-certificate": payload.shouldEmailCertificate
+            "should-email-certificate": shouldEmailCertificate
         };
 
         return this.s3BucketService.upload(`cvs-cert-${process.env.BUCKET}`, payload.fileName, payload.certificate, metadata);
