@@ -2,7 +2,6 @@ import {Service} from "../models/injector/ServiceDecorator";
 import {S3BucketService} from "./S3BucketService";
 import {IGeneratedCertificateResponse} from "./CertificateGenerationService";
 import {ManagedUpload, Metadata} from "aws-sdk/clients/s3";
-import moment from "moment";
 
 /**
  * Service class for uploading certificates to S3
@@ -24,7 +23,7 @@ class CertificateUploadService {
             "vrm": payload.vrm,
             "test-type-name": payload.testTypeName,
             "test-type-result": payload.testTypeResult,
-            "date-of-issue": moment().format("D MMMM YYYY"),
+            "date-of-issue": payload.dateOfIssue,
             "cert-type": payload.certificateType,
             "file-format": payload.fileFormat,
             "file-size": payload.fileSize,

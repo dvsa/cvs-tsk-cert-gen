@@ -84,7 +84,7 @@ class CertificateGenerationService {
                     vrm: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
                     testTypeResult: testResult.testTypes.testResult,
-                    dateOfIssue: moment().format("D MMMM YYYY"),
+                    dateOfIssue: testResult.testTypes.testTypeStartTimestamp,
                     certificateType: certificateTypes[vehicleTestRes].split(".")[0],
                     fileFormat: "pdf",
                     fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
