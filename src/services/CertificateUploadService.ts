@@ -1,6 +1,6 @@
 import {Service} from "../models/injector/ServiceDecorator";
 import {S3BucketService} from "./S3BucketService";
-import {IGeneratedCertificateResponse} from "./CertificateGenerationService";
+import {IGeneratedCertificateResponse} from "../models";
 import {ManagedUpload, Metadata} from "aws-sdk/clients/s3";
 
 /**
@@ -21,8 +21,8 @@ class CertificateUploadService {
     public uploadCertificate(payload: IGeneratedCertificateResponse): Promise<ManagedUpload.SendData> {
         let shouldEmailCertificate = payload.shouldEmailCertificate;
 
-        if (shouldEmailCertificate !== "true") {
-            shouldEmailCertificate = "false";
+        if (shouldEmailCertificate !== "false") {
+            shouldEmailCertificate = "true";
         }
 
         const metadata: Metadata = {
