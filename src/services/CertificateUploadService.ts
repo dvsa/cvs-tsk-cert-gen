@@ -1,8 +1,7 @@
 import {Service} from "../models/injector/ServiceDecorator";
 import {S3BucketService} from "./S3BucketService";
-import {IGeneratedCertificateResponse} from "./CertificateGenerationService";
+import {IGeneratedCertificateResponse} from "../models";
 import {ManagedUpload, Metadata} from "aws-sdk/clients/s3";
-import moment from "moment";
 
 /**
  * Service class for uploading certificates to S3
@@ -20,18 +19,24 @@ class CertificateUploadService {
      * @param payload
      */
     public uploadCertificate(payload: IGeneratedCertificateResponse): Promise<ManagedUpload.SendData> {
+        let shouldEmailCertificate = payload.shouldEmailCertificate;
+
+        if (shouldEmailCertificate !== "false") {
+            shouldEmailCertificate = "true";
+        }
+
         const metadata: Metadata = {
             "vrm": payload.vrm,
             "test-type-name": payload.testTypeName,
             "test-type-result": payload.testTypeResult,
-            "date-of-issue": moment().format("D MMMM YYYY"),
+            "date-of-issue": payload.dateOfIssue,
             "cert-type": payload.certificateType,
             "file-format": payload.fileFormat,
             "file-size": payload.fileSize,
             "cert-index": payload.certificateOrder.current.toString(),
             "total-certs": payload.certificateOrder.total.toString(),
             "email": payload.email,
-            "should-email-certificate": payload.shouldEmailCertificate
+            "should-email-certificate": shouldEmailCertificate
         };
 
         return this.s3BucketService.upload(`cvs-cert-${process.env.BUCKET}`, payload.fileName, payload.certificate, metadata);

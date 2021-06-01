@@ -19,6 +19,7 @@ Temporary Items
 
 # Idea specific hidden files
 .idea/**
+*.iml
 
 # Node specific files
 node_modules/**

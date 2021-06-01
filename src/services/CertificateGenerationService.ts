@@ -1,4 +1,12 @@
-import {IInvokeConfig, IMOTConfig, IGeneratedCertificateResponse, ICertificatePayload, IRoadworthinessCertificateData, IWeightDetails, ITestResult} from "../models";
+import {
+    ICertificatePayload,
+    IGeneratedCertificateResponse,
+    IInvokeConfig,
+    IMOTConfig,
+    IRoadworthinessCertificateData,
+    ITestResult,
+    IWeightDetails
+} from "../models";
 import {Configuration} from "../utils/Configuration";
 import {S3BucketService} from "./S3BucketService";
 import S3 from "aws-sdk/clients/s3";
@@ -7,7 +15,13 @@ import moment from "moment";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
-import {ERRORS, TEST_RESULTS, VEHICLE_TYPES, CERTIFICATE_DATA, HGV_TRL_ROADWORTHINESS_TEST_TYPES} from "../models/Enums";
+import {
+    CERTIFICATE_DATA,
+    ERRORS,
+    HGV_TRL_ROADWORTHINESS_TEST_TYPES,
+    TEST_RESULTS,
+    VEHICLE_TYPES
+} from "../models/Enums";
 import {HTTPError} from "../models/HTTPError";
 
 /**
@@ -84,7 +98,7 @@ class CertificateGenerationService {
                     vrm: testResult.vehicleType === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
                     testTypeName: testResult.testTypes.testTypeName,
                     testTypeResult: testResult.testTypes.testResult,
-                    dateOfIssue: moment().format("D MMMM YYYY"),
+                    dateOfIssue: moment(testResult.testTypes.testTypeStartTimestamp).format("D MMMM YYYY"),
                     certificateType: certificateTypes[vehicleTestRes].split(".")[0],
                     fileFormat: "pdf",
                     fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
