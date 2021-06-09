@@ -39,6 +39,9 @@ describe("cert-gen", () => {
     sandbox.restore();
     jest.setTimeout(5000);
   });
+  afterEach(() => {
+    sandbox.restore();
+});
   context("CertificateGenerationService", () => {
     LambdaMockService.populateFunctions();
 
@@ -1740,6 +1743,8 @@ describe("cert-gen", () => {
                 SeatBeltNumber: 2,
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -1832,6 +1837,8 @@ describe("cert-gen", () => {
                 SeatBeltNumber: 2,
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -1878,6 +1885,103 @@ describe("cert-gen", () => {
           });
         }
       );
+      context("and trailer registration lambda returns status code 404 not found", () => {
+        it("should return a VTG5A payload without Trn", () => {
+            const expectedResult: any = {
+                Watermark: "NOT VALID",
+                DATA: {
+                    TestNumber: "W01A00310",
+                    TestStationPNumber: "09-4129632",
+                    TestStationName: "Abshire-Kub",
+                    CurrentOdometer: {
+                        value: 12312,
+                        unit: "kilometres"
+                    },
+                    IssuersName: "CVS Dev1",
+                    DateOfTheTest: "26.02.2019",
+                    CountryOfRegistrationCode: "gb",
+                    VehicleEuClassification: "M1",
+                    RawVIN: "T12876765",
+                    ExpiryDate: "25.02.2020",
+                    EarliestDateOfTheNextTest: "01.11.2019",
+                    SeatBeltTested: "Yes",
+                    SeatBeltPreviousCheckDate:  "26.02.2019",
+                    SeatBeltNumber: 2,
+                    Make: "Mercedes",
+                    Model: "632,01",
+                },
+                Signature: {
+                    ImageType: "png",
+                    ImageData: fs.readFileSync(path.resolve(__dirname, `../resources/signatures/1.base64`)).toString()
+                }
+            };
+            // Add a new signature
+            S3BucketMockService.buckets.push({
+                bucketName: `cvs-signature-${process.env.BUCKET}`,
+                files: ["1.base64"]
+            });
+
+            const getTrailerRegistrationStub = sandbox.stub(CertificateGenerationService.prototype, "getTrailerRegistrationObject").resolves(undefined);
+
+            return certificateGenerationService.generatePayload(testResult)
+                .then((payload: any) => {
+                    expect(payload).toEqual(expectedResult);
+
+                    // Remove the signature
+                    S3BucketMockService.buckets.pop();
+                    getTrailerRegistrationStub.restore();
+                });
+        });
+    });
+
+      context("and trailer registration lambda returns status code other than 200 or 404 not found", () => {
+      it("should throw an error", () => {
+          const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                  TestNumber: "W01A00310",
+                  TestStationPNumber: "09-4129632",
+                  TestStationName: "Abshire-Kub",
+                  CurrentOdometer: {
+                      value: 12312,
+                      unit: "kilometres"
+                  },
+                  IssuersName: "CVS Dev1",
+                  DateOfTheTest: "26.02.2019",
+                  CountryOfRegistrationCode: "gb",
+                  VehicleEuClassification: "M1",
+                  RawVIN: "T12876765",
+                  ExpiryDate: "25.02.2020",
+                  EarliestDateOfTheNextTest: "01.11.2019",
+                  SeatBeltTested: "Yes",
+                  SeatBeltPreviousCheckDate:  "26.02.2019",
+                  SeatBeltNumber: 2,
+                  Make: "Mercedes",
+                  Model: "632,01",
+              },
+              Signature: {
+                  ImageType: "png",
+                  ImageData: fs.readFileSync(path.resolve(__dirname, `../resources/signatures/1.base64`)).toString()
+              }
+          };
+          // Add a new signature
+          S3BucketMockService.buckets.push({
+              bucketName: `cvs-signature-${process.env.BUCKET}`,
+              files: ["1.base64"]
+          });
+
+          const getTrailerRegistrationStub = sandbox.stub(CertificateGenerationService.prototype, "getTrailerRegistrationObject").rejects({statusCode: 500, body: "an error occured"});
+
+          return certificateGenerationService.generatePayload(testResult)
+              .catch((err: any) => {
+                  expect(err.statusCode).toEqual(500);
+
+                  // Remove the signature
+                  S3BucketMockService.buckets.pop();
+                  getTrailerRegistrationStub.restore();
+              });
+      });
+  });
     });
 
     context("when a prs test result is read from the queue", () => {
@@ -1914,6 +2018,8 @@ describe("cert-gen", () => {
                 SeatBeltNumber: 2,
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               FAIL_DATA: {
                 TestNumber: "W01A00310",
@@ -1936,6 +2042,8 @@ describe("cert-gen", () => {
                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2048,6 +2156,8 @@ describe("cert-gen", () => {
                 SeatBeltNumber: 2,
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               FAIL_DATA: {
                 TestNumber: "W01A00310",
@@ -2070,6 +2180,8 @@ describe("cert-gen", () => {
                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2156,6 +2268,8 @@ describe("cert-gen", () => {
                 ],
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2267,6 +2381,8 @@ describe("cert-gen", () => {
                 ],
                 Make: "Mercedes",
                 Model: "632,01",
+                Trn: "ABC123",
+                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
