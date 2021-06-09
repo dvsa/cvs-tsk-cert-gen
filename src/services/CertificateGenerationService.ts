@@ -5,7 +5,8 @@ import {
     IMOTConfig,
     IRoadworthinessCertificateData,
     ITestResult,
-    IWeightDetails
+    IWeightDetails,
+    ITrailerRegistration,
 } from "../models";
 import {Configuration} from "../utils/Configuration";
 import {S3BucketService} from "./S3BucketService";
@@ -136,7 +137,7 @@ class CertificateGenerationService {
      * Generates the payload for the MOT certificate generation service
      * @param testResult - source test result for certificate generation
      */
-    public async generatePayload(testResult: any) {
+    public async generatePayload(testResult: ITestResult) {
         const signature: string | null = await this.getSignature(testResult.testerStaffId);
         let makeAndModel: any = null;
         if (!CertificateGenerationService.isRoadworthinessTestType(testResult.testTypes.testTypeId)) {
@@ -153,22 +154,24 @@ class CertificateGenerationService {
                 ImageData: signature
             }
         };
+        const { testTypes, vehicleType, vin } = testResult;
         if (CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)) {
             // CVSB-7677 for roadworthiness test for hgv or trl.
             const rwtData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.RWT_DATA);
             payload.RWT_DATA = {...rwtData};
-        } else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testResult.testTypes)) {
+        } else if (testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testTypes)) {
             const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
             payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
-            const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.vin);
-            if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
+            const odometerHistory = (vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(vin);
+            const Trn = (vehicleType === VEHICLE_TYPES.TRL && makeAndModel) ? await this.getTrailerRegistration(vin,  makeAndModel.Make) : undefined;
+            if (testTypes.testResult !== TEST_RESULTS.FAIL) {
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
-                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
+                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory, Trn};
             }
-            if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
+            if  (testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
-                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
+                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory, Trn};
             }
         }
         // Purge undefined values
@@ -562,6 +565,39 @@ class CertificateGenerationService {
         }
 
         return defectString;
+    }
+    /**
+     * To fetch trailer registration
+     * @param vin The vin of the trailer
+     * @param make The make of the trailer
+     * @returns A payload containing the TRN of the trailer.
+     */
+     public async getTrailerRegistration(vin: string, make: string) {
+        const config: IInvokeConfig = this.config.getInvokeConfig();
+        const invokeParams: any = {
+            FunctionName: config.functions.trailerRegistration.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "GET",
+                path: `${Configuration.getInstance().getTrailerServiceVersion()}/trailers/${vin}?make=${make}`,
+                pathParameters: {
+                    proxy: `${Configuration.getInstance().getTrailerServiceVersion()}/trailers`
+                },
+                queryStringParameters: {
+                    make
+                }
+            }),
+        };
+        const response = await this.lambdaClient.invoke(invokeParams);
+        try {
+             const payload: any = this.lambdaClient.validateInvocationResponse(response);
+             const trailerRegistration = JSON.parse(payload.body) as ITrailerRegistration;
+             return trailerRegistration.trn;
+         } catch (e) {
+             console.log("Error on fetching trailer registration", e);
+             return undefined;
+         }
     }
 
     /**
