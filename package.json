@@ -8,22 +8,23 @@
     "npm": "5.6.0"
   },
   "scripts": {
-    "start": "npm run kill:offline && npm run start:offline && node_modules/serverless/bin/serverless invoke local -f main --path tests/resources/queue-event.json",
-    "start:offline": "node_modules/gulp/bin/gulp.js start-serverless",
-    "kill:offline": "node_modules/gulp/bin/gulp.js kill-serverless",
+    "start": "npm run kill:offline && npm run start:offline && serverless invoke local -f main --path tests/resources/queue-event.json",
+    "start:offline": "gulp start-serverless",
+    "kill:offline": "gulp kill-serverless",
     "start:docker": "docker-compose -f docker-compose.yml up -d",
     "build": "node_modules/typescript/bin/tsc --rootDir ./ --outDir .build --sourceMap false && npm run build:copy",
     "build:dev": "node_modules/typescript/bin/tsc && npm run build:copy",
     "build:copy": "find src -type f \\( -name \"*.yml\" -or -name \"*.json\" \\) | cpio -pdm .build && find tests -type f \\( -name \"*.yml\" -or -name \"*.json\" -or -name \"*.base64\" \\)  | cpio -pdm .build",
     "build:docker": "docker-compose -f docker-compose.yml up -d --build",
-    "test": "BRANCH=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest --testMatch=\"**/*.unitTest.ts\" --coverage",
+    "test": "BRANCH=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest --testMatch=\"**/*.unitTest.ts\"",
     "test-i": "BRANCH=local jest --testMatch=\"**/*.intTest.ts\" --runInBand",
     "tslint": "tslint src/**/*.ts tests/**/*.ts -q",
     "security-checks": "git secrets --scan && git log -p | scanrepo",
-    "prepush": "npm test && npm run tslint",
+    "prepush": "npm run coverage && npm run build",
     "sonar-scanner": "BRANCH=local npm run tslint && npm run coverage && sonar-scanner",
-    "coverage": "BRANCH=local SLS_DEBUG=* jest --testMatch=\"**/*.*Test.ts\" --coverage",
-    "audit-dep": "npm audit --json | node_modules/.bin/audit-filter --nsp-config=.nsprc --audit=-",
+    "coverage": "npm test -- --coverage",
+    "audit:check": "npm audit --json | node_modules/.bin/audit-filter --nsp-config=.nsprc --audit=-",
+    "audit-dep": "npm audit",
     "package": "mkdir -p ${ZIP_NAME} && cp package.json package-lock.json ${ZIP_NAME}/ && cp -r .build/src/* ${ZIP_NAME}/ && cd ${ZIP_NAME} && npm ci --production && rm package.json package-lock.json && zip -qr ../${ZIP_NAME}.zip .",
     "tools-setup": "echo 'nothing to do'"
   },
@@ -71,20 +72,20 @@
     "aws-lambda-mock-context": "^3.2.1",
     "gulp": "^4.0.2",
     "husky": "^3.0.9",
-    "jest": "^24.9.0",
+    "jest": "^26.6.3",
     "jest-plugin-context": "^2.9.0",
     "jest-sonar-reporter": "^2.0.0",
     "lambda-tester": "^3.5.0",
-    "serverless": "1.56.1",
+    "serverless": "^2.46.0",
     "serverless-dependency-invoke": "^0.0.9",
     "serverless-offline": "^5.12.0",
     "serverless-plugin-tracing": "^2.0.0",
     "serverless-plugin-typescript": "^1.1.9",
     "sinon": "^7.5.0",
-    "ts-jest": "^24.1.0",
+    "ts-jest": "^26.4.4",
     "tslint": "^5.20.0",
     "tslint-no-unused-expression-chai": "^0.1.4",
-    "typescript": "^3.6.4"
+    "typescript": "^3.9.7"
   },
   "jestSonar": {
     "reportPath": ".reports",
@@ -99,7 +100,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run prepush && npm run security-checks"
+      "pre-commit": "npm run security-checks && npm audit && npm run tslint",
+      "pre-push": "npm run prepush"
     }
   }
 }
