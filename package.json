@@ -51,7 +51,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/lambda-tester": "^3.6.0",
-    "aws-lambda": "^0.1.2",
+    "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.562.0",
     "aws-xray-sdk": "^2.4.0",
     "moment": "^2.24.0",
