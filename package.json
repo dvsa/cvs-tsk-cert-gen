@@ -20,7 +20,7 @@
     "test-i": "BRANCH=local jest --testMatch=\"**/*.intTest.ts\" --runInBand",
     "tslint": "tslint src/**/*.ts tests/**/*.ts -q",
     "security-checks": "git secrets --scan && git log -p | scanrepo",
-    "prepush": "npm run coverage",
+    "prepush": "npm run coverage && npm run build",
     "sonar-scanner": "BRANCH=local npm run tslint && npm run coverage && sonar-scanner",
     "coverage": "npm test -- --coverage",
     "audit:check": "npm audit --json | node_modules/.bin/audit-filter --nsp-config=.nsprc --audit=-",
@@ -76,7 +76,7 @@
     "jest-plugin-context": "^2.9.0",
     "jest-sonar-reporter": "^2.0.0",
     "lambda-tester": "^3.5.0",
-    "serverless": "^2.19.0",
+    "serverless": "^2.46.0",
     "serverless-dependency-invoke": "^0.0.9",
     "serverless-offline": "^5.12.0",
     "serverless-plugin-tracing": "^2.0.0",
@@ -100,7 +100,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run security-checks && npm run tslint && npm run build",
+      "pre-commit": "npm run security-checks && npm audit && npm run tslint",
       "pre-push": "npm run prepush"
     }
   }
