@@ -51,7 +51,6 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: string = JSON.stringify(await this.generatePayload(testResult));
-
         const certificateTypes: any = {
             psv_pass: config.documentNames.vtp20,
             psv_fail: config.documentNames.vtp30,
@@ -164,7 +163,7 @@ class CertificateGenerationService {
             payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
             const odometerHistory = (vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(vin);
-            const Trn = (vehicleType === VEHICLE_TYPES.TRL && makeAndModel) ? await this.getTrailerRegistration(vin,  makeAndModel.Make) : undefined;
+            const Trn = this.isValidForTrn(vehicleType, testTypes, makeAndModel) ? await this.getTrailerRegistration(testResult.vin, makeAndModel.Make) : undefined;
             if (testTypes.testResult !== TEST_RESULTS.FAIL) {
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
                 payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory, Trn};
@@ -176,7 +175,6 @@ class CertificateGenerationService {
         }
         // Purge undefined values
         payload = JSON.parse(JSON.stringify(payload));
-
         return payload;
     }
 
@@ -598,6 +596,17 @@ class CertificateGenerationService {
              console.log("Error on fetching trailer registration", e);
              return undefined;
          }
+    }
+
+    /**
+     * To check if the testResult is valid for fetching Trn.
+     * @param vehicleType the vehicle type
+     * @param testTypes the test type
+     * @param makeAndModel object containing Make and Model
+     * @returns returns if the condition is satisfied else false
+     */
+    private isValidForTrn(vehicleType: string, testTypes: any, makeAndModel: any): boolean {
+       return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL &&  testTypes.testResult !== TEST_RESULTS.PRS);
     }
 
     /**

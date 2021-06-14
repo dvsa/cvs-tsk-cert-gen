@@ -1962,7 +1962,8 @@ describe("cert-gen", () => {
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
                                 Make: "Mercedes",
-                                Model: "632,01"
+                                Model: "632,01",
+                                Trn: "ABC123"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2061,7 +2062,8 @@ describe("cert-gen", () => {
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
                                 ],
                                 Make: "Mercedes",
-                                Model: "632,01"
+                                Model: "632,01",
+                                Trn: "ABC123"
                             },
                             Signature: {
                                 ImageType: "png",
