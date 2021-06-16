@@ -593,7 +593,7 @@ class CertificateGenerationService {
              const trailerRegistration = JSON.parse(payload.body) as ITrailerRegistration;
              return trailerRegistration.trn;
          } catch (e) {
-             console.log("Error on fetching trailer registration", e);
+             console.error(`Error on fetching vinOrChassisWithMake ${vin+make}`, e);
              return undefined;
          }
     }
