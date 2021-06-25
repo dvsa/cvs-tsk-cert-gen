@@ -1738,7 +1738,8 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "Mercedes",
-                                Model: "632,01"
+                                Model: "632,01",
+                                Trn: "ABC123",
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -1762,7 +1763,8 @@ describe("cert-gen", () => {
                                     "1.1.a A registration plate: missing. Front."
                                 ],
                                 Make: "Mercedes",
-                                Model: "632,01"
+                                Model: "632,01",
+                                Trn: "ABC123",
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1864,7 +1866,8 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate:  "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "Mercedes",
-                                Model: "632,01"
+                                Model: "632,01",
+                                Trn: "ABC123",
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -1888,7 +1891,8 @@ describe("cert-gen", () => {
                                     "1.1.a A registration plate: missing. Front."
                                 ],
                                 Make: "Mercedes",
-                                Model: "632,01"
+                                Model: "632,01",
+                                Trn: "ABC123",
                             },
                             Signature: {
                                 ImageType: "png",

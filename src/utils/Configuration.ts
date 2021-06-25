@@ -98,7 +98,7 @@ class Configuration {
      * @returns Trailer service version
      */
     public getTrailerServiceVersion(): string {
-        return process.env.TRAILERS_VERSION || "v1";
+        return this.config.version.trailerRegistration || "v1";
     }
 
 }

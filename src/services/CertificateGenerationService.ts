@@ -7,6 +7,8 @@ import {
     ITestResult,
     IWeightDetails,
     ITrailerRegistration,
+    ITestType,
+    IMakeAndModel,
 } from "../models";
 import {Configuration} from "../utils/Configuration";
 import {S3BucketService} from "./S3BucketService";
@@ -578,9 +580,9 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `${Configuration.getInstance().getTrailerServiceVersion()}/trailers/${vin}?make=${make}`,
+                path: `v1/trailers/${vin}?make=${make}`,
                 pathParameters: {
-                    proxy: `${Configuration.getInstance().getTrailerServiceVersion()}/trailers`
+                    proxy: `v1/trailers`
                 },
                 queryStringParameters: {
                     make
@@ -594,7 +596,7 @@ class CertificateGenerationService {
              return trailerRegistration.trn;
          } catch (e) {
              console.error(`Error on fetching vinOrChassisWithMake ${vin+make}`, e);
-             return undefined;
+             throw e;
          }
     }
 
@@ -605,8 +607,8 @@ class CertificateGenerationService {
      * @param makeAndModel object containing Make and Model
      * @returns returns if the condition is satisfied else false
      */
-    private isValidForTrn(vehicleType: string, testTypes: any, makeAndModel: any): boolean {
-       return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL &&  testTypes.testResult !== TEST_RESULTS.PRS);
+    private isValidForTrn(vehicleType: string, testTypes: ITestType, makeAndModel: IMakeAndModel): boolean {
+       return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL);
     }
 
     /**

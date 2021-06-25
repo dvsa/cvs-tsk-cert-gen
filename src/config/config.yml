@@ -28,6 +28,8 @@ invoke:
           name: doc-gen-${BRANCH}
       trailerRegistration:
           name: trailers-${BRANCH}
+version:
+  trailerRegistration: v1
 s3:
   local:
     endpoint: http://localhost:7000

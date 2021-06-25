@@ -220,6 +220,11 @@ interface ITrailerRegistration {
   certificateIssueDate: Date;
 }
 
+interface IMakeAndModel {
+  Make: string;
+  Model: string
+}
+
 export {
   IInvokeConfig,
   IMOTConfig,
@@ -230,5 +235,7 @@ export {
   IRoadworthinessCertificateData,
   IWeightDetails,
   ITestResult,
-  ITrailerRegistration
+  ITestType,
+  ITrailerRegistration,
+  IMakeAndModel
 };
