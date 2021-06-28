@@ -172,7 +172,7 @@ class CertificateGenerationService {
             }
             if  (testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
-                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory, Trn};
+                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory, Trn, IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL};
             }
         }
         // Purge undefined values
