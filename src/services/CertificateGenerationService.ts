@@ -165,14 +165,14 @@ class CertificateGenerationService {
             payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
             const odometerHistory = (vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(vin);
-            const Trn = this.isValidForTrn(vehicleType, testTypes, makeAndModel) ? await this.getTrailerRegistration(testResult.vin, makeAndModel.Make) : undefined;
+            const TrnObj = this.isValidForTrn(vehicleType, testResult.vin, makeAndModel) ? await this.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make) : undefined;
             if (testTypes.testResult !== TEST_RESULTS.FAIL) {
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
-                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory, Trn};
+                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory, ...TrnObj};
             }
             if  (testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
-                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory, Trn, IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL};
+                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory, ...TrnObj};
             }
         }
         // Purge undefined values
@@ -570,9 +570,9 @@ class CertificateGenerationService {
      * To fetch trailer registration
      * @param vin The vin of the trailer
      * @param make The make of the trailer
-     * @returns A payload containing the TRN of the trailer.
+     * @returns A payload containing the TRN of the trailer and a boolean.
      */
-     public async getTrailerRegistration(vin: string, make: string) {
+     public async getTrailerRegistrationObject(vin: string, make: string) {
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
             FunctionName: config.functions.trailerRegistration.name,
@@ -593,9 +593,9 @@ class CertificateGenerationService {
         try {
              const payload: any = this.lambdaClient.validateInvocationResponse(response);
              const trailerRegistration = JSON.parse(payload.body) as ITrailerRegistration;
-             return trailerRegistration.trn;
+             return {Trn: trailerRegistration.trn, isTrailer: true};
          } catch (e) {
-             console.error(`Error on fetching vinOrChassisWithMake ${vin+make}`, e);
+             console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, e);
              throw e;
          }
     }
@@ -607,8 +607,13 @@ class CertificateGenerationService {
      * @param makeAndModel object containing Make and Model
      * @returns returns if the condition is satisfied else false
      */
-    private isValidForTrn(vehicleType: string, testTypes: ITestType, makeAndModel: IMakeAndModel): boolean {
-       return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL);
+    public isValidForTrn(vehicleType: string, vin: string, makeAndModel: IMakeAndModel): boolean {
+        // FIXME: Agree with Mike on whether we return or throw error.
+        // console.log("is makeAndModle true", makeAndModel && makeAndModel.Make);
+        // if (!(makeAndModel && makeAndModel.Make) && vehicleType === VEHICLE_TYPES.TRL) {
+        //     throw new Error(`Unable to fetch trailer registration ${ERRORS.MAKE_MISSING} for ${vin}`);
+        // }
+        return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL);
     }
 
     /**

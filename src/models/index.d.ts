@@ -222,7 +222,7 @@ interface ITrailerRegistration {
 
 interface IMakeAndModel {
   Make: string;
-  Model: string
+  Model: string;
 }
 
 export {
