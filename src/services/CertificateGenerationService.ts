@@ -596,7 +596,7 @@ class CertificateGenerationService {
              return {Trn: trailerRegistration.trn, isTrailer: true};
          } catch (err) {
              if (err.statusCode === 404) {
-                console.warn(`vinOrChassisWithMake not found ${vin + make}`);
+                console.debug(`vinOrChassisWithMake not found ${vin + make}`);
                 return;
              }
              console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, err);
@@ -612,11 +612,6 @@ class CertificateGenerationService {
      * @returns returns if the condition is satisfied else false
      */
     public isValidForTrn(vehicleType: string, vin: string, makeAndModel: IMakeAndModel): boolean {
-        // FIXME: Agree with Mike on whether we return or throw error.
-        // console.log("is makeAndModle true", makeAndModel && makeAndModel.Make);
-        // if (!(makeAndModel && makeAndModel.Make) && vehicleType === VEHICLE_TYPES.TRL) {
-        //     throw new Error(`Unable to fetch trailer registration ${ERRORS.MAKE_MISSING} for ${vin}`);
-        // }
         return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL);
     }
 
