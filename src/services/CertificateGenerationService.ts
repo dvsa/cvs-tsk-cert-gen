@@ -594,9 +594,13 @@ class CertificateGenerationService {
              const payload: any = this.lambdaClient.validateInvocationResponse(response);
              const trailerRegistration = JSON.parse(payload.body) as ITrailerRegistration;
              return {Trn: trailerRegistration.trn, isTrailer: true};
-         } catch (e) {
-             console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, e);
-             throw e;
+         } catch (err) {
+             if (err.statusCode === 404) {
+                console.warn(`vinOrChassisWithMake not found ${vin + make}`);
+                return;
+             }
+             console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, err);
+             throw err;
          }
     }
 
