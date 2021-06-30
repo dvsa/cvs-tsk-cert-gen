@@ -93,6 +93,14 @@ class Configuration {
         return this.config.mot;
     }
 
+    /**
+     * Returns current version of Trailer Service
+     * @returns Trailer service version
+     */
+    public getTrailerServiceVersion(): string {
+        return this.config.version.trailerRegistration || "v1";
+    }
+
 }
 
 export { Configuration };

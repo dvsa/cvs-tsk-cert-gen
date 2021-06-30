@@ -5,7 +5,10 @@ import {
     IMOTConfig,
     IRoadworthinessCertificateData,
     ITestResult,
-    IWeightDetails
+    IWeightDetails,
+    ITrailerRegistration,
+    ITestType,
+    IMakeAndModel,
 } from "../models";
 import {Configuration} from "../utils/Configuration";
 import {S3BucketService} from "./S3BucketService";
@@ -50,7 +53,6 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: string = JSON.stringify(await this.generatePayload(testResult));
-
         const certificateTypes: any = {
             psv_pass: config.documentNames.vtp20,
             psv_fail: config.documentNames.vtp30,
@@ -136,7 +138,7 @@ class CertificateGenerationService {
      * Generates the payload for the MOT certificate generation service
      * @param testResult - source test result for certificate generation
      */
-    public async generatePayload(testResult: any) {
+    public async generatePayload(testResult: ITestResult) {
         const signature: string | null = await this.getSignature(testResult.testerStaffId);
         let makeAndModel: any = null;
         if (!CertificateGenerationService.isRoadworthinessTestType(testResult.testTypes.testTypeId)) {
@@ -153,27 +155,28 @@ class CertificateGenerationService {
                 ImageData: signature
             }
         };
+        const { testTypes, vehicleType, vin } = testResult;
         if (CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)) {
             // CVSB-7677 for roadworthiness test for hgv or trl.
             const rwtData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.RWT_DATA);
             payload.RWT_DATA = {...rwtData};
-        } else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testResult.testTypes)) {
+        } else if (testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testTypes)) {
             const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
             payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
-            const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.vin);
-            if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
+            const odometerHistory = (vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(vin);
+            const TrnObj = this.isValidForTrn(vehicleType, testResult.vin, makeAndModel) ? await this.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make) : undefined;
+            if (testTypes.testResult !== TEST_RESULTS.FAIL) {
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
-                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
+                payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory, ...TrnObj};
             }
-            if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
+            if  (testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
-                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
+                payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory, ...TrnObj};
             }
         }
         // Purge undefined values
         payload = JSON.parse(JSON.stringify(payload));
-
         return payload;
     }
 
@@ -562,6 +565,54 @@ class CertificateGenerationService {
         }
 
         return defectString;
+    }
+    /**
+     * To fetch trailer registration
+     * @param vin The vin of the trailer
+     * @param make The make of the trailer
+     * @returns A payload containing the TRN of the trailer and a boolean.
+     */
+     public async getTrailerRegistrationObject(vin: string, make: string) {
+        const config: IInvokeConfig = this.config.getInvokeConfig();
+        const invokeParams: any = {
+            FunctionName: config.functions.trailerRegistration.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "GET",
+                path: `v1/trailers/${vin}?make=${make}`,
+                pathParameters: {
+                    proxy: `v1/trailers`
+                },
+                queryStringParameters: {
+                    make
+                }
+            }),
+        };
+        const response = await this.lambdaClient.invoke(invokeParams);
+        try {
+             const payload: any = this.lambdaClient.validateInvocationResponse(response);
+             const trailerRegistration = JSON.parse(payload.body) as ITrailerRegistration;
+             return {Trn: trailerRegistration.trn, isTrailer: true};
+         } catch (err) {
+             if (err.statusCode === 404) {
+                console.debug(`vinOrChassisWithMake not found ${vin + make}`);
+                return;
+             }
+             console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, err);
+             throw err;
+         }
+    }
+
+    /**
+     * To check if the testResult is valid for fetching Trn.
+     * @param vehicleType the vehicle type
+     * @param testTypes the test type
+     * @param makeAndModel object containing Make and Model
+     * @returns returns if the condition is satisfied else false
+     */
+    public isValidForTrn(vehicleType: string, vin: string, makeAndModel: IMakeAndModel): boolean {
+        return (makeAndModel && vehicleType === VEHICLE_TYPES.TRL);
     }
 
     /**
