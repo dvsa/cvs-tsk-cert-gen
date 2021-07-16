@@ -82,15 +82,13 @@
           "approvalDate": "2019-10-01"
         },
         "listStatementApplicable": false,
-        "batteryListNumber":  "124",
+        "batteryListNumber": "124",
         "declarationsSeen": true,
         "brakeDeclarationsSeen": true,
         "brakeDeclarationIssuer": "demoBrakeDeclarationIssuer",
         "compatibilityGroupJ": false,
         "documents": ["documentOne", "documentTwo"],
-        "permittedDangerousGoods": [
-          "FP <61 (FL)"
-        ],
+        "permittedDangerousGoods": ["FP <61 (FL)"],
         "additionalExaminerNotes": "string",
         "applicantDetails": {
           "name": "string",
@@ -99,14 +97,10 @@
           "city": "string",
           "postcode": "string"
         },
-        "memosApply": [
-          "07/09 3mth leak ext"
-        ],
+        "memosApply": ["07/09 3mth leak ext"],
         "additionalNotes": {
           "number": ["0"],
-          "guidanceNotes": [
-            "M145 Statement"
-          ]
+          "guidanceNotes": ["M145 Statement"]
         },
         "adrTypeApprovalNo": "adrTypeApprovalNodemo",
         "tank": {
@@ -117,11 +111,13 @@
               "tc2IntermediateApprovalNo": "string",
               "tc2IntermediateExpiryDate": "2019-10-01"
             },
-            "tc3Details": [{
-              "tc3Type": "string",
-              "tc3PeriodicNumber": "string",
-              "tc3PeriodicExpiryDate": "2019-10-01"
-            }],
+            "tc3Details": [
+              {
+                "tc3Type": "string",
+                "tc3PeriodicNumber": "string",
+                "tc3PeriodicExpiryDate": "2019-10-01"
+              }
+            ],
             "yearOfManufacture": 2019,
             "tankCode": "string",
             "specialProvisions": "string",

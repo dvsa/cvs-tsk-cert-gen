@@ -4,9 +4,9 @@ services:
     container_name: aws-cli
     build: .
     depends_on:
-    - s3
+      - s3
     links:
-    - s3
+      - s3
     environment:
       WAIT_HOSTS: s3:9991
   s3:
@@ -16,5 +16,5 @@ services:
       - ./s3-conf.json:/usr/src/app/config.json
       - ./s3-location-conf.json:/usr/src/app/locationConfig.json
     ports:
-    - "7000:7000" # s3 server
-    - "9991:9991" # data store
+      - "7000:7000" # s3 server
+      - "9991:9991" # data store

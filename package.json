@@ -60,6 +60,8 @@
     "ts-node-register": "^1.0.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^12.1.4",
+    "@commitlint/config-conventional": "^12.1.4",
     "@types/aws-lambda": "^8.10.34",
     "@types/jest": "^24.0.21",
     "@types/jest-plugin-context": "^2.9.2",
@@ -75,6 +77,7 @@
     "jest-plugin-context": "^2.9.0",
     "jest-sonar-reporter": "^2.0.0",
     "lambda-tester": "^4.0.1",
+    "prettier": "^2.3.2",
     "serverless": "^2.46.0",
     "serverless-dependency-invoke": "^0.0.9",
     "serverless-offline": "^5.12.0",

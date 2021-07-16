@@ -2,16 +2,16 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-    "Dgvw": 98204,
-    "Weight2": 40568, 
-    "VehicleNumber":  "NKPILNCN",
-    "Vin":  "GYFC26269R240355",
-    "IssuersName": "CVS Dev1",
-    "DateOfInspection": "26.02.2019",
-    "TestStationPNumber": "09-4129632",
-    "DocumentNumber": "123",
-    "Date": "26.02.2019",
-    "IsTrailer": false
+      "Dgvw": 98204,
+      "Weight2": 40568,
+      "VehicleNumber": "NKPILNCN",
+      "Vin": "GYFC26269R240355",
+      "IssuersName": "CVS Dev1",
+      "DateOfInspection": "26.02.2019",
+      "TestStationPNumber": "09-4129632",
+      "DocumentNumber": "123",
+      "Date": "26.02.2019",
+      "IsTrailer": false
     },
     "Signature": {
       "ImageType": "png",
@@ -21,16 +21,16 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-    "Dgvw": 98204,
-    "Weight2": 40568, 
-    "VehicleNumber":  "NKPILNCN",
-    "Vin":  "GYFC26269R240355",
-    "IssuersName": "CVS Dev1",
-    "DateOfInspection": "26.02.2019",
-    "TestStationPNumber": "09-4129632",
-    "DocumentNumber": "123",
-    "Date": "26.02.2019",
-    "IsTrailer": false
+      "Dgvw": 98204,
+      "Weight2": 40568,
+      "VehicleNumber": "NKPILNCN",
+      "Vin": "GYFC26269R240355",
+      "IssuersName": "CVS Dev1",
+      "DateOfInspection": "26.02.2019",
+      "TestStationPNumber": "09-4129632",
+      "DocumentNumber": "123",
+      "Date": "26.02.2019",
+      "IsTrailer": false
     },
     "Signature": {
       "ImageType": "png",
@@ -40,16 +40,16 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-    "Dgvw": 98204,
-    "Weight2": 9400, 
-    "VehicleNumber":  "0285678",
-    "Vin":  "T12768594",
-    "IssuersName": "CVS Dev1",
-    "DateOfInspection": "26.02.2019",
-    "TestStationPNumber": "09-4129632",
-    "DocumentNumber": "123",
-    "Date": "26.02.2019",
-    "IsTrailer": true
+      "Dgvw": 98204,
+      "Weight2": 9400,
+      "VehicleNumber": "0285678",
+      "Vin": "T12768594",
+      "IssuersName": "CVS Dev1",
+      "DateOfInspection": "26.02.2019",
+      "TestStationPNumber": "09-4129632",
+      "DocumentNumber": "123",
+      "Date": "26.02.2019",
+      "IsTrailer": true
     },
     "Signature": {
       "ImageType": "png",
@@ -59,18 +59,20 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-    "Dgvw": 98204,
-    "Weight2": 9400, 
-    "VehicleNumber":  "0285678",
-    "Vin":  "T12768594",
-    "IssuersName": "CVS Dev1",
-    "DateOfInspection": "26.02.2019",
-    "TestStationPNumber": "09-4129632",
-    "DocumentNumber": "321",
-    "Date": "26.02.2019",
-    "Defects":["54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-      "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.", 
-      "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"],
+      "Dgvw": 98204,
+      "Weight2": 9400,
+      "VehicleNumber": "0285678",
+      "Vin": "T12768594",
+      "IssuersName": "CVS Dev1",
+      "DateOfInspection": "26.02.2019",
+      "TestStationPNumber": "09-4129632",
+      "DocumentNumber": "321",
+      "Date": "26.02.2019",
+      "Defects": [
+        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+      ],
       "IsTrailer": true
     },
     "Signature": {
@@ -81,19 +83,21 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-       "Dgvw": 98204,
-       "Weight2": 9400, 
-       "VehicleNumber":  "0285678",
-       "Vin":  "T12768594",
-    "IssuersName": "CVS Dev1",
-    "DateOfInspection": "26.02.2019",
-    "TestStationPNumber": "09-4129632",
-    "DocumentNumber": "321",
-    "Date": "26.02.2019",
-    "Defects":["54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-               "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.", 
-               "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"],
-    "IsTrailer": true
+      "Dgvw": 98204,
+      "Weight2": 9400,
+      "VehicleNumber": "0285678",
+      "Vin": "T12768594",
+      "IssuersName": "CVS Dev1",
+      "DateOfInspection": "26.02.2019",
+      "TestStationPNumber": "09-4129632",
+      "DocumentNumber": "321",
+      "Date": "26.02.2019",
+      "Defects": [
+        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+      ],
+      "IsTrailer": true
     },
     "Signature": {
       "ImageType": "png",
@@ -101,4 +105,3 @@
     }
   }
 ]
-  
