@@ -2,7 +2,6 @@
  * Defines a throwable subclass of Error used for signaling an HTTP status code.
  */
 class HTTPError extends Error {
-
   private statusCode = 0;
   private body = "";
   /**

@@ -2,15 +2,18 @@ service: cvs-svc-tsk-cert-gen
 
 provider:
   name: aws
-  runtime: nodejs8.10
-  tracing: true # enable tracing
-  iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-        - "xray:PutTraceSegments"
-        - "xray:PutTelemetryRecords"
-      Resource:
-        - "*"
+  runtime: nodejs14.x
+  tracing:
+    lambda: true # enable tracing
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "xray:PutTraceSegments"
+            - "xray:PutTelemetryRecords"
+          Resource:
+            - "*"
 
 plugins:
   - serverless-plugin-typescript
@@ -21,9 +24,9 @@ functions:
   main:
     handler: src/handler.handler
     events:
-    - sqs:
-        arn: arn:aws:sqs:region:XXXXXX:cert-gen-q
-        batchSize: 10
+      - sqs:
+          arn: arn:aws:sqs:region:XXXXXX:cert-gen-q
+          batchSize: 10
 
 resources:
   Resources:

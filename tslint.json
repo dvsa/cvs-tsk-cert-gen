@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "tslint:recommended",
-    "tslint-no-unused-expression-chai"
-  ],
+  "extends": ["tslint:recommended", "tslint-no-unused-expression-chai"],
   "rules": {
     "max-line-length": {
       "options": [240]
