@@ -19,7 +19,7 @@ describe("Certificate Generation Service", () => {
           .resolves(AWSResolve(JSON.stringify(techRecordResp)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null,
+          null as any,
           new LambdaService(new Lambda())
         );
         const testResultMock = {
@@ -51,7 +51,7 @@ describe("Certificate Generation Service", () => {
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
-            null,
+            null as any,
             new LambdaService(new Lambda())
           );
           const testResultMock = {
@@ -85,7 +85,7 @@ describe("Certificate Generation Service", () => {
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
-            null,
+            null as any,
             new LambdaService(new Lambda())
           );
           const testResultMock = {
@@ -116,7 +116,7 @@ describe("Certificate Generation Service", () => {
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
-            null,
+            null as any,
             new LambdaService(new Lambda())
           );
           const testResultMock = {
@@ -151,7 +151,7 @@ describe("Certificate Generation Service", () => {
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
-            null,
+            null as any,
             new LambdaService(new Lambda())
           );
           const testResultMock = {
@@ -176,7 +176,7 @@ describe("Certificate Generation Service", () => {
           .resolves(AWSReject("no"));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null,
+          null as any,
           new LambdaService(new Lambda())
         );
         const testResultMock = {
@@ -206,7 +206,7 @@ describe("Certificate Generation Service", () => {
             .resolves(AWSReject("no"));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
-            null,
+            null as any,
             new LambdaService(new Lambda())
           );
           const testResultMock = {
@@ -234,7 +234,7 @@ describe("Certificate Generation Service", () => {
           .resolves(AWSResolve(JSON.stringify(techRecordResp)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null,
+          null as any,
           new LambdaService(new Lambda())
         );
         const testResultMock = {
@@ -256,8 +256,8 @@ describe("Certificate Generation Service", () => {
         const LambdaStub = sandbox
           .stub(LambdaService.prototype, "invoke")
           .resolves(AWSResolve(JSON.stringify(techRecordRespHGV)));
-        // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
+          // @ts-ignore
           null,
           new LambdaService(new Lambda())
         );
