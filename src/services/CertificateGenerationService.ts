@@ -122,7 +122,9 @@ class CertificateGenerationService {
      * @returns the signature as a base64 encoded string
      */
     public async getSignature(testerStaffId: string): Promise<string | null> {
-        return this.s3Client.download(`cvs-signature-${process.env.BUCKET}`, `${testerStaffId}.base64`)
+      const bucket = process.env.LOCALSTACK_HOSTNAME ? "cvs-signature-localstack" : `cvs-signature-${process.env.BUCKET}`;
+      console.log({bucket});
+      return this.s3Client.download(bucket, `${testerStaffId}.base64`)
         .then((result: S3.Types.GetObjectOutput) => {
             return result.Body!.toString();
         })
