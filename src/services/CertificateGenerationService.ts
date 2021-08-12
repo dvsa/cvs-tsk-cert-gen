@@ -363,6 +363,10 @@ class CertificateGenerationService {
                 return 0;
             });
 
+            console.log("**********************");
+            console.log("SIZE = " + testResults.length);
+            console.log(JSON.stringify(testResults));
+
             // Remove the first result as it should be the current one.
             testResults.shift();
 
