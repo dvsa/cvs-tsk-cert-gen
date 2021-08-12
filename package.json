@@ -8,7 +8,7 @@
     "npm": "5.6.0"
   },
   "scripts": {
-    "start": "npm run kill:offline && npm run start:offline && serverless invoke local -f main --path tests/resources/queue-event.json",
+    "start": "BRANCH=local npm run kill:offline && npm run start:offline && serverless invoke local -f main --path tests/resources/queue-event.json",
     "start:offline": "gulp start-serverless",
     "kill:offline": "gulp kill-serverless",
     "start:docker": "docker-compose -f docker-compose.yml up -d",

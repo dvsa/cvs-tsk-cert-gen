@@ -161,7 +161,11 @@ class CertificateGenerationService {
             const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
             payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
-            const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.vin);
+            console.log("**** USING SYSTEM NUMBER HERE INSTEAD OF VIN");
+            console.log(`**** VIN: ${testResult.vin}`);
+            console.log(`**** SYSNUM: ${testResult.systemNumber}`);
+            console.log(`**********************************`);
+            const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.systemNumber);
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
                 payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
