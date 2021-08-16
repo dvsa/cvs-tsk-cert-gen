@@ -172,6 +172,8 @@ class CertificateGenerationService {
             }
             if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
+                console.log(`***** THIS IS THE ODOMETER HISTORY`);
+                console.log(odometerHistory);
                 payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
             }
         }
