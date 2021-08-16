@@ -50,6 +50,8 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: string = JSON.stringify(await this.generatePayload(testResult));
+        console.log(`** This is the payload in generateCertificate method`);
+        console.log(payload);
 
         const certificateTypes: any = {
             psv_pass: config.documentNames.vtp20,
@@ -184,6 +186,8 @@ class CertificateGenerationService {
         }
         // Purge undefined values
         payload = JSON.parse(JSON.stringify(payload));
+        console.log(`** This is the payload returned from generatePayload method`);
+        console.log(payload);
 
         return payload;
     }
