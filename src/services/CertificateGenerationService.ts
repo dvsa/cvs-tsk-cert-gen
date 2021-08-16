@@ -167,12 +167,14 @@ class CertificateGenerationService {
             console.log(`**********************************`);
             const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.systemNumber);
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
+                console.log(`***** THIS IS THE ODOMETER HISTORY in PASS`);
+                console.log(odometerHistory);
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
                 payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
             }
             if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
-                console.log(`***** THIS IS THE ODOMETER HISTORY`);
+                console.log(`***** THIS IS THE ODOMETER HISTORY in FAIL`);
                 console.log(odometerHistory);
                 payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
             }
