@@ -165,7 +165,10 @@ class CertificateGenerationService {
             console.log(`**** VIN: ${testResult.vin}`);
             console.log(`**** SYSNUM: ${testResult.systemNumber}`);
             console.log(`**********************************`);
+            console.log(`BEFORE retrieving odometer history`);
             const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.systemNumber);
+            console.log(JSON.stringify(odometerHistory));
+            console.log(`AFTER retrieving odometer history`);
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
                 console.log(`***** THIS IS THE ODOMETER HISTORY in PASS`);
                 console.log(JSON.stringify(odometerHistory));
