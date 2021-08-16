@@ -50,8 +50,6 @@ class CertificateGenerationService {
         const iConfig: IInvokeConfig = this.config.getInvokeConfig();
         const testType: any = testResult.testTypes;
         const payload: string = JSON.stringify(await this.generatePayload(testResult));
-        console.log(`** This is the payload in generateCertificate method`);
-        console.log(payload);
 
         const certificateTypes: any = {
             psv_pass: config.documentNames.vtp20,
@@ -163,31 +161,18 @@ class CertificateGenerationService {
             const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
             payload.ADR_DATA = {...adrData, ...makeAndModel};
         } else {
-            console.log("**** USING SYSTEM NUMBER HERE INSTEAD OF VIN");
-            console.log(`**** VIN: ${testResult.vin}`);
-            console.log(`**** SYSNUM: ${testResult.systemNumber}`);
-            console.log(`**********************************`);
-            console.log(`BEFORE retrieving odometer history`);
             const odometerHistory: any = (testResult.vehicleType === VEHICLE_TYPES.TRL) ? undefined : await this.getOdometerHistory(testResult.systemNumber);
-            console.log(JSON.stringify(odometerHistory));
-            console.log(`AFTER retrieving odometer history`);
             if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
-                console.log(`***** THIS IS THE ODOMETER HISTORY in PASS`);
-                console.log(JSON.stringify(odometerHistory));
                 const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA);
                 payload.DATA =   {...passData, ...makeAndModel, ...odometerHistory};
             }
             if  (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
                 const failData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA);
-                console.log(`***** THIS IS THE ODOMETER HISTORY in FAIL`);
-                console.log(JSON.stringify(odometerHistory));
                 payload.FAIL_DATA =  {...failData, ...makeAndModel, ...odometerHistory};
             }
         }
         // Purge undefined values
         payload = JSON.parse(JSON.stringify(payload));
-        console.log(`** This is the payload returned from generatePayload method`);
-        console.log(payload);
 
         return payload;
     }
@@ -373,10 +358,6 @@ class CertificateGenerationService {
 
                 return 0;
             });
-
-            console.log("**********************");
-            console.log("SIZE = " + testResults.length);
-            console.log(JSON.stringify(testResults));
 
             // Remove the first result as it should be the current one.
             testResults.shift();
