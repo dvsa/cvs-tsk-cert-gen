@@ -9,7 +9,7 @@
       "city": "string",
       "postcode": "string"
     },
-    "PermittedDangerousGoods": [ "FP <61 (FL)" ],
+    "PermittedDangerousGoods": ["FP <61 (FL)"],
     "TankManufacturer": "string",
     "Tc2InitApprovalNo": "string",
     "TankManufactureSerialNo": "string",
