@@ -184,7 +184,7 @@ class CertificateGenerationService {
         ImageData: signature,
       },
     };
-    const { testTypes, vehicleType, vin } = testResult;
+    const { testTypes, vehicleType, systemNumber } = testResult;
     if (
       CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)
     ) {
@@ -207,7 +207,7 @@ class CertificateGenerationService {
       const odometerHistory =
         vehicleType === VEHICLE_TYPES.TRL
           ? undefined
-          : await this.getOdometerHistory(vin);
+          : await this.getOdometerHistory(systemNumber);
       const TrnObj = this.isValidForTrn(
         vehicleType,
         makeAndModel
