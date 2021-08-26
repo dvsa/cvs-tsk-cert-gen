@@ -1744,7 +1744,6 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -1838,7 +1837,6 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2019,7 +2017,6 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
               },
               FAIL_DATA: {
                 TestNumber: "W01A00310",
@@ -2043,7 +2040,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
+                IsTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2157,7 +2154,6 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
               },
               FAIL_DATA: {
                 TestNumber: "W01A00310",
@@ -2181,7 +2177,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
+                IsTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2269,7 +2265,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
+                IsTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2382,7 +2378,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
-                isTrailer: true,
+                IsTrailer: true,
               },
               Signature: {
                 ImageType: "png",

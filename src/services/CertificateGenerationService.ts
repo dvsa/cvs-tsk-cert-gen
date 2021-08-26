@@ -97,17 +97,15 @@ class CertificateGenerationService {
         body: payload,
       }),
     };
-
     return this.lambdaClient
       .invoke(invokeParams)
       .then(
         (
           response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
         ) => {
-          // tslint:disable-next-line:no-shadowed-variable
-          const payload: any =
+          const documentPayload: any =
             this.lambdaClient.validateInvocationResponse(response);
-          const resBody: string = payload.body;
+          const resBody: string = documentPayload.body;
           const responseBuffer: Buffer = Buffer.from(resBody, "base64");
           return {
             vrm:
@@ -230,7 +228,7 @@ class CertificateGenerationService {
           ...passData,
           ...makeAndModel,
           ...odometerHistory,
-          ...TrnObj,
+          Trn: TrnObj?.Trn
         };
       }
       if (testTypes.testResult !== TEST_RESULTS.PASS) {
@@ -652,7 +650,7 @@ class CertificateGenerationService {
       LogType: "Tail",
       Payload: JSON.stringify({
         httpMethod: "GET",
-        path: `/v1/trailers/${vin}?make=${make}`,
+        path: `/v1/trailers/${vin}`,
         pathParameters: {
           proxy: `/v1/trailers`,
         },
@@ -663,11 +661,7 @@ class CertificateGenerationService {
     };
     const response = await this.lambdaClient.invoke(invokeParams);
     try {
-      if (
-        !response.Payload ||
-        response.Payload === "" ||
-        (response.StatusCode && response.StatusCode >= 400)
-      ) {
+      if (!response.Payload || response.Payload === "") {
         throw new HTTPError(
           500,
           `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`
@@ -687,7 +681,7 @@ class CertificateGenerationService {
       const trailerRegistration = JSON.parse(
         payload.body
       ) as ITrailerRegistration;
-      return { Trn: trailerRegistration.trn, isTrailer: true };
+      return { Trn: trailerRegistration.trn, IsTrailer: true };
     } catch (err) {
       console.error(
         `Error on fetching vinOrChassisWithMake ${vin + make}`,
