@@ -7,7 +7,6 @@ import {
   ITestResult,
   IWeightDetails,
   ITrailerRegistration,
-  ITestType,
   IMakeAndModel,
 } from "../models";
 import { Configuration } from "../utils/Configuration";
