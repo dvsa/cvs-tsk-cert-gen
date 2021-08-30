@@ -669,7 +669,7 @@ class CertificateGenerationService {
       const payload: any = JSON.parse(response.Payload as string);
       if (payload.statusCode === 404) {
         console.debug(`vinOrChassisWithMake not found ${vin + make}`);
-        return;
+        return { Trn: undefined, IsTrailer: true };
       }
       if (payload.statusCode >= 400) {
         throw new HTTPError(
