@@ -1,0 +1,9 @@
+{
+    "headers": {
+      "Access-Control-Allow-Origin":"*",
+      "Access-Control-Allow-Credentials":true
+    },
+    "statusCode": 200,
+    "body": " { \n \"vin\": \"12343212DDDD\", \n \"make\": \"Doepker Industries\", \n \"trn\": \"ABC123\",\n \"certificateExpiryDate\": \"2023-12-10T15:49:30.881Z\",\n  \"certificateIssueDate\": \"2021-01-14T15:49:30.881Z\"\n}"
+  }
+  

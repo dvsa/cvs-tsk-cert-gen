@@ -6,6 +6,8 @@ import {
   IRoadworthinessCertificateData,
   ITestResult,
   IWeightDetails,
+  ITrailerRegistration,
+  IMakeAndModel,
 } from "../models";
 import { Configuration } from "../utils/Configuration";
 import { S3BucketService } from "./S3BucketService";
@@ -94,17 +96,15 @@ class CertificateGenerationService {
         body: payload,
       }),
     };
-
     return this.lambdaClient
       .invoke(invokeParams)
       .then(
         (
           response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
         ) => {
-          // tslint:disable-next-line:no-shadowed-variable
-          const payload: any =
+          const documentPayload: any =
             this.lambdaClient.validateInvocationResponse(response);
-          const resBody: string = payload.body;
+          const resBody: string = documentPayload.body;
           const responseBuffer: Buffer = Buffer.from(resBody, "base64");
           return {
             vrm:
@@ -184,6 +184,7 @@ class CertificateGenerationService {
         ImageData: signature,
       },
     };
+    const { testTypes, vehicleType, vin } = testResult;
     if (
       CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)
     ) {
@@ -203,18 +204,33 @@ class CertificateGenerationService {
       );
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
     } else {
-      const odometerHistory: any =
-        testResult.vehicleType === VEHICLE_TYPES.TRL
+      const odometerHistory =
+        vehicleType === VEHICLE_TYPES.TRL
           ? undefined
-          : await this.getOdometerHistory(testResult.vin);
-      if (testResult.testTypes.testResult !== TEST_RESULTS.FAIL) {
+          : await this.getOdometerHistory(vin);
+      const TrnObj = this.isValidForTrn(
+        vehicleType,
+        testResult.vin,
+        makeAndModel
+      )
+        ? await this.getTrailerRegistrationObject(
+            testResult.vin,
+            makeAndModel.Make
+          )
+        : undefined;
+      if (testTypes.testResult !== TEST_RESULTS.FAIL) {
         const passData = await this.generateCertificateData(
           testResult,
           CERTIFICATE_DATA.PASS_DATA
         );
-        payload.DATA = { ...passData, ...makeAndModel, ...odometerHistory };
+        payload.DATA = {
+          ...passData,
+          ...makeAndModel,
+          ...odometerHistory,
+          Trn: TrnObj?.Trn
+        };
       }
-      if (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
+      if (testTypes.testResult !== TEST_RESULTS.PASS) {
         const failData = await this.generateCertificateData(
           testResult,
           CERTIFICATE_DATA.FAIL_DATA
@@ -223,6 +239,7 @@ class CertificateGenerationService {
           ...failData,
           ...makeAndModel,
           ...odometerHistory,
+          ...TrnObj,
         };
       }
     }
@@ -616,6 +633,76 @@ class CertificateGenerationService {
         return undefined;
       }
     });
+  }
+
+  /**
+   * To fetch trailer registration
+   * @param vin The vin of the trailer
+   * @param make The make of the trailer
+   * @returns A payload containing the TRN of the trailer and a boolean.
+   */
+  public async getTrailerRegistrationObject(vin: string, make: string) {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.trailerRegistration.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/v1/trailers/${vin}`,
+        pathParameters: {
+          proxy: `/v1/trailers`,
+        },
+        queryStringParameters: {
+          make,
+        },
+      }),
+    };
+    const response = await this.lambdaClient.invoke(invokeParams);
+    try {
+      if (!response.Payload || response.Payload === "") {
+        throw new HTTPError(
+          500,
+          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`
+        );
+      }
+      const payload: any = JSON.parse(response.Payload as string);
+      if (payload.statusCode === 404) {
+        console.debug(`vinOrChassisWithMake not found ${vin + make}`);
+        return { Trn: undefined, IsTrailer: true };
+      }
+      if (payload.statusCode >= 400) {
+        throw new HTTPError(
+          500,
+          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`
+        );
+      }
+      const trailerRegistration = JSON.parse(
+        payload.body
+      ) as ITrailerRegistration;
+      return { Trn: trailerRegistration.trn, IsTrailer: true };
+    } catch (err) {
+      console.error(
+        `Error on fetching vinOrChassisWithMake ${vin + make}`,
+        err
+      );
+      throw err;
+    }
+  }
+
+  /**
+   * To check if the testResult is valid for fetching Trn.
+   * @param vehicleType the vehicle type
+   * @param testTypes the test type
+   * @param makeAndModel object containing Make and Model
+   * @returns returns if the condition is satisfied else false
+   */
+  public isValidForTrn(
+    vehicleType: string,
+    vin: string,
+    makeAndModel: IMakeAndModel
+  ): boolean {
+    return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
   }
 
   /**

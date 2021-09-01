@@ -4,6 +4,7 @@ interface IInvokeConfig {
     testResults: { name: string };
     techRecords: { name: string; mock: string };
     certGen: { name: string };
+    trailerRegistration: { name: string };
   };
 }
 
@@ -210,6 +211,20 @@ interface IVehicleClass {
   description: string;
 }
 
+interface ITrailerRegistration {
+  vinOrChassisWithMake?: string;
+  vin: string;
+  make: string;
+  trn: string;
+  certificateExpiryDate: Date;
+  certificateIssueDate: Date;
+}
+
+interface IMakeAndModel {
+  Make: string;
+  Model: string;
+}
+
 export {
   IInvokeConfig,
   IMOTConfig,
@@ -220,4 +235,7 @@ export {
   IRoadworthinessCertificateData,
   IWeightDetails,
   ITestResult,
+  ITestType,
+  ITrailerRegistration,
+  IMakeAndModel
 };
