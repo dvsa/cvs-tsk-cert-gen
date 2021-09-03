@@ -210,7 +210,6 @@ class CertificateGenerationService {
           : await this.getOdometerHistory(vin);
       const TrnObj = this.isValidForTrn(
         vehicleType,
-        testResult.vin,
         makeAndModel
       )
         ? await this.getTrailerRegistrationObject(
@@ -227,7 +226,7 @@ class CertificateGenerationService {
           ...passData,
           ...makeAndModel,
           ...odometerHistory,
-          Trn: TrnObj?.Trn
+          ...TrnObj,
         };
       }
       if (testTypes.testResult !== TEST_RESULTS.PASS) {
@@ -699,7 +698,6 @@ class CertificateGenerationService {
    */
   public isValidForTrn(
     vehicleType: string,
-    vin: string,
     makeAndModel: IMakeAndModel
   ): boolean {
     return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
