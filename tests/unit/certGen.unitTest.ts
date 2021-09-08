@@ -1740,6 +1740,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
+                IsTrailer: true
               },
               Signature: {
                 ImageType: "png",
@@ -1833,6 +1834,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
+                IsTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -1905,6 +1907,7 @@ describe("cert-gen", () => {
                 SeatBeltNumber: 2,
                 Make: "Mercedes",
                 Model: "632,01",
+                IsTrailer: true,
               },
               Signature: {
                 ImageType: "png",
@@ -2039,6 +2042,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
+                IsTrailer: true,
               },
               FAIL_DATA: {
                 TestNumber: "W01A00310",
@@ -2176,6 +2180,7 @@ describe("cert-gen", () => {
                 Make: "Mercedes",
                 Model: "632,01",
                 Trn: "ABC123",
+                IsTrailer: true,
               },
               FAIL_DATA: {
                 TestNumber: "W01A00310",
