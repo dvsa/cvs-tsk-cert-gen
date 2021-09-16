@@ -472,6 +472,7 @@ class CertificateGenerationService {
         ) => {
           const payload: any =
             this.lambdaClient.validateInvocationResponse(response);
+          // TODO: convert to correct type
           const testResults: any[] = JSON.parse(payload.body);
 
           if (!testResults || testResults.length === 0) {
@@ -501,21 +502,13 @@ class CertificateGenerationService {
           testResults.shift();
 
           // Remove any failed test results as they should not to be included in Odometer History
-          let filteredTestResults: any[] = [];
-
-          testResults.forEach((testResult) => {
-            let hasPassOrPrs: boolean = false;
-            if (testResult.testTypes) {
-              testResult.testTypes.forEach((testType: ITestType) => {
-                if (testType.testResult !== "fail") {
-                  hasPassOrPrs = true;
-                }
-              });
-              if (hasPassOrPrs) {
-                filteredTestResults.push(testResult);
-              }
-            } else {
-              filteredTestResults.push(testResult);
+          let filteredTestResults: any[] = testResults.filter((testResult) => {
+            const { testTypes } = testResult;
+            if (!testTypes) {
+              return testResult;
+            }
+            if (testTypes.filter((testType: ITestType) => testType.testResult !== "fail").length) {
+              return testResult;
             }
           });
 
