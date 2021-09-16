@@ -7,7 +7,7 @@ import {
   ITestResult,
   IWeightDetails,
   ITrailerRegistration,
-  IMakeAndModel,
+  IMakeAndModel, ITestType,
 } from "../models";
 import { Configuration } from "../utils/Configuration";
 import { S3BucketService } from "./S3BucketService";
@@ -472,7 +472,7 @@ class CertificateGenerationService {
         ) => {
           const payload: any =
             this.lambdaClient.validateInvocationResponse(response);
-          let testResults: any[] = JSON.parse(payload.body);
+          const testResults: any[] = JSON.parse(payload.body);
 
           if (!testResults || testResults.length === 0) {
             throw new HTTPError(
@@ -500,11 +500,30 @@ class CertificateGenerationService {
           // Remove the first result as it should be the current one.
           testResults.shift();
 
+          // Remove any failed test results as they should not to be included in Odometer History
+          let filteredTestResults: any[] = [];
+
+          testResults.forEach((testResult) => {
+            let hasPassOrPrs: boolean = false;
+            if (testResult.testTypes) {
+              testResult.testTypes.forEach((testType: ITestType) => {
+                if (testType.testResult !== "fail") {
+                  hasPassOrPrs = true;
+                }
+              });
+              if (hasPassOrPrs) {
+                filteredTestResults.push(testResult);
+              }
+            } else {
+              filteredTestResults.push(testResult);
+            }
+          });
+
           // Keep only last three entries (first three items of array)
-          testResults = testResults.slice(0, 3);
+          filteredTestResults = filteredTestResults.slice(0, 3);
 
           return {
-            OdometerHistoryList: testResults.map((testResult) => {
+            OdometerHistoryList: filteredTestResults.map((testResult) => {
               return {
                 value: testResult.odometerReading,
                 unit: testResult.odometerReadingUnits,
