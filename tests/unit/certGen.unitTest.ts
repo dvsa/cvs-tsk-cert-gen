@@ -44,6 +44,127 @@ describe("cert-gen", () => {
 
     context("when a passing test result is read from the queue", () => {
       const event: any = { ...queueEventPass };
+      const testResult: any = JSON.parse(event.Records[3].body);
+      const testResult2: any = JSON.parse(event.Records[4].body);
+
+      context("and a payload is generated", () => {
+        context("and no signatures were found in the bucket", () => {
+          it("should return a VTP20 payload without signature and the issuers name should have been swapped", () => {
+            const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                TestNumber: "W01A00310",
+                TestStationPNumber: "09-4129632",
+                TestStationName: "Abshire-Kub",
+                CurrentOdometer: {
+                  value: 12312,
+                  unit: "kilometres",
+                },
+                IssuersName: "Dev1 CVS",
+                DateOfTheTest: "26.02.2019",
+                CountryOfRegistrationCode: "gb",
+                VehicleEuClassification: "M1",
+                RawVIN: "XMGDE02FS0H012345",
+                RawVRM: "BQ91YHQ",
+                ExpiryDate: "25.02.2020",
+                EarliestDateOfTheNextTest: "26.12.2019",
+                SeatBeltTested: "Yes",
+                SeatBeltPreviousCheckDate: "26.02.2019",
+                SeatBeltNumber: 2,
+                Make: "Mercedes",
+                Model: "632,01",
+                OdometerHistoryList: [
+                  {
+                    value: 350000,
+                    unit: "kilometres",
+                    date: "14.01.2019",
+                  },
+                  {
+                    value: 350000,
+                    unit: "kilometres",
+                    date: "14.01.2019",
+                  },
+                  {
+                    value: 350000,
+                    unit: "kilometres",
+                    date: "14.01.2019",
+                  },
+                ],
+              },
+              Signature: {
+                ImageType: "png",
+                ImageData: null,
+              },
+            };
+
+            return certificateGenerationService
+                .generatePayload(testResult)
+                .then((payload: any) => {
+                  expect(payload).toEqual(expectedResult);
+                });
+          });
+        });
+        context("and no signatures were found in the bucket", () => {
+          it("should return a VTP20 payload without signature and the issuers name should have not been swapped", () => {
+            const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                TestNumber: "W01A00310",
+                TestStationPNumber: "09-4129632",
+                TestStationName: "Abshire-Kub",
+                CurrentOdometer: {
+                  value: 12312,
+                  unit: "kilometres",
+                },
+                IssuersName: "CVS, Test, Dev1",
+                DateOfTheTest: "26.02.2019",
+                CountryOfRegistrationCode: "gb",
+                VehicleEuClassification: "M1",
+                RawVIN: "XMGDE02FS0H012345",
+                RawVRM: "BQ91YHQ",
+                ExpiryDate: "25.02.2020",
+                EarliestDateOfTheNextTest: "26.12.2019",
+                SeatBeltTested: "Yes",
+                SeatBeltPreviousCheckDate: "26.02.2019",
+                SeatBeltNumber: 2,
+                Make: "Mercedes",
+                Model: "632,01",
+                OdometerHistoryList: [
+                  {
+                    value: 350000,
+                    unit: "kilometres",
+                    date: "14.01.2019",
+                  },
+                  {
+                    value: 350000,
+                    unit: "kilometres",
+                    date: "14.01.2019",
+                  },
+                  {
+                    value: 350000,
+                    unit: "kilometres",
+                    date: "14.01.2019",
+                  },
+                ],
+              },
+              Signature: {
+                ImageType: "png",
+                ImageData: null,
+              },
+            };
+
+            return certificateGenerationService
+                .generatePayload(testResult2)
+                .then((payload: any) => {
+                  expect(payload).toEqual(expectedResult);
+                });
+          });
+        });
+      });
+    });
+
+    context("when a passing test result is read from the queue", () => {
+      const event: any = { ...queueEventPass };
       const testResult: any = JSON.parse(event.Records[0].body);
 
       context("and a payload is generated", () => {
