@@ -23,7 +23,7 @@
     "security-checks": "git secrets --scan && git log -p | scanrepo",
     "prepush": "npm run test && npm run build && npm run test-i",
     "sonar-scanner": "sonar-scanner",
-    "audit": "npm audit",
+    "audit": "npm audit --prod",
     "package": "mkdir -p ${ZIP_NAME} && cp package.json package-lock.json ${ZIP_NAME}/ && cp -r .build/src/* ${ZIP_NAME}/ && cd ${ZIP_NAME} && npm ci --production && rm package.json package-lock.json && zip -qr ../${ZIP_NAME}.zip .",
     "tools-setup": "echo 'nothing to do'"
   },
