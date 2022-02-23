@@ -501,13 +501,17 @@ class CertificateGenerationService {
           // Remove the first result as it should be the current one.
           testResults.shift();
 
-          // Remove any failed test results as they should not to be included in Odometer History
-          let filteredTestResults: any[] = testResults.filter((testResult) => {
+          // Set the array to only submitted tests (exclude cancelled)
+          const submittedTests = testResults.filter((testResult) => {
+              return testResult.testStatus === "submitted";
+            });
+          let filteredTestResults: any[] = submittedTests.filter((testResult) => {
             const { testTypes } = testResult;
             if (!testTypes) {
               return testResult;
             }
-            if (testTypes.filter((testType: ITestType) => testType.testResult !== "fail").length) {
+            // Only include passed and prs results (exclude failed and abandoned)
+            if (testTypes.filter((testType: ITestType) => testType.testResult === "pass" || testType.testResult === "prs").length) {
               return testResult;
             }
           });
