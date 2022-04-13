@@ -162,6 +162,15 @@ class CertificateGenerationService {
    * @param testResult - source test result for certificate generation
    */
   public async generatePayload(testResult: any) {
+    let name = testResult.testerName;
+
+    const nameArrayList: string[] = name.split(",");
+
+    if (nameArrayList.length === 2) {
+      name = name.split(", ").reverse().join(" ");
+      testResult.testerName = name;
+    }
+
     const signature: string | null = await this.getSignature(
       testResult.testerStaffId
     );
