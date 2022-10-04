@@ -1,14 +1,12 @@
-import S3, { Metadata } from "aws-sdk/clients/s3";
-import { AWSError, config as AWSConfig } from "aws-sdk";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Readable } from "stream";
-import { Configuration } from "../utils/Configuration";
-import { IS3Config } from "../models";
-import { ManagedUpload } from "aws-sdk/lib/s3/managed_upload";
-import { PromiseResult } from "aws-sdk/lib/request";
-/* tslint:disable */
-const AWSXRay = require("aws-xray-sdk");
-/* tslint:enable */
+import S3, { Metadata } from 'aws-sdk/clients/s3';
+import { AWSError, config as AWSConfig } from 'aws-sdk';
+import { Readable } from 'stream';
+import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
+import { PromiseResult } from 'aws-sdk/lib/request';
+import {captureAWSClient} from "aws-xray-sdk";
+import { Service } from '../models/injector/ServiceDecorator';
+import { Configuration } from '../utils/Configuration';
+import { IS3Config } from '../models/index.d';
 
 /**
  * Service class for communicating with Simple Storage Service
@@ -19,7 +17,7 @@ class S3BucketService {
 
   constructor(s3Client: S3) {
     const config: IS3Config = Configuration.getInstance().getS3Config();
-    this.s3Client = AWSXRay.captureAWSClient(s3Client);
+    this.s3Client = captureAWSClient(s3Client);
 
     AWSConfig.s3 = config;
   }
@@ -35,12 +33,12 @@ class S3BucketService {
     bucketName: string,
     fileName: string,
     content: Buffer | Uint8Array | Blob | string | Readable,
-    metadata?: Metadata
+    metadata?: Metadata,
   ): Promise<ManagedUpload.SendData> {
     return this.s3Client
       .upload({
         Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
+        Key: `${process.env.BRANCH as string}/${fileName}`,
         Body: content,
         Metadata: metadata,
       })
@@ -54,12 +52,12 @@ class S3BucketService {
    */
   public download(
     bucketName: string,
-    fileName: string
+    fileName: string,
   ): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
     return this.s3Client
       .getObject({
         Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
+        Key: `${process.env.BRANCH as string}/${fileName}`,
       })
       .promise();
   }

@@ -1,9 +1,10 @@
-import { AWSError, Lambda, Response } from "aws-sdk";
-import { PromiseResult } from "aws-sdk/lib/request";
-import { Configuration } from "../../src/utils/Configuration";
-import { IInvokeConfig } from "../../src/models";
-import * as fs from "fs";
-import * as path from "path";
+/* eslint-disable */
+import { AWSError, Lambda, Response } from 'aws-sdk';
+import { PromiseResult } from 'aws-sdk/lib/request';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Configuration } from '../../src/utils/Configuration';
+import { IInvokeConfig } from '../../src/models';
 
 interface IMockFunctions {
   functionName: string;
@@ -23,14 +24,12 @@ class LambdaMockService {
     const invokeConfig: IInvokeConfig =
       Configuration.getInstance().getInvokeConfig();
     this.responses = Object.entries(invokeConfig.functions).map(
-      ([k, v]: [string, any]) => {
-        return {
-          functionName: v.name,
-          response: fs
-            .readFileSync(path.resolve(__dirname, `../../${v.mock}`))
-            .toString(),
-        };
-      }
+      ([k, v]: [string, any]) => ({
+        functionName: v.name,
+        response: fs
+          .readFileSync(path.resolve(__dirname, `../../${v.mock}`))
+          .toString(),
+      }),
     );
   }
 
@@ -46,17 +45,17 @@ class LambdaMockService {
    * @param params - InvocationRequest params
    */
   public async invoke(
-    params: Lambda.Types.InvocationRequest
+    params: Lambda.Types.InvocationRequest,
   ): Promise<PromiseResult<Lambda.Types.InvocationResponse, AWSError>> {
     const mockFunction: IMockFunctions | undefined =
       LambdaMockService.responses.find(
-        (item: IMockFunctions) => item.functionName === params.FunctionName
+        (item: IMockFunctions) => item.functionName === params.FunctionName,
       );
     if (!mockFunction) {
       const error: Error = new Error();
       Object.assign(error, {
-        message: "Unsupported Media Type",
-        code: "UnknownError",
+        message: 'Unsupported Media Type',
+        code: 'UnknownError',
         statusCode: 415,
         retryable: false,
       });
@@ -85,15 +84,15 @@ class LambdaMockService {
    * @param response - the invocation response
    */
   public validateInvocationResponse(
-    response: Lambda.Types.InvocationResponse
+    response: Lambda.Types.InvocationResponse,
   ): Promise<any> {
     if (
       !response.Payload ||
-      response.Payload === "" ||
+      response.Payload === '' ||
       (response.StatusCode && response.StatusCode >= 400)
     ) {
       throw new Error(
-        `Lambda invocation returned error: ${response.StatusCode} with empty payload.`
+        `Lambda invocation returned error: ${response.StatusCode} with empty payload.`,
       );
     }
 
@@ -101,7 +100,7 @@ class LambdaMockService {
 
     if (!payload.body) {
       throw new Error(
-        `Lambda invocation returned bad data: ${JSON.stringify(payload)}.`
+        `Lambda invocation returned bad data: ${JSON.stringify(payload)}.`,
       );
     }
 

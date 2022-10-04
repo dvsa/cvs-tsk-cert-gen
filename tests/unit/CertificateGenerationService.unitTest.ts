@@ -1,251 +1,253 @@
-import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
-import sinon from "sinon";
-import techRecordResp from "../resources/tech-records-response.json";
-import techRecordRespHGV from "../resources/tech-records-response-HGV.json";
-import testResultsResp from "../resources/test-results-response.json";
-import testResultsRespFail from "../resources/test-results-fail-response.json";
-import testResultsRespPrs from "../resources/test-results-prs-response.json";
-import testResultsRespEmpty from "../resources/test-results-empty-response.json";
-import { AWSError, Lambda, Response } from "aws-sdk";
-import { LambdaService } from "../../src/services/LambdaService";
+/* eslint-disable */
+import sinon from 'sinon';
+import { AWSError, Lambda, Response } from 'aws-sdk';
+import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
+import techRecordResp from '../resources/tech-records-response.json';
+import techRecordRespHGV from '../resources/tech-records-response-HGV.json';
+import testResultsResp from '../resources/test-results-response.json';
+import testResultsRespFail from '../resources/test-results-fail-response.json';
+import testResultsRespPrs from '../resources/test-results-prs-response.json';
+import testResultsRespEmpty from '../resources/test-results-empty-response.json';
+import { LambdaService } from '../../src/services/LambdaService';
+import { TestResult } from '../../src/models/index.d'
 
-describe("Certificate Generation Service", () => {
+describe('Certificate Generation Service', () => {
   const sandbox = sinon.createSandbox();
   afterEach(() => {
     sandbox.restore();
   });
 
-  describe("getVehicleMakeAndModel function", () => {
-    context("when given a systemNumber with matching record", () => {
-      it("should return the record & only invoke the LambdaService once", async () => {
+  describe('getVehicleMakeAndModel function', () => {
+    context('when given a systemNumber with matching record', () => {
+      it('should return the record & only invoke the LambdaService once', async () => {
         const LambdaStub = sandbox
-          .stub(LambdaService.prototype, "invoke")
+          .stub(LambdaService.prototype, 'invoke')
           .resolves(AWSResolve(JSON.stringify(techRecordResp)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new Lambda())
+          new LambdaService(new Lambda()),
         );
         const testResultMock = {
-          systemNumber: "12345678",
+          systemNumber: '12345678',
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-          testResultMock
+          testResultMock as TestResult,
         );
         expect(LambdaStub.calledOnce).toBeTruthy();
         const lambdaArgs = JSON.parse(
-          LambdaStub.firstCall.args[0].Payload as string
+          LambdaStub.firstCall.args[0].Payload as string,
         );
         expect(lambdaArgs.queryStringParameters.searchCriteria).toEqual(
-          "systemNumber"
+          'systemNumber',
         );
-        expect(makeAndModel).toEqual({ Make: "Mercedes", Model: "632,01" });
+        expect(makeAndModel).toEqual({ Make: 'Mercedes', Model: '632,01' });
       });
     });
 
     context(
-      "when given a systemNumber  with no matching record and a vin with matching record",
+      'when given a systemNumber  with no matching record and a vin with matching record',
       () => {
-        it("should return the record & invoke the LambdaService twice", async () => {
+        it('should return the record & invoke the LambdaService twice', async () => {
           const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+            .stub(LambdaService.prototype, 'invoke')
             .onFirstCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onSecondCall()
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
+            new LambdaService(new Lambda()),
           );
           const testResultMock = {
-            systemNumber: "134567889",
-            vin: "abc123",
+            systemNumber: '134567889',
+            vin: 'abc123',
           };
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
+            testResultMock as TestResult,
           );
           expect(LambdaStub.calledTwice).toBeTruthy();
           const lambdaArgs = JSON.parse(
-            LambdaStub.secondCall.args[0].Payload as string
+            LambdaStub.secondCall.args[0].Payload as string,
           );
           expect(lambdaArgs.queryStringParameters.searchCriteria).toEqual(
-            "all"
+            'all',
           );
-          expect(makeAndModel).toEqual({ Make: "Mercedes", Model: "632,01" });
+          expect(makeAndModel).toEqual({ Make: 'Mercedes', Model: '632,01' });
         });
-      }
+      },
     );
 
     context(
-      "when given a vin with no matching record but a matching partialVin",
+      'when given a vin with no matching record but a matching partialVin',
       () => {
-        it("should return the record & invoke the LambdaService twice", async () => {
+        it('should return the record & invoke the LambdaService twice', async () => {
           const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+            .stub(LambdaService.prototype, 'invoke')
             .onFirstCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onSecondCall()
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
+            new LambdaService(new Lambda()),
           );
           const testResultMock = {
-            vin: "abc123",
-            partialVin: "abc123",
+            vin: 'abc123',
+            partialVin: 'abc123',
           };
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
+            testResultMock as TestResult,
           );
           expect(LambdaStub.calledOnce).toBeFalsy();
           expect(LambdaStub.calledTwice).toBeTruthy();
-          expect(makeAndModel).toEqual({ Make: "Mercedes", Model: "632,01" });
+          expect(makeAndModel).toEqual({ Make: 'Mercedes', Model: '632,01' });
         });
-      }
+      },
     );
 
     context(
-      "when given a vin and partialVin with no matching record but a matching VRM",
+      'when given a vin and partialVin with no matching record but a matching VRM',
       () => {
-        it("should return the record & invoke the LambdaService three times", async () => {
+        it('should return the record & invoke the LambdaService three times', async () => {
           const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+            .stub(LambdaService.prototype, 'invoke')
             .onFirstCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onSecondCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onThirdCall()
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
+            new LambdaService(new Lambda()),
           );
           const testResultMock = {
-            vin: "abc123",
-            partialVin: "abc123",
-            vrm: "testvrm",
+            vin: 'abc123',
+            partialVin: 'abc123',
+            vrm: 'testvrm',
           };
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
+            testResultMock as TestResult,
           );
           expect(LambdaStub.calledOnce).toBeFalsy();
           expect(LambdaStub.calledTwice).toBeFalsy();
           expect(LambdaStub.calledThrice).toBeTruthy();
-          expect(makeAndModel).toEqual({ Make: "Mercedes", Model: "632,01" });
+          expect(makeAndModel).toEqual({ Make: 'Mercedes', Model: '632,01' });
         });
-      }
+      },
     );
 
     context(
-      "when given a vin, partialVin and VRM with no matching record but a matching TrailerID",
+      'when given a vin, partialVin and VRM with no matching record but a matching TrailerID',
       () => {
-        it("should return the record & invoke the LambdaService four times", async () => {
+        it('should return the record & invoke the LambdaService four times', async () => {
           const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+            .stub(LambdaService.prototype, 'invoke')
             .onFirstCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onSecondCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onThirdCall()
-            .resolves(AWSReject("no"))
+            .resolves(AWSReject('no'))
             .onCall(3)
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
+            new LambdaService(new Lambda()),
           );
           const testResultMock = {
-            vin: "abc123",
-            partialVin: "abc123",
-            vrm: "testvrm",
-            trailerId: "testTrailerId",
+            vin: 'abc123',
+            partialVin: 'abc123',
+            vrm: 'testvrm',
+            trailerId: 'testTrailerId',
           };
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
+            testResultMock as TestResult,
           );
           expect(LambdaStub.callCount).toEqual(4);
-          expect(makeAndModel).toEqual({ Make: "Mercedes", Model: "632,01" });
+          expect(makeAndModel).toEqual({ Make: 'Mercedes', Model: '632,01' });
         });
-      }
+      },
     );
 
-    context("when given a vehicle details with no matching records", () => {
-      it("should call Tech Records Lambda 4 times and then throw an error", async () => {
+    context('when given a vehicle details with no matching records', () => {
+      it('should call Tech Records Lambda 4 times and then throw an error', async () => {
         const LambdaStub = sandbox
-          .stub(LambdaService.prototype, "invoke")
-          .resolves(AWSReject("no"));
+          .stub(LambdaService.prototype, 'invoke')
+          .resolves(AWSReject('no'));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new Lambda())
+          new LambdaService(new Lambda()),
         );
         const testResultMock = {
-          vin: "abc123",
-          partialVin: "abc123",
-          vrm: "testvrm",
-          trailerId: "testTrailerId",
+          vin: 'abc123',
+          partialVin: 'abc123',
+          vrm: 'testvrm',
+          trailerId: 'testTrailerId',
         };
         try {
-          await certGenSvc.getVehicleMakeAndModel(testResultMock);
+          await certGenSvc.getVehicleMakeAndModel(testResultMock as TestResult);
         } catch (e) {
           expect(LambdaStub.callCount).toEqual(4);
           expect(e).toBeInstanceOf(Error);
           expect(e.message).toEqual(
-            "Unable to retrieve unique Tech Record for Test Result"
+            'Unable to retrieve unique Tech Record for Test Result',
           );
         }
       });
     });
 
     context(
-      "when given a vehicle details with missing vehicle detail fields and no match",
+      'when given a vehicle details with missing vehicle detail fields and no match',
       () => {
-        it("should call Tech Records Lambda matching number (2) times and then throw an error", async () => {
+        it('should call Tech Records Lambda matching number (2) times and then throw an error', async () => {
           const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
-            .resolves(AWSReject("no"));
+            .stub(LambdaService.prototype, 'invoke')
+            .resolves(AWSReject('no'));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
+            new LambdaService(new Lambda()),
           );
           const testResultMock = {
-            vin: "abc123",
-            trailerId: "testTrailerId",
+            vin: 'abc123',
+            trailerId: 'testTrailerId',
           };
           try {
-            await certGenSvc.getVehicleMakeAndModel(testResultMock);
+            await certGenSvc.getVehicleMakeAndModel(testResultMock as TestResult);
           } catch (e) {
             expect(LambdaStub.callCount).toEqual(2);
             expect(e).toBeInstanceOf(Error);
             expect(e.message).toEqual(
-              "Unable to retrieve unique Tech Record for Test Result"
+              'Unable to retrieve unique Tech Record for Test Result',
             );
           }
         });
-      }
+      },
     );
 
-    context("when lookup returns a PSV tech record", () => {
-      it("should return make and model from chassis details", async () => {
+    context('when lookup returns a PSV tech record', () => {
+      it('should return make and model from chassis details', async () => {
         const techRecord = JSON.parse(techRecordResp.body);
         const LambdaStub = sandbox
-          .stub(LambdaService.prototype, "invoke")
+          .stub(LambdaService.prototype, 'invoke')
           .resolves(AWSResolve(JSON.stringify(techRecordResp)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new Lambda())
+          new LambdaService(new Lambda()),
         );
         const testResultMock = {
-          systemNumber: "12345678",
+          systemNumber: '12345678',
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-          testResultMock
+          testResultMock as TestResult,
         );
         expect(makeAndModel).toEqual({
           Make: techRecord[0].techRecord[0].chassisMake,
@@ -254,22 +256,22 @@ describe("Certificate Generation Service", () => {
       });
     });
 
-    context("when lookup returns a non-PSV tech record", () => {
-      it("should return make and model from not-chassis details", async () => {
+    context('when lookup returns a non-PSV tech record', () => {
+      it('should return make and model from not-chassis details', async () => {
         const techRecord = JSON.parse(techRecordRespHGV.body);
         const LambdaStub = sandbox
-          .stub(LambdaService.prototype, "invoke")
+          .stub(LambdaService.prototype, 'invoke')
           .resolves(AWSResolve(JSON.stringify(techRecordRespHGV)));
         const certGenSvc = new CertificateGenerationService(
           // @ts-ignore
           null,
-          new LambdaService(new Lambda())
+          new LambdaService(new Lambda()),
         );
         const testResultMock = {
-          systemNumber: "12345678",
+          systemNumber: '12345678',
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-          testResultMock
+          testResultMock as TestResult,
         );
         expect(makeAndModel).toEqual({
           Make: techRecord[0].techRecord[0].make,
@@ -279,110 +281,125 @@ describe("Certificate Generation Service", () => {
     });
   });
 
-  describe("getOdometerHistory function", () => {
-    context("when given a systemNumber with only failed test results", () => {
-      it("should return an empty odometer history list", async () => {
+  describe('getOdometerHistory function', () => {
+    context('when given a systemNumber with only failed test results', () => {
+      it('should return an empty odometer history list', async () => {
         const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
-            .resolves(AWSResolve(JSON.stringify(testResultsRespFail)));
+          .stub(LambdaService.prototype, 'invoke')
+          .resolves(AWSResolve(JSON.stringify(testResultsRespFail)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
+          null as any,
+          new LambdaService(new Lambda()),
         );
-        const systemNumberMock = "12345678";
+        const systemNumberMock = '12345678';
         const odometerHistory = await certGenSvc.getOdometerHistory(
-            systemNumberMock
+          systemNumberMock,
         );
         expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: []});
+        expect(odometerHistory).toEqual({ OdometerHistoryList: [] });
       });
     });
 
-    context("when given a systemNumber which returns more than 3 pass or prs", () => {
-      it("should return an odometer history no greater than 3", async () => {
-        const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+    context(
+      'when given a systemNumber which returns more than 3 pass or prs',
+      () => {
+        it('should return an odometer history no greater than 3', async () => {
+          const LambdaStub = sandbox
+            .stub(LambdaService.prototype, 'invoke')
             .resolves(AWSResolve(JSON.stringify(testResultsResp)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
+          // @ts-ignore
+          const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
-        );
-        const systemNumberMock = "12345678";
-        const odometerHistory = await certGenSvc.getOdometerHistory(
-            systemNumberMock
-        );
-        expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
-            {
-              value: 350000,
-              unit: "kilometres",
-              date: "14.01.2019",
-            },
-            {
-              value: 350000,
-              unit: "kilometres",
-              date: "14.01.2019",
-            },
-            {
-              value: 350000,
-              unit: "kilometres",
-              date: "14.01.2019",
-            },
-          ]});
-      });
-    });
+            new LambdaService(new Lambda()),
+          );
+          const systemNumberMock = '12345678';
+          const odometerHistory = await certGenSvc.getOdometerHistory(
+            systemNumberMock,
+          );
+          expect(LambdaStub.calledOnce).toBeTruthy();
+          expect(odometerHistory).toEqual({
+            OdometerHistoryList: [
+              {
+                value: 350000,
+                unit: 'kilometres',
+                date: '14.01.2019',
+              },
+              {
+                value: 350000,
+                unit: 'kilometres',
+                date: '14.01.2019',
+              },
+              {
+                value: 350000,
+                unit: 'kilometres',
+                date: '14.01.2019',
+              },
+            ],
+          });
+        });
+      },
+    );
 
-    context("when given a systemNumber which returns a test result which was fail then prs", () => {
-      it("should return an odometer history which includes test result", async () => {
-        const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+    context(
+      'when given a systemNumber which returns a test result which was fail then prs',
+      () => {
+        it('should return an odometer history which includes test result', async () => {
+          const LambdaStub = sandbox
+            .stub(LambdaService.prototype, 'invoke')
             .resolves(AWSResolve(JSON.stringify(testResultsRespPrs)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
+          // @ts-ignore
+          const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
-        );
-        const systemNumberMock = "12345678";
-        const odometerHistory = await certGenSvc.getOdometerHistory(
-            systemNumberMock
-        );
-        expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
-            {
-              value: 350000,
-              unit: "kilometres",
-              date: "14.01.2019",
-            },
-          ]});
-      });
-    });
+            new LambdaService(new Lambda()),
+          );
+          const systemNumberMock = '12345678';
+          const odometerHistory = await certGenSvc.getOdometerHistory(
+            systemNumberMock,
+          );
+          expect(LambdaStub.calledOnce).toBeTruthy();
+          expect(odometerHistory).toEqual({
+            OdometerHistoryList: [
+              {
+                value: 350000,
+                unit: 'kilometres',
+                date: '14.01.2019',
+              },
+            ],
+          });
+        });
+      },
+    );
 
-    context("when given a systemNumber which returns a test result which has no test types array", () => {
-      it("should return an odometer history which includes test result", async () => {
-        const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
+    context(
+      'when given a systemNumber which returns a test result which has no test types array',
+      () => {
+        it('should return an odometer history which includes test result', async () => {
+          const LambdaStub = sandbox
+            .stub(LambdaService.prototype, 'invoke')
             .resolves(AWSResolve(JSON.stringify(testResultsRespEmpty)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
+          // @ts-ignore
+          const certGenSvc = new CertificateGenerationService(
             null as any,
-            new LambdaService(new Lambda())
-        );
-        const systemNumberMock = "12345678";
-        const odometerHistory = await certGenSvc.getOdometerHistory(
-            systemNumberMock
-        );
-        expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
-            {
-              value: 350000,
-              unit: "kilometres",
-              date: "14.01.2019",
-            },
-          ]});
-      });
-    });
+            new LambdaService(new Lambda()),
+          );
+          const systemNumberMock = '12345678';
+          const odometerHistory = await certGenSvc.getOdometerHistory(
+            systemNumberMock,
+          );
+          expect(LambdaStub.calledOnce).toBeTruthy();
+          expect(odometerHistory).toEqual({
+            OdometerHistoryList: [
+              {
+                value: 350000,
+                unit: 'kilometres',
+                date: '14.01.2019',
+              },
+            ],
+          });
+        });
+      },
+    );
   });
 });
 

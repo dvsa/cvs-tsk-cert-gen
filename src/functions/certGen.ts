@@ -1,12 +1,13 @@
-import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
-import { Injector } from "../models/injector/Injector";
-import { ManagedUpload } from "aws-sdk/clients/s3";
+/* eslint-disable */
+import { Callback, Context, Handler, SQSEvent, SQSRecord } from 'aws-lambda';
+import { ManagedUpload } from 'aws-sdk/clients/s3';
+import { Injector } from '../models/injector/Injector';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
-} from "../services/CertificateGenerationService";
-import { CertificateUploadService } from "../services/CertificateUploadService";
-import { ERRORS } from "../models/Enums";
+} from '../services/CertificateGenerationService';
+import { CertificateUploadService } from '../services/CertificateUploadService';
+import { ERRORS } from '../models/Enums';
 
 /**
  * λ function to process an SQS message detailing info for certificate generation
@@ -17,7 +18,7 @@ import { ERRORS } from "../models/Enums";
 const certGen: Handler = async (
   event: SQSEvent,
   context?: Context,
-  callback?: Callback
+  callback?: Callback,
 ): Promise<ManagedUpload.SendData[]> => {
   if (
     !event ||
@@ -25,13 +26,13 @@ const certGen: Handler = async (
     !Array.isArray(event.Records) ||
     !event.Records.length
   ) {
-    console.error("ERROR: event is not defined.");
-    throw new Error("Event is empty");
+    console.error('ERROR: event is not defined.');
+    throw new Error('Event is empty');
   }
 
   const certificateGenerationService: CertificateGenerationService =
     Injector.resolve<CertificateGenerationService>(
-      CertificateGenerationService
+      CertificateGenerationService,
     );
   const certificateUploadService: CertificateUploadService =
     Injector.resolve<CertificateUploadService>(CertificateUploadService);
@@ -41,21 +42,21 @@ const certGen: Handler = async (
     const testResult: any = JSON.parse(record.body);
     if (
       testResult.testResultId.match(
-        "\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b"
+        '\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b',
       )
     ) {
       // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
       const generatedCertificateResponse: Promise<ManagedUpload.SendData> =
         certificateGenerationService
           .generateCertificate(testResult)
-          .then((response: IGeneratedCertificateResponse) => {
-            return certificateUploadService.uploadCertificate(response);
-          });
+          .then((response: IGeneratedCertificateResponse) =>
+            certificateUploadService.uploadCertificate(response),
+          );
 
       certificateUploadPromises.push(generatedCertificateResponse);
     } else {
       console.error(`${ERRORS.TESTRESULT_ID}`, testResult.testResultId);
-      throw new Error("Bad Test Record: " + testResult.testResultId);
+      throw new Error(`Bad Test Record: ${testResult.testResultId}`);
     }
   });
 

@@ -8,12 +8,12 @@ provider:
   iam:
     role:
       statements:
-        - Effect: "Allow"
+        - Effect: 'Allow'
           Action:
-            - "xray:PutTraceSegments"
-            - "xray:PutTelemetryRecords"
+            - 'xray:PutTraceSegments'
+            - 'xray:PutTelemetryRecords'
           Resource:
-            - "*"
+            - '*'
 
 plugins:
   - serverless-plugin-typescript

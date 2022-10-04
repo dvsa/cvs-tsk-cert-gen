@@ -1,7 +1,7 @@
-import { Service } from "../models/injector/ServiceDecorator";
-import { S3BucketService } from "./S3BucketService";
-import { IGeneratedCertificateResponse } from "../models";
-import { ManagedUpload, Metadata } from "aws-sdk/clients/s3";
+import { ManagedUpload, Metadata } from 'aws-sdk/clients/s3';
+import { Service } from '../models/injector/ServiceDecorator';
+import { S3BucketService } from './S3BucketService';
+import { IGeneratedCertificateResponse } from '../models/index.d';
 
 /**
  * Service class for uploading certificates to S3
@@ -19,33 +19,34 @@ class CertificateUploadService {
    * @param payload
    */
   public uploadCertificate(
-    payload: IGeneratedCertificateResponse
+    payload: IGeneratedCertificateResponse,
   ): Promise<ManagedUpload.SendData> {
-    let shouldEmailCertificate = payload.shouldEmailCertificate;
+    let { shouldEmailCertificate } = payload;
 
-    if (shouldEmailCertificate !== "false") {
-      shouldEmailCertificate = "true";
+    if (shouldEmailCertificate !== 'false') {
+      shouldEmailCertificate = 'true';
     }
 
     const metadata: Metadata = {
-      "vrm": payload.vrm,
-      "test-type-name": payload.testTypeName,
-      "test-type-result": payload.testTypeResult,
-      "date-of-issue": payload.dateOfIssue,
-      "cert-type": payload.certificateType,
-      "file-format": payload.fileFormat,
-      "file-size": payload.fileSize,
-      "cert-index": payload.certificateOrder.current.toString(),
-      "total-certs": payload.certificateOrder.total.toString(),
-      "email": payload.email,
-      "should-email-certificate": shouldEmailCertificate,
+      vrm: payload.vrm,
+      'test-type-name': payload.testTypeName,
+      'test-type-result': payload.testTypeResult,
+      'date-of-issue': payload.dateOfIssue,
+      'cert-type': payload.certificateType,
+      'file-format': payload.fileFormat,
+      'file-size': payload.fileSize,
+      'cert-index': payload.certificateOrder.current.toString(),
+      'total-certs': payload.certificateOrder.total.toString(),
+      email: payload.email,
+      'should-email-certificate': shouldEmailCertificate,
     };
 
+    const bucketName = process.env.BUCKET as string;
     return this.s3BucketService.upload(
-      `cvs-cert-${process.env.BUCKET}`,
+      `cvs-cert-${bucketName}`,
       payload.fileName,
       payload.certificate,
-      metadata
+      metadata,
     );
   }
 }
