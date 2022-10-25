@@ -10,28 +10,28 @@ interface IInvokeConfig {
 
 interface IMOTConfig {
   endpoint: string;
-  documentDir: "CVS";
+  documentDir: 'CVS';
   documentNames: {
-    vt20: "VT20.pdf";
-    vt20w: "VT20W.pdf";
-    vt30: "VT30.pdf";
-    vt30w: "VT30W.pdf";
-    vt32ve: "VT32VE.pdf";
-    vt32vew: "VT32VEW.pdf";
-    prs: "PRS.pdf";
-    prsw: "PRSW.pdf";
-    ct20: "CT20.pdf";
-    ct30: "CT30.pdf";
-    vtp20: "VTP20.pdf";
-    vtp30: "VTP30.pdf";
-    psv_prs: "PSV_PRS.pdf";
-    vtg5: "VTG5.pdf";
-    vtg5a: "VTG5A.pdf";
-    vtg30: "VTG30.pdf";
-    hgv_prs: "HGV_PRS.pdf";
-    trl_prs: "TRL_PRS.pdf";
-    adr_pass: "ADR_PASS.pdf";
-    rwt: "RWT.pdf;";
+    vt20: 'VT20.pdf';
+    vt20w: 'VT20W.pdf';
+    vt30: 'VT30.pdf';
+    vt30w: 'VT30W.pdf';
+    vt32ve: 'VT32VE.pdf';
+    vt32vew: 'VT32VEW.pdf';
+    prs: 'PRS.pdf';
+    prsw: 'PRSW.pdf';
+    ct20: 'CT20.pdf';
+    ct30: 'CT30.pdf';
+    vtp20: 'VTP20.pdf';
+    vtp30: 'VTP30.pdf';
+    psv_prs: 'PSV_PRS.pdf';
+    vtg5: 'VTG5.pdf';
+    vtg5a: 'VTG5A.pdf';
+    vtg30: 'VTG30.pdf';
+    hgv_prs: 'HGV_PRS.pdf';
+    trl_prs: 'TRL_PRS.pdf';
+    adr_pass: 'ADR_PASS.pdf';
+    rwt: 'RWT.pdf;';
   };
   api_key: string;
 }
@@ -50,10 +50,11 @@ interface IGeneratedCertificateResponse {
   fileFormat: string;
   fileSize: string;
   certificate: Buffer;
-  certificateOrder: { current: number; total: number };
+  certificateOrder: CertificateOrder;
   email: string;
   shouldEmailCertificate: string;
 }
+
 interface ICertificateData {
   TestNumber: string;
   TestStationPNumber: string;
@@ -118,7 +119,7 @@ interface IWeightDetails {
   weight2: number;
 }
 
-interface ITestResult {
+interface TestResult {
   vrm: string;
   trailerId: string;
   vin: string;
@@ -148,9 +149,14 @@ interface ITestResult {
   noOfAxles: number;
   regnDate: string;
   firstUseDate: string;
-  testTypes: ITestType;
+  testTypes: TestType;
+  order: CertificateOrder;
+  shouldEmailCertificate: string;
+  systemNumber: string;
+  partialVin: string;
 }
-interface ITestType {
+
+interface TestType {
   createdAt: string;
   lastUpdatedAt: string;
   deletionFlag: boolean;
@@ -178,6 +184,7 @@ interface ITestType {
   fuelType: string;
   defects: IDefect[];
 }
+
 interface IDefect {
   imNumber: number;
   imDescription: string;
@@ -193,10 +200,12 @@ interface IDefect {
   prs: boolean;
   prohibitionIssued: boolean;
 }
+
 interface IAdditionalInformation {
   location: ILocation;
   notes: string;
 }
+
 interface ILocation {
   vertical: string;
   horizontal: string;
@@ -206,6 +215,7 @@ interface ILocation {
   seatNumber: number;
   axleNumber: number;
 }
+
 interface IVehicleClass {
   code: string;
   description: string;
@@ -225,6 +235,20 @@ interface IMakeAndModel {
   Model: string;
 }
 
+interface Payload {
+  body: string;
+  statusCode: number;
+}
+
+interface CertificateOrder {
+  current: number;
+  total: number;
+}
+
+interface Config {
+  [key: string]: any;
+}
+
 export {
   IInvokeConfig,
   IMOTConfig,
@@ -234,8 +258,10 @@ export {
   ICertificatePayload,
   IRoadworthinessCertificateData,
   IWeightDetails,
-  ITestResult,
-  ITestType,
+  TestResult,
+  TestType,
   ITrailerRegistration,
-  IMakeAndModel
+  IMakeAndModel,
+  Payload,
+  Config,
 };

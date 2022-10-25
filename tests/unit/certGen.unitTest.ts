@@ -1,33 +1,36 @@
-import { Injector } from "../../src/models/injector/Injector";
-import * as fs from "fs";
-import * as path from "path";
+/* eslint-disable */
+import * as fs from 'fs';
+import * as path from 'path';
+import { ManagedUpload } from 'aws-sdk/clients/s3';
+import sinon from 'sinon';
+import { cloneDeep } from 'lodash';
+import { Injector } from '../../src/models/injector/Injector';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
-} from "../../src/services/CertificateGenerationService";
-import { S3BucketMockService } from "../models/S3BucketMockService";
-import { LambdaMockService } from "../models/LambdaMockService";
-import { CertificateUploadService } from "../../src/services/CertificateUploadService";
-import { ManagedUpload } from "aws-sdk/clients/s3";
-import { certGen } from "../../src/functions/certGen";
-import sinon from "sinon";
-import queueEventPass from "../resources/queue-event-pass.json";
-import queueEventFail from "../resources/queue-event-fail.json";
-import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
-import techRecordsRwt from "../resources/tech-records-response-rwt.json";
-import docGenRwt from "../resources/doc-gen-payload-rwt.json";
-const sandbox = sinon.createSandbox();
-import { cloneDeep } from "lodash";
-import { ITestResult, ICertificatePayload } from "../../src/models";
+} from '../../src/services/CertificateGenerationService';
+import { S3BucketMockService } from '../models/S3BucketMockService';
+import { LambdaMockService } from '../models/LambdaMockService';
+import { CertificateUploadService } from '../../src/services/CertificateUploadService';
+import { certGen } from '../../src/functions/certGen';
+import queueEventPass from '../resources/queue-event-pass.json';
+import queueEventFail from '../resources/queue-event-fail.json';
+import queueEventFailPRS from '../resources/queue-event-fail-prs.json';
+import techRecordsRwt from '../resources/tech-records-response-rwt.json';
+import docGenRwt from '../resources/doc-gen-payload-rwt.json';
+import { TestResult, ICertificatePayload } from '../../src/models';
+import {CertificateDataEnum} from "../../src/models/Enums";
 
-describe("cert-gen", () => {
-  it("should pass", () => {
+const sandbox = sinon.createSandbox();
+
+describe('cert-gen', () => {
+  it('should pass', () => {
     expect(true).toBe(true);
   });
   const certificateGenerationService: CertificateGenerationService =
     Injector.resolve<CertificateGenerationService>(
       CertificateGenerationService,
-      [S3BucketMockService, LambdaMockService]
+      [S3BucketMockService, LambdaMockService],
     );
   beforeAll(() => {
     jest.setTimeout(10000);
@@ -39,180 +42,180 @@ describe("cert-gen", () => {
   afterEach(() => {
     sandbox.restore();
   });
-  context("CertificateGenerationService", () => {
+  context('CertificateGenerationService', () => {
     LambdaMockService.populateFunctions();
 
-    context("when a passing test result is read from the queue", () => {
+    context('when a passing test result is read from the queue', () => {
       const event: any = { ...queueEventPass };
       const testResult: any = JSON.parse(event.Records[3].body);
       const testResult2: any = JSON.parse(event.Records[4].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTP20 payload without signature and the issuers name should have been swapped", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTP20 payload without signature and the issuers name should have been swapped', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "Dev1 CVS",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'Dev1 CVS',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
 
             return certificateGenerationService
-                .generatePayload(testResult)
-                .then((payload: any) => {
-                  expect(payload).toEqual(expectedResult);
-                });
+              .generatePayload(testResult)
+              .then((payload: any) => {
+                expect(payload).toEqual(expectedResult);
+              });
           });
         });
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTP20 payload without signature and the issuers name should have not been swapped", () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTP20 payload without signature and the issuers name should have not been swapped', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS, Test, Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS, Test, Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
 
             return certificateGenerationService
-                .generatePayload(testResult2)
-                .then((payload: any) => {
-                  expect(payload).toEqual(expectedResult);
-                });
+              .generatePayload(testResult2)
+              .then((payload: any) => {
+                expect(payload).toEqual(expectedResult);
+              });
           });
         });
       });
     });
 
-    context("when a passing test result is read from the queue", () => {
+    context('when a passing test result is read from the queue', () => {
       const event: any = { ...queueEventPass };
       const testResult: any = JSON.parse(event.Records[0].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTP20 payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTP20 payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -225,32 +228,32 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a VTP20 payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a VTP20 payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -259,14 +262,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             return certificateGenerationService
@@ -279,54 +282,54 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a VTP20 payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a VTP20 payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -334,7 +337,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -350,86 +353,86 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
                 expect(response.fileName).toEqual(
-                  "W01A00310_XMGDE02FS0H012345.pdf"
+                  'W01A00310_XMGDE02FS0H012345.pdf',
                 );
-                expect(response.certificateType).toEqual("VTP20");
+                expect(response.certificateType).toEqual('VTP20');
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
 
-    context("when a failing test result is read from the queue", () => {
+    context('when a failing test result is read from the queue', () => {
       const event: any = { ...queueEventFail };
       const testResult: any = JSON.parse(event.Records[0].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTP30 payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTP30 payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -442,41 +445,41 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a VTP30 payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a VTP30 payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -485,14 +488,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
 
@@ -506,63 +509,63 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a VTP30 payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a VTP30 payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -570,7 +573,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -586,122 +589,122 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
                 expect(response.fileName).toEqual(
-                  "W01A00310_XMGDE02FS0H012345.pdf"
+                  'W01A00310_XMGDE02FS0H012345.pdf',
                 );
-                expect(response.certificateType).toEqual("VTP30");
+                expect(response.certificateType).toEqual('VTP30');
                 expect(response.certificateOrder).toEqual({
                   current: 2,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
 
-    context("when a prs test result is read from the queue", () => {
+    context('when a prs test result is read from the queue', () => {
       const event: any = JSON.parse(
         fs.readFileSync(
-          path.resolve(__dirname, "../resources/queue-event-prs.json"),
-          "utf8"
-        )
+          path.resolve(__dirname, '../resources/queue-event-prs.json'),
+          'utf8',
+        ),
       );
       const testResult: any = JSON.parse(event.Records[0].body);
-      let resBody: string = "";
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a PRS payload without signature", () => {
+      let resBody = '';
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a PRS payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                Make: "Mercedes",
-                Model: "632,01",
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -714,53 +717,53 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a PRS payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a PRS payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -769,14 +772,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             return certificateGenerationService
@@ -789,94 +792,94 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a PRS payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a PRS payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                Make: "Mercedes",
-                Model: "632,01",
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -884,7 +887,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -900,227 +903,227 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
                 expect(response.fileName).toEqual(
-                  "W01A00310_XMGDE02FS0H012345.pdf"
+                  'W01A00310_XMGDE02FS0H012345.pdf',
                 );
-                expect(response.certificateType).toEqual("PSV_PRS");
+                expect(response.certificateType).toEqual('PSV_PRS');
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
 
-    context("when a failing test result is read from the queue", () => {
+    context('when a failing test result is read from the queue', () => {
       const event: any = { ...queueEventFailPRS };
       const testResult: any = JSON.parse(event.Records[0].body);
 
-      context("and certificate Data is generated", () => {
+      context('and certificate Data is generated', () => {
         context(
-          "and test-result contains a Dagerous Defect with Major defect rectified",
+          'and test-result contains a Dagerous Defect with Major defect rectified',
           () => {
-            it("should return Certificate Data with PRSDefects list in Fail data", () => {
+            it('should return Certificate Data with PRSDefects list in Fail data', () => {
               const expectedResult: any = {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MajorDefects: undefined,
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
               };
 
               return certificateGenerationService
-                .generateCertificateData(testResult, "FAIL_DATA")
+                .generateCertificateData(testResult, CertificateDataEnum.FAIL_DATA)
                 .then((payload: any) => {
                   expect(payload).toEqual(expectedResult);
                 });
             });
-          }
+          },
         );
       });
 
       const testResult2: any = JSON.parse(event.Records[1].body);
-      context("and certificate Data is generated", () => {
+      context('and certificate Data is generated', () => {
         context(
-          "and test-result contains a Major Defect with Dangerous defect rectified",
+          'and test-result contains a Major Defect with Dangerous defect rectified',
           () => {
-            it("should return Certificate Data with PRSDefects list in Fail Data", () => {
+            it('should return Certificate Data with PRSDefects list in Fail Data', () => {
               const expectedResult: any = {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: undefined,
-                MajorDefects: ["1.1.a A registration plate: missing. Front."],
+                MajorDefects: ['1.1.a A registration plate: missing. Front.'],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
                 PRSDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
               };
 
               return certificateGenerationService
-                .generateCertificateData(testResult2, "FAIL_DATA")
+                .generateCertificateData(testResult2, CertificateDataEnum.FAIL_DATA)
                 .then((payload: any) => {
                   expect(payload).toEqual(expectedResult);
                 });
             });
-          }
+          },
         );
       });
 
       const testResult3: any = JSON.parse(event.Records[2].body);
-      context("and certificate Data is generated", () => {
+      context('and certificate Data is generated', () => {
         context(
-          "and test-result contains a Major and Dagerous Defect with no Major or Dagerous defect rectified",
+          'and test-result contains a Major and Dagerous Defect with no Major or Dagerous defect rectified',
           () => {
-            it("should return Certificate Data with 0 PRSDefects list in Fail Data", () => {
+            it('should return Certificate Data with 0 PRSDefects list in Fail Data', () => {
               const expectedResult: any = {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "XMGDE02FS0H012345",
-                RawVRM: "BQ91YHQ",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'XMGDE02FS0H012345',
+                RawVRM: 'BQ91YHQ',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
-                MajorDefects: ["1.1.a A registration plate: missing. Front."],
+                MajorDefects: ['1.1.a A registration plate: missing. Front.'],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
                 PRSDefects: undefined,
               };
 
               return certificateGenerationService
-                .generateCertificateData(testResult3, "FAIL_DATA")
+                .generateCertificateData(testResult3, CertificateDataEnum.FAIL_DATA)
                 .then((payload: any) => {
                   expect(payload).toEqual(expectedResult);
                 });
             });
-          }
+          },
         );
       });
     });
   });
 
-  context("CertGenService for HGV", () => {
-    context("when a passing test result for HGV is read from the queue", () => {
+  context('CertGenService for HGV', () => {
+    context('when a passing test result for HGV is read from the queue', () => {
       const event: any = { ...queueEventPass };
       const testResult: any = JSON.parse(event.Records[1].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTG5 payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTG5 payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1133,32 +1136,32 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a VTG5 payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a VTG5 payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1167,14 +1170,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             return certificateGenerationService
@@ -1187,54 +1190,54 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a VTG5 payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a VTG5 payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -1242,7 +1245,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -1258,122 +1261,122 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
                 expect(response.fileName).toEqual(
-                  "W01A00310_P012301098765.pdf"
+                  'W01A00310_P012301098765.pdf',
                 );
-                expect(response.certificateType).toEqual("VTG5");
+                expect(response.certificateType).toEqual('VTG5');
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
 
-    context("when a prs test result is read from the queue", () => {
+    context('when a prs test result is read from the queue', () => {
       const event: any = JSON.parse(
         fs.readFileSync(
-          path.resolve(__dirname, "../resources/queue-event-prs.json"),
-          "utf8"
-        )
+          path.resolve(__dirname, '../resources/queue-event-prs.json'),
+          'utf8',
+        ),
       );
       const testResult: any = JSON.parse(event.Records[1].body);
-      let resBody: string = "";
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a PRS payload without signature", () => {
+      let resBody = '';
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a PRS payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                Make: "Mercedes",
-                Model: "632,01",
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1386,53 +1389,53 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a PRS payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a PRS payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1441,14 +1444,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             return certificateGenerationService
@@ -1461,94 +1464,94 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a PRS payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a PRS payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                Make: "Mercedes",
-                Model: "632,01",
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -1556,7 +1559,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -1572,86 +1575,86 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
                 expect(response.fileName).toEqual(
-                  "W01A00310_P012301098765.pdf"
+                  'W01A00310_P012301098765.pdf',
                 );
-                expect(response.certificateType).toEqual("HGV_PRS");
+                expect(response.certificateType).toEqual('HGV_PRS');
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
 
-    context("when a failing test result is read from the queue", () => {
+    context('when a failing test result is read from the queue', () => {
       const event: any = { ...queueEventFail };
       const testResult: any = JSON.parse(event.Records[1].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTG30 payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTG30 payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1664,41 +1667,41 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a VTG30 payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a VTG30 payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1707,14 +1710,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
 
@@ -1728,63 +1731,63 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a VTG30 payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a VTG30 payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "P012301098765",
-                RawVRM: "VM14MDT",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'P012301098765',
+                RawVRM: 'VM14MDT',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 OdometerHistoryList: [
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                   {
                     value: 350000,
-                    unit: "kilometres",
-                    date: "14.01.2019",
+                    unit: 'kilometres',
+                    date: '14.01.2019',
                   },
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -1792,7 +1795,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -1808,63 +1811,63 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
                 expect(response.fileName).toEqual(
-                  "W01A00310_P012301098765.pdf"
+                  'W01A00310_P012301098765.pdf',
                 );
-                expect(response.certificateType).toEqual("VTG30");
+                expect(response.certificateType).toEqual('VTG30');
                 expect(response.certificateOrder).toEqual({
                   current: 2,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
   });
 
-  context("CertGenService for TRL", () => {
-    context("when a passing test result for TRL is read from the queue", () => {
+  context('CertGenService for TRL', () => {
+    context('when a passing test result for TRL is read from the queue', () => {
       const event: any = { ...queueEventPass };
       const testResult: any = JSON.parse(event.Records[2].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTG5A payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTG5A payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
-                IsTrailer: true
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
+                IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1877,31 +1880,31 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a VTG5A payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a VTG5A payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -1910,14 +1913,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             return certificateGenerationService
@@ -1930,38 +1933,38 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a VTG5A payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a VTG5A payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -1969,7 +1972,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -1985,56 +1988,56 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
-                expect(response.fileName).toEqual("W01A00310_T12876765.pdf");
-                expect(response.certificateType).toEqual("VTG5A");
+                expect(response.fileName).toEqual('W01A00310_T12876765.pdf');
+                expect(response.certificateType).toEqual('VTG5A');
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
       context(
-        "and trailer registration lambda returns status code 404 not found",
+        'and trailer registration lambda returns status code 404 not found',
         () => {
-          it("should return a VTG5A payload without Trn", () => {
+          it('should return a VTG5A payload without Trn', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -2042,13 +2045,13 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             const getTrailerRegistrationStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getTrailerRegistrationObject"
+                'getTrailerRegistrationObject',
               )
               .resolves({ Trn: undefined, IsTrailer: true });
 
@@ -2062,41 +2065,41 @@ describe("cert-gen", () => {
                 getTrailerRegistrationStub.restore();
               });
           });
-        }
+        },
       );
 
       context(
-        "and trailer registration lambda returns status code other than 200 or 404 not found",
+        'and trailer registration lambda returns status code other than 200 or 404 not found',
         () => {
-          it("should throw an error", () => {
+          it('should throw an error', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -2104,15 +2107,15 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             const getTrailerRegistrationStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getTrailerRegistrationObject"
+                'getTrailerRegistrationObject',
               )
-              .rejects({ statusCode: 500, body: "an error occured" });
+              .rejects({ statusCode: 500, body: 'an error occured' });
 
             return certificateGenerationService
               .generatePayload(testResult)
@@ -2124,73 +2127,73 @@ describe("cert-gen", () => {
                 getTrailerRegistrationStub.restore();
               });
           });
-        }
+        },
       );
     });
 
-    context("when a prs test result is read from the queue", () => {
+    context('when a prs test result is read from the queue', () => {
       const event: any = JSON.parse(
         fs.readFileSync(
-          path.resolve(__dirname, "../resources/queue-event-prs.json"),
-          "utf8"
-        )
+          path.resolve(__dirname, '../resources/queue-event-prs.json'),
+          'utf8',
+        ),
       );
       const testResult: any = JSON.parse(event.Records[2].body);
-      let resBody: string = "";
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a PRS payload without signature", () => {
+      let resBody = '';
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a PRS payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -2203,51 +2206,51 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a PRS payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a PRS payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -2256,14 +2259,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             return certificateGenerationService
@@ -2276,62 +2279,62 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a PRS payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a PRS payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                ExpiryDate: "25.02.2020",
-                EarliestDateOfTheNextTest: "01.11.2019",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                ExpiryDate: '25.02.2020',
+                EarliestDateOfTheNextTest: '01.11.2019',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
-                PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -2339,7 +2342,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -2355,68 +2358,68 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
-                expect(response.fileName).toEqual("W01A00310_T12876765.pdf");
-                expect(response.certificateType).toEqual("TRL_PRS");
+                expect(response.fileName).toEqual('W01A00310_T12876765.pdf');
+                expect(response.certificateType).toEqual('TRL_PRS');
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
     });
 
-    context("when a failing test result is read from the queue", () => {
+    context('when a failing test result is read from the queue', () => {
       const event: any = { ...queueEventFail };
       const testResult: any = JSON.parse(event.Records[2].body);
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return a VTG30 payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return a VTG30 payload without signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -2429,40 +2432,40 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and lambda-to-lambda calls were unsuccessful", () => {
-          it("should return a VTG30 payload without bodyMake, bodyModel and odometer history", () => {
+        context('and lambda-to-lambda calls were unsuccessful', () => {
+          it('should return a VTG30 payload without bodyMake, bodyModel and odometer history', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
@@ -2471,14 +2474,14 @@ describe("cert-gen", () => {
             const getOdometerHistoryStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getOdometerHistory"
+                'getOdometerHistory',
               )
               .resolves(undefined);
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
 
@@ -2492,47 +2495,47 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return a VTG30 payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return a VTG30 payload with signature', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
-                Trn: "ABC123",
+                Make: 'Mercedes',
+                Model: '632,01',
+                Trn: 'ABC123',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: fs
                   .readFileSync(
-                    path.resolve(__dirname, `../resources/signatures/1.base64`)
+                    path.resolve(__dirname, `../resources/signatures/1.base64`),
                   )
                   .toString(),
               },
@@ -2540,7 +2543,7 @@ describe("cert-gen", () => {
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             return certificateGenerationService
@@ -2556,70 +2559,70 @@ describe("cert-gen", () => {
       });
 
       context(
-        "and the generated payload is used to call the MOT service",
+        'and the generated payload is used to call the MOT service',
         () => {
-          it("successfully generate a certificate", () => {
+          it('successfully generate a certificate', () => {
             expect.assertions(3);
             return certificateGenerationService
               .generateCertificate(testResult)
               .then((response: any) => {
-                expect(response.fileName).toEqual("W01A00310_T12876765.pdf");
-                expect(response.certificateType).toEqual("VTG30");
+                expect(response.fileName).toEqual('W01A00310_T12876765.pdf');
+                expect(response.certificateType).toEqual('VTG30');
                 expect(response.certificateOrder).toEqual({
                   current: 2,
                   total: 2,
                 });
               });
           });
-        }
+        },
       );
 
       context(
-        "and trailer registration lambda returns status code 404 not found",
+        'and trailer registration lambda returns status code 404 not found',
         () => {
-          it("should return a VTG30 payload without Trn", () => {
+          it('should return a VTG30 payload without Trn', () => {
             const expectedResult: any = {
-              Watermark: "NOT VALID",
+              Watermark: 'NOT VALID',
               FAIL_DATA: {
-                TestNumber: "W01A00310",
-                TestStationPNumber: "09-4129632",
-                TestStationName: "Abshire-Kub",
+                TestNumber: 'W01A00310',
+                TestStationPNumber: '09-4129632',
+                TestStationName: 'Abshire-Kub',
                 CurrentOdometer: {
                   value: 12312,
-                  unit: "kilometres",
+                  unit: 'kilometres',
                 },
-                IssuersName: "CVS Dev1",
-                DateOfTheTest: "26.02.2019",
-                CountryOfRegistrationCode: "gb",
-                VehicleEuClassification: "M1",
-                RawVIN: "T12876765",
-                EarliestDateOfTheNextTest: "26.12.2019",
-                ExpiryDate: "25.02.2020",
-                SeatBeltTested: "Yes",
-                SeatBeltPreviousCheckDate: "26.02.2019",
+                IssuersName: 'CVS Dev1',
+                DateOfTheTest: '26.02.2019',
+                CountryOfRegistrationCode: 'gb',
+                VehicleEuClassification: 'M1',
+                RawVIN: 'T12876765',
+                EarliestDateOfTheNextTest: '26.12.2019',
+                ExpiryDate: '25.02.2020',
+                SeatBeltTested: 'Yes',
+                SeatBeltPreviousCheckDate: '26.02.2019',
                 SeatBeltNumber: 2,
                 DangerousDefects: [
-                  "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                  '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
                 ],
                 MinorDefects: [
-                  "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                  '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
                 ],
                 AdvisoryDefects: [
-                  "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                  '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
                 ],
-                Make: "Mercedes",
-                Model: "632,01",
+                Make: 'Mercedes',
+                Model: '632,01',
                 IsTrailer: true,
               },
               Signature: {
-                ImageType: "png",
+                ImageType: 'png',
                 ImageData: null,
               },
             };
             const getTrailerRegistrationStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getTrailerRegistrationObject"
+                'getTrailerRegistrationObject',
               )
               .resolves({ Trn: undefined, IsTrailer: true });
 
@@ -2633,48 +2636,48 @@ describe("cert-gen", () => {
                 getTrailerRegistrationStub.restore();
               });
           });
-        }
+        },
       );
     });
   });
 
-  context("CertGenService for ADR", () => {
-    context("when a passing test result for ADR is read from the queue", () => {
+  context('CertGenService for ADR', () => {
+    context('when a passing test result for ADR is read from the queue', () => {
       const event: any = cloneDeep(queueEventPass);
       const testResult: any = JSON.parse(event.Records[1].body);
-      testResult.testTypes.testTypeId = "50";
+      testResult.testTypes.testTypeId = '50';
 
-      context("and a payload is generated", () => {
-        context("and no signatures were found in the bucket", () => {
-          it("should return an ADR_PASS payload without signature", () => {
+      context('and a payload is generated', () => {
+        context('and no signatures were found in the bucket', () => {
+          it('should return an ADR_PASS payload without signature', () => {
             const expectedResult: any = JSON.parse(
               fs.readFileSync(
                 path.resolve(
                   __dirname,
-                  "../resources/doc-gen-payload-adr.json"
+                  '../resources/doc-gen-payload-adr.json',
                 ),
-                "utf8"
-              )
+                'utf8',
+              ),
             );
 
             const techRecordResponseAdrMock = JSON.parse(
               fs.readFileSync(
                 path.resolve(
                   __dirname,
-                  "../resources/tech-records-response-adr.json"
+                  '../resources/tech-records-response-adr.json',
                 ),
-                "utf8"
-              )
+                'utf8',
+              ),
             );
 
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             const getTechRecordStub = sandbox
-              .stub(CertificateGenerationService.prototype, "getTechRecord")
+              .stub(CertificateGenerationService.prototype, 'getTechRecord')
               .resolves(techRecordResponseAdrMock);
 
             return certificateGenerationService
@@ -2687,21 +2690,21 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and signatures were found in the bucket", () => {
-          it("should return an ADR_PASS payload with signature", () => {
+        context('and signatures were found in the bucket', () => {
+          it('should return an ADR_PASS payload with signature', () => {
             const expectedResult: any = JSON.parse(
               fs.readFileSync(
                 path.resolve(
                   __dirname,
-                  "../resources/doc-gen-payload-adr.json"
+                  '../resources/doc-gen-payload-adr.json',
                 ),
-                "utf8"
-              )
+                'utf8',
+              ),
             );
-            expectedResult.Signature.ImageType = "png";
+            expectedResult.Signature.ImageType = 'png';
             expectedResult.Signature.ImageData = fs
               .readFileSync(
-                path.resolve(__dirname, `../resources/signatures/1.base64`)
+                path.resolve(__dirname, `../resources/signatures/1.base64`),
               )
               .toString();
 
@@ -2709,26 +2712,26 @@ describe("cert-gen", () => {
               fs.readFileSync(
                 path.resolve(
                   __dirname,
-                  "../resources/tech-records-response-adr.json"
+                  '../resources/tech-records-response-adr.json',
                 ),
-                "utf8"
-              )
+                'utf8',
+              ),
             );
 
             // Add a new signature
             S3BucketMockService.buckets.push({
               bucketName: `cvs-signature-${process.env.BUCKET}`,
-              files: ["1.base64"],
+              files: ['1.base64'],
             });
 
             const getVehicleMakeAndModelStub = sandbox
               .stub(
                 CertificateGenerationService.prototype,
-                "getVehicleMakeAndModel"
+                'getVehicleMakeAndModel',
               )
               .resolves(undefined);
             const getTechRecordStub = sandbox
-              .stub(CertificateGenerationService.prototype, "getTechRecord")
+              .stub(CertificateGenerationService.prototype, 'getTechRecord')
               .resolves(techRecordResponseAdrMock);
 
             return certificateGenerationService
@@ -2745,26 +2748,26 @@ describe("cert-gen", () => {
     });
   });
 
-  context("CertGenService for Roadworthiness test", () => {
+  context('CertGenService for Roadworthiness test', () => {
     context(
-      "when a passing test result for Roadworthiness test for HGV or TRL is read from the queue",
+      'when a passing test result for Roadworthiness test for HGV or TRL is read from the queue',
       () => {
         const event: any = cloneDeep(queueEventPass);
-        const testResult: ITestResult = JSON.parse(event.Records[1].body);
-        testResult.testTypes.testTypeId = "122";
-        testResult.vin = "GYFC26269R240355";
-        testResult.vrm = "NKPILNCN";
-        context("and a payload is generated", () => {
-          context("and no signatures were found in the bucket", () => {
-            it("should return an RWT_DATA payload without signature", () => {
+        const testResult: TestResult = JSON.parse(event.Records[1].body);
+        testResult.testTypes.testTypeId = '122';
+        testResult.vin = 'GYFC26269R240355';
+        testResult.vrm = 'NKPILNCN';
+        context('and a payload is generated', () => {
+          context('and no signatures were found in the bucket', () => {
+            it('should return an RWT_DATA payload without signature', () => {
               const expectedResult: ICertificatePayload = cloneDeep(
-                docGenRwt[0]
+                docGenRwt[0],
               );
 
               const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[1]);
 
               const getTechRecordStub = sandbox
-                .stub(CertificateGenerationService.prototype, "getTechRecord")
+                .stub(CertificateGenerationService.prototype, 'getTechRecord')
                 .resolves(techRecordResponseRwtMock);
 
               return certificateGenerationService
@@ -2776,22 +2779,22 @@ describe("cert-gen", () => {
             });
           });
 
-          context("and signatures were found in the bucket", () => {
-            it("should return an RWT_DATA payload with signature", () => {
+          context('and signatures were found in the bucket', () => {
+            it('should return an RWT_DATA payload with signature', () => {
               const expectedResult: ICertificatePayload = cloneDeep(
-                docGenRwt[1]
+                docGenRwt[1],
               );
 
               const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[1]);
 
               const getTechRecordStub = sandbox
-                .stub(CertificateGenerationService.prototype, "getTechRecord")
+                .stub(CertificateGenerationService.prototype, 'getTechRecord')
                 .resolves(techRecordResponseRwtMock);
 
               // Add a new signature
               S3BucketMockService.buckets.push({
                 bucketName: `cvs-signature-${process.env.BUCKET}`,
-                files: ["1.base64"],
+                files: ['1.base64'],
               });
 
               return certificateGenerationService
@@ -2804,46 +2807,46 @@ describe("cert-gen", () => {
             });
           });
         });
-      }
+      },
     );
     context(
-      "and the generate certificate is used to call the doc generation service",
+      'and the generate certificate is used to call the doc generation service',
       () => {
-        it("should pass certificateType as RWT", () => {
+        it('should pass certificateType as RWT', () => {
           const event: any = cloneDeep(queueEventPass);
-          const testResult: ITestResult = JSON.parse(event.Records[1].body);
-          testResult.testTypes.testTypeId = "122";
-          testResult.vin = "GYFC26269R240355";
-          testResult.vrm = "NKPILNCN";
+          const testResult: TestResult = JSON.parse(event.Records[1].body);
+          testResult.testTypes.testTypeId = '122';
+          testResult.vin = 'GYFC26269R240355';
+          testResult.vrm = 'NKPILNCN';
           expect.assertions(1);
           return certificateGenerationService
             .generateCertificate(testResult)
             .then((response: any) => {
-              expect(response.certificateType).toEqual("RWT");
+              expect(response.certificateType).toEqual('RWT');
             });
         });
-      }
+      },
     );
 
     context(
-      "when a failing test result for Roadworthiness test for HGV or TRL is read from the queue",
+      'when a failing test result for Roadworthiness test for HGV or TRL is read from the queue',
       () => {
         const event: any = cloneDeep(queueEventFail);
-        const testResult: ITestResult = JSON.parse(event.Records[2].body);
-        testResult.testTypes.testTypeId = "91";
-        testResult.vin = "T12768594";
-        testResult.trailerId = "0285678";
-        context("and a payload is generated", () => {
-          context("and no signatures were found in the bucket", () => {
-            it("should return an RWT_DATA payload without signature", () => {
+        const testResult: TestResult = JSON.parse(event.Records[2].body);
+        testResult.testTypes.testTypeId = '91';
+        testResult.vin = 'T12768594';
+        testResult.trailerId = '0285678';
+        context('and a payload is generated', () => {
+          context('and no signatures were found in the bucket', () => {
+            it('should return an RWT_DATA payload without signature', () => {
               const expectedResult: ICertificatePayload = cloneDeep(
-                docGenRwt[4]
+                docGenRwt[4],
               );
 
               const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[0]);
 
               const getTechRecordStub = sandbox
-                .stub(CertificateGenerationService.prototype, "getTechRecord")
+                .stub(CertificateGenerationService.prototype, 'getTechRecord')
                 .resolves(techRecordResponseRwtMock);
 
               return certificateGenerationService
@@ -2855,22 +2858,22 @@ describe("cert-gen", () => {
             });
           });
 
-          context("and signatures were found in the bucket", () => {
-            it("should return an RWT_DATA payload with signature", () => {
+          context('and signatures were found in the bucket', () => {
+            it('should return an RWT_DATA payload with signature', () => {
               const expectedResult: ICertificatePayload = cloneDeep(
-                docGenRwt[3]
+                docGenRwt[3],
               );
 
               const techRecordResponseRwtMock = cloneDeep(techRecordsRwt[0]);
 
               const getTechRecordStub = sandbox
-                .stub(CertificateGenerationService.prototype, "getTechRecord")
+                .stub(CertificateGenerationService.prototype, 'getTechRecord')
                 .resolves(techRecordResponseRwtMock);
 
               // Add a new signature
               S3BucketMockService.buckets.push({
                 bucketName: `cvs-signature-${process.env.BUCKET}`,
-                files: ["1.base64"],
+                files: ['1.base64'],
               });
 
               return certificateGenerationService
@@ -2883,17 +2886,17 @@ describe("cert-gen", () => {
             });
           });
         });
-      }
+      },
     );
   });
 
-  context("CertificateUploadService", () => {
-    context("when a valid event is received", () => {
+  context('CertificateUploadService', () => {
+    context('when a valid event is received', () => {
       const event: any = JSON.parse(
         fs.readFileSync(
-          path.resolve(__dirname, "../resources/queue-event-prs.json"),
-          "utf8"
-        )
+          path.resolve(__dirname, '../resources/queue-event-prs.json'),
+          'utf8',
+        ),
       );
       const testResult: any = JSON.parse(event.Records[0].body);
       const certificateUploadService: CertificateUploadService =
@@ -2904,15 +2907,15 @@ describe("cert-gen", () => {
       const certificateGenerationService: CertificateGenerationService =
         Injector.resolve<CertificateGenerationService>(
           CertificateGenerationService,
-          [S3BucketMockService, LambdaMockService]
+          [S3BucketMockService, LambdaMockService],
         );
 
-      context("when uploading a certificate", () => {
-        context("and the S3 bucket exists and is accesible", () => {
-          it("should successfully upload the certificate", async () => {
+      context('when uploading a certificate', () => {
+        context('and the S3 bucket exists and is accesible', () => {
+          it('should successfully upload the certificate', async () => {
             const generatedCertificateResponse: IGeneratedCertificateResponse =
               await certificateGenerationService.generateCertificate(
-                testResult
+                testResult,
               );
             S3BucketMockService.buckets.push({
               bucketName: `cvs-cert-${process.env.BUCKET}`,
@@ -2923,7 +2926,7 @@ describe("cert-gen", () => {
               .uploadCertificate(generatedCertificateResponse)
               .then((response: ManagedUpload.SendData) => {
                 expect(response.Key).toEqual(
-                  `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
+                  `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`,
                 );
 
                 S3BucketMockService.buckets.pop();
@@ -2931,11 +2934,11 @@ describe("cert-gen", () => {
           });
         });
 
-        context("and the S3 bucket does not exist or is not accesible", () => {
-          it("should throw an error", async () => {
+        context('and the S3 bucket does not exist or is not accesible', () => {
+          it('should throw an error', async () => {
             const generatedCertificateResponse: IGeneratedCertificateResponse =
               await certificateGenerationService.generateCertificate(
-                testResult
+                testResult,
               );
             expect.assertions(1);
             return certificateUploadService
@@ -2949,46 +2952,40 @@ describe("cert-gen", () => {
     });
   });
 
-  context("CertGen function", () => {
-    context("when a failing test result is read from the queue", () => {
+  context('CertGen function', () => {
+    context('when a failing test result is read from the queue', () => {
       const event: any = { ...queueEventFail };
-      context("and the testResultId is malformed", () => {
-        it("should thrown an error", async () => {
+      context('and the testResultId is malformed', () => {
+        it('should thrown an error', async () => {
           expect.assertions(1);
           try {
-            await certGen(event, undefined as any, () => {
-              return;
-            });
+            await certGen(event, undefined as any, () => {});
           } catch (err) {
-            expect(err.message).toEqual("Bad Test Record: 1");
+            expect(err.message).toEqual('Bad Test Record: 1');
           }
         });
       });
-      context("and the event is empty", () => {
-        it("should thrown an error", async () => {
+      context('and the event is empty', () => {
+        it('should thrown an error', async () => {
           expect.assertions(1);
           try {
-            await certGen({}, undefined as any, () => {
-              return;
-            });
+            await certGen({}, undefined as any, () => {});
           } catch (err) {
-            expect(err.message).toEqual("Event is empty");
+            expect(err.message).toEqual('Event is empty');
           }
         });
       });
-      context("and the event has no records", () => {
-        it("should thrown an error", async () => {
+      context('and the event has no records', () => {
+        it('should thrown an error', async () => {
           expect.assertions(1);
           try {
             await certGen(
-              { otherStuff: "hi", Records: [] },
+              { otherStuff: 'hi', Records: [] },
               undefined as any,
-              () => {
-                return;
-              }
+              () => {},
             );
           } catch (err) {
-            expect(err.message).toEqual("Event is empty");
+            expect(err.message).toEqual('Event is empty');
           }
         });
       });

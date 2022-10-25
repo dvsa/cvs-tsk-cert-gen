@@ -11,11 +11,11 @@ invoke:
         name: cvs-svc-technical-records
         mock: tests/resources/tech-records-response.json
       certGen:
-          name: cvs-svc-doc-gen
-          mock: tests/resources/cert-gen-response.json
+        name: cvs-svc-doc-gen
+        mock: tests/resources/cert-gen-response.json
       trailerRegistration:
-          name: cvs-svc-trailer-registration
-          mock: tests/resources/trailer-registration.json
+        name: cvs-svc-trailer-registration
+        mock: tests/resources/trailer-registration.json
   remote:
     params:
       apiVersion: 2015-03-31
@@ -25,9 +25,9 @@ invoke:
       techRecords:
         name: technical-records-${BRANCH}
       certGen:
-          name: doc-gen-${BRANCH}
+        name: doc-gen-${BRANCH}
       trailerRegistration:
-          name: trailer-registration-${BRANCH}
+        name: trailer-registration-${BRANCH}
 version:
   trailerRegistration: v1
 s3:

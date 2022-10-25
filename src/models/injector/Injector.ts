@@ -1,5 +1,6 @@
-import "reflect-metadata";
-import { Type } from "./GenericClassDecorator";
+/* eslint-disable */
+import 'reflect-metadata';
+import { Type } from './GenericClassDecorator';
 
 /**
  * The Injector stores services and resolves requested instances.
@@ -15,16 +16,16 @@ export const Injector = new (class {
     if (!injections) {
       // tokens are required dependencies, while injections are resolved tokens from the Injector
       const targetTokens =
-        Reflect.getMetadata("design:paramtypes", target) || [];
+        Reflect.getMetadata('design:paramtypes', target) || [];
       const targetInjections = targetTokens.map((token: any) =>
-        Injector.resolve<any>(token)
+        Injector.resolve<any>(token),
       );
 
       return new target(...targetInjections);
     }
 
     const manualInjections: any = injections.map((token: any) =>
-      Injector.resolve<any>(token)
+      Injector.resolve<any>(token),
     );
     return new target(...manualInjections);
   }

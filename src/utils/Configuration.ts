@@ -1,38 +1,44 @@
-// @ts-ignore
-import * as yml from "node-yaml";
-import { IInvokeConfig, IMOTConfig, IS3Config } from "../models";
+/* eslint-disable */
+import * as yml from 'node-yaml';
+import {
+  Config,
+  IInvokeConfig,
+  IMOTConfig,
+  IS3Config,
+} from '../models/index.d';
 
 /**
  * Configuration class for retrieving project config
  */
 class Configuration {
   private static instance: Configuration;
-  private readonly config: any;
+
+  private readonly config: Config;
 
   private constructor(configPath: string) {
-    const config = yml.readSync(configPath);
+    const config = yml.readSync(configPath) as Config;
 
     // Replace environment variable references
     let stringifiedConfig: string = JSON.stringify(config);
-    const envRegex: RegExp = /\${(\w+\b):?(\w+\b)?}/g;
+    const envRegex = /\${(\w+\b):?(\w+\b)?}/g;
     const matches: RegExpMatchArray | null = stringifiedConfig.match(envRegex);
 
     if (matches) {
       matches.forEach((match: string) => {
         envRegex.lastIndex = 0;
         const captureGroups: RegExpExecArray = envRegex.exec(
-          match
+          match,
         ) as RegExpExecArray;
 
         // Insert the environment variable if available. If not, insert placeholder. If no placeholder, leave it as is.
         stringifiedConfig = stringifiedConfig.replace(
           match,
-          process.env[captureGroups[1]] || captureGroups[2] || captureGroups[1]
+          process.env[captureGroups[1]] || captureGroups[2] || captureGroups[1],
         );
       });
     }
 
-    this.config = JSON.parse(stringifiedConfig);
+    this.config = JSON.parse(stringifiedConfig) as Config;
   }
 
   /**
@@ -41,7 +47,7 @@ class Configuration {
    */
   public static getInstance(): Configuration {
     if (!this.instance) {
-      this.instance = new Configuration("../config/config.yml");
+      this.instance = new Configuration('../config/config.yml');
     }
 
     return Configuration.instance;
@@ -51,7 +57,7 @@ class Configuration {
    * Retrieves the entire config as an object
    * @returns any
    */
-  public getConfig(): any {
+  public getConfig(): Config {
     return this.config;
   }
 
@@ -62,15 +68,15 @@ class Configuration {
   public getInvokeConfig(): IInvokeConfig {
     if (!this.config.invoke) {
       throw new Error(
-        "Lambda Invoke config is not defined in the config file."
+        'Lambda Invoke config is not defined in the config file.',
       );
     }
 
     // Not defining BRANCH will default to local
     const env: string =
-      !process.env.BRANCH || process.env.BRANCH === "local"
-        ? "local"
-        : "remote";
+      !process.env.BRANCH || process.env.BRANCH === 'local'
+        ? 'local'
+        : 'remote';
 
     return this.config.invoke[env];
   }
@@ -81,14 +87,14 @@ class Configuration {
    */
   public getS3Config(): IS3Config {
     if (!this.config.s3) {
-      throw new Error("DynamoDB config is not defined in the config file.");
+      throw new Error('DynamoDB config is not defined in the config file.');
     }
 
     // Not defining BRANCH will default to local
     const env: string =
-      !process.env.BRANCH || process.env.BRANCH === "local"
-        ? "local"
-        : "remote";
+      !process.env.BRANCH || process.env.BRANCH === 'local'
+        ? 'local'
+        : 'remote';
 
     return this.config.s3[env];
   }
@@ -99,7 +105,7 @@ class Configuration {
    */
   public getMOTConfig(): IMOTConfig {
     if (!this.config.mot) {
-      throw new Error("The MOT config is not defined in the config file.");
+      throw new Error('The MOT config is not defined in the config file.');
     }
 
     return this.config.mot;

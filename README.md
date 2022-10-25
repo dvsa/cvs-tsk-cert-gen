@@ -190,3 +190,12 @@ _Manual_:
 - Add sonar-scanner in environment variables in your profile file add the line: `export PATH=<PATH_TO_SONAR_SCANNER>/sonar-scanner-3.3.0.1492-macosx/bin:$PATH`
 - Start the SonarQube server: `cd <PATH_TO_SONARQUBE_SERVER>/bin/macosx-universal-64 ./sonar.sh start`
 - In the microservice folder run the command: `npm run sonar-scanner`
+
+## Linting
+
+### Linting during development
+Please run this command: `npm run lint:fix`
+This command will display linting errors and fix the ones that it can
+
+### Linting for CI and Sonar Qube
+This command `npm run lint` will produce a `report.json` file in the root directory. This file will be read by Sonar Qube to display stats about code quality.
