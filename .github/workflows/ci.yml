@@ -6,5 +6,7 @@ on:
 jobs:
   security:
     uses: dvsa/.github/.github/workflows/nodejs-security.yaml@main
+    with:
+      args: '--all-projects'
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
