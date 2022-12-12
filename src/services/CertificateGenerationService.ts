@@ -192,8 +192,12 @@ class CertificateGenerationService {
         ImageType: "png",
         ImageData: signature,
       },
+      certIssueReason: undefined
     };
-    const { testTypes, vehicleType, systemNumber } = testResult;
+    const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
+    if (testHistory) {
+      payload.certIssueReason = "Replacement";
+    }
     if (
       CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)
     ) {
