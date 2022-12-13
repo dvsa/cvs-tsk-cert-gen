@@ -92,7 +92,7 @@ interface ICertificatePayload {
   RWT_DATA?: any;
   ADR_DATA?: any;
   Signature: ISignature;
-  certIssueReason?: string;
+  CertIssueReason?: string;
 }
 
 interface ISignature {

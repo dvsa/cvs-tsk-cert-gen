@@ -174,6 +174,7 @@ class CertificateGenerationService {
     const signature: string | null = await this.getSignature(
       testResult.testerStaffId
     );
+
     let makeAndModel: any = null;
     if (
       !CertificateGenerationService.isRoadworthinessTestType(
@@ -182,6 +183,7 @@ class CertificateGenerationService {
     ) {
       makeAndModel = await this.getVehicleMakeAndModel(testResult);
     }
+
     let payload: ICertificatePayload = {
       Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
       DATA: undefined,
@@ -192,12 +194,22 @@ class CertificateGenerationService {
         ImageType: "png",
         ImageData: signature,
       },
-      certIssueReason: undefined
+      CertIssueReason: undefined
     };
+
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
+
     if (testHistory) {
-      payload.certIssueReason = "Replacement";
+      for (const history of testHistory) {
+        for (const testType of history.testTypes) {
+          if (testType.testCode === testTypes.testCode) {
+            payload.CertIssueReason = "Replacement";
+            break;
+          }
+        }
+      }
     }
+
     if (
       CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)
     ) {
