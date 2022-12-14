@@ -378,7 +378,7 @@ describe("cert-gen", () => {
 
       context("and the result has testHistory", () => {
         context("and the testHistory has history for the test result", () => {
-          it("should return a VTP20 payload with CertIssueReason set to Replacement", () => {
+          it("should return a VTP20 payload with Reissue populated", () => {
             const expectedResult: any = {
               Watermark: "NOT VALID",
               DATA: {
@@ -424,7 +424,11 @@ describe("cert-gen", () => {
                 ImageType: "png",
                 ImageData: null,
               },
-              CertIssueReason: "REPLACEMENT"
+              Reissue: {
+                Reason: "REPLACEMENT",
+                Issuer: "Joe Smith",
+                Date: "14.12.2022"
+              }
             };
 
             return certificateGenerationService
@@ -436,7 +440,7 @@ describe("cert-gen", () => {
         });
 
         context("and the testHistory has history for an unrelated test result", () => {
-          it("should return a VTP20 payload with no CertIssueReason set", () => {
+          it("should return a VTP20 payload with no Reissue set", () => {
             const expectedResult: any = {
               Watermark: "NOT VALID",
               DATA: {

@@ -193,8 +193,7 @@ class CertificateGenerationService {
       Signature: {
         ImageType: "png",
         ImageData: signature,
-      },
-      CertIssueReason: undefined
+      }
     };
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
@@ -203,7 +202,11 @@ class CertificateGenerationService {
       for (const history of testHistory) {
         for (const testType of history.testTypes) {
           if (testType.testCode === testTypes.testCode) {
-            payload.CertIssueReason = "REPLACEMENT";
+            payload.Reissue = {
+              Reason: "REPLACEMENT",
+              Issuer: testResult.createdByName,
+              Date: moment(testResult.createdAt).format("DD.MM.YYYY")
+            };
             break;
           }
         }
