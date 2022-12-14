@@ -424,7 +424,7 @@ describe("cert-gen", () => {
                 ImageType: "png",
                 ImageData: null,
               },
-              CertIssueReason: "Replacement"
+              CertIssueReason: "REPLACEMENT"
             };
 
             return certificateGenerationService

@@ -203,7 +203,7 @@ class CertificateGenerationService {
       for (const history of testHistory) {
         for (const testType of history.testTypes) {
           if (testType.testCode === testTypes.testCode) {
-            payload.CertIssueReason = "Replacement";
+            payload.CertIssueReason = "REPLACEMENT";
             break;
           }
         }
