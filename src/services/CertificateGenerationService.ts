@@ -135,21 +135,21 @@ class CertificateGenerationService {
 
   /**
    * Retrieves a signature from the cvs-signature S3 bucket
-   * @param testerStaffId - staff ID of the signature you want to retrieve
+   * @param staffId - staff ID of the signature you want to retrieve
    * @returns the signature as a base64 encoded string
    */
-  public async getSignature(testerStaffId: string): Promise<string | null> {
+  public async getSignature(staffId: string): Promise<string | null> {
     return this.s3Client
       .download(
         `cvs-signature-${process.env.BUCKET}`,
-        `${testerStaffId}.base64`
+        `${staffId}.base64`
       )
       .then((result: S3.Types.GetObjectOutput) => {
         return result.Body!.toString();
       })
       .catch((error: AWSError) => {
         console.error(
-          `Unable to fetch signature for staff id ${testerStaffId}. ${error.message}`
+          `Unable to fetch signature for staff id ${staffId}. ${error.message}`
         );
         return null;
       });
@@ -170,7 +170,7 @@ class CertificateGenerationService {
     }
 
     const signature: string | null = await this.getSignature(
-      testResult.testerStaffId
+      testResult.createdById ?? testResult.testerStaffId
     );
 
     let makeAndModel: any = null;
