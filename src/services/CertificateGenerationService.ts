@@ -122,7 +122,7 @@ class CertificateGenerationService {
             fileSize: responseBuffer.byteLength.toString(),
             certificate: responseBuffer,
             certificateOrder: testResult.order,
-            email: testResult.testerEmailAddress,
+            email: testResult.createdByEmailAddress ? testResult.createdByEmailAddress : testResult.testerEmailAddress,
             shouldEmailCertificate: testResult.shouldEmailCertificate
               ? testResult.shouldEmailCertificate
               : "true",
