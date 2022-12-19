@@ -92,6 +92,13 @@ interface ICertificatePayload {
   RWT_DATA?: any;
   ADR_DATA?: any;
   Signature: ISignature;
+  Reissue?: IReissue;
+}
+
+interface IReissue {
+  Reason: string;
+  Issuer: string;
+  Date: string;
 }
 
 interface ISignature {

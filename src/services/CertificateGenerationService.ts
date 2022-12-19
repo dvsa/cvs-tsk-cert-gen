@@ -122,10 +122,8 @@ class CertificateGenerationService {
             fileSize: responseBuffer.byteLength.toString(),
             certificate: responseBuffer,
             certificateOrder: testResult.order,
-            email: testResult.testerEmailAddress,
-            shouldEmailCertificate: testResult.shouldEmailCertificate
-              ? testResult.shouldEmailCertificate
-              : "true",
+            email: testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
+            shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
           };
         }
       )
@@ -137,21 +135,21 @@ class CertificateGenerationService {
 
   /**
    * Retrieves a signature from the cvs-signature S3 bucket
-   * @param testerStaffId - staff ID of the signature you want to retrieve
+   * @param staffId - staff ID of the signature you want to retrieve
    * @returns the signature as a base64 encoded string
    */
-  public async getSignature(testerStaffId: string): Promise<string | null> {
+  public async getSignature(staffId: string): Promise<string | null> {
     return this.s3Client
       .download(
         `cvs-signature-${process.env.BUCKET}`,
-        `${testerStaffId}.base64`
+        `${staffId}.base64`
       )
       .then((result: S3.Types.GetObjectOutput) => {
         return result.Body!.toString();
       })
       .catch((error: AWSError) => {
         console.error(
-          `Unable to fetch signature for staff id ${testerStaffId}. ${error.message}`
+          `Unable to fetch signature for staff id ${staffId}. ${error.message}`
         );
         return null;
       });
@@ -172,8 +170,9 @@ class CertificateGenerationService {
     }
 
     const signature: string | null = await this.getSignature(
-      testResult.testerStaffId
+      testResult.createdById ?? testResult.testerStaffId
     );
+
     let makeAndModel: any = null;
     if (
       !CertificateGenerationService.isRoadworthinessTestType(
@@ -182,6 +181,7 @@ class CertificateGenerationService {
     ) {
       makeAndModel = await this.getVehicleMakeAndModel(testResult);
     }
+
     let payload: ICertificatePayload = {
       Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
       DATA: undefined,
@@ -191,9 +191,26 @@ class CertificateGenerationService {
       Signature: {
         ImageType: "png",
         ImageData: signature,
-      },
+      }
     };
-    const { testTypes, vehicleType, systemNumber } = testResult;
+
+    const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
+
+    if (testHistory) {
+      for (const history of testHistory) {
+        for (const testType of history.testTypes) {
+          if (testType.testCode === testTypes.testCode) {
+            payload.Reissue = {
+              Reason: "REPLACEMENT",
+              Issuer: testResult.createdByName,
+              Date: moment(testResult.createdAt).format("DD.MM.YYYY")
+            };
+            break;
+          }
+        }
+      }
+    }
+
     if (
       CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)
     ) {
