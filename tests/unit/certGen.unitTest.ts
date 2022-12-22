@@ -425,7 +425,7 @@ describe("cert-gen", () => {
                 ImageData: null,
               },
               Reissue: {
-                Reason: "REPLACEMENT",
+                Reason: "Replacement",
                 Issuer: "Joe Smith",
                 Date: "14.12.2022"
               }
