@@ -201,7 +201,7 @@ class CertificateGenerationService {
         for (const testType of history.testTypes) {
           if (testType.testCode === testTypes.testCode) {
             payload.Reissue = {
-              Reason: "REPLACEMENT",
+              Reason: "Replacement",
               Issuer: testResult.createdByName,
               Date: moment(testResult.createdAt).format("DD.MM.YYYY")
             };
