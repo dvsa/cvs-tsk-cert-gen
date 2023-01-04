@@ -163,6 +163,7 @@ interface ITestType {
   deletionFlag: boolean;
   testCode: string;
   testTypeName: string;
+  testTypeClassification: string;
   name: string;
   testTypeId: string;
   testNumber: string;

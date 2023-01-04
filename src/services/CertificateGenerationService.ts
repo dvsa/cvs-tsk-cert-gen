@@ -536,10 +536,11 @@ class CertificateGenerationService {
             if (!testTypes) {
               return testResult;
             }
-            // Only include passed and prs results (exclude failed and abandoned)
-            if (testTypes.filter((testType: ITestType) => testType.testResult === "pass" || testType.testResult === "prs").length) {
-              return testResult;
-            }
+
+            return testTypes.some((testType: ITestType) =>
+              testType.testTypeClassification === "Annual With Certificate" &&
+                (testType.testResult === "pass" || testType.testResult === "prs")
+            );
           });
 
           // Keep only last three entries (first three items of array)
