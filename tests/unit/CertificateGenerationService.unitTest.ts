@@ -396,7 +396,7 @@ describe("Certificate Generation Service", () => {
     });
 
     context("when given a systemNumber which returns a test result which has no test types array", () => {
-      it("should return an odometer history which includes test result", async () => {
+      it("should omit the result from the odometer history", async () => {
         const LambdaStub = sandbox
             .stub(LambdaService.prototype, "invoke")
             .resolves(AWSResolve(JSON.stringify(testResultsRespEmpty)));
@@ -412,9 +412,19 @@ describe("Certificate Generation Service", () => {
         expect(LambdaStub.calledOnce).toBeTruthy();
         expect(odometerHistory).toEqual({OdometerHistoryList: [
             {
-              value: 350000,
+              value: 400000,
               unit: "kilometres",
-              date: "14.01.2019",
+              date: "19.01.2019",
+            },
+            {
+              value: 380000,
+              unit: "kilometres",
+              date: "17.01.2019",
+            },
+            {
+              value: 370000,
+              unit: "kilometres",
+              date: "16.01.2019",
             },
           ]});
       });

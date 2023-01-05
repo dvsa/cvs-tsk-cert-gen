@@ -534,7 +534,7 @@ class CertificateGenerationService {
           let filteredTestResults: any[] = submittedTests.filter((testResult) => {
             const { testTypes } = testResult;
             if (!testTypes) {
-              return testResult;
+              return false;
             }
 
             return testTypes.some((testType: ITestType) =>
