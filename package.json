@@ -52,8 +52,9 @@
     "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.1067.0",
     "aws-xray-sdk": "^3.3.4",
+    "js-yaml": "^3.14.1",
     "moment": "^2.24.0",
-    "node-yaml": "^3.2.0",
+    "node-yaml": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "ts-node-register": "^1.0.0"
   },
