@@ -6,6 +6,7 @@ import testResultsResp from "../resources/test-results-response.json";
 import testResultsRespFail from "../resources/test-results-fail-response.json";
 import testResultsRespPrs from "../resources/test-results-prs-response.json";
 import testResultsRespEmpty from "../resources/test-results-empty-response.json";
+import testResultsRespNoCert from "../resources/test-results-nocert-response.json";
 import { AWSError, Lambda, Response } from "aws-sdk";
 import { LambdaService } from "../../src/services/LambdaService";
 
@@ -316,21 +317,56 @@ describe("Certificate Generation Service", () => {
         expect(LambdaStub.calledOnce).toBeTruthy();
         expect(odometerHistory).toEqual({OdometerHistoryList: [
             {
-              value: 350000,
+              value: 400000,
               unit: "kilometres",
-              date: "14.01.2019",
+              date: "19.01.2019",
             },
             {
-              value: 350000,
+              value: 390000,
               unit: "kilometres",
-              date: "14.01.2019",
+              date: "18.01.2019",
             },
             {
-              value: 350000,
+              value: 380000,
               unit: "kilometres",
-              date: "14.01.2019",
+              date: "17.01.2019",
             },
           ]});
+      });
+    });
+
+    context("when given a systemNumber which returns tests which include those that are not Annual With Certificate", () => {
+      it("should omiting results that are not Annual With Certificate", async () => {
+        const LambdaStub = sandbox
+          .stub(LambdaService.prototype, "invoke")
+          .resolves(AWSResolve(JSON.stringify(testResultsRespNoCert)));
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+          null as any,
+          new LambdaService(new Lambda())
+        );
+        const systemNumberMock = "12345678";
+        const odometerHistory = await certGenSvc.getOdometerHistory(
+          systemNumberMock
+        );
+        expect(LambdaStub.calledOnce).toBeTruthy();
+        expect(odometerHistory).toEqual({OdometerHistoryList: [
+          {
+            value: 400000,
+            unit: "kilometres",
+            date: "19.01.2019",
+          },
+          {
+            value: 380000,
+            unit: "kilometres",
+            date: "17.01.2019",
+          },
+          {
+            value: 360000,
+            unit: "kilometres",
+            date: "15.01.2019",
+          },
+        ]});
       });
     });
 
@@ -360,7 +396,7 @@ describe("Certificate Generation Service", () => {
     });
 
     context("when given a systemNumber which returns a test result which has no test types array", () => {
-      it("should return an odometer history which includes test result", async () => {
+      it("should omit the result from the odometer history", async () => {
         const LambdaStub = sandbox
             .stub(LambdaService.prototype, "invoke")
             .resolves(AWSResolve(JSON.stringify(testResultsRespEmpty)));
@@ -376,9 +412,19 @@ describe("Certificate Generation Service", () => {
         expect(LambdaStub.calledOnce).toBeTruthy();
         expect(odometerHistory).toEqual({OdometerHistoryList: [
             {
-              value: 350000,
+              value: 400000,
               unit: "kilometres",
-              date: "14.01.2019",
+              date: "19.01.2019",
+            },
+            {
+              value: 380000,
+              unit: "kilometres",
+              date: "17.01.2019",
+            },
+            {
+              value: 370000,
+              unit: "kilometres",
+              date: "16.01.2019",
             },
           ]});
       });

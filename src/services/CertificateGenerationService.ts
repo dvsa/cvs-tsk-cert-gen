@@ -529,21 +529,13 @@ class CertificateGenerationService {
 
           // Set the array to only submitted tests (exclude cancelled)
           const submittedTests = testResults.filter((testResult) => {
-              return testResult.testStatus === "submitted";
-            });
-          let filteredTestResults: any[] = submittedTests.filter((testResult) => {
-            const { testTypes } = testResult;
-            if (!testTypes) {
-              return testResult;
-            }
-            // Only include passed and prs results (exclude failed and abandoned)
-            if (testTypes.filter((testType: ITestType) => testType.testResult === "pass" || testType.testResult === "prs").length) {
-              return testResult;
-            }
+            return testResult.testStatus === "submitted";
           });
 
-          // Keep only last three entries (first three items of array)
-          filteredTestResults = filteredTestResults.slice(0, 3);
+          const filteredTestResults = submittedTests.filter(({ testTypes }) => testTypes?.some((testType: ITestType) =>
+            testType.testTypeClassification === "Annual With Certificate"
+            && (testType.testResult === "pass" || testType.testResult === "prs"))
+          ).slice(0, 3); // Only last three entries are used for the history.
 
           return {
             OdometerHistoryList: filteredTestResults.map((testResult) => {
