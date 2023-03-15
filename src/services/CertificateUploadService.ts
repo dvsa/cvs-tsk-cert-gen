@@ -28,7 +28,7 @@ class CertificateUploadService {
     }
 
     const metadata: Metadata = {
-      vrm: payload.vrm,
+      "vrm": payload.vrm,
       "test-type-name": payload.testTypeName,
       "test-type-result": payload.testTypeResult,
       "date-of-issue": payload.dateOfIssue,
@@ -37,7 +37,7 @@ class CertificateUploadService {
       "file-size": payload.fileSize,
       "cert-index": payload.certificateOrder.current.toString(),
       "total-certs": payload.certificateOrder.total.toString(),
-      email: payload.email,
+      "email": payload.email,
       "should-email-certificate": shouldEmailCertificate,
     };
 
