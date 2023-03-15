@@ -63,6 +63,17 @@ class S3BucketService {
       })
       .promise();
   }
+
+  public delete(
+    bucketName: string,
+    fileName: string
+  ) {
+    return this.s3Client.deleteObject({
+      Bucket: bucketName,
+      Key: `${process.env.BRANCH}/${fileName}`,
+    })
+    .promise
+  }
 }
 
 export { S3BucketService };

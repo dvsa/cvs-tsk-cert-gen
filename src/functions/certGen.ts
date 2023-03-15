@@ -39,7 +39,11 @@ const certGen: Handler = async (
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
-    if (
+    if (testResult.testStatus === 'cancelled'){
+      const s3DeletePromise = certificateUploadService.removeCertificate(testResult);
+      certificateUploadPromises.push(s3DeletePromise);
+    }
+    else if (
       testResult.testResultId.match(
         "\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b"
       )

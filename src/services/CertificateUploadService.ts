@@ -48,6 +48,10 @@ class CertificateUploadService {
       metadata
     );
   }
+
+  public removeCertificate(testResult: any) {
+    return this.s3BucketService.delete(`cvs-cert-${process.env.BUCKET}`, `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`)
+  }
 }
 
 export { CertificateUploadService };
