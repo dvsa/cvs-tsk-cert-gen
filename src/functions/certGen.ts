@@ -1,6 +1,6 @@
 import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
 import { Injector } from "../models/injector/Injector";
-import { ManagedUpload } from "aws-sdk/clients/s3";
+import S3, { ManagedUpload } from "aws-sdk/clients/s3";
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
@@ -35,15 +35,17 @@ const certGen: Handler = async (
     );
   const certificateUploadService: CertificateUploadService =
     Injector.resolve<CertificateUploadService>(CertificateUploadService);
-  const certificateUploadPromises: Array<Promise<ManagedUpload.SendData>> = [];
+  const certificateUploadPromises: Array<
+    Promise<ManagedUpload.SendData> | Promise<any>
+  > = [];
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
-    if (testResult.testStatus === 'cancelled'){
-      const s3DeletePromise = certificateUploadService.removeCertificate(testResult);
+    if (testResult.testStatus === "cancelled") {
+      const s3DeletePromise =
+        certificateUploadService.removeCertificate(testResult);
       certificateUploadPromises.push(s3DeletePromise);
-    }
-    else if (
+    } else if (
       testResult.testResultId.match(
         "\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b"
       )
