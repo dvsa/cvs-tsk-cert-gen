@@ -8,6 +8,8 @@ import {
 import { CertificateUploadService } from "../services/CertificateUploadService";
 import { ERRORS } from "../models/Enums";
 
+type CertGenReturn = S3.ManagedUpload.SendData | S3.DeleteObjectOutput;
+
 /**
  * λ function to process an SQS message detailing info for certificate generation
  * @param event - DynamoDB Stream event
@@ -18,7 +20,7 @@ const certGen: Handler = async (
   event: SQSEvent,
   context?: Context,
   callback?: Callback
-): Promise<ManagedUpload.SendData[]> => {
+): Promise<CertGenReturn[]> => {
   if (
     !event ||
     !event.Records ||
@@ -35,9 +37,7 @@ const certGen: Handler = async (
     );
   const certificateUploadService: CertificateUploadService =
     Injector.resolve<CertificateUploadService>(CertificateUploadService);
-  const certificateUploadPromises: Array<
-    Promise<ManagedUpload.SendData> | Promise<any>
-  > = [];
+  const certificateUploadPromises: Array<Promise<CertGenReturn>> = [];
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
