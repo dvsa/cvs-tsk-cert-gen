@@ -63,6 +63,23 @@ class S3BucketService {
       })
       .promise();
   }
+
+  /**
+   * Deletes a file from an S3 bucket
+   * @param bucketName - the bucket from which to download
+   * @param fileName - the name of the file
+   */
+  public delete(
+    bucketName: string,
+    fileName: string
+  ): Promise<PromiseResult<S3.DeleteObjectOutput, AWSError>> {
+    return this.s3Client
+      .deleteObject({
+        Bucket: bucketName,
+        Key: `${process.env.BRANCH}/${fileName}`,
+      })
+      .promise();
+  }
 }
 
 export { S3BucketService };
