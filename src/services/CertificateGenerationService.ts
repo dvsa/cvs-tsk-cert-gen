@@ -7,7 +7,8 @@ import {
   ITestResult,
   IWeightDetails,
   ITrailerRegistration,
-  IMakeAndModel, ITestType,
+  IMakeAndModel,
+  ITestType,
 } from "../models";
 import { Configuration } from "../utils/Configuration";
 import { S3BucketService } from "./S3BucketService";
@@ -122,7 +123,8 @@ class CertificateGenerationService {
             fileSize: responseBuffer.byteLength.toString(),
             certificate: responseBuffer,
             certificateOrder: testResult.order,
-            email: testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
+            email:
+              testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
             shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
           };
         }
@@ -140,10 +142,7 @@ class CertificateGenerationService {
    */
   public async getSignature(staffId: string): Promise<string | null> {
     return this.s3Client
-      .download(
-        `cvs-signature-${process.env.BUCKET}`,
-        `${staffId}.base64`
-      )
+      .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
       .then((result: S3.Types.GetObjectOutput) => {
         return result.Body!.toString();
       })
@@ -191,7 +190,7 @@ class CertificateGenerationService {
       Signature: {
         ImageType: "png",
         ImageData: signature,
-      }
+      },
     };
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
@@ -203,7 +202,7 @@ class CertificateGenerationService {
             payload.Reissue = {
               Reason: "Replacement",
               Issuer: testResult.createdByName,
-              Date: moment(testResult.createdAt).format("DD.MM.YYYY")
+              Date: moment(testResult.createdAt).format("DD.MM.YYYY"),
             };
             break;
           }
@@ -234,10 +233,7 @@ class CertificateGenerationService {
         vehicleType === VEHICLE_TYPES.TRL
           ? undefined
           : await this.getOdometerHistory(systemNumber);
-      const TrnObj = this.isValidForTrn(
-        vehicleType,
-        makeAndModel
-      )
+      const TrnObj = this.isValidForTrn(vehicleType, makeAndModel)
         ? await this.getTrailerRegistrationObject(
             testResult.vin,
             makeAndModel.Make
@@ -294,7 +290,9 @@ class CertificateGenerationService {
             unit: testResult.odometerReadingUnits,
           },
           IssuersName: testResult.testerName,
-          DateOfTheTest: moment(testType.createdAt).format("DD.MM.YYYY"),
+          DateOfTheTest: moment(testResult.testEndTimestamp).format(
+            "DD.MM.YYYY"
+          ),
           CountryOfRegistrationCode: testResult.countryOfRegistration,
           VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
           RawVIN: testResult.vin,
@@ -532,10 +530,17 @@ class CertificateGenerationService {
             return testResult.testStatus === "submitted";
           });
 
-          const filteredTestResults = submittedTests.filter(({ testTypes }) => testTypes?.some((testType: ITestType) =>
-            testType.testTypeClassification === "Annual With Certificate"
-            && (testType.testResult === "pass" || testType.testResult === "prs"))
-          ).slice(0, 3); // Only last three entries are used for the history.
+          const filteredTestResults = submittedTests
+            .filter(({ testTypes }) =>
+              testTypes?.some(
+                (testType: ITestType) =>
+                  testType.testTypeClassification ===
+                    "Annual With Certificate" &&
+                  (testType.testResult === "pass" ||
+                    testType.testResult === "prs")
+              )
+            )
+            .slice(0, 3); // Only last three entries are used for the history.
 
           return {
             OdometerHistoryList: filteredTestResults.map((testResult) => {
