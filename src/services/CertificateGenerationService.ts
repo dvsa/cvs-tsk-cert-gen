@@ -58,8 +58,11 @@ class CertificateGenerationService {
       await this.generatePayload(testResult)
     );
 
+    // TODO STEP 1: logic to add welsh version of certificateType to config as well as the object below
+
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
+      psv_pass_welsh: config.documentNames.vtp20w,
       psv_fail: config.documentNames.vtp30,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,
@@ -69,8 +72,24 @@ class CertificateGenerationService {
       trl_fail: config.documentNames.vtg30,
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
-      adr_pass: config.documentNames.adr_pass,
+      adr_pass: config.documentNames.adr_pass
     };
+
+    // TODO STEP 2: logic to determine if welsh using post code API?
+    //  maybe add to if block only 1 test initially, will need a more permanent solution if more than one
+
+    console.log("ENV VARIABLE: " + process.env.WELSH);
+
+    let isWelsh = false; // obviously this will be replaced by API call
+    if (process.env.WELSH && process.env.WELSH === "true") {
+      isWelsh = true;
+    }
+
+    if (!isWelsh) {
+      console.log("Not Welsh address, carry on as normal");
+    } else {
+      console.log("This is a welsh address");
+    }
 
     let vehicleTestRes: string;
     if (
@@ -83,6 +102,22 @@ class CertificateGenerationService {
     } else {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
     }
+
+    console.log("** THIS IS THE vehicleTestRes before isWelshAddress method **: " + vehicleTestRes);
+
+    vehicleTestRes = this.isWelshAddress(vehicleTestRes, isWelsh);
+
+    console.log("** THIS IS THE vehicleTestRes after isWelshAddress method **: " + vehicleTestRes);
+
+    const certType = certificateTypes[vehicleTestRes];
+    console.log("** THIS IS THE CERTIFICATE TYPE **: " + certType);
+    // console.log("LOGIC TEST:");
+    // console.log(vehicleTestRes === "vt20" || vehicleTestRes === "vt30" || vehicleTestRes === "vt32" || vehicleTestRes === "prs");
+    // const welshTemplateExists = vehicleTestRes === "vt20" || vehicleTestRes === "vt30" || vehicleTestRes === "vt32" || vehicleTestRes === "prs";
+    // vehicleTestRes = (isWelsh && welshTemplateExists) ? vehicleTestRes + "w" : vehicleTestRes;
+
+    console.log("THIS IS AFTERWARDS: " + vehicleTestRes);
+
     const invokeParams: any = {
       FunctionName: iConfig.functions.certGen.name,
       InvocationType: "RequestResponse",
@@ -855,6 +890,23 @@ class CertificateGenerationService {
     const adrTestTypeIds = ["50", "59", "60"];
 
     return adrTestTypeIds.includes(testType.testTypeId);
+  }
+
+  /**
+   * Quick method to test logic
+   * @param vehicleTestRes
+   * @param isWelsh
+   */
+  public isWelshAddress(vehicleTestRes: string, isWelsh: boolean): string {
+    if (isWelsh) {
+      if (vehicleTestRes === "psv_pass") {
+        return vehicleTestRes + "_welsh";
+      } else {
+        return vehicleTestRes;
+      }
+    } else {
+      return vehicleTestRes;
+    }
   }
 
   //#region Private Static Functions
