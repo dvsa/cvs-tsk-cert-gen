@@ -17,7 +17,7 @@
     "build:copy": "find src -type f \\( -name \"*.yml\" -or -name \"*.json\" \\) | cpio -pdm .build && find tests -type f \\( -name \"*.yml\" -or -name \"*.json\" -or -name \"*.base64\" \\)  | cpio -pdm .build",
     "build:docker": "docker-compose -f docker-compose.yml up -d --build",
     "test:unit": "BRANCH=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest --testMatch=\"**/*.unitTest.ts\" --runInBand --detectOpenHandles",
-    "test": "WELSH=true npm run test:unit -- --coveragePathIgnorePatterns='<rootDir>/tests/' --coverage",
+    "test": "WELSH=false npm run test:unit -- --coveragePathIgnorePatterns='<rootDir>/tests/' --coverage",
     "test-i": "BRANCH=local jest --testMatch=\"**/*.intTest.ts\" --runInBand",
     "lint": "tslint src/**/*.ts tests/**/*.ts -q",
     "security-checks": "git secrets --scan",

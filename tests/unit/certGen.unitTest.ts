@@ -360,7 +360,7 @@ describe("cert-gen", () => {
                 expect(response.fileName).toEqual(
                   "W01A00310_XMGDE02FS0H012345.pdf"
                 );
-                expect(response.certificateType).toEqual("VTP20W");
+                expect(response.certificateType).toEqual("VTP20");
                 expect(response.certificateOrder).toEqual({
                   current: 1,
                   total: 2,
