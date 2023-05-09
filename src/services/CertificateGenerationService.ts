@@ -64,6 +64,7 @@ class CertificateGenerationService {
       psv_pass: config.documentNames.vtp20,
       psv_pass_welsh: config.documentNames.vtp20w,
       psv_fail: config.documentNames.vtp30,
+      psv_fail_welsh: config.documentNames.vtp30w,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,
       hgv_fail: config.documentNames.vtg30,
@@ -899,7 +900,7 @@ class CertificateGenerationService {
    */
   public isWelshAddress(vehicleTestRes: string, isWelsh: boolean): string {
     if (isWelsh) {
-      if (vehicleTestRes === "psv_pass") {
+      if (vehicleTestRes === "psv_pass" || vehicleTestRes === "psv_fail") {
         return vehicleTestRes + "_welsh";
       } else {
         return vehicleTestRes;

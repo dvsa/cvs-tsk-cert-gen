@@ -25,6 +25,7 @@ interface IMOTConfig {
     vtp20: "VTP20.pdf";
     vtp20w: "VTP20W.pdf";
     vtp30: "VTP30.pdf";
+    vtp30w: "VTP30W.pdf";
     psv_prs: "PSV_PRS.pdf";
     vtg5: "VTG5.pdf";
     vtg5a: "VTG5A.pdf";
