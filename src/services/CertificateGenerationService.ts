@@ -74,7 +74,6 @@ class CertificateGenerationService {
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass,
-      vt30w: config.documentNames.vtp30w
     };
 
     // TODO STEP 2: logic to determine if welsh using post code API?
@@ -113,10 +112,6 @@ class CertificateGenerationService {
 
     const certType = certificateTypes[vehicleTestRes];
     console.log("** THIS IS THE CERTIFICATE TYPE **: " + certType);
-    // console.log("LOGIC TEST:");
-    // console.log(vehicleTestRes === "vt20" || vehicleTestRes === "vt30" || vehicleTestRes === "vt32" || vehicleTestRes === "prs");
-    // const welshTemplateExists = vehicleTestRes === "vt20" || vehicleTestRes === "vt30" || vehicleTestRes === "vt32" || vehicleTestRes === "prs";
-    // vehicleTestRes = (isWelsh && welshTemplateExists) ? vehicleTestRes + "w" : vehicleTestRes;
 
     console.log("THIS IS AFTERWARDS: " + vehicleTestRes);
 
@@ -128,7 +123,7 @@ class CertificateGenerationService {
         httpMethod: "POST",
         pathParameters: {
           documentName: certificateTypes[vehicleTestRes],
-          documentDirectory: (process.env.DEFECT && process.env.DEFECT === "true") ? "MOT" : config.documentDir,
+          documentDirectory: config.documentDir,
         },
         json: true,
         body: payload,
@@ -276,6 +271,11 @@ class CertificateGenerationService {
             makeAndModel.Make
           )
         : undefined;
+      //
+      // TODO RETRIEVE WELSH DEFECTS - API CALL / S3 BUCKET PICKUP & ADD TO PAYLOAD FAIL DATA
+      //
+      const welshDefects = { defect: "mock for welsh defects"};
+      //
       if (testTypes.testResult !== TEST_RESULTS.FAIL) {
         const passData = await this.generateCertificateData(
           testResult,
@@ -293,12 +293,22 @@ class CertificateGenerationService {
           testResult,
           CERTIFICATE_DATA.FAIL_DATA
         );
-        payload.FAIL_DATA = {
-          ...failData,
-          ...makeAndModel,
-          ...odometerHistory,
-          ...TrnObj,
-        };
+        if (process.env.WELSH && process.env.WELSH === "true") {
+          payload.FAIL_DATA = {
+            ...failData,
+            ...makeAndModel,
+            ...odometerHistory,
+            ...TrnObj,
+            ...welshDefects
+          };
+        } else {
+          payload.FAIL_DATA = {
+            ...failData,
+            ...makeAndModel,
+            ...odometerHistory,
+            ...TrnObj,
+          };
+        }
       }
     }
     // Purge undefined values
@@ -903,9 +913,6 @@ class CertificateGenerationService {
     if (isWelsh) {
       if (vehicleTestRes === "psv_pass" || vehicleTestRes === "psv_fail") {
         return vehicleTestRes + "_welsh";
-      } else if (process.env.DEFECT && process.env.DEFECT === "true") {
-        console.log("VT30W being used");
-        return "vt30w";
       } else {
         return vehicleTestRes;
       }
