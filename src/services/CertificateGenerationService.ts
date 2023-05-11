@@ -73,7 +73,8 @@ class CertificateGenerationService {
       trl_fail: config.documentNames.vtg30,
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
-      adr_pass: config.documentNames.adr_pass
+      adr_pass: config.documentNames.adr_pass,
+      vt30w: config.documentNames.vtp30w
     };
 
     // TODO STEP 2: logic to determine if welsh using post code API?
