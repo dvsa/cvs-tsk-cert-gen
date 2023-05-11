@@ -274,7 +274,7 @@ class CertificateGenerationService {
       //
       // TODO RETRIEVE WELSH DEFECTS - API CALL / S3 BUCKET PICKUP & ADD TO PAYLOAD FAIL DATA
       //
-      const welshDefects = { defect: "mock for welsh defects"};
+      const welshDefects = { DefectMock: "mock for welsh defects"};
       //
       if (testTypes.testResult !== TEST_RESULTS.FAIL) {
         const passData = await this.generateCertificateData(
