@@ -902,6 +902,9 @@ class CertificateGenerationService {
     if (isWelsh) {
       if (vehicleTestRes === "psv_pass" || vehicleTestRes === "psv_fail") {
         return vehicleTestRes + "_welsh";
+      } else if (process.env.DEFECT && process.env.DEFECT === "true") {
+        console.log("VT30W being used");
+        return "vt30w";
       } else {
         return vehicleTestRes;
       }
