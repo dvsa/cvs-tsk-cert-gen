@@ -127,7 +127,7 @@ class CertificateGenerationService {
         httpMethod: "POST",
         pathParameters: {
           documentName: certificateTypes[vehicleTestRes],
-          documentDirectory: config.documentDir,
+          documentDirectory: (process.env.DEFECT && process.env.DEFECT === "true") ? "MOT" : config.documentDir,
         },
         json: true,
         body: payload,
