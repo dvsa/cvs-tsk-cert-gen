@@ -797,12 +797,15 @@ class CertificateGenerationService {
   private generateDefects(testTypes: any, type: string) {
     const rawDefects: any = testTypes.defects;
     const defects: any = {
-      DangerousDefects: [],
+      DangerousDefects: [], // add welsh versions in here
       MajorDefects: [],
       PRSDefects: [],
       MinorDefects: [],
       AdvisoryDefects: [],
     };
+
+    // iterate through rawDefects here to retrieve the welsh version of each
+    // then push to Welsh version of the array at the same time
 
     rawDefects.forEach((defect: any) => {
       switch (defect.deficiencyCategory.toLowerCase()) {
