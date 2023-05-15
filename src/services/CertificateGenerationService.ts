@@ -323,6 +323,31 @@ class CertificateGenerationService {
    * @param type - the certificate type
    */
   public async generateCertificateData(testResult: ITestResult, type: string) {
+
+    const welshDefectsFromApi = await this.getWelshDefectsFromAPI()
+        .then((response) => {
+          console.log("Successfully retrieved Welsh defects from API");
+          return response;
+        })
+        .catch((error: AWSError | Error) => {
+          console.log("There was an error retrieving Welsh Defects from API");
+          console.log(error);
+        });
+    const welshDefectsFromBucket = await this.getWelshDefectsFromBucket()
+        .then((response) => {
+          console.log("Successfully retrieved Welsh defects from S3 bucket");
+          return response;
+        })
+        .catch((error: AWSError | Error) => {
+          console.log("There was an error retrieving Welsh Defects from S3 bucket");
+          console.log(error);
+        });
+
+    // if welsh logic here? or maybe generateDefects method
+    // const welshDefects = await this.getWelshDefectsFromAPI();
+    // const welshDefects = await this.getWelshDefectsFromBucket();
+    // some sort of logic to cherry pick test result defects from welsh defects
+
     const testType: any = testResult.testTypes;
     switch (type) {
       case CERTIFICATE_DATA.PASS_DATA:
@@ -603,6 +628,59 @@ class CertificateGenerationService {
       .catch((error: AWSError | Error) => {
         console.log(error);
       });
+  }
+
+  /**
+   * Method to retrieve defects from API
+   */
+  public async getWelshDefectsFromAPI() {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.defects.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/defects/`,
+      }),
+    };
+
+    return this.lambdaClient
+        .invoke(invokeParams)
+        .then(
+            (response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+              const payload: any = this.lambdaClient.validateInvocationResponse(response);
+              const welshDefects: any[] = JSON.parse(payload.body);
+
+              if (!welshDefects || welshDefects.length === 0) {
+                throw new HTTPError(
+                    400,
+                    `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+                );
+              }
+
+              return welshDefects;
+            }
+        ).catch((error: AWSError | Error) => {
+          console.log(error);
+        });
+  }
+
+  /**
+   * Method to retrieve defects from bucket
+   */
+  public async getWelshDefectsFromBucket(): Promise<string | null> {
+    return this.s3Client
+        .download(`cvs-signature-${process.env.BUCKET}`, `defects.json`)
+        .then((result: S3.Types.GetObjectOutput) => {
+          return result.Body!.toString();
+        })
+        .catch((error: AWSError) => {
+          console.error(
+              `Unable to fetch defects. ${error.message}`
+          );
+          return null;
+        });
   }
 
   /**

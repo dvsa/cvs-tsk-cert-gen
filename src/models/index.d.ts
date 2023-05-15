@@ -5,6 +5,7 @@ interface IInvokeConfig {
     techRecords: { name: string; mock: string };
     certGen: { name: string };
     trailerRegistration: { name: string };
+    defects: { name: string };
   };
 }
 
