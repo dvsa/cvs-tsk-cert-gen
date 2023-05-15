@@ -327,7 +327,6 @@ class CertificateGenerationService {
     const welshDefectsFromApi = await this.getWelshDefectsFromAPI()
         .then((response) => {
           console.log("Successfully retrieved Welsh defects from API");
-          console.log(response[0]);
           return response;
         })
         .catch((error: AWSError | Error) => {
@@ -666,6 +665,8 @@ class CertificateGenerationService {
                 );
               }
 
+              console.log(`There are ${welshDefects.length} defects`);
+
               return welshDefects;
             }
         ).catch((error: AWSError | Error) => {
@@ -680,6 +681,8 @@ class CertificateGenerationService {
     return this.s3Client
         .download(`cvs-signature-${process.env.BUCKET}`, `defects.json`)
         .then((result: S3.Types.GetObjectOutput) => {
+          const json: any[] = JSON.parse(result.Body!.toString());
+          console.log(`There are ${json.length} defects`);
           return result.Body!.toString();
         })
         .catch((error: AWSError) => {
