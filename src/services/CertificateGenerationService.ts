@@ -659,7 +659,7 @@ class CertificateGenerationService {
                 );
               }
 
-              // console.log(`There are ${welshDefects.length} defects`);
+              console.log(`There are ${welshDefects.length} defects`);
 
               return welshDefects;
             }
@@ -675,8 +675,8 @@ class CertificateGenerationService {
     return this.s3Client
         .download(`cvs-signature-${process.env.BUCKET}`, `defects.json`)
         .then((result: S3.Types.GetObjectOutput) => {
-          // const json: any[] = JSON.parse(result.Body!.toString());
-          // console.log(`There are ${json.length} defects`);
+          const json: any[] = JSON.parse(result.Body!.toString());
+          console.log(`There are ${json.length} defects`);
           return result.Body!.toString();
         })
         .catch((error: AWSError) => {
