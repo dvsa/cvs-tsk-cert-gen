@@ -333,21 +333,15 @@ class CertificateGenerationService {
           console.log("There was an error retrieving Welsh Defects from API");
           console.log(error);
         });
-
-    console.log(welshDefectsFromApi);
-
     const welshDefectsFromBucket = await this.getWelshDefectsFromBucket()
         .then((response) => {
           console.log("Successfully retrieved Welsh defects from S3 bucket");
-          console.log(response);
           return response;
         })
         .catch((error: AWSError | Error) => {
           console.log("There was an error retrieving Welsh Defects from S3 bucket");
           console.log(error);
         });
-
-    console.log(welshDefectsFromBucket);
 
     // if welsh logic here? or maybe generateDefects method
     // const welshDefects = await this.getWelshDefectsFromAPI();
