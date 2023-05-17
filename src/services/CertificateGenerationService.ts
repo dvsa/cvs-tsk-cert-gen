@@ -718,9 +718,10 @@ class CertificateGenerationService {
    * @param pNumber
    */
   public async queryTestStations(pNumber: string): Promise<string> {
+    console.log(pNumber);
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
-      FunctionName: config.functions.techRecords.name,
+      FunctionName: config.functions.testStations.name,
       InvocationType: "RequestResponse",
       LogType: "Tail",
       Payload: JSON.stringify({

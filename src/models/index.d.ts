@@ -3,6 +3,7 @@ interface IInvokeConfig {
   functions: {
     testResults: { name: string };
     techRecords: { name: string; mock: string };
+    testStations: { name: string; mock: string };
     certGen: { name: string };
     trailerRegistration: { name: string };
   };

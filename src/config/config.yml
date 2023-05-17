@@ -16,10 +16,15 @@ invoke:
       trailerRegistration:
           name: cvs-svc-trailer-registration
           mock: tests/resources/trailer-registration.json
+      testStations:
+          name: cvs-svc-technical-records
+          mock: tests/resources/tech-records-response.json
   remote:
     params:
       apiVersion: 2015-03-31
     functions:
+      testStations:
+        name: test-stations-${BRANCH}
       testResults:
         name: test-results-${BRANCH}
       techRecords:
