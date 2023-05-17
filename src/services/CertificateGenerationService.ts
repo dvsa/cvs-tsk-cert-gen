@@ -95,7 +95,7 @@ class CertificateGenerationService {
     console.log("testStations");
     console.log(testStations);
 
-    const postCode: ITestStation = testStations[0]
+    const postCode: ITestStation = testStations[0];
     console.log("POSTCODE");
     console.log(postCode);
 
