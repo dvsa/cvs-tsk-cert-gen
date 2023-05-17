@@ -91,11 +91,11 @@ class CertificateGenerationService {
     console.log("TEST RESULT");
     console.log(testResult);
 
-    const testStations: [ITestStation] | undefined  = await this.queryTestStations(testResult.testStationPNumber).then((x) => x);
+    const testStations: [ITestStation] = await this.queryTestStations(testResult.testStationPNumber).then((x) => x);
     console.log("testStations");
     console.log(testStations);
 
-    const postCode: ITestStation = testStations!.filter((x) => x.testStationPNumber === testResult.testStationPNumber)[0];
+    const postCode: ITestStation = testStations[0]
     console.log("POSTCODE");
     console.log(postCode);
 
@@ -706,7 +706,7 @@ class CertificateGenerationService {
    * query test stations
    * @param pNumber
    */
-  public async queryTestStations(pNumber: string): Promise<[ITestStation] | undefined> {
+  public async queryTestStations(pNumber: string): Promise<[ITestStation]> {
     console.log(pNumber);
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
@@ -720,14 +720,9 @@ class CertificateGenerationService {
     };
 
     return this.lambdaClient.invoke(invokeParams).then((response) => {
-      try {
         const payload: any =
             this.lambdaClient.validateInvocationResponse(response);
-
         return JSON.parse(payload.body) as [ITestStation];
-      } catch (e) {
-        return undefined;
-      }
     });
   }
 
