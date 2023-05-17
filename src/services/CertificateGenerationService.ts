@@ -108,18 +108,14 @@ class CertificateGenerationService {
     console.log("** THIS IS THE vehicleTestRes before isWelshAddress method **: " + vehicleTestRes);
 
     const postCode: string  = await this.queryTestStations(testResult.testStationPNumber).then((x) => x);
-    vehicleTestRes = this.isWelshAddress(vehicleTestRes, postCode, isWelsh);
-
-    console.log("** THIS IS THE vehicleTestRes after isWelshAddress method **: " + vehicleTestRes);
+    console.log("POSTCODE");
+    console.log(postCode);
+    const isWelshSMC = await this.isWelshAddress(postCode);
+    console.log("isWelshSMC");
+    console.log(isWelshSMC);
 
     const certType = certificateTypes[vehicleTestRes];
     console.log("** THIS IS THE CERTIFICATE TYPE **: " + certType);
-    // console.log("LOGIC TEST:");
-    // console.log(vehicleTestRes === "vt20" || vehicleTestRes === "vt30" || vehicleTestRes === "vt32" || vehicleTestRes === "prs");
-    // const welshTemplateExists = vehicleTestRes === "vt20" || vehicleTestRes === "vt30" || vehicleTestRes === "vt32" || vehicleTestRes === "prs";
-    // vehicleTestRes = (isWelsh && welshTemplateExists) ? vehicleTestRes + "w" : vehicleTestRes;
-
-    console.log("THIS IS AFTERWARDS: " + vehicleTestRes);
 
     const invokeParams: any = {
       FunctionName: iConfig.functions.certGen.name,
@@ -936,27 +932,19 @@ class CertificateGenerationService {
    * @param postCode
    * @param isWelsh
    */
-  public isWelshAddress(vehicleTestRes: string, postCode: string, isWelsh: boolean): string {
+  public async isWelshAddress(postCode: string): Promise<boolean> {
     axios.defaults.baseURL = process.env.smcBaseUrl!;
     axios.defaults.headers.common["x-api-key"] = process.env.smcApiKey!;
     axios.defaults.headers.post["Content-Type"] = "application/json";
 
-    axios.get(`/isWelsh/${vehicleTestRes}`
-    ).then((x) => {
+    return await axios.get(`/isWelsh/${postCode}`).then((x) => {
       console.log(x);
+      return x;
     }).catch((x) => {
       console.log(x);
+      return x;
     });
 
-    if (isWelsh) {
-      if (vehicleTestRes === "psv_pass" || vehicleTestRes === "psv_fail") {
-        return vehicleTestRes + "_welsh";
-      } else {
-        return vehicleTestRes;
-      }
-    } else {
-      return vehicleTestRes;
-    }
   }
 
   //#region Private Static Functions
