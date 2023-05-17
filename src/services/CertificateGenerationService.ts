@@ -107,6 +107,8 @@ class CertificateGenerationService {
 
     console.log("** THIS IS THE vehicleTestRes before isWelshAddress method **: " + vehicleTestRes);
 
+    console.log("TEST RESULT");
+    console.log(testResult);
     const postCode: string  = await this.queryTestStations(testResult.testStationPNumber).then((x) => x);
     console.log("POSTCODE");
     console.log(postCode);
