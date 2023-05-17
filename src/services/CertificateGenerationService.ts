@@ -8,7 +8,7 @@ import {
   IWeightDetails,
   ITrailerRegistration,
   IMakeAndModel,
-  ITestType,
+  ITestType, ITestStation,
 } from "../models";
 import { Configuration } from "../utils/Configuration";
 import { S3BucketService } from "./S3BucketService";
@@ -58,9 +58,6 @@ class CertificateGenerationService {
     const payload: string = JSON.stringify(
         await this.generatePayload(testResult)
     );
-
-    // TODO STEP 1: logic to add welsh version of certificateType to config as well as the object below
-
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
       psv_pass_welsh: config.documentNames.vtp20w,
@@ -76,22 +73,6 @@ class CertificateGenerationService {
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass
     };
-
-    // TODO STEP 2: logic to determine if welsh using post code API?
-    //  maybe add to if block only 1 test initially, will need a more permanent solution if more than one
-
-    console.log("ENV VARIABLE: " + process.env.WELSH);
-
-    let isWelsh = false; // obviously this will be replaced by API call
-    if (process.env.WELSH && process.env.WELSH === "true") {
-      isWelsh = true;
-    }
-
-    if (!isWelsh) {
-      console.log("Not Welsh address, carry on as normal");
-    } else {
-      console.log("This is a welsh address");
-    }
 
     let vehicleTestRes: string;
     if (
@@ -109,10 +90,16 @@ class CertificateGenerationService {
 
     console.log("TEST RESULT");
     console.log(testResult);
-    const postCode: string  = await this.queryTestStations(testResult.testStationPNumber).then((x) => x);
+
+    const testStations: [ITestStation] | undefined  = await this.queryTestStations(testResult.testStationPNumber).then((x) => x);
+    console.log("testStations");
+    console.log(testStations);
+
+    const postCode: ITestStation = testStations!.filter((x) => x.testStationPNumber === testResult.testStationPNumber)[0];
     console.log("POSTCODE");
     console.log(postCode);
-    const isWelshSMC = await this.isWelshAddress(postCode);
+
+    const isWelshSMC = await this.isWelshAddress(postCode.testStationPNumber);
     console.log("isWelshSMC");
     console.log(isWelshSMC);
 
@@ -719,7 +706,7 @@ class CertificateGenerationService {
    * query test stations
    * @param pNumber
    */
-  public async queryTestStations(pNumber: string): Promise<string> {
+  public async queryTestStations(pNumber: string): Promise<[ITestStation] | undefined> {
     console.log(pNumber);
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
@@ -737,8 +724,7 @@ class CertificateGenerationService {
         const payload: any =
             this.lambdaClient.validateInvocationResponse(response);
 
-        const jsonPayload: [any] = JSON.parse(payload.body).filter((x: { testStationPNumber: any;  }) => x.testStationPNumber === pNumber).map((x: any) => x);
-        return jsonPayload[0];
+        return JSON.parse(payload.body) as [ITestStation];
       } catch (e) {
         return undefined;
       }
