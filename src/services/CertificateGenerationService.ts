@@ -922,7 +922,7 @@ class CertificateGenerationService {
     axios.defaults.headers.post["Content-Type"] = "application/json";
 
     return await axios.get(`/isWelsh/${postCode}`).then((x) => {
-      console.log(x);
+      console.log(x.data);
       return x;
     }).catch((x) => {
       console.log(x);
