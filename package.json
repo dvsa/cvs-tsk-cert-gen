@@ -52,6 +52,7 @@
     "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.1067.0",
     "aws-xray-sdk": "^3.3.4",
+    "axios": "0.27.2",
     "js-yaml": "^3.14.1",
     "moment": "^2.24.0",
     "node-yaml": "^4.0.1",
@@ -95,7 +96,10 @@
     "coverageDirectory": "./coverage",
     "collectCoverage": true,
     "testResultsProcessor": "jest-sonar-reporter",
-    "testURL": "http://localhost"
+    "testURL": "http://localhost",
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    }
   },
   "husky": {
     "hooks": {
