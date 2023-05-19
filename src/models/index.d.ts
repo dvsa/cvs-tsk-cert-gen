@@ -56,6 +56,7 @@ interface IGeneratedCertificateResponse {
   certificateOrder: { current: number; total: number };
   email: string;
   shouldEmailCertificate: string;
+  isWelsh: string;
 }
 interface ICertificateData {
   TestNumber: string;

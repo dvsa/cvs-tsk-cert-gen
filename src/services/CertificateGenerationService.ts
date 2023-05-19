@@ -99,9 +99,8 @@ class CertificateGenerationService {
     console.log("POSTCODE");
     console.log(postCode);
 
-    const isWelshSMC = await this.isWelshAddress(postCode.testStationPNumber);
     console.log("isWelshSMC");
-    console.log(isWelshSMC);
+    const isWelshSMC = await this.isWelshAddress(postCode.testStationPNumber);
 
     const certType = certificateTypes[vehicleTestRes];
     console.log("** THIS IS THE CERTIFICATE TYPE **: " + certType);
@@ -149,6 +148,7 @@ class CertificateGenerationService {
                 email:
                     testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
                 shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
+                isWelsh: isWelshSMC.toString()
               };
             }
         )
@@ -922,8 +922,8 @@ class CertificateGenerationService {
     axios.defaults.headers.post["Content-Type"] = "application/json";
 
     return await axios.get(`/isWelsh/${postCode}`).then((x) => {
-      console.log(x.data);
-      return x;
+      console.log(x.data.isWelshAddress);
+      return x.data.isWelshAddress;
     }).catch((x) => {
       console.log(x);
       return x;
