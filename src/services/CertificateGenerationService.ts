@@ -148,7 +148,7 @@ class CertificateGenerationService {
                 email:
                     testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
                 shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
-                isWelsh: isWelshSMC.toString()
+                isWelsh: isWelshSMC ? "true" : "false"
               };
             }
         )
