@@ -1,24 +1,25 @@
-import { Injector } from "../../src/models/injector/Injector";
+import {Injector} from "../../src/models/injector/Injector";
 import * as fs from "fs";
 import * as path from "path";
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
 } from "../../src/services/CertificateGenerationService";
-import { S3BucketMockService } from "../models/S3BucketMockService";
-import { LambdaMockService } from "../models/LambdaMockService";
-import { CertificateUploadService } from "../../src/services/CertificateUploadService";
-import { ManagedUpload } from "aws-sdk/clients/s3";
-import { certGen } from "../../src/functions/certGen";
+import {S3BucketMockService} from "../models/S3BucketMockService";
+import {LambdaMockService} from "../models/LambdaMockService";
+import {CertificateUploadService} from "../../src/services/CertificateUploadService";
+import {ManagedUpload} from "aws-sdk/clients/s3";
+import {certGen} from "../../src/functions/certGen";
 import sinon from "sinon";
 import queueEventPass from "../resources/queue-event-pass.json";
 import queueEventFail from "../resources/queue-event-fail.json";
 import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import docGenRwt from "../resources/doc-gen-payload-rwt.json";
+import {cloneDeep} from "lodash";
+import {ICertificatePayload, ITestResult} from "../../src/models";
+
 const sandbox = sinon.createSandbox();
-import { cloneDeep } from "lodash";
-import { ITestResult, ICertificatePayload } from "../../src/models";
 
 describe("cert-gen", () => {
   it("should pass", () => {
@@ -494,6 +495,136 @@ describe("cert-gen", () => {
                 expect(payload).toEqual(expectedResult);
               });
           });
+        });
+      });
+    });
+
+    context("when a passing test result is read from the queue", () => {
+      const event: any = { ...queueEventPass };
+      const testResultWithMinorDefect: any = JSON.parse(event.Records[7].body);
+
+      context("and the result has a minor defect", () => {
+        context("and the test station location is not in Wales", () => {
+          it("should return a VTP20 payload without the MinorDefectsWelsh array populated", () => {
+            const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                TestNumber: "W01A00310",
+                TestStationPNumber: "09-4129632",
+                TestStationName: "Abshire-Kub",
+                CurrentOdometer: {
+                  value: 12312,
+                  unit: "kilometres",
+                },
+                IssuersName: "CVS Dev1",
+                DateOfTheTest: "26.02.2019",
+                CountryOfRegistrationCode: "gb",
+                VehicleEuClassification: "M1",
+                RawVIN: "XMGDE02FS0H012345",
+                RawVRM: "BQ91YHQ",
+                ExpiryDate: "25.02.2020",
+                EarliestDateOfTheNextTest: "26.12.2019",
+                SeatBeltTested: "Yes",
+                SeatBeltPreviousCheckDate: "26.02.2019",
+                SeatBeltNumber: 2,
+                Make: "Mercedes",
+                MinorDefects: [
+                  "3.4.a.i Condition of Webbing: a cut or damage or fluffing or fraying, which is not sufficient to obstruct correct operation of the belt or which has not clearly weakened the webbing.. None"
+                ],
+                Model: "632,01",
+                OdometerHistoryList: [
+                  {
+                    value: 400000,
+                    unit: "kilometres",
+                    date: "19.01.2019",
+                  },
+                  {
+                    value: 390000,
+                    unit: "kilometres",
+                    date: "18.01.2019",
+                  },
+                  {
+                    value: 380000,
+                    unit: "kilometres",
+                    date: "17.01.2019",
+                  },
+                ],
+              },
+              Signature: {
+                ImageType: "png",
+                ImageData: null,
+              },
+            };
+
+            return certificateGenerationService
+                .generatePayload(testResultWithMinorDefect)
+                .then((payload: any) => {
+                  expect(payload).toEqual(expectedResult);
+                });
+          });
+          // context("and the test station location is in Wales", () => {
+          //   it("should return a VTP20 payload without the MinorDefectsWelsh array populated", () => {
+          //     CertificateGenerationService.prototype.checkIfWelsh() = jest.fn().mockImplementation(() => {
+          //       return true;
+          //     });
+          //
+          //     const expectedResult: any = {
+          //       Watermark: "NOT VALID",
+          //       DATA: {
+          //         TestNumber: "W01A00310",
+          //         TestStationPNumber: "09-4129632",
+          //         TestStationName: "Abshire-Kub",
+          //         CurrentOdometer: {
+          //           value: 12312,
+          //           unit: "kilometres",
+          //         },
+          //         IssuersName: "CVS Dev1",
+          //         DateOfTheTest: "26.02.2019",
+          //         CountryOfRegistrationCode: "gb",
+          //         VehicleEuClassification: "M1",
+          //         RawVIN: "XMGDE02FS0H012345",
+          //         RawVRM: "BQ91YHQ",
+          //         ExpiryDate: "25.02.2020",
+          //         EarliestDateOfTheNextTest: "26.12.2019",
+          //         SeatBeltTested: "Yes",
+          //         SeatBeltPreviousCheckDate: "26.02.2019",
+          //         SeatBeltNumber: 2,
+          //         Make: "Mercedes",
+          //         MinorDefects: [
+          //           "3.4.a.i Condition of Webbing: a cut or damage or fluffing or fraying, which is not sufficient to obstruct correct operation of the belt or which has not clearly weakened the webbing.. None"
+          //         ],
+          //         Model: "632,01",
+          //         OdometerHistoryList: [
+          //           {
+          //             value: 400000,
+          //             unit: "kilometres",
+          //             date: "19.01.2019",
+          //           },
+          //           {
+          //             value: 390000,
+          //             unit: "kilometres",
+          //             date: "18.01.2019",
+          //           },
+          //           {
+          //             value: 380000,
+          //             unit: "kilometres",
+          //             date: "17.01.2019",
+          //           },
+          //         ],
+          //       },
+          //       Signature: {
+          //         ImageType: "png",
+          //         ImageData: null,
+          //       },
+          //     };
+          //
+          //     return certificateGenerationService
+          //         .generatePayload(testResultWithMinorDefect)
+          //         .then((payload: any) => {
+          //           expect(payload).toEqual(expectedResult);
+          //         });
+          //   });
+          // });
         });
       });
     });

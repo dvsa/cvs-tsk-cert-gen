@@ -9,6 +9,11 @@ import testResultsRespEmpty from "../resources/test-results-empty-response.json"
 import testResultsRespNoCert from "../resources/test-results-nocert-response.json";
 import { AWSError, Lambda, Response } from "aws-sdk";
 import { LambdaService } from "../../src/services/LambdaService";
+import mockTestResult from "../resources/test-result-with-defect.json";
+import defectsMock from "../../tests/resources/defects_mock.json";
+import flatDefectsMock from "../../tests/resources/flattened-defects.json";
+import { cloneDeep } from "lodash";
+import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
 
 describe("Certificate Generation Service", () => {
   const sandbox = sinon.createSandbox();
@@ -427,6 +432,104 @@ describe("Certificate Generation Service", () => {
               date: "16.01.2019",
             },
           ]});
+      });
+    });
+
+    context("test formatDefectWelsh method", () => {
+      it("should return welsh string for hgv vehicle type when there are shared defect refs", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        // get mock of defect or test result
+        const testResultWithDefect = cloneDeep(mockTestResult);
+        console.log(testResultWithDefect.testTypes[0].defects[0]);
+        const format = certGenSvc.formatDefectWelsh(testResultWithDefect.testTypes[0].defects[0], "hgv", defectsMock);
+        console.log(format);
+        expect(format).toEqual("74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None");
+      });
+      it("should return welsh string for psv vehicle type when there are shared defect refs", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        // get mock of defect or test result
+        const testResultWithDefect = cloneDeep(mockTestResult);
+        console.log(testResultWithDefect.testTypes[0].defects[0]);
+        const format = certGenSvc.formatDefectWelsh(testResultWithDefect.testTypes[0].defects[0], "psv", defectsMock);
+        console.log(format);
+        expect(format).toEqual("74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall. Blaen. None");
+      });
+    });
+
+    context("test convertLocationWelsh method", () => {
+      it("should return the translated location value", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const welshLocation1 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.FRONT);
+        const welshLocation2 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.REAR);
+        const welshLocation3 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.UPPER);
+        const welshLocation4 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.LOWER);
+        const welshLocation5 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.NEARSIDE);
+        const welshLocation6 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.OFFSIDE);
+        const welshLocation7 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.CENTRE);
+        const welshLocation8 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.INNER);
+        const welshLocation9 = certGenSvc.convertLocationWelsh(LOCATION_ENGLISH.OUTER);
+        const welshLocation10 = certGenSvc.convertLocationWelsh("mockLocation");
+        expect(welshLocation1).toEqual(LOCATION_WELSH.FRONT);
+        expect(welshLocation2).toEqual(LOCATION_WELSH.REAR);
+        expect(welshLocation3).toEqual(LOCATION_WELSH.UPPER);
+        expect(welshLocation4).toEqual(LOCATION_WELSH.LOWER);
+        expect(welshLocation5).toEqual(LOCATION_WELSH.NEARSIDE);
+        expect(welshLocation6).toEqual(LOCATION_WELSH.OFFSIDE);
+        expect(welshLocation7).toEqual(LOCATION_WELSH.CENTRE);
+        expect(welshLocation8).toEqual(LOCATION_WELSH.INNER);
+        expect(welshLocation9).toEqual(LOCATION_WELSH.OUTER);
+        expect(welshLocation10).toEqual("mockLocation");
+      });
+    });
+
+    context("test filterFlatDefects method", () => {
+      it("should return a filtered flat defect for hgv", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const flatDefect = flatDefectsMock[0];
+        const filterFlatDefect = certGenSvc.filterFlatDefects(flatDefectsMock, "hgv");
+        expect(filterFlatDefect).toEqual(flatDefect);
+      });
+      it("should return a filtered flat defect for hgv", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const flatDefect = flatDefectsMock[1];
+        const filterFlatDefect = certGenSvc.filterFlatDefects(flatDefectsMock, "psv");
+        expect(filterFlatDefect).toEqual(flatDefect);
+      });
+    });
+
+    context("test flattenDefectsFromApi method", () => {
+      it("should return the defects in a flat array", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
+        console.log(flattenedArray);
+        expect(flattenedArray).toEqual(flatDefectsMock);
+        expect(flattenedArray).toHaveLength(2);
       });
     });
   });
