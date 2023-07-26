@@ -192,7 +192,7 @@ class CertificateGenerationService {
    * @returns boolean
    */
   public async isTestStationWelsh(testStations: ITestStation[], testStationPNumber: string) {
-    // default parameter so that if test station cannot be determined, processing will continue
+    // default parameter value so that if test station cannot be determined, processing will continue
     let isWelsh = false;
 
     if (!testStations || testStations.length === 0) {
@@ -205,17 +205,13 @@ class CertificateGenerationService {
       return x.testStationPNumber === testStationPNumber;
     });
 
-    console.log(`There are ${pNumberTestStation.length} test stations matching PNumber ${pNumberTestStation.length}`);
-
     if ((pNumberTestStation) && (pNumberTestStation.length > 0)) {
       const thisTestStation = pNumberTestStation[0];
-      console.log(`This test result was done at ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
       // @ts-ignore
       if (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES) {
         isWelsh = true;
-      } else {
-        console.log(`Country details cannot be determined for ${testStationPNumber}`);
       }
+      console.log(`Test station details: ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
     }
 
     console.log(`Return value for isWelsh is ${isWelsh}`);
