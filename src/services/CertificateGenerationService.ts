@@ -174,7 +174,6 @@ class CertificateGenerationService {
               `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
             );
           }
-          console.log(`There are ${testStations.length} test stations`);
           return testStations;
         }
       )
@@ -201,15 +200,20 @@ class CertificateGenerationService {
       return x.testStationPNumber === testStationPNumber;
     });
 
+    console.log(`There are ${pNumberTestStation.length} test stations matching PNumber ${pNumberTestStation.length}`);
+
     if ((pNumberTestStation) && (pNumberTestStation.length > 0)) {
       const thisTestStation = pNumberTestStation[0];
       console.log(`This test result was done at ATF ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
       // @ts-ignore
       if (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES) {
         isWelsh = true;
+      } else {
+        console.log(`Country details cannot be determined for ${testStationPNumber}`);
       }
     }
 
+    console.log(`Return value for isWelsh is ${isWelsh}`);
     return isWelsh;
   }
 
