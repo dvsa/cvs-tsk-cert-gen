@@ -40,23 +40,7 @@ interface IMOTConfig {
 interface IS3Config {
   endpoint: string;
 }
-interface ITestStation {
-  testStationId: string;
-  testStationPNumber: string;
-  testStationStatus: string;
-  testStationName: string;
-  testStationContactNumber: string;
-  testStationAccessNotes: string;
-  testStationGeneralNotes: string;
-  testStationTown: string;
-  testStationAddress: string;
-  testStationPostcode: string;
-  testStationCountry?: string;
-  testStationLongitude: number;
-  testStationLatitude: number;
-  testStationType: string;
-  testStationEmails: string[];
-}
+
 interface IGeneratedCertificateResponse {
   fileName: string;
   vrm: string;
@@ -262,6 +246,5 @@ export {
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IMakeAndModel,
-  ITestStation
+  IMakeAndModel
 };

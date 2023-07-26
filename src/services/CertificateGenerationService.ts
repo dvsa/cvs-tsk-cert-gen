@@ -8,8 +8,9 @@ import {
   IWeightDetails,
   ITrailerRegistration,
   IMakeAndModel,
-  ITestType, ITestStation,
+  ITestType
 } from "../models";
+import {ITestStation} from "../models/ITestStations";
 import { Configuration } from "../utils/Configuration";
 import { S3BucketService } from "./S3BucketService";
 import S3 from "aws-sdk/clients/s3";
@@ -19,6 +20,7 @@ import { PromiseResult } from "aws-sdk/lib/request";
 import { Service } from "../models/injector/ServiceDecorator";
 import { LambdaService } from "./LambdaService";
 import {
+  ATF_COUNTRIES,
   CERTIFICATE_DATA,
   ERRORS,
   HGV_TRL_ROADWORTHINESS_TEST_TYPES,
@@ -57,7 +59,8 @@ class CertificateGenerationService {
     const testType: any = testResult.testTypes;
 
     // Find out if Welsh certificate is needed
-    const testStations = await this.getTestStations(testResult.testStationPNumber);
+    const testStations = await this.getTestStations();
+    const welshTestStation = this.isTestStationWelsh(testStations, testResult.testStationPNumber);
 
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult)
@@ -141,13 +144,9 @@ class CertificateGenerationService {
   }
 
   /**
-   * Method to retrieve defects from API
+   * Method to retrieve Test Station details from API
    */
-  public async getTestStations(testStationPNumber: string) {
-
-    console.log(`In get test stations`);
-    console.log(`PNumber parameter is ${testStationPNumber}`);
-
+  public async getTestStations() {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
       FunctionName: config.functions.testStations.name,
@@ -160,33 +159,58 @@ class CertificateGenerationService {
     };
     let testStations: ITestStation[] = [];
     return this.lambdaClient
-        .invoke(invokeParams)
-        .then(
-            (response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
-              const payload: any = this.lambdaClient.validateInvocationResponse(response);
-              testStations = JSON.parse(payload.body);
+      .invoke(invokeParams)
+      .then(
+        (
+          response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
+        ) => {
+          const payload: any =
+            this.lambdaClient.validateInvocationResponse(response);
+          testStations = JSON.parse(payload.body);
 
-              if (!testStations || testStations.length === 0) {
-                throw new HTTPError(
-                    400,
-                    `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
-                );
-              }
-
-              console.log(`There are ${testStations.length} test stations`);
-
-              const thisATF = testStations.filter((x) => {
-                return x.testStationPNumber === testStationPNumber;
-              });
-
-              console.log(`This is ATF ${thisATF[0].testStationPNumber} ${thisATF[0].testStationName} in ${thisATF[0].testStationCountry}`);
-
-              return thisATF;
-            }
-        ).catch((error: AWSError | Error) => {
-          console.error(`There was an error retrieving the test stations: ${error}`);
+          if (!testStations || testStations.length === 0) {
+            throw new HTTPError(
+              400,
+              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+            );
+          }
+          console.log(`There are ${testStations.length} test stations`);
           return testStations;
-        });
+        }
+      )
+      .catch((error: AWSError | Error) => {
+        console.error(
+          `There was an error retrieving the test stations: ${error}`
+        );
+        return testStations;
+      });
+  }
+
+  /**
+   * Check if the specific test station is in Wales
+   * @param testStations list of all test stations
+   * @param testStationPNumber pNumber from the test result
+   * @returns boolean
+   */
+  public async isTestStationWelsh(testStations: ITestStation[], testStationPNumber: string) {
+    // default parameter so that if ATF cannot be determined, processing will continue
+    let isWelsh = false;
+
+    // find the specific test station by the PNumber used on the test result
+    const pNumberTestStation = testStations.filter((x) => {
+      return x.testStationPNumber === testStationPNumber;
+    });
+
+    if ((pNumberTestStation) && (pNumberTestStation.length > 0)) {
+      const thisTestStation = pNumberTestStation[0];
+      console.log(`This test result was done at ATF ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
+      // @ts-ignore
+      if (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES) {
+        isWelsh = true;
+      }
+    }
+
+    return isWelsh;
   }
 
   /**
