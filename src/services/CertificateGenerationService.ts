@@ -208,7 +208,7 @@ class CertificateGenerationService {
     if ((pNumberTestStation) && (pNumberTestStation.length > 0)) {
       const thisTestStation = pNumberTestStation[0];
       // @ts-ignore
-      if (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES) {
+      if ((thisTestStation.testStationCountry) && (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES)) {
         isWelsh = true;
       }
       console.log(`Test station details: ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
