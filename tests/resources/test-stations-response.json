@@ -1,0 +1,8 @@
+{
+  "headers": {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Credentials": true
+  },
+  "statusCode": 200,
+  "body": "[{\"testStationAddress\": \"123 High Street\",\"testStationName\": \"New Test ATF 1\",\"testStationId\": \"23\",\"testStationEmails\": [    \"automation@nonprod.cvs.dvsacloud.uk\"],\"testStationCountry\": \"Wales\",\"testStationLatitude\": 180,\"testStationPNumber\": \"P11223\",\"testStationPostcode\": \"SY231AB\",\"testStationAccessNotes\": \"\",\"testStationType\": \"atf\",\"testStationLongitude\": 360,\"testStationContactNumber\": \"1234567890\",\"testStationStatus\": \"active\",\"testStationTown\": \"Aberystwyth\",\"testStationGeneralNotes\": \"\"\n},{\"testStationAddress\": \"711 Macpherson Place\",\"testStationName\": \"Shields LLC\",\"testStationId\": \"14\",\"testStationCountry\": \"Scotland\",\"testStationEmails\": [    \"automation@nonprod.cvs.dvsacloud.uk\"],\"testStationLatitude\": 40.417358,\"testStationPNumber\": \"69-2361520\",\"testStationPostcode\": \"65923-007\",\"testStationAccessNotes\": \"Nulla ut erat id mauris vulputate elementum. Nullam varius. Nulla facilisi.\\n\\nCras non velit nec nisi vulputate nonummy. Maecenas tincidunt lacus at velit. Vivamus vel nulla eget eros elementum pellentesque.\\n\\nQuisque porta volutpat erat. Quisque erat eros, viverra eget, congue eget, semper rutrum, nulla. Nunc purus.\",\"testStationType\": \"atf\",\"testStationLongitude\": 117.500558,\"testStationContactNumber\": \"+86 619 125 2939\",\"testStationStatus\": \"active\",\"testStationTown\": \"Xianglong\",\"testStationGeneralNotes\": \"Suspendisse potenti. In eleifend quam a odio. In hac habitasse platea dictumst.\"\n}]"
+}

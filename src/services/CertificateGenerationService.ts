@@ -8,7 +8,7 @@ import {
   IWeightDetails,
   ITrailerRegistration,
   IMakeAndModel,
-  ITestType,
+  ITestType, ITestStation,
 } from "../models";
 import { Configuration } from "../utils/Configuration";
 import { S3BucketService } from "./S3BucketService";
@@ -35,6 +35,7 @@ class CertificateGenerationService {
   private readonly s3Client: S3BucketService;
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
+  private testStationsService: any;
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
@@ -54,6 +55,10 @@ class CertificateGenerationService {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
+
+    // Find out if Welsh certificate is needed
+    const testStations = await this.getTestStations(testResult.testStationPNumber);
+
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult)
     );
@@ -133,6 +138,51 @@ class CertificateGenerationService {
         console.log(error);
         throw error;
       });
+  }
+
+  /**
+   * Method to retrieve defects from API
+   */
+  public async getTestStations(testStationPNumber: string) {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.testStations.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/test-stations/`,
+      }),
+    };
+    let testStations: ITestStation[] = [];
+    return this.lambdaClient
+        .invoke(invokeParams)
+        .then(
+            (response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+              const payload: any = this.lambdaClient.validateInvocationResponse(response);
+              testStations = JSON.parse(payload.body);
+
+              if (!testStations || testStations.length === 0) {
+                throw new HTTPError(
+                    400,
+                    `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+                );
+              }
+
+              console.log(`There are ${testStations.length} test stations`);
+
+              const thisATF = testStations.filter((x) => {
+                return x.testStationPNumber === testStationPNumber;
+              });
+
+              console.log(`This is ATF ${thisATF[0].testStationPNumber} ${thisATF[0].testStationName} in ${thisATF[0].testStationCountry}`);
+
+              return thisATF;
+            }
+        ).catch((error: AWSError | Error) => {
+          console.error(`There was an error retrieving the test stations: ${error}`);
+          return testStations;
+        });
   }
 
   /**

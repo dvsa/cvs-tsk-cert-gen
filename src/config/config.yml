@@ -16,6 +16,9 @@ invoke:
       trailerRegistration:
           name: cvs-svc-trailer-registration
           mock: tests/resources/trailer-registration.json
+      testStations:
+        name: cvs-svc-test-stations
+        mock: tests/resources/test-stations-response.json
   remote:
     params:
       apiVersion: 2015-03-31
@@ -28,6 +31,8 @@ invoke:
           name: doc-gen-${BRANCH}
       trailerRegistration:
           name: trailer-registration-${BRANCH}
+      testStations:
+        name: test-stations-${BRANCH}
 version:
   trailerRegistration: v1
 s3:
