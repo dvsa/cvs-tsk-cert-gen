@@ -144,6 +144,10 @@ class CertificateGenerationService {
    * Method to retrieve defects from API
    */
   public async getTestStations(testStationPNumber: string) {
+
+    console.log(`In get test stations`);
+    console.log(`PNumber parameter is ${testStationPNumber}`);
+
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
       FunctionName: config.functions.testStations.name,
