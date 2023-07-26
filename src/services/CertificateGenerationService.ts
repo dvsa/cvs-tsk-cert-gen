@@ -192,8 +192,13 @@ class CertificateGenerationService {
    * @returns boolean
    */
   public async isTestStationWelsh(testStations: ITestStation[], testStationPNumber: string) {
-    // default parameter so that if ATF cannot be determined, processing will continue
+    // default parameter so that if test station cannot be determined, processing will continue
     let isWelsh = false;
+
+    if (!testStations || testStations.length === 0) {
+      console.log(`Test stations data is empty`);
+      return isWelsh;
+    }
 
     // find the specific test station by the PNumber used on the test result
     const pNumberTestStation = testStations.filter((x) => {
@@ -204,7 +209,7 @@ class CertificateGenerationService {
 
     if ((pNumberTestStation) && (pNumberTestStation.length > 0)) {
       const thisTestStation = pNumberTestStation[0];
-      console.log(`This test result was done at ATF ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
+      console.log(`This test result was done at ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
       // @ts-ignore
       if (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES) {
         isWelsh = true;
