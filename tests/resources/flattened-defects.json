@@ -1,0 +1,101 @@
+[
+  {
+    "deficiencyText": "the use of the vehicle or trailer on the road would involve an immediate danger of injury to any person.",
+    "deficiencyTextWelsh": "byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson.",
+    "forVehicleType": [
+      "hgv",
+      "trl"
+    ],
+    "imDescription": "Other Dangerous Defects",
+    "imDescriptionWelsh": "Diffygion Peryglus Eraill",
+    "imNumber": 74,
+    "itemDescription": "A defect not described elsewhere in the manual such that:",
+    "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+    "itemNumber": 1,
+    "ref": "74.1"
+  },
+  {
+    "deficiencyText": "the use of the vehicle on the road would involve an immediate danger of injury to any other person.",
+    "deficiencyTextWelsh": "byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall.",
+    "forVehicleType": [
+      "psv"
+    ],
+    "imDescription": "Other Dangerous Defects",
+    "imDescriptionWelsh": "Diffygion Peryglus Eraill",
+    "imNumber": 74,
+    "itemDescription": "A defect not described elsewhere in the manual such that:",
+    "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+    "itemNumber": 1,
+    "ref": "74.1"
+  },
+  {
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": [
+      "psv", "hgv"
+    ],
+    "itemNumber": 1,
+    "itemDescription": "Switch(es) controlling windscreen wipers and/or washers",
+    "itemDescriptionWelsh": "Switsys sy'n rheoli sychwyr sgrin wynt a/neu wasieri",
+    "ref": "25.",
+    "deficiencyText": "missing or defective.",
+    "deficiencyTextWelsh": "ar goll neu'n ddiffygiol."
+  },
+  {
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": [
+      "psv", "hgv"
+    ],
+    "itemNumber": 2,
+    "itemDescription": "Wipers:",
+    "itemDescriptionWelsh": "Sychwyr:",
+    "ref": "25.2.a",
+    "deficiencyText": "do not move over an adequate area.",
+    "deficiencyTextWelsh": "ddim yn symud dros ardal ddigonol."
+  },
+  {
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": [
+      "psv", "hgv"
+    ],
+    "itemNumber": 2,
+    "itemDescription": "Wipers:",
+    "itemDescriptionWelsh": "Sychwyr:",
+    "ref": "25.2.b",
+    "deficiencyText": "do not work continually when switched on.",
+    "deficiencyTextWelsh": "ddim yn gweithio'n barhaus pan gaiff ei droi ymlaen."
+  },
+  {
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": [
+      "psv", "hgv"
+    ],
+    "itemNumber": 2,
+    "itemDescription": "Wipers:",
+    "itemDescriptionWelsh": "Sychwyr:",
+    "ref": "25.2.c",
+    "deficiencyText": "a blade missing, insecure or so deteriorated that it cannot clear the screen effectively.",
+    "deficiencyTextWelsh": "llafn ar goll, yn ansefydlog neu wedi dirywio cymaint fel na all glirio'r sgrin yn effeithiol."
+  },
+  {
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": [
+      "psv", "hgv"
+    ],
+    "itemNumber": 3,
+    "itemDescription": "Windscreen washers",
+    "itemDescriptionWelsh": "Golchwyr sgrin wynt",
+    "ref": "25.3",
+    "deficiencyText": "not working or not providing sufficient fluid to clear the windscreen.",
+    "deficiencyTextWelsh": "ddim yn gweithio neu ddim yn darparu digon o hylif i glirio'r ffenestr flaen. "
+  }
+]

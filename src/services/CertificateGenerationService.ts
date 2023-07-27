@@ -4,13 +4,24 @@ import S3 from "aws-sdk/clients/s3";
 import { PromiseResult } from "aws-sdk/lib/request";
 import moment from "moment";
 import { ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, IMakeAndModel, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails } from "../models";
-import { CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES } from "../models/Enums";
+import { CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES, LOCATION_ENGLISH, LOCATION_WELSH, WELSH_CERT_VEHICLES } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
 import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
 import { Service } from "../models/injector/ServiceDecorator";
 import { Configuration } from "../utils/Configuration";
 import { LambdaService } from "./LambdaService";
 import { S3BucketService } from "./S3BucketService";
+import { ITestStation } from "../models/ITestStations";
+import { IFlatDefect } from "../models/IFlatDefect";
+import { IDefectParent } from "../models/IDefectParent";
+import { IItem } from "../models/IItem";
+import { IDefectChild } from "../models/IDefectChild";
+import axios from "axios";
+import SecretsManager, {
+  GetSecretValueRequest,
+  GetSecretValueResponse,
+} from "aws-sdk/clients/secretsmanager";
+import {ISecret} from "../models/ISecret";
 
 /**
  * Service class for Certificate Generation
@@ -20,11 +31,14 @@ class CertificateGenerationService {
   private readonly s3Client: S3BucketService;
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
+  private readonly secretsClient: SecretsManager;
+
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
+    this.secretsClient = new SecretsManager({ region: "eu-west-1" });
 
     AWSConfig.lambda = this.config.getInvokeConfig().params;
   }
@@ -39,18 +53,34 @@ class CertificateGenerationService {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
+    const { STOP_WELSH_GEN } = process.env;
+
+    let isTestStationWelsh = false;
+
+    // Circumvent bilingual certificate generation and logic if EV set to TRUE
+    if (STOP_WELSH_GEN === undefined || STOP_WELSH_GEN.toUpperCase() === "FALSE") {
+      // Find out if Welsh certificate is needed
+      const testStations = await this.getTestStations();
+      const testStationPostcode = this.getThisTestStation(testStations, testResult.testStationPNumber);
+      isTestStationWelsh = testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
+    } else {
+      console.log(`Welsh certificate generation deactivated via environment variable set to ${STOP_WELSH_GEN}`);
+    }
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult)
     );
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
+      psv_pass_bilingual: config.documentNames.vtp20_bilingual,
       psv_fail: config.documentNames.vtp30,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,
+      hgv_pass_bilingual: config.documentNames.vtg5_bilingual,
       hgv_fail: config.documentNames.vtg30,
       hgv_prs: config.documentNames.hgv_prs,
       trl_pass: config.documentNames.vtg5a,
+      trl_pass_bilingual: config.documentNames.vtg5a_bilingual,
       trl_fail: config.documentNames.vtg30,
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
@@ -65,9 +95,18 @@ class CertificateGenerationService {
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
+    } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
+      vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
+      console.log("** THIS IS THE vehicleTestRes in the else if " + vehicleTestRes);
     } else {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
     }
+
+    console.log("** THIS IS THE vehicleType after the else if: " + testResult.vehicleType);
+    console.log("** THIS IS THE testResult after the else if: " + testType.testResult);
+    console.log("** THIS IS THE isTestStationWelsh in the else if: " + isTestStationWelsh);
+    console.log("** THIS IS THE vehicleTestRes after the else if: " + vehicleTestRes);
+
     const invokeParams: any = {
       FunctionName: iConfig.functions.certGen.name,
       InvocationType: "RequestResponse",
@@ -118,6 +157,137 @@ class CertificateGenerationService {
     }
 
   /**
+   * Method to retrieve Test Station details from API
+   */
+  public async getTestStations() {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.testStations.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/test-stations/`,
+      }),
+    };
+    let testStations: ITestStation[] = [];
+    return this.lambdaClient
+      .invoke(invokeParams)
+      .then(
+        (
+          response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
+        ) => {
+          const payload: any =
+            this.lambdaClient.validateInvocationResponse(response);
+          testStations = JSON.parse(payload.body);
+
+          if (!testStations || testStations.length === 0) {
+            throw new HTTPError(
+              400,
+              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+            );
+          }
+          return testStations;
+        }
+      )
+      .catch((error: AWSError | Error) => {
+        console.error(
+          `There was an error retrieving the test stations: ${error}`
+        );
+        return testStations;
+      });
+  }
+
+  /**
+   * Find the details of the test station used on the test result
+   * @param testStations list of all test stations
+   * @param testStationPNumber pNumber from the test result
+   * @returns string postcode of the pNumber test station
+   */
+  public getThisTestStation(
+    testStations: ITestStation[],
+    testStationPNumber: string
+  ) {
+    if (!testStations || testStations.length === 0) {
+      console.log(`Test stations data is empty`);
+      return null;
+    }
+
+    // find the specific test station by the PNumber used on the test result
+    const thisTestStation = testStations.filter((x) => {
+      return x.testStationPNumber === testStationPNumber;
+    });
+
+    if (thisTestStation && thisTestStation.length > 0) {
+      return thisTestStation[0].testStationPostcode;
+    } else {
+      console.log(
+        `Test station details could not be found for ${testStationPNumber}`
+      );
+      return null;
+    }
+  }
+
+  /** Call SMC postcode lookup with test station postcode
+   * @param postcode
+   * @returns boolean true if Welsh
+   */
+  public async lookupPostcode(postcode: string) {
+    const secretConfig = await this.getSecret();
+
+    if (secretConfig) {
+      const addressResponse: boolean = await axios({
+        method: "get",
+        url: secretConfig.url + "/" + postcode,
+        headers: {"x-api-key": secretConfig.key},
+      })
+          .then((response) => {
+            return response.data.isWelshAddress;
+          })
+          .catch((error) => {
+            console.log(`Error looking up postcode ${postcode}`);
+            console.log(error);
+            return false;
+          });
+
+      console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`);
+      return addressResponse;
+    } else {
+      console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
+      return false;
+    }
+  }
+
+  /**
+   * Method to get the secret details for the Welsh lookup
+   * @returns ISecret secret containing SMC url and api key
+   */
+  private async getSecret() {
+    const welshConfigSecretKey: string = this.config.getWelshSecretKey();
+
+    if (welshConfigSecretKey) {
+      try {
+        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
+        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+
+        if (secretResponse.SecretString) {
+          const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
+          return secretConfig;
+        } else {
+          console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
+          return null;
+        }
+      } catch (error) {
+        console.log(error);
+        return null;
+      }
+    } else {
+      console.log(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
+      return null;
+    }
+  }
+
+  /**
    * Retrieves a signature from the cvs-signature S3 bucket
    * @param staffId - staff ID of the signature you want to retrieve
    * @returns the signature as a base64 encoded string
@@ -139,8 +309,9 @@ class CertificateGenerationService {
   /**
    * Generates the payload for the MOT certificate generation service
    * @param testResult - source test result for certificate generation
+   * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
    */
-  public async generatePayload(testResult: any) {
+  public async generatePayload(testResult: any, isWelsh: boolean = false) {
     let name = testResult.testerName;
 
     const nameArrayList: string[] = name.split(",");
@@ -224,7 +395,8 @@ class CertificateGenerationService {
       if (testTypes.testResult !== TEST_RESULTS.FAIL) {
         const passData = await this.generateCertificateData(
           testResult,
-          CERTIFICATE_DATA.PASS_DATA
+          CERTIFICATE_DATA.PASS_DATA,
+          isWelsh
         );
         payload.DATA = {
           ...passData,
@@ -257,12 +429,18 @@ class CertificateGenerationService {
      * @param testResult - the source test result for certificate generation
      * @param type - the certificate type
      */
-    public async generateCertificateData(testResult: ITestResult, type: string) {
+    public async generateCertificateData(testResult: ITestResult, type: string, isWelsh: boolean = false) {
+        let defectListFromApi: IDefectParent[] = [];
+        let flattenedDefects: IFlatDefect[] = [];
+        if (isWelsh) {
+          defectListFromApi = await this.getDefectTranslations();
+          flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
+        }
         const testType: any = testResult.testTypes;
         switch (type) {
             case CERTIFICATE_DATA.PASS_DATA:
             case CERTIFICATE_DATA.FAIL_DATA:
-                const defects: any = await this.generateDefects(testResult.testTypes, type);
+                const defects: any = await this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, isWelsh);
                 return {
                     TestNumber: testType.testNumber,
                     TestStationPNumber: testResult.testStationPNumber,
@@ -691,7 +869,6 @@ class CertificateGenerationService {
   /**
    * To check if the testResult is valid for fetching Trn.
    * @param vehicleType the vehicle type
-   * @param testTypes the test type
    * @param makeAndModel object containing Make and Model
    * @returns returns if the condition is satisfied else false
    */
@@ -703,11 +880,61 @@ class CertificateGenerationService {
   }
 
   /**
+   * Method used to retrieve the Welsh translations for the certificates
+   */
+  public async getDefectTranslations() {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.defects.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/defects/`,
+      }),
+    };
+    let defects: IDefectParent[] = [];
+    return this.lambdaClient
+      .invoke(invokeParams)
+      .then(
+        (
+          response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
+        ) => {
+          const payload: any =
+            this.lambdaClient.validateInvocationResponse(response);
+          defects = JSON.parse(payload.body);
+
+          if (!defects || defects.length === 0) {
+            throw new HTTPError(
+              400,
+              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+            );
+          }
+
+          console.log(
+            `Successfully retrieved ${defects.length} welsh defects translations.`
+          );
+
+          return defects;
+        }
+      )
+      .catch((error: AWSError | Error) => {
+        console.error(
+          `There was an error retrieving the welsh defect translations: ${error}`
+        );
+        return defects;
+      });
+  }
+
+  /**
    * Generates an object containing defects for a given test type and certificate type
    * @param testTypes - the source test type for defect generation
    * @param type - the certificate type
+   * @param vehicleType - the vehicle type from the test result
+   * @param flattenedDefects - the list of flattened defects after being retrieved from the defect service
+   * @param isWelsh - determines whether the atf in which the test result was conducted resides in Wales
    */
-  private generateDefects(testTypes: any, type: string) {
+  private generateDefects(testTypes: any, type: string, vehicleType: string, flattenedDefects: IFlatDefect[], isWelsh: boolean = false) {
     const rawDefects: any = testTypes.defects;
     const defects: any = {
       DangerousDefects: [],
@@ -715,6 +942,8 @@ class CertificateGenerationService {
       PRSDefects: [],
       MinorDefects: [],
       AdvisoryDefects: [],
+      MinorDefectsWelsh: [],
+      AdvisoryDefectsWelsh: [],
     };
 
     rawDefects.forEach((defect: any) => {
@@ -741,9 +970,19 @@ class CertificateGenerationService {
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
+            // TODO - add logic to only push to array if not null
+            defects.MinorDefectsWelsh.push(
+              this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
+            );
+          }
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
+            // TODO - add logic to only push to array if not null
+            defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
+          }
           break;
       }
     });
@@ -808,6 +1047,196 @@ class CertificateGenerationService {
   }
 
   /**
+   * Returns a formatted welsh string containing data about a given defect
+   * @param defect - the defect for which to generate the formatted welsh string
+   * @param vehicleType - the vehicle type from the test result
+   * @param flattenedDefects - the list of flattened defects
+   */
+  public formatDefectWelsh(
+    defect: any,
+    vehicleType: any,
+    flattenedDefects: IFlatDefect[]
+  ) {
+    const toUpperFirstLetter: any = (word: string) =>
+      word.charAt(0).toUpperCase() + word.slice(1);
+
+    const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter(
+      (x: IFlatDefect) => defect.deficiencyRef === x.ref
+    );
+
+    const filteredFlatDefect: IFlatDefect | null = this.filterFlatDefects(
+      filteredFlatDefects,
+      vehicleType
+    );
+
+    // TODO - handle if there are no matching defects and remove this if
+    if (filteredFlatDefect !== null) {
+      let defectString = `${defect.deficiencyRef} ${filteredFlatDefect.itemDescriptionWelsh}`;
+
+      if (defect.deficiencyText) {
+        defectString += ` ${filteredFlatDefect.deficiencyTextWelsh}`;
+      }
+
+      if (defect.additionalInformation.location) {
+        Object.keys(defect.additionalInformation.location).forEach(
+          (location: string, index: number, array: string[]) => {
+            if (defect.additionalInformation.location[location]) {
+              switch (location) {
+                case "rowNumber":
+                  defectString += ` ${LOCATION_WELSH.ROW_NUMBER}: ${defect.additionalInformation.location.rowNumber}.`;
+                  break;
+                case "seatNumber":
+                  defectString += ` ${LOCATION_WELSH.SEAT_NUMBER}: ${defect.additionalInformation.location.seatNumber}.`;
+                  break;
+                case "axleNumber":
+                  defectString += ` ${LOCATION_WELSH.AXLE_NUMBER}: ${defect.additionalInformation.location.axleNumber}.`;
+                  break;
+                default:
+                  const welshLocation = this.convertLocationWelsh(
+                    defect.additionalInformation.location[location]
+                  );
+                  defectString += ` ${toUpperFirstLetter(welshLocation)}`;
+                  break;
+              }
+            }
+
+            if (index === array.length - 1) {
+              defectString += `.`;
+            }
+          }
+        );
+      }
+
+      if (defect.additionalInformation.notes) {
+        defectString += ` ${defect.additionalInformation.notes}`;
+      }
+      // TODO - remove this once tested
+      console.log(`Defect: ${JSON.stringify(defect)}`);
+      console.log(`Welsh Defect String Generated: ${defectString}`);
+      return defectString;
+    } else {
+      console.log(`ERROR: Unable to find a filtered defect`);
+      return null;
+    }
+  }
+
+  /**
+   * Returns welsh version of location
+   * @param locationToTranslate
+   */
+  public convertLocationWelsh(locationToTranslate: string) {
+    switch (locationToTranslate) {
+      case LOCATION_ENGLISH.FRONT:
+        return LOCATION_WELSH.FRONT;
+      case LOCATION_ENGLISH.REAR:
+        return LOCATION_WELSH.REAR;
+      case LOCATION_ENGLISH.UPPER:
+        return LOCATION_WELSH.UPPER;
+      case LOCATION_ENGLISH.LOWER:
+        return LOCATION_WELSH.LOWER;
+      case LOCATION_ENGLISH.NEARSIDE:
+        return LOCATION_WELSH.NEARSIDE;
+      case LOCATION_ENGLISH.OFFSIDE:
+        return LOCATION_WELSH.OFFSIDE;
+      case LOCATION_ENGLISH.CENTRE:
+        return LOCATION_WELSH.CENTRE;
+      case LOCATION_ENGLISH.INNER:
+        return LOCATION_WELSH.INNER;
+      case LOCATION_ENGLISH.OUTER:
+        return LOCATION_WELSH.OUTER;
+      default:
+        return locationToTranslate;
+    }
+  }
+
+  /**
+   * Returns filtered welsh defects
+   * @param filteredFlatDefects - the array of flattened defects
+   * @param vehicleType - the vehicle type from the test result
+   */
+  public filterFlatDefects(
+    filteredFlatDefects: IFlatDefect[],
+    vehicleType: string
+  ): IFlatDefect | null {
+    if (filteredFlatDefects.length === 0) {
+      return null;
+    } else if (filteredFlatDefects.length === 1) {
+      // TODO - remove this once tested
+      console.log(
+        `Filtered to one defect on def ref id: ${JSON.stringify(filteredFlatDefects[0])}`
+      );
+      return filteredFlatDefects[0];
+    } else {
+      const filteredWelshDefectsOnVehicleType = filteredFlatDefects.filter(
+        (flatDefect: IFlatDefect) =>
+          flatDefect.forVehicleType!.includes(vehicleType)
+      );
+      // TODO - remove this once tested
+      console.log(
+        `Filtered to one defect on def ref id and vehicle type: ${JSON.stringify(filteredWelshDefectsOnVehicleType[0])}`
+      );
+      return filteredWelshDefectsOnVehicleType[0];
+    }
+  }
+
+  /**
+   * Returns a flattened array of every deficiency that only includes the key/value pairs required for certificate generation
+   * @param defects - the array of defects from the api
+   */
+  public flattenDefectsFromApi(defects: IDefectParent[]): IFlatDefect[] {
+    const flatDefects: IFlatDefect[] = [];
+    try {
+      // go through each defect in un-flattened array
+      defects.forEach((defect: IDefectParent) => {
+        const { imNumber, imDescription, imDescriptionWelsh, items } = defect;
+        if (defect.items !== undefined && defect.items.length !== 0) {
+          // go through each item of defect
+          items.forEach((item: IItem) => {
+            const {
+              itemNumber,
+              itemDescription,
+              itemDescriptionWelsh,
+              deficiencies,
+            } = item;
+            if (
+                item.deficiencies !== undefined &&
+                item.deficiencies.length !== 0
+            ) {
+              // go through each deficiency and push to flatDefects array
+              deficiencies.forEach((deficiency: IDefectChild) => {
+                const {
+                  ref,
+                  deficiencyText,
+                  deficiencyTextWelsh,
+                  forVehicleType,
+                } = deficiency;
+                const lowLevelDeficiency: IFlatDefect = {
+                  imNumber,
+                  imDescription,
+                  imDescriptionWelsh,
+                  itemNumber,
+                  itemDescription,
+                  itemDescriptionWelsh,
+                  ref,
+                  deficiencyText,
+                  deficiencyTextWelsh,
+                  forVehicleType,
+                };
+                flatDefects.push(lowLevelDeficiency);
+              });
+            }
+          });
+        }
+      });
+      // TODO - remove this once tested
+      console.log("Flattened defect array length: " + flatDefects.length);
+    } catch (e) {
+      console.error(`Error flattening defects: ${e}`);
+    }
+    return flatDefects;
+  }
+
+  /**
    * Returns true if testType is adr and false if not
    * @param testType - testType which is tested
    */
@@ -826,6 +1255,7 @@ class CertificateGenerationService {
   private static isRoadworthinessTestType(testTypeId: string): boolean {
     return HGV_TRL_ROADWORTHINESS_TEST_TYPES.IDS.includes(testTypeId);
   }
+
   /**
    * Returns true if provided testResult is HGV or TRL Roadworthiness test otherwise false
    * @param testResult - testResult of the vehicle

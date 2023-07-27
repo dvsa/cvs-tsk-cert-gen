@@ -6,6 +6,8 @@ interface IInvokeConfig {
     techRecordsSearch: { name: string; mock: string };
     certGen: { name: string };
     trailerRegistration: { name: string };
+    testStations: { name: string; mock: string };
+    defects: { name: string };
   };
 }
 
@@ -24,10 +26,13 @@ interface IMOTConfig {
     ct20: "CT20.pdf";
     ct30: "CT30.pdf";
     vtp20: "VTP20.pdf";
+    vtp20_bilingual: "VTP20_BILINGUAL.pdf";
     vtp30: "VTP30.pdf";
     psv_prs: "PSV_PRS.pdf";
     vtg5: "VTG5.pdf";
     vtg5a: "VTG5A.pdf";
+    vtg5_bilingual: "VTG5_BILINGUAL.pdf";
+    vtg5a_bilingual: "VTG5A_BILINGUAL.pdf";
     vtg30: "VTG30.pdf";
     hgv_prs: "HGV_PRS.pdf";
     trl_prs: "TRL_PRS.pdf";
@@ -55,6 +60,7 @@ interface IGeneratedCertificateResponse {
   email: string;
   shouldEmailCertificate: string;
 }
+
 interface ICertificateData {
   TestNumber: string;
   TestStationPNumber: string;
@@ -158,6 +164,7 @@ interface ITestResult {
   firstUseDate: string;
   testTypes: ITestType;
 }
+
 interface ITestType {
   createdAt: string;
   lastUpdatedAt: string;
@@ -187,6 +194,7 @@ interface ITestType {
   fuelType: string;
   defects: IDefect[];
 }
+
 interface IDefect {
   imNumber: number;
   imDescription: string;
@@ -202,10 +210,12 @@ interface IDefect {
   prs: boolean;
   prohibitionIssued: boolean;
 }
+
 interface IAdditionalInformation {
   location: ILocation;
   notes: string;
 }
+
 interface ILocation {
   vertical: string;
   horizontal: string;
@@ -215,6 +225,7 @@ interface ILocation {
   seatNumber: number;
   axleNumber: number;
 }
+
 interface IVehicleClass {
   code: string;
   description: string;
@@ -246,5 +257,5 @@ export {
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IMakeAndModel
+  IMakeAndModel,
 };

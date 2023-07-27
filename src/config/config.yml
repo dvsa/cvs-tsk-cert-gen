@@ -14,8 +14,14 @@ invoke:
         name: cvs-svc-doc-gen
         mock: tests/resources/cert-gen-response.json
       trailerRegistration:
-        name: cvs-svc-trailer-registration
-        mock: tests/resources/trailer-registration.json
+          name: cvs-svc-trailer-registration
+          mock: tests/resources/trailer-registration.json
+      testStations:
+        name: cvs-svc-test-stations
+        mock: tests/resources/test-stations-response.json
+      defects:
+        name: cvs-svc-defects
+        mock: tests/resources/defects-response.json
   remote:
     params:
       apiVersion: 2015-03-31
@@ -29,7 +35,11 @@ invoke:
       certGen:
         name: doc-gen-${BRANCH}
       trailerRegistration:
-        name: trailer-registration-${BRANCH}
+          name: trailer-registration-${BRANCH}
+      testStations:
+        name: test-stations-${BRANCH}
+      defects:
+        name: defects-${BRANCH}
 version:
   trailerRegistration: v1
 s3:
@@ -50,13 +60,18 @@ mot:
     ct20: CT20.pdf
     ct30: CT30.pdf
     vtp20: VTP20.pdf
+    vtp20_bilingual: VTP20_BILINGUAL.pdf
     vtp30: VTP30.pdf
     psv_prs: PSV_PRS.pdf
     vtg5: VTG5.pdf
     vtg5a: VTG5A.pdf
+    vtg5_bilingual: VTG5_BILINGUAL.pdf
+    vtg5a_bilingual: VTG5A_BILINGUAL.pdf
     vtg30: VTG30.pdf
     hgv_prs: HGV_PRS.pdf;
     trl_prs: TRL_PRS.pdf;
     rwt: RWT.pdf
     adr_pass: ADR_PASS.pdf;
   documentDir: CVS
+welsh:
+  secret_key:
