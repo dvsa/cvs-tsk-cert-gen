@@ -37,7 +37,6 @@ class CertificateGenerationService {
   private readonly s3Client: S3BucketService;
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
-  private testStationsService: any;
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
@@ -207,11 +206,12 @@ class CertificateGenerationService {
 
     if ((pNumberTestStation) && (pNumberTestStation.length > 0)) {
       const thisTestStation = pNumberTestStation[0];
-      // @ts-ignore
       if ((thisTestStation.testStationCountry) && (thisTestStation.testStationCountry.toUpperCase() === ATF_COUNTRIES.WALES)) {
         isWelsh = true;
       }
       console.log(`Test station details: ${thisTestStation.testStationPNumber} ${thisTestStation.testStationName} in ${thisTestStation.testStationCountry}`);
+    } else {
+      console.log(`Test station details could not be found for ${testStationPNumber} `);
     }
 
     console.log(`Return value for isWelsh is ${isWelsh}`);
