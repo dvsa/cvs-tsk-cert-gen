@@ -28,3 +28,9 @@ export enum CERTIFICATE_DATA {
 export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {
   IDS: ["62", "63", "91", "101", "122"],
 };
+
+export enum ATF_COUNTRIES {
+    ENGLAND = "ENGLAND",
+    SCOTLAND = "SCOTLAND",
+    WALES = "WALES"
+}
