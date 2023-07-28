@@ -369,11 +369,12 @@ class CertificateGenerationService {
    */
   public async generateCertificateData(testResult: ITestResult, type: string, isWelsh: boolean = false) {
     const defectListFromApi: IDefectParent[] = await this.getDefectTranslations();
+    const flattenedDefects: IFlatDefect[] = this.flattenDefectsFromApi(defectListFromApi);
     const testType: any = testResult.testTypes;
     switch (type) {
       case CERTIFICATE_DATA.PASS_DATA:
       case CERTIFICATE_DATA.FAIL_DATA:
-        const defects: any = this.generateDefects(testResult.testTypes, type, testResult.vehicleType, defectListFromApi, isWelsh);
+        const defects: any = this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, isWelsh);
         return {
           TestNumber: testType.testNumber,
           TestStationPNumber: testResult.testStationPNumber,
@@ -848,7 +849,7 @@ class CertificateGenerationService {
         path: `/defects/`,
       }),
     };
-    let defects: any[] = [];
+    let defects: IDefectParent[] = [];
     return this.lambdaClient
         .invoke(invokeParams)
         .then(
@@ -878,10 +879,10 @@ class CertificateGenerationService {
    * @param testTypes - the source test type for defect generation
    * @param type - the certificate type
    * @param vehicleType - the vehicle type from the test result
-   * @param defectListFromApi - the list of defects retrieved from the defect service
+   * @param flattenedDefects - the list of flattened defects after being retrieved from the defect service
    * @param isWelsh - determines whether the atf in which the test result was conducted resides in Wales
    */
-  private generateDefects(testTypes: any, type: string, vehicleType: string, defectListFromApi: IDefectParent[], isWelsh: boolean = false) {
+  private generateDefects(testTypes: any, type: string, vehicleType: string, flattenedDefects: IFlatDefect[], isWelsh: boolean = false) {
     const rawDefects: any = testTypes.defects;
     const defects: any = {
       DangerousDefects: [],
@@ -920,16 +921,16 @@ class CertificateGenerationService {
           defects.MinorDefects.push(this.formatDefect(defect));
           if (type === CERTIFICATE_DATA.PASS_DATA && isWelsh) {
             // TODO - remove this once tested
-            console.log(this.formatDefectWelsh(defect, vehicleType, defectListFromApi));
+            console.log(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             // TODO - add logic to only push to array if not null
-            defects.MinorDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, defectListFromApi));
+            defects.MinorDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
           }
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
           if (type === CERTIFICATE_DATA.PASS_DATA && isWelsh) {
             // TODO - remove this once tested
-            console.log(this.formatDefectWelsh(defect, vehicleType, defectListFromApi));
+            console.log(this.formatDefect(defect));
             // TODO - add logic to only push to array if not null
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
@@ -1000,16 +1001,15 @@ class CertificateGenerationService {
    * Returns a formatted welsh string containing data about a given defect
    * @param defect - the defect for which to generate the formatted welsh string
    * @param vehicleType - the vehicle type from the test result
-   * @param defectListFromApi - the list of defects retrieved from the defect service
+   * @param flattenedDefects - the list of flattened defects
    */
-  public formatDefectWelsh(defect: any, vehicleType: any, defectListFromApi: IDefectParent[]) {
+  public formatDefectWelsh(defect: any, vehicleType: any, flattenedDefects: IFlatDefect[]) {
     const toUpperFirstLetter: any = (word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1);
-    const flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
 
-    const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter((x) => defect.deficiencyRef === x.ref);
+    const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter((x: IFlatDefect) => defect.deficiencyRef === x.ref);
 
-    const filteredFlatDefect = this.filterFlatDefects(filteredFlatDefects, vehicleType);
+    const filteredFlatDefect: IFlatDefect | null = this.filterFlatDefects(filteredFlatDefects, vehicleType);
 
     // TODO - handle if there are no matching defects and remove this if
     if (filteredFlatDefect !== null) {

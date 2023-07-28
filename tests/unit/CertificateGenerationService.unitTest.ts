@@ -446,7 +446,7 @@ describe("Certificate Generation Service", () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(testResultWithDefect.testTypes[0].defects[0], "hgv", defectsMock);
+        const format = certGenSvc.formatDefectWelsh(testResultWithDefect.testTypes[0].defects[0], "hgv", flatDefectsMock);
         console.log(format);
         expect(format).toEqual("74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None");
       });
@@ -460,7 +460,7 @@ describe("Certificate Generation Service", () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(testResultWithDefect.testTypes[0].defects[0], "psv", defectsMock);
+        const format = certGenSvc.formatDefectWelsh(testResultWithDefect.testTypes[0].defects[0], "psv", flatDefectsMock);
         console.log(format);
         expect(format).toEqual("74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall. Blaen. None");
       });
