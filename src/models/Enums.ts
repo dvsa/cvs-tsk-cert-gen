@@ -25,6 +25,33 @@ export enum CERTIFICATE_DATA {
   ADR_DATA = "ADR_DATA",
 }
 
+export enum LOCATION_ENGLISH {
+    FRONT = "front",
+    REAR = "rear",
+    UPPER = "upper",
+    LOWER = "lower",
+    NEARSIDE = "nearside",
+    OFFSIDE = "offside",
+    CENTRE = "centre",
+    INNER = "inner",
+    OUTER = "outer"
+}
+
+export enum LOCATION_WELSH {
+    FRONT = "blaen",
+    REAR = "cefn",
+    UPPER = "uchaf",
+    LOWER = "isaf",
+    NEARSIDE = "ochr mewnol",
+    OFFSIDE = "allanol",
+    CENTRE = "canol",
+    INNER = "mewnol",
+    OUTER = "allanol",
+    ROW_NUMBER = "Rhesi",
+    SEAT_NUMBER = "Seddi",
+    AXLE_NUMBER = "Echelau"
+}
+
 export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {
   IDS: ["62", "63", "91", "101", "122"],
 };

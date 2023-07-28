@@ -1,0 +1,31 @@
+[
+  {
+    "deficiencyText": "the use of the vehicle or trailer on the road would involve an immediate danger of injury to any person.",
+    "deficiencyTextWelsh": "byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson.",
+    "forVehicleType": [
+      "hgv",
+      "trl"
+    ],
+    "imDescription": "Other Dangerous Defects",
+    "imDescriptionWelsh": "Diffygion Peryglus Eraill",
+    "imNumber": 74,
+    "itemDescription": "A defect not described elsewhere in the manual such that:",
+    "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+    "itemNumber": 1,
+    "ref": "74.1"
+  },
+  {
+    "deficiencyText": "the use of the vehicle on the road would involve an immediate danger of injury to any other person.",
+    "deficiencyTextWelsh": "byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall.",
+    "forVehicleType": [
+      "psv"
+    ],
+    "imDescription": "Other Dangerous Defects",
+    "imDescriptionWelsh": "Diffygion Peryglus Eraill",
+    "imNumber": 74,
+    "itemDescription": "A defect not described elsewhere in the manual such that:",
+    "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+    "itemNumber": 1,
+    "ref": "74.1"
+  }
+]

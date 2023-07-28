@@ -1,0 +1,85 @@
+[
+  {
+    "id": 61,
+    "imNumber": 74,
+    "imDescription": "Other Dangerous Defects",
+    "imDescriptionWelsh": "Diffygion Peryglus Eraill",
+    "forVehicleType": ["hgv", "trl", "psv"],
+    "additionalInfo": {
+      "psv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": null,
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      },
+      "hgv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": null,
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      },
+      "trl": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": null,
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      }
+    },
+    "items": [
+      {
+        "itemNumber": 1,
+        "itemDescription": "A defect not described elsewhere in the manual such that:",
+        "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+        "forVehicleType": ["hgv", "trl"],
+        "deficiencies": [
+          {
+            "ref": "74.1",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "dangerous",
+            "deficiencyText": "the use of the vehicle or trailer on the road would involve an immediate danger of injury to any person.",
+            "deficiencyTextWelsh": "byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson.",
+            "stdForProhibition": true,
+            "forVehicleType": ["hgv", "trl"]
+          }
+        ]
+      },
+      {
+        "itemNumber": 1,
+        "itemDescription": "A defect not described elsewhere in the manual such that:",
+        "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+        "forVehicleType": ["psv"],
+        "deficiencies": [
+          {
+            "ref": "74.1",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "dangerous",
+            "deficiencyText": "the use of the vehicle on the road would involve an immediate danger of injury to any other person.",
+            "deficiencyTextWelsh": "byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall.",
+            "stdForProhibition": true,
+            "forVehicleType": ["psv"]
+          }
+        ]
+      }
+    ]
+  }
+]

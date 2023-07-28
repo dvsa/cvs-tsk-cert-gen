@@ -19,6 +19,9 @@ invoke:
       testStations:
         name: cvs-svc-test-stations
         mock: tests/resources/test-stations-response.json
+      defects:
+        name: cvs-svc-defects
+        mock: tests/resources/defects-response.json
   remote:
     params:
       apiVersion: 2015-03-31
@@ -33,6 +36,8 @@ invoke:
           name: trailer-registration-${BRANCH}
       testStations:
         name: test-stations-${BRANCH}
+      defects:
+        name: defects-${BRANCH}
 version:
   trailerRegistration: v1
 s3:
