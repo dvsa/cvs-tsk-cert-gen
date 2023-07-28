@@ -246,6 +246,7 @@ class CertificateGenerationService {
   /**
    * Generates the payload for the MOT certificate generation service
    * @param testResult - source test result for certificate generation
+   * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
    */
   public async generatePayload(testResult: any, isWelsh: boolean = false) {
     let name = testResult.testerName;
@@ -367,7 +368,6 @@ class CertificateGenerationService {
    * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
    */
   public async generateCertificateData(testResult: ITestResult, type: string, isWelsh: boolean = false) {
-    // TODO - handle if defectListFromApi is empty due to error
     const defectListFromApi: IDefectParent[] = await this.getDefectTranslations();
     const testType: any = testResult.testTypes;
     switch (type) {
