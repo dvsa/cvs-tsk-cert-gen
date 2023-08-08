@@ -646,7 +646,7 @@ class CertificateGenerationService {
     }
   }
 
-  public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[]> => {
+  public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[] | undefined> => {
     console.log('in call search tech records');
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
@@ -663,16 +663,16 @@ class CertificateGenerationService {
     };
 
     return await this.lambdaClient.invoke(invokeParams)
-        .then((response) => {
-      try {
-        console.log(response);
-        return this.lambdaClient.validateInvocationResponse(response);
-      } catch (e) {
-        console.log('in search tech record catch block');
-        console.log(e);
-        return undefined;
-      }
-    });
+        .then(async (response) => {
+          try {
+            console.log(response);
+            return await this.lambdaClient.validateInvocationResponse(response);
+          } catch (e) {
+            console.log('in search tech record catch block');
+            console.log(e);
+            return undefined;
+          }
+        });
   }
 
   public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string, vehicleType: string): Promise<TechRecordType<T> | undefined> => {
@@ -696,7 +696,7 @@ class CertificateGenerationService {
         .then(async (response) => {
           try {
             console.log(response);
-            const payload = this.lambdaClient.validateInvocationResponse(response);
+            const payload = await this.lambdaClient.validateInvocationResponse(response);
             // The type of the parsed payload should be `TechRecordType<T>`
             const parsedPayload: TechRecordType<T> = await payload;
             return parsedPayload;
