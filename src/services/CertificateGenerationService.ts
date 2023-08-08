@@ -26,6 +26,7 @@ import {
   VEHICLE_TYPES,
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
+import {NestedObject, SearchResult, TechRecordGet, TechRecordType} from "../models/Types";
 
 /**
  * Service class for Certificate Generation
@@ -355,45 +356,44 @@ class CertificateGenerationService {
         return resultPass;
       case CERTIFICATE_DATA.ADR_DATA:
         const adrDetails = await this.getAdrDetails(testResult);
-
         const docGenPayloadAdr = {
           ChasisNumber: testResult.vin,
           RegistrationNumber: testResult.vrm,
           ApplicantDetails: adrDetails
-            ? adrDetails.applicantDetails
+            ? await this.unflattenFlatObject(adrDetails, "applicantDetails")
             : undefined,
           VehicleType:
-            adrDetails && adrDetails.vehicleDetails
-              ? adrDetails.vehicleDetails.type
+            adrDetails && adrDetails.techRecord_adrDetails_vehicleDetails_type
+              ? adrDetails.techRecord_adrDetails_vehicleDetails_type
               : undefined,
           PermittedDangerousGoods: adrDetails
-            ? adrDetails.permittedDangerousGoods
+            ? adrDetails.techRecord_adrDetails_permittedDangerousGoods
             : undefined,
-          BrakeEndurance: adrDetails ? adrDetails.brakeEndurance : undefined,
-          Weight: adrDetails ? adrDetails.weight : undefined,
-          TankManufacturer: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.tankManufacturer
+          BrakeEndurance: adrDetails ? adrDetails.techRecord_adrDetails_brakeEndurance : undefined,
+          Weight: adrDetails ? adrDetails.techRecord_adrDetails_weight : undefined,
+          TankManufacturer: await this.containsTankDetails(adrDetails)
+            ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankManufacturer
             : undefined,
           Tc2InitApprovalNo:
-            this.containsTankDetails(adrDetails) &&
-            adrDetails.tank.tankDetails.tc2Details
-              ? adrDetails.tank.tankDetails.tc2Details.tc2IntermediateApprovalNo
+            await this.containsTankDetails(adrDetails) &&
+            !!await this.unflattenFlatObject(adrDetails, "tc2Details")
+              ? adrDetails.techRecord_adrDetails_tank_tankDetails_tc2Details_tc2IntermediateApprovalNo
               : undefined,
-          TankManufactureSerialNo: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.tankManufacturerSerialNo
+          TankManufactureSerialNo: await this.containsTankDetails(adrDetails)
+            ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankManufacturerSerialNo
             : undefined,
-          YearOfManufacture: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.yearOfManufacture
+          YearOfManufacture: await this.containsTankDetails(adrDetails)
+            ? adrDetails.techRecord_adrDetails_tank_tankDetails_yearOfManufacture
             : undefined,
-          TankCode: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.tankCode
+          TankCode: await this.containsTankDetails(adrDetails)
+            ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankCode
             : undefined,
-          SpecialProvisions: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.specialProvisions
+          SpecialProvisions: await this.containsTankDetails(adrDetails)
+            ? adrDetails.techRecord_adrDetails_tank_tankDetails_specialProvisions
             : undefined,
           TankStatement:
-            adrDetails && adrDetails.tank
-              ? adrDetails.tank.tankStatement
+            adrDetails && !!await this.unflattenFlatObject(adrDetails, "tank")
+              ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankStatement_statement
               : undefined,
           ExpiryDate: testResult.testTypes.testExpiryDate,
           AtfNameAtfPNumber:
@@ -407,23 +407,79 @@ class CertificateGenerationService {
         return docGenPayloadAdr;
     }
   }
-
   /**
    * Retrieves the adrDetails from a techRecord searched by vin
    * @param testResult - testResult from which the VIN is used to search a tech-record
    */
-  public async getAdrDetails(testResult: any) {
-    const techRecord = await this.getTechRecord(testResult);
+  public getAdrDetails = async (testResult: any) => {
+    // todo change this to use other
+    const searchRes = await this.callSearchTechRecords(testResult.vin);
+    return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl" | undefined>;
+  }
 
-    return techRecord.techRecord[0].adrDetails;
+  /**
+   * documentaiton todo
+   * @param obj
+   * @param keyFilter
+   */
+  public unflattenFlatObject<T extends { [key: string]: any }>(obj: T, keyFilter: string): Promise<NestedObject<T>> {
+    return Object.entries(obj).reduce((result: any, [key, value]) => {
+      const parts = key.split("_");
+      return parts[0] === keyFilter ? parts.reduce((target: any, part: string, idx: number) => {
+        return (target[part] = idx === parts.length - 1 ? value : target[part] ?? {}, target[part]);
+      }, result) : result;
+    }, {});
+  }
+
+
+  public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: SearchResult[]): Promise<TechRecordType<T> | undefined> => {
+    const processRecordsRes = this.processRecords(searchResult);
+    // console.log(processRecordsRes);
+    if (processRecordsRes.currentCount !== 0) {
+      return this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
+          processRecordsRes.currentRecords[0].createdTimestamp,
+          processRecordsRes.currentRecords[0].techRecord_vehicleType);
+    }
+    return processRecordsRes.provisionalCount === 1
+        ? this.callGetTechRecords(processRecordsRes.provisionalRecords[0].systemNumber,
+            processRecordsRes.provisionalRecords[0].createdTimestamp, processRecordsRes.provisionalRecords[0].techRecord_vehicleType)
+        : this.callGetTechRecords(processRecordsRes.provisionalRecords[1].systemNumber,
+            processRecordsRes.provisionalRecords[1].createdTimestamp,
+            processRecordsRes.provisionalRecords[1].techRecord_vehicleType);
+  }
+
+  /**
+   * helper function is used to process records and count provisional and current records
+   * @param records
+   */
+  public processRecords = (records: SearchResult[]
+  ): { currentRecords: SearchResult[]; provisionalRecords: SearchResult[]; currentCount: number; provisionalCount: number; } => {
+    const currentRecords: SearchResult[] = [];
+    const provisionalRecords: SearchResult[] = [];
+
+    console.log(`PROCESS RECORDS METHOD: ${JSON.stringify(records)}`);
+    records.forEach((record) => {
+      if (record.techRecord_statusCode === "current") {
+        currentRecords.push(record);
+      } else if (record.techRecord_statusCode === "provisional") {
+        provisionalRecords.push(record);
+      }
+    });
+
+    return {
+      currentRecords,
+      provisionalRecords,
+      currentCount: currentRecords.length,
+      provisionalCount: provisionalRecords.length
+    };
   }
 
   /**
    * Returns true if an adrDetails object contains a tankDetails object
    * @param testResult - testResult from which the VIN is used to search a tech-record
    */
-  public containsTankDetails(adrDetails: any) {
-    return adrDetails && adrDetails.tank && adrDetails.tank.tankDetails;
+  public async containsTankDetails(adrDetails: any) {
+    return adrDetails && !!await this.unflattenFlatObject(adrDetails, "tank") && !!await this.unflattenFlatObject(adrDetails, "tankDetails");
   }
 
   /**
@@ -431,26 +487,30 @@ class CertificateGenerationService {
    * @param testResult
    */
   public async getWeightDetails(testResult: any) {
-    const result = await this.getTechRecord(testResult);
-    if (result) {
+    // TODO change here
+    const searchRes = await this.callSearchTechRecords(testResult.vin);
+    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
+    if (techRecord) {
       console.log("techRecord for weight details found");
       const weightDetails: IWeightDetails = {
-        dgvw: result.techRecord[0].grossDesignWeight,
+        dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
         weight2: 0,
       };
       if (testResult.vehicleType === VEHICLE_TYPES.HGV) {
-        weightDetails.weight2 = result.techRecord[0].trainDesignWeight;
+        weightDetails.weight2 = (techRecord as TechRecordType<"hgv">).techRecord_trainDesignWeight ?? 0;
       } else {
         if (
-          result.techRecord[0].axles &&
-          result.techRecord[0].axles.length > 0
+            techRecord.techRecord_noOfAxles ?? -1 > 0
         ) {
-          const initialValue = 0;
-          weightDetails.weight2 = result.techRecord[0].axles.reduce(
-            (
+          const initialValue: number = 0;
+          // const unflattenedAxles = await this.unflattenFlatObject(techRecord , "axles") ;
+          //
+          // console.log(unflattenedAxles);
+          weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
+              (
               accumulator: number,
-              currentValue: { weights: { designWeight: number } }
-            ) => accumulator + currentValue.weights.designWeight,
+              currentValue: {weights_designWeight: number }
+            ) => accumulator + currentValue.weights_designWeight,
             initialValue
           );
         } else {
@@ -562,77 +622,24 @@ class CertificateGenerationService {
    * Method for getting make and model based on the vehicle from a test-result
    * @param testResult - the testResult for which the tech record search is done for
    */
-  public async getVehicleMakeAndModel(testResult: any) {
-    const techRecord = await this.getTechRecord(testResult);
+  public getVehicleMakeAndModel = async (testResult: any) => {
+    // TODO change here
+    const searchRes = await this.callSearchTechRecords(testResult.vin);
+    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
     // Return bodyMake and bodyModel values for PSVs
-    if (techRecord.techRecord[0].vehicleType === VEHICLE_TYPES.PSV) {
+    if (techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV) {
+
       return {
-        Make: techRecord.techRecord[0].chassisMake,
-        Model: techRecord.techRecord[0].chassisModel,
+        Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
+        Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
       };
     } else {
       // Return make and model values for HGV and TRL vehicle types
       return {
-        Make: techRecord.techRecord[0].make,
-        Model: techRecord.techRecord[0].model,
+        Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
+        Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
       };
     }
-  }
-
-  /**
-   * Method for getting techRecord to which the test-results reffer to
-   * @param testResult - the testResult for which the tech record search is done for
-   */
-  public async getTechRecord(testResult: any) {
-    let techRecords: any | any[] = testResult.systemNumber
-      ? await this.queryTechRecords(testResult.systemNumber, "systemNumber")
-      : undefined;
-    if (!isSingleRecord(techRecords) && testResult.vin) {
-      console.log(
-        "No unique Tech Record found for systemNumber ",
-        testResult.systemNumber,
-        ". Trying vin"
-      );
-      techRecords = await this.queryTechRecords(testResult.vin);
-    }
-    if (!isSingleRecord(techRecords) && testResult.partialVin) {
-      console.log(
-        "No unique Tech Record found for vin ",
-        testResult.vin,
-        ". Trying Partial Vin"
-      );
-      techRecords = await this.queryTechRecords(testResult.partialVin);
-    }
-    if (!isSingleRecord(techRecords) && testResult.vrm) {
-      console.log(
-        "No unique Tech Record found for partial vin ",
-        testResult.partialVin,
-        ". Trying VRM"
-      );
-      techRecords = await this.queryTechRecords(testResult.vrm);
-    }
-    if (!isSingleRecord(techRecords) && testResult.trailerId) {
-      console.log(
-        "No unique Tech Record found for vrm ",
-        testResult.vrm,
-        ". Trying TrailerID"
-      );
-      techRecords = await this.queryTechRecords(testResult.trailerId);
-    }
-    // @ts-ignore - already handled undefined case.
-    if (!isSingleRecord(techRecords) || !techRecords[0].techRecord) {
-      console.error(
-        `Unable to retrieve unique Tech Record for Test Result:`,
-        testResult
-      );
-      throw new Error(`Unable to retrieve unique Tech Record for Test Result`);
-    }
-
-    // @ts-ignore - already handled undefined case.
-    const techRecord =
-      techRecords instanceof Array ? techRecords[0] : techRecords;
-
-    return techRecord;
   }
 
   /**
@@ -664,14 +671,67 @@ class CertificateGenerationService {
 
     return this.lambdaClient.invoke(invokeParams).then((response) => {
       try {
-        const payload: any =
-          this.lambdaClient.validateInvocationResponse(response);
+        const payload: any = this.lambdaClient.validateInvocationResponse(response);
         return JSON.parse(payload.body);
       } catch (e) {
         return undefined;
       }
     });
   }
+
+  public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[]> => {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.techRecords.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/v3/search/${searchTerm}`,
+        pathParameters: {
+          proxy: `search/${searchTerm}`,
+        }
+      }),
+    };
+
+    return this.lambdaClient.invoke(invokeParams)
+        .then((response) => {
+      try {
+        return this.lambdaClient.validateInvocationResponse(response);
+      } catch (e) {
+        return undefined;
+      }
+    });
+  }
+
+  public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string, vehicleType: string): Promise<TechRecordType<T> | undefined> => {
+    const config: IInvokeConfig = this.config.getInvokeConfig();
+    const invokeParams: any = {
+      FunctionName: config.functions.techRecords.name,
+      InvocationType: "RequestResponse",
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        httpMethod: "GET",
+        path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
+        pathParameters: {
+          proxy: `technical-records/${systemNumber}/${createdTimestamp}`,
+        }
+      }),
+    };
+
+    return this.lambdaClient.invoke(invokeParams)
+        .then(async (response) => {
+          try {
+            const payload = this.lambdaClient.validateInvocationResponse(response);
+            // The type of the parsed payload should be `TechRecordType<T>`
+            const parsedPayload: TechRecordType<T> = await payload;
+            return parsedPayload;
+          } catch (e) {
+            return undefined;
+          }
+        });
+  }
+
 
   /**
    * To fetch trailer registration
@@ -881,18 +941,5 @@ class CertificateGenerationService {
   }
   //#endregion
 }
-
-/**
- * Checks a techRecord to  see if it's a single, valid record
- * @param techRecord
- */
-const isSingleRecord = (techRecords: any): boolean => {
-  if (!techRecords) {
-    return false;
-  }
-  return techRecords && techRecords instanceof Array
-    ? techRecords.length === 1
-    : true;
-};
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };

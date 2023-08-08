@@ -1,0 +1,57 @@
+[
+  {
+    "techRecord_chassisMake": "AEC",
+    "techRecord_manufactureYear": 2000,
+    "techRecord_chassisModel": "RELIANCE",
+    "primaryVrm": "P021718S",
+    "vin": "PSV021718S",
+    "techRecord_statusCode": "archived",
+    "systemNumber": "10000048",
+    "techRecord_vehicleType": "psv",
+    "createdTimestamp": "2023-08-07T07:12:53.239Z"
+  },
+  {
+    "techRecord_chassisMake": "AEC",
+    "techRecord_manufactureYear": null,
+    "techRecord_chassisModel": "RELIANCE",
+    "primaryVrm": "P021718S",
+    "vin": "PSV021718S",
+    "techRecord_statusCode": "archived",
+    "systemNumber": "10000048",
+    "techRecord_vehicleType": "psv",
+    "createdTimestamp": "2023-08-07T03:54:19.612Z"
+  },
+  {
+    "techRecord_chassisMake": "AEC",
+    "techRecord_manufactureYear": 2000,
+    "techRecord_chassisModel": "RELIANCE",
+    "primaryVrm": "P021718S",
+    "vin": "PSV021718S",
+    "techRecord_statusCode": "current",
+    "systemNumber": "10000048",
+    "techRecord_vehicleType": "psv",
+    "createdTimestamp": "2023-08-07T06:11:38.561Z"
+  },
+  {
+    "techRecord_chassisMake": "AEC",
+    "techRecord_manufactureYear": 2000,
+    "techRecord_chassisModel": "RELIANCE",
+    "primaryVrm": "P021718S",
+    "vin": "PSV021718S",
+    "techRecord_statusCode": "provisional",
+    "systemNumber": "10000048",
+    "techRecord_vehicleType": "psv",
+    "createdTimestamp": "2023-08-07T07:32:46.156Z"
+  },
+  {
+    "techRecord_chassisMake": "AEC",
+    "techRecord_manufactureYear": null,
+    "techRecord_chassisModel": "RELIANCE",
+    "primaryVrm": "P021718S",
+    "vin": "PSV021718S",
+    "techRecord_statusCode": "archived",
+    "systemNumber": "10000048",
+    "techRecord_vehicleType": "psv",
+    "createdTimestamp": "2023-08-07T03:57:27.635Z"
+  }
+]

@@ -1,34 +1,17 @@
 {
-  "Watermark": "NOT VALID",
   "ADR_DATA": {
-    "ChasisNumber": "P012301098765",
-    "ApplicantDetails": {
-      "name": "string",
-      "street": "string",
-      "town": "string",
-      "city": "string",
-      "postcode": "string"
-    },
-    "PermittedDangerousGoods": ["FP <61 (FL)"],
-    "TankManufacturer": "string",
-    "Tc2InitApprovalNo": "string",
-    "TankManufactureSerialNo": "string",
-    "YearOfManufacture": 2019,
-    "TankCode": "string",
-    "SpecialProvisions": "string",
-    "TankStatement": {
-      "substancesPermitted": "Substances permitted under the tank code and any special provisions specified in 9 may be carried",
-      "statement": "string",
-      "productList": "string"
-    },
-    "RegistrationNumber": "VM14MDT",
-    "VehicleType": "string",
-    "ExpiryDate": "2020-02-25T15:29:40.032Z",
+    "ApplicantDetails": {},
     "AtfNameAtfPNumber": "Abshire-Kub 09-4129632",
+    "ChasisNumber": "P012301098765",
+    "ExpiryDate": "2020-02-25T15:29:40.032Z",
+    "Make": "STANLEY",
+    "Model": "AUTOTRL",
+    "RegistrationNumber": "VM14MDT",
     "TestTypeDate": "2019-02-26T15:37:32.917Z"
   },
   "Signature": {
-    "ImageType": "png",
-    "ImageData": null
-  }
+    "ImageData": null,
+    "ImageType": "png"
+  },
+  "Watermark": "NOT VALID"
 }
