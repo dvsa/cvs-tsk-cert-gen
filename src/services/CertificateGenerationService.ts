@@ -646,7 +646,7 @@ class CertificateGenerationService {
     }
   }
 
-  public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[] | undefined> => {
+  public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[]> => {
     console.log('in call search tech records');
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
