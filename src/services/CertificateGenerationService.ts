@@ -412,8 +412,10 @@ class CertificateGenerationService {
    * @param testResult - testResult from which the VIN is used to search a tech-record
    */
   public getAdrDetails = async (testResult: any) => {
+    console.log('in adr details method');
     // todo change this to use other
     const searchRes = await this.callSearchTechRecords(testResult.vin);
+    console.log(`searcg res: ${searchRes}`);
     return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl" | undefined>;
   }
 
@@ -433,8 +435,9 @@ class CertificateGenerationService {
 
 
   public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: SearchResult[]): Promise<TechRecordType<T> | undefined> => {
+    console.log('in process current provisional records');
     const processRecordsRes = this.processRecords(searchResult);
-    // console.log(processRecordsRes);
+    console.log(processRecordsRes);
     if (processRecordsRes.currentCount !== 0) {
       return this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
           processRecordsRes.currentRecords[0].createdTimestamp,
@@ -487,6 +490,7 @@ class CertificateGenerationService {
    * @param testResult
    */
   public async getWeightDetails(testResult: any) {
+    console.log('in get weight details');
     // TODO change here
     const searchRes = await this.callSearchTechRecords(testResult.vin);
     const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
@@ -680,6 +684,7 @@ class CertificateGenerationService {
   }
 
   public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[]> => {
+    console.log('in call search tech records');
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
       FunctionName: config.functions.techRecords.name,
@@ -697,6 +702,7 @@ class CertificateGenerationService {
     return this.lambdaClient.invoke(invokeParams)
         .then((response) => {
       try {
+        console.log(response);
         return this.lambdaClient.validateInvocationResponse(response);
       } catch (e) {
         return undefined;
@@ -705,6 +711,8 @@ class CertificateGenerationService {
   }
 
   public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string, vehicleType: string): Promise<TechRecordType<T> | undefined> => {
+    console.log('in call get tech records');
+
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
       FunctionName: config.functions.techRecords.name,
@@ -722,6 +730,7 @@ class CertificateGenerationService {
     return this.lambdaClient.invoke(invokeParams)
         .then(async (response) => {
           try {
+            console.log(response);
             const payload = this.lambdaClient.validateInvocationResponse(response);
             // The type of the parsed payload should be `TechRecordType<T>`
             const parsedPayload: TechRecordType<T> = await payload;
