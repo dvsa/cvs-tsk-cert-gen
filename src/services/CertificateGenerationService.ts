@@ -646,43 +646,6 @@ class CertificateGenerationService {
     }
   }
 
-  /**
-   * Helper method for Technical Records Lambda calls. Accepts any search term now, rather than just the VIN
-   * Created as part of CVSB-8582
-   * @param searchTerm - the value of your search term
-   * @param searchType - the kind of value your searchTerm represents in camel case e.g. vin, vrm, systemNumber
-   */
-  public async queryTechRecords(
-    searchTerm: string,
-    searchType: string = "all"
-  ) {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: any = {
-      FunctionName: config.functions.techRecords.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
-      Payload: JSON.stringify({
-        httpMethod: "GET",
-        path: `/vehicles/${searchTerm}/tech-records`,
-        pathParameters: {
-          proxy: `${searchTerm}/tech-records`,
-        },
-        queryStringParameters: {
-          searchCriteria: searchType,
-        },
-      }),
-    };
-
-    return this.lambdaClient.invoke(invokeParams).then((response) => {
-      try {
-        const payload: any = this.lambdaClient.validateInvocationResponse(response);
-        return JSON.parse(payload.body);
-      } catch (e) {
-        return undefined;
-      }
-    });
-  }
-
   public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[]> => {
     console.log('in call search tech records');
     const config: IInvokeConfig = this.config.getInvokeConfig();
