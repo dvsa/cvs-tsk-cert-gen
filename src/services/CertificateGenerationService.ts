@@ -699,12 +699,14 @@ class CertificateGenerationService {
       }),
     };
 
-    return this.lambdaClient.invoke(invokeParams)
+    return await this.lambdaClient.invoke(invokeParams)
         .then((response) => {
       try {
         console.log(response);
         return this.lambdaClient.validateInvocationResponse(response);
       } catch (e) {
+        console.log('in search tech record catch block');
+        console.log(e);
         return undefined;
       }
     });
@@ -727,7 +729,7 @@ class CertificateGenerationService {
       }),
     };
 
-    return this.lambdaClient.invoke(invokeParams)
+    return await this.lambdaClient.invoke(invokeParams)
         .then(async (response) => {
           try {
             console.log(response);
@@ -736,6 +738,8 @@ class CertificateGenerationService {
             const parsedPayload: TechRecordType<T> = await payload;
             return parsedPayload;
           } catch (e) {
+            console.log('in get tech record catch block');
+            console.log(e);
             return undefined;
           }
         });
