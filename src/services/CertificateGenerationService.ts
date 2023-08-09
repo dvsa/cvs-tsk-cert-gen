@@ -102,11 +102,8 @@ class CertificateGenerationService {
         return this.lambdaClient
             .invoke(invokeParams)
             .then(
-                (
-                    response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
-                ) => {
-                    const documentPayload: any =
-                        this.lambdaClient.validateInvocationResponse(response);
+                async (response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+                    const documentPayload: any = await this.lambdaClient.validateInvocationResponse(response);
                     const resBody: string = documentPayload.body;
                     const responseBuffer: Buffer = Buffer.from(resBody, "base64");
                     return {
@@ -181,7 +178,10 @@ class CertificateGenerationService {
             )
         ) {
             makeAndModel = await this.getVehicleMakeAndModel(testResult);
+
         }
+        console.log(makeAndModel);
+        console.log('after get vehicle make and model');
 
         let payload: ICertificatePayload = {
             Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
@@ -194,10 +194,13 @@ class CertificateGenerationService {
                 ImageData: signature,
             },
         };
+        console.log('after i certificate payload');
 
         const {testTypes, vehicleType, systemNumber, testHistory} = testResult;
 
         if (testHistory) {
+            console.log('there is test history... processing...');
+
             for (const history of testHistory) {
                 for (const testType of history.testTypes) {
                     if (testType.testCode === testTypes.testCode) {
@@ -562,11 +565,10 @@ class CertificateGenerationService {
         return this.lambdaClient
             .invoke(invokeParams)
             .then(
-                (
+                async (
                     response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
                 ) => {
-                    const payload: any =
-                        this.lambdaClient.validateInvocationResponse(response);
+                    const payload: any = await this.lambdaClient.validateInvocationResponse(response);
                     // TODO: convert to correct type
                     const testResults: any[] = JSON.parse(payload.body);
 
