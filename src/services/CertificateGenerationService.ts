@@ -27,6 +27,7 @@ import {
 } from "../models/Enums";
 import {HTTPError} from "../models/HTTPError";
 import {NestedObject, SearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {InvocationRequest} from "aws-sdk/clients/lambda";
 
 /**
  * Service class for Certificate Generation
@@ -657,13 +658,16 @@ class CertificateGenerationService {
         console.log(`searchIdentifier: ${searchIdentifier}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
         console.log(`invoke config: ${JSON.stringify(config)}`);
-        const invokeParams: any = {
+        const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecordsSearch.name,
             InvocationType: "RequestResponse",
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
                 path: `/v3/technical-records/search/${searchIdentifier}`,
+                pathParameters: {
+                    searchIdentifier
+                },
             }),
         };
         console.log(`invoke params: ${JSON.stringify(invokeParams)}`);
@@ -685,13 +689,17 @@ class CertificateGenerationService {
         console.log('in call get tech records');
 
         const config: IInvokeConfig = this.config.getInvokeConfig();
-        const invokeParams: any = {
+        const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecords.name,
             InvocationType: "RequestResponse",
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
                 path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
+                pathParameters: {
+                    systemNumber,
+                    createdTimestamp
+                }
             }),
         };
 
