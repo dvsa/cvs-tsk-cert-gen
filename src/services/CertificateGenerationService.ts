@@ -656,7 +656,7 @@ class CertificateGenerationService {
         console.log('in call search tech records');
         console.log(`searchIdentifier: ${searchIdentifier}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
-        console.log(`invoke config: ${config}`);
+        console.log(`invoke config: ${JSON.stringify(config)}`);
         const invokeParams: any = {
             FunctionName: config.functions.techRecordsSearch.name,
             InvocationType: "RequestResponse",
@@ -669,7 +669,7 @@ class CertificateGenerationService {
                 }
             }),
         };
-        console.log(`invoke params: ${invokeParams}`);
+        console.log(`invoke params: ${JSON.stringify(invokeParams)}`);
 
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
