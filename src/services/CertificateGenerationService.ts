@@ -441,18 +441,17 @@ class CertificateGenerationService {
         if (searchResult) {
             const processRecordsRes = this.processRecords(searchResult);
             console.log(`processRecordsRes: ${processRecordsRes}`);
-            if (processRecordsRes.currentCount !== 0) {
-                console.log('current count is not 0');
-                return this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
-                    processRecordsRes.currentRecords[0].createdTimestamp);
-            }
-            return processRecordsRes.provisionalCount === 1
-                ? this.callGetTechRecords(processRecordsRes.provisionalRecords[0].systemNumber,
-                    processRecordsRes.provisionalRecords[0].createdTimestamp)
-                : this.callGetTechRecords(processRecordsRes.provisionalRecords[1].systemNumber,
-                    processRecordsRes.provisionalRecords[1].createdTimestamp);
+
+            return processRecordsRes.currentCount !== 0
+                ? this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
+                    processRecordsRes.currentRecords[0].createdTimestamp)
+                : processRecordsRes.provisionalCount === 1
+                    ? this.callGetTechRecords(processRecordsRes.provisionalRecords[0].systemNumber,
+                        processRecordsRes.provisionalRecords[0].createdTimestamp)
+                    : this.callGetTechRecords(processRecordsRes.provisionalRecords[1].systemNumber,
+                        processRecordsRes.provisionalRecords[1].createdTimestamp);
         } else {
-            throw new Error("Tech record Search returned nothing.");
+            await Promise.reject("Tech record Search returned nothing.");
         }
     };
 
@@ -640,19 +639,26 @@ class CertificateGenerationService {
         console.log(`in vehicle make and model, search res: ${searchRes}`);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
         // Return bodyMake and bodyModel values for PSVs
-        if (techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV) {
-
-            return {
-                Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
-                Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
-            };
-        } else {
-            // Return make and model values for HGV and TRL vehicle types
-            return {
-                Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
-                Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
-            };
-        }
+        console.log(`tech record coming back from process get current provisonal records: ${JSON.stringify(techRecord)}`);
+        // if (techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV) {
+        //     return {
+        //         Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
+        //         Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
+        //     };
+        // } else {
+        //     // Return make and model values for HGV and TRL vehicle types
+        //     return {
+        //         Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
+        //         Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
+        //     };
+        // }
+        return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV ? {
+            Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
+            Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
+        } : {
+            Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
+            Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
+        };
     };
 
     public callSearchTechRecords = async (searchIdentifier: string) => {
@@ -674,7 +680,7 @@ class CertificateGenerationService {
             .then(async (response) => {
                 try {
                     let res = await this.lambdaClient.validateInvocationResponse(response);
-                    return JSON.parse(res.body)
+                    return JSON.parse(res.body);
                 } catch (e) {
                     console.log('in search tech record catch block');
                     console.log(e);
@@ -706,10 +712,8 @@ class CertificateGenerationService {
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
-                    console.log(JSON.stringify(response));
                     let res = await this.lambdaClient.validateInvocationResponse(response);
-                    console.log(JSON.stringify(res));
-                    return JSON.parse(res.body)
+                    return JSON.parse(res.body);
                 } catch (e) {
                     console.log('in get tech record catch block');
                     console.log(e);
