@@ -663,7 +663,7 @@ class CertificateGenerationService {
                 httpMethod: "GET",
                 path: `/v3/technical-records/search/${searchTerm}`,
                 pathParameters: {
-                    proxy: `technical-records/search/${searchTerm}`,
+                    searchIdentifier: searchTerm
                 }
             }),
         };
@@ -693,7 +693,8 @@ class CertificateGenerationService {
                 httpMethod: "GET",
                 path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
                 pathParameters: {
-                    proxy: `technical-records/${systemNumber}/${createdTimestamp}`,
+                    systemNumber: systemNumber,
+                    createdTimestamp: createdTimestamp
                 }
             }),
         };
