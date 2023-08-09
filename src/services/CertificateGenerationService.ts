@@ -661,9 +661,9 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/v3/search/${searchTerm}`,
+                path: `/v3/technical-records/search/${searchTerm}`,
                 pathParameters: {
-                    proxy: `search/${searchTerm}`,
+                    proxy: `technical-records/search/${searchTerm}`,
                 }
             }),
         };
