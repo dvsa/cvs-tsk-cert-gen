@@ -656,7 +656,7 @@ class CertificateGenerationService {
         console.log('in call search tech records');
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: any = {
-            FunctionName: config.functions.techRecords.name,
+            FunctionName: config.functions.techRecordsSearch.name,
             InvocationType: "RequestResponse",
             LogType: "Tail",
             Payload: JSON.stringify({
