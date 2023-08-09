@@ -664,9 +664,6 @@ class CertificateGenerationService {
             Payload: JSON.stringify({
                 httpMethod: "GET",
                 path: `/v3/technical-records/search/${searchIdentifier}`,
-                pathParameters: {
-                    proxy: `/v3/technical-records/search`,
-                }
             }),
         };
         console.log(`invoke params: ${JSON.stringify(invokeParams)}`);
@@ -695,9 +692,6 @@ class CertificateGenerationService {
             Payload: JSON.stringify({
                 httpMethod: "GET",
                 path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
-                pathParameters: {
-                    proxy: `/v3/technical-records`,
-                }
             }),
         };
 
