@@ -440,18 +440,17 @@ class CertificateGenerationService {
         console.log('in process current provisional records');
         if (searchResult) {
             const processRecordsRes = this.processRecords(searchResult);
-            console.log(processRecordsRes);
+            console.log(`processRecordsRes: ${processRecordsRes}`);
             if (processRecordsRes.currentCount !== 0) {
+                console.log('current count is not 0');
                 return this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
-                    processRecordsRes.currentRecords[0].createdTimestamp,
-                    processRecordsRes.currentRecords[0].techRecord_vehicleType);
+                    processRecordsRes.currentRecords[0].createdTimestamp);
             }
             return processRecordsRes.provisionalCount === 1
                 ? this.callGetTechRecords(processRecordsRes.provisionalRecords[0].systemNumber,
-                    processRecordsRes.provisionalRecords[0].createdTimestamp, processRecordsRes.provisionalRecords[0].techRecord_vehicleType)
+                    processRecordsRes.provisionalRecords[0].createdTimestamp)
                 : this.callGetTechRecords(processRecordsRes.provisionalRecords[1].systemNumber,
-                    processRecordsRes.provisionalRecords[1].createdTimestamp,
-                    processRecordsRes.provisionalRecords[1].techRecord_vehicleType);
+                    processRecordsRes.provisionalRecords[1].createdTimestamp);
         } else {
             throw new Error("Tech record Search returned nothing.");
         }
@@ -658,7 +657,6 @@ class CertificateGenerationService {
 
     public callSearchTechRecords = async (searchIdentifier: string) => {
         console.log('in call search tech records');
-        console.log(`searchIdentifier: ${searchIdentifier}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecordsSearch.name,
@@ -675,7 +673,6 @@ class CertificateGenerationService {
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
-                    console.log(response);
                     let res = await this.lambdaClient.validateInvocationResponse(response);
                     return JSON.parse(res.body)
                 } catch (e) {
@@ -686,8 +683,10 @@ class CertificateGenerationService {
             });
     };
 
-    public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string, vehicleType: string): Promise<TechRecordType<T> | undefined> => {
+    public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string): Promise<TechRecordType<T> | undefined> => {
         console.log('in call get tech records');
+        console.log(`system number: ${systemNumber}`);
+        console.log(`createdTimestamp: ${createdTimestamp}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecords.name,
@@ -703,10 +702,13 @@ class CertificateGenerationService {
             }),
         };
 
+        console.log(JSON.stringify(invokeParams));
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
+                    console.log(JSON.stringify(response));
                     let res = await this.lambdaClient.validateInvocationResponse(response);
+                    console.log(JSON.stringify(res));
                     return JSON.parse(res.body)
                 } catch (e) {
                     console.log('in get tech record catch block');
