@@ -652,21 +652,24 @@ class CertificateGenerationService {
         }
     };
 
-    public callSearchTechRecords = async (searchTerm: string): Promise<SearchResult[]> => {
+    public callSearchTechRecords = async (searchIdentifier: string): Promise<SearchResult[]> => {
         console.log('in call search tech records');
+        console.log(`searchIdentifier: ${searchIdentifier}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
+        console.log(`invoke config: ${config}`);
         const invokeParams: any = {
             FunctionName: config.functions.techRecordsSearch.name,
             InvocationType: "RequestResponse",
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/v3/technical-records/search/${searchTerm}`,
+                path: `/v3/technical-records/search/${searchIdentifier}`,
                 pathParameters: {
                     proxy: `/v3/technical-records/search`,
                 }
             }),
         };
+        console.log(`invoke params: ${invokeParams}`);
 
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
