@@ -417,7 +417,7 @@ class CertificateGenerationService {
         console.log('in adr details method');
         // todo change this to use other
         const searchRes = await this.callSearchTechRecords(testResult.vin);
-        console.log(`searcg res: ${searchRes}`);
+        console.log(`searchRes in get adr details res: ${searchRes}`);
         return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl" | undefined>;
     };
 
@@ -468,6 +468,7 @@ class CertificateGenerationService {
 
         console.log(`PROCESS RECORDS METHOD: ${JSON.stringify(records)}`);
         records.forEach((record) => {
+            console.log(`record in process records: ${record}`);
             if (record.techRecord_statusCode === "current") {
                 currentRecords.push(record);
             } else if (record.techRecord_statusCode === "provisional") {
@@ -499,6 +500,7 @@ class CertificateGenerationService {
         console.log('in get weight details');
         // TODO change here
         const searchRes = await this.callSearchTechRecords(testResult.vin);
+        console.log(`search res in weight details ${searchRes}`);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
         if (techRecord) {
             console.log("techRecord for weight details found");
@@ -636,6 +638,7 @@ class CertificateGenerationService {
     public getVehicleMakeAndModel = async (testResult: any) => {
         // TODO change here
         const searchRes = await this.callSearchTechRecords(testResult.vin);
+        console.log(`in vehicle make and model, search res: ${searchRes}`);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
         // Return bodyMake and bodyModel values for PSVs
         if (techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV) {
@@ -653,11 +656,10 @@ class CertificateGenerationService {
         }
     };
 
-    public callSearchTechRecords = async (searchIdentifier: string): Promise<SearchResult[]> => {
+    public callSearchTechRecords = async (searchIdentifier: string) => {
         console.log('in call search tech records');
         console.log(`searchIdentifier: ${searchIdentifier}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
-        console.log(`invoke config: ${JSON.stringify(config)}`);
         const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecordsSearch.name,
             InvocationType: "RequestResponse",
@@ -670,13 +672,12 @@ class CertificateGenerationService {
                 },
             }),
         };
-        console.log(`invoke params: ${JSON.stringify(invokeParams)}`);
-
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
                     console.log(response);
-                    return await this.lambdaClient.validateInvocationResponse(response);
+                    let res = await this.lambdaClient.validateInvocationResponse(response);
+                    return JSON.parse(res.body)
                 } catch (e) {
                     console.log('in search tech record catch block');
                     console.log(e);
@@ -687,7 +688,6 @@ class CertificateGenerationService {
 
     public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string, vehicleType: string): Promise<TechRecordType<T> | undefined> => {
         console.log('in call get tech records');
-
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecords.name,
@@ -706,11 +706,8 @@ class CertificateGenerationService {
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
-                    console.log(response);
-                    const payload = await this.lambdaClient.validateInvocationResponse(response);
-                    // The type of the parsed payload should be `TechRecordType<T>`
-                    const parsedPayload: TechRecordType<T> = await payload;
-                    return parsedPayload;
+                    let res = await this.lambdaClient.validateInvocationResponse(response);
+                    return JSON.parse(res.body)
                 } catch (e) {
                     console.log('in get tech record catch block');
                     console.log(e);
