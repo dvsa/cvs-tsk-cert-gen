@@ -236,8 +236,6 @@ class CertificateGenerationService {
     const secretConfig = await this.getSecret();
 
     if (secretConfig) {
-      console.log(`This is the secretConfig url: ${secretConfig.url}`);
-      console.log(`This is the secretConfig key: ${secretConfig.key}`);
       const addressResponse: boolean = await axios({
         method: "get",
         url: this.smcUrl + "/" + postcode,
@@ -276,22 +274,8 @@ class CertificateGenerationService {
       const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
 
       if (secretResponse.SecretString) {
-        console.log(`This is the secret config prior to conversion: ${JSON.stringify(secretResponse)}`);
-        console.log(`This is the secretString prior to conversion: ${JSON.stringify(secretResponse.SecretString)}`);
-
-        try {
-          console.log(`In try/catch for conversion`);
-          const secretMock: ISecret = secretResponse.SecretString as unknown as ISecret;
-          console.log(secretMock);
-          console.log(secretMock.url);
-          console.log(secretMock.key);
-        } catch (e) {
-          console.log(`Error caught in try/catch: ${e}`);
-        }
-
-        const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
+        const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
         console.log("secret config " + JSON.stringify(secretConfig));
-
         this.smcUrl = secretConfig.url;
         this.smcApiKey = secretConfig.key;
         console.log("url " + this.smcUrl);
