@@ -236,8 +236,8 @@ class CertificateGenerationService {
 
     if (secretConfig) {
       // TODO: get info out of secrets manager for these
-      const smcUrl: string = secretConfig.url; // secretConfig.welsh.smc_url + postcode;
-      const smcApiKey: string = secretConfig.key; // secretConfig.welsh.api_key;
+      const smcUrl: string = secretConfig.url + "/" + postcode;
+      const smcApiKey: string = secretConfig.key;
 
       const addressResponse: boolean = await axios({
         method: "get",
@@ -275,22 +275,28 @@ class CertificateGenerationService {
 
     if (welshConfigSecretKey) {
       console.log("found secret key");
-      const secretRequest: GetSecretValueRequest = { SecretId: welshConfigSecretKey };
-      const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
 
-      console.log("secret response = " + secretResponse);
+      try {
+        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
+        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
 
-      if (secretResponse.SecretString) {
-        const secretString = JSON.parse(secretResponse.SecretString);
-        console.log("secret string is " + secretString);
+        console.log("secret response = " + secretResponse);
 
-        const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
+        if (secretResponse.SecretString) {
+          const secretString = JSON.parse(secretResponse.SecretString);
+          console.log("secret string is " + secretString);
 
-        console.log("secret config " + JSON.stringify(secretConfig));
+          const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
 
-        return secretConfig;
-      } else {
-        console.log("No secret details found for " + welshConfigSecretKey);
+          console.log("secret config " + JSON.stringify(secretConfig));
+
+          return secretConfig;
+        } else {
+          console.log("No secret details found for " + welshConfigSecretKey);
+          return null;
+        }
+      } catch (e) {
+        console.log("error getting secret");
         return null;
       }
     } else {
