@@ -283,6 +283,8 @@ class CertificateGenerationService {
           console.log(`In try/catch for conversion`);
           const secretMock: ISecret = secretResponse.SecretString as unknown as ISecret;
           console.log(secretMock);
+          console.log(secretMock.url);
+          console.log(secretMock.key);
         } catch (e) {
           console.log(`Error caught in try/catch: ${e}`);
         }
