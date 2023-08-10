@@ -38,6 +38,8 @@ import SecretsManager, {
   GetSecretValueRequest,
   GetSecretValueResponse,
 } from "aws-sdk/clients/secretsmanager";
+import { safeLoad } from "js-yaml";
+import {ISecret} from "../models/ISecret";
 
 /**
  * Service class for Certificate Generation
@@ -230,27 +232,31 @@ class CertificateGenerationService {
    * @returns boolean true if Welsh
    */
   public async lookupPostcode(postcode: string) {
-    const secretConfig = this.getSecret();
+    const secretConfig = await this.getSecret();
 
-    // TODO: get info out of secrets manager for these
-    const smcUrl: string = ""; // secretConfig.welsh.smc_url + postcode;
-    const smcApiKey: string = ""; // secretConfig.welsh.api_key;
+    if (secretConfig) {
+      // TODO: get info out of secrets manager for these
+      const smcUrl: string = secretConfig.url; // secretConfig.welsh.smc_url + postcode;
+      const smcApiKey: string = secretConfig.key; // secretConfig.welsh.api_key;
 
-    const addressResponse: boolean = await axios({
-      method: "get",
-      url: smcUrl,
-      headers: { "x-api-key": smcApiKey },
-    })
-      .then((response) => {
-        return response.data.isWelshAddress;
+      const addressResponse: boolean = await axios({
+        method: "get",
+        url: smcUrl,
+        headers: {"x-api-key": smcApiKey},
       })
-      .catch((error) => {
-        console.log(`Error looking up postcode ${postcode}`);
-        return false;
-      });
+          .then((response) => {
+            return response.data.isWelshAddress;
+          })
+          .catch((error) => {
+            console.log(`Error looking up postcode ${postcode}`);
+            return false;
+          });
 
-    console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`
-    );
+      console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`
+      );
+    } else {
+      console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
+    }
 
     return false; // addressResponse;
   }
@@ -277,13 +283,19 @@ class CertificateGenerationService {
       if (secretResponse.SecretString) {
         const secretString = JSON.parse(secretResponse.SecretString);
         console.log("secret string is " + secretString);
-      }
 
-      // secretConfig = safeLoad(secretResponse.SecretString as string);
-      //
-      // return secretConfig;
+        const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
+
+        console.log("secret config " + JSON.stringify(secretConfig));
+
+        return secretConfig;
+      } else {
+        console.log("No secret details found for " + welshConfigSecretKey);
+        return null;
+      }
     } else {
-      throw new Error("secretConfig not set");
+      console.log("No Secret key configured");
+      return null;
     }
   }
 
