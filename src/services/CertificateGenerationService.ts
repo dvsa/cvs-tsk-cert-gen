@@ -281,11 +281,15 @@ class CertificateGenerationService {
      * @param type - the certificate type
      */
     public async generateCertificateData(testResult: ITestResult, type: string) {
+        console.log(`test result ${JSON.stringify(testResult)}`);
         const testType: any = testResult.testTypes;
+        console.log(`test type: ${JSON.stringify(testType)}`);
         switch (type) {
             case CERTIFICATE_DATA.PASS_DATA:
             case CERTIFICATE_DATA.FAIL_DATA:
+                console.log('before generate defects');
                 const defects: any = this.generateDefects(testResult.testTypes, type);
+                console.log('after generate defects');
                 return {
                     TestNumber: testType.testNumber,
                     TestStationPNumber: testResult.testStationPNumber,
@@ -801,6 +805,8 @@ class CertificateGenerationService {
      * @param type - the certificate type
      */
     private generateDefects(testTypes: any, type: string) {
+        console.log('in generate defects');
+        console.log(`test types: ${JSON.stringify(testTypes)}`);
         const rawDefects: any = testTypes.defects;
         const defects: any = {
             DangerousDefects: [],
