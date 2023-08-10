@@ -104,6 +104,23 @@ class Configuration {
 
     return this.config.mot;
   }
+
+  /**
+   * Retrieves the Welsh address secret key
+   * @returns string secret name
+   */
+  public getWelshSecretKey() {
+
+    if (!process.env.BRANCH || process.env.BRANCH === "local") {
+      if (!this.config.welsh.secret_key) {
+        throw new Error("The welsh language secret is not defined in the config file.");
+      } else {
+        return this.config.welsh.secret_key;
+      }
+    } else {
+      return process.env.SECRET_KEY;
+    }
+  }
 }
 
 export { Configuration };

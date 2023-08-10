@@ -68,3 +68,5 @@ mot:
     rwt: RWT.pdf
     adr_pass: ADR_PASS.pdf;
   documentDir: CVS
+welsh:
+  secret_key: feature/cert-gen-smc/values

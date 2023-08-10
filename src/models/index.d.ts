@@ -56,6 +56,7 @@ interface IGeneratedCertificateResponse {
   email: string;
   shouldEmailCertificate: string;
 }
+
 interface ICertificateData {
   TestNumber: string;
   TestStationPNumber: string;
@@ -159,6 +160,7 @@ interface ITestResult {
   firstUseDate: string;
   testTypes: ITestType;
 }
+
 interface ITestType {
   createdAt: string;
   lastUpdatedAt: string;
@@ -188,6 +190,7 @@ interface ITestType {
   fuelType: string;
   defects: IDefect[];
 }
+
 interface IDefect {
   imNumber: number;
   imDescription: string;
@@ -203,10 +206,12 @@ interface IDefect {
   prs: boolean;
   prohibitionIssued: boolean;
 }
+
 interface IAdditionalInformation {
   location: ILocation;
   notes: string;
 }
+
 interface ILocation {
   vertical: string;
   horizontal: string;
@@ -216,6 +221,7 @@ interface ILocation {
   seatNumber: number;
   axleNumber: number;
 }
+
 interface IVehicleClass {
   code: string;
   description: string;
@@ -247,5 +253,5 @@ export {
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IMakeAndModel
+  IMakeAndModel,
 };

@@ -49,7 +49,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/js-yaml": "^4.0.5",
     "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.1067.0",
     "aws-xray-sdk": "^3.3.4",
