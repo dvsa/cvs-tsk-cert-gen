@@ -26,7 +26,7 @@ import {
     VEHICLE_TYPES,
 } from "../models/Enums";
 import {HTTPError} from "../models/HTTPError";
-import {NestedObject, SearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {NestedObject, ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
 import {InvocationRequest} from "aws-sdk/clients/lambda";
 
 /**
@@ -180,9 +180,6 @@ class CertificateGenerationService {
             makeAndModel = await this.getVehicleMakeAndModel(testResult);
 
         }
-        console.log(makeAndModel);
-        console.log('after get vehicle make and model');
-
         let payload: ICertificatePayload = {
             Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
             DATA: undefined,
@@ -194,13 +191,10 @@ class CertificateGenerationService {
                 ImageData: signature,
             },
         };
-        console.log('after i certificate payload');
 
         const {testTypes, vehicleType, systemNumber, testHistory} = testResult;
 
         if (testHistory) {
-            console.log('there is test history... processing...');
-
             for (const history of testHistory) {
                 for (const testType of history.testTypes) {
                     if (testType.testCode === testTypes.testCode) {
@@ -281,15 +275,11 @@ class CertificateGenerationService {
      * @param type - the certificate type
      */
     public async generateCertificateData(testResult: ITestResult, type: string) {
-        console.log(`test result ${JSON.stringify(testResult)}`);
         const testType: any = testResult.testTypes;
-        console.log(`test type: ${JSON.stringify(testType)}`);
         switch (type) {
             case CERTIFICATE_DATA.PASS_DATA:
             case CERTIFICATE_DATA.FAIL_DATA:
-                console.log('before generate defects');
-                const defects: any = this.generateDefects(testResult.testTypes, type);
-                console.log('after generate defects');
+                const defects: any = await this.generateDefects(testResult.testTypes, type);
                 return {
                     TestNumber: testType.testNumber,
                     TestStationPNumber: testResult.testStationPNumber,
@@ -421,15 +411,12 @@ class CertificateGenerationService {
      * @param testResult - testResult from which the VIN is used to search a tech-record
      */
     public getAdrDetails = async (testResult: any) => {
-        console.log('in adr details method');
-        // todo change this to use other
         const searchRes = await this.callSearchTechRecords(testResult.vin);
-        console.log(`searchRes in get adr details res: ${searchRes}`);
         return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl" | undefined>;
-    };
+    }
 
     /**
-     * documentaiton todo
+     * Used to unflatten a specific object inside of flat technical record
      * @param obj
      * @param keyFilter
      */
@@ -443,12 +430,9 @@ class CertificateGenerationService {
     }
 
 
-    public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: SearchResult[]): Promise<TechRecordType<T> | undefined> => {
-        console.log('in process current provisional records');
+    public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {
         if (searchResult) {
             const processRecordsRes = this.processRecords(searchResult);
-            console.log(`processRecordsRes: ${processRecordsRes}`);
-
             return processRecordsRes.currentCount !== 0
                 ? this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
                     processRecordsRes.currentRecords[0].createdTimestamp)
@@ -460,20 +444,17 @@ class CertificateGenerationService {
         } else {
             await Promise.reject("Tech record Search returned nothing.");
         }
-    };
+    }
 
     /**
      * helper function is used to process records and count provisional and current records
      * @param records
      */
-    public processRecords = (records: SearchResult[]
-    ): { currentRecords: SearchResult[]; provisionalRecords: SearchResult[]; currentCount: number; provisionalCount: number; } => {
-        const currentRecords: SearchResult[] = [];
-        const provisionalRecords: SearchResult[] = [];
-
-        console.log(`PROCESS RECORDS METHOD: ${JSON.stringify(records)}`);
+    public processRecords = (records: ISearchResult[]
+    ): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
+        const currentRecords: ISearchResult[] = [];
+        const provisionalRecords: ISearchResult[] = [];
         records.forEach((record) => {
-            console.log(`record in process records: ${record}`);
             if (record.techRecord_statusCode === "current") {
                 currentRecords.push(record);
             } else if (record.techRecord_statusCode === "provisional") {
@@ -487,7 +468,7 @@ class CertificateGenerationService {
             currentCount: currentRecords.length,
             provisionalCount: provisionalRecords.length
         };
-    };
+    }
 
     /**
      * Returns true if an adrDetails object contains a tankDetails object
@@ -502,13 +483,9 @@ class CertificateGenerationService {
      * @param testResult
      */
     public async getWeightDetails(testResult: any) {
-        console.log('in get weight details');
-        // TODO change here
         const searchRes = await this.callSearchTechRecords(testResult.vin);
-        console.log(`search res in weight details ${searchRes}`);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
         if (techRecord) {
-            console.log("techRecord for weight details found");
             const weightDetails: IWeightDetails = {
                 dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
                 weight2: 0,
@@ -520,9 +497,6 @@ class CertificateGenerationService {
                     techRecord.techRecord_noOfAxles ?? -1 > 0
                 ) {
                     const initialValue: number = 0;
-                    // const unflattenedAxles = await this.unflattenFlatObject(techRecord , "axles") ;
-                    //
-                    // console.log(unflattenedAxles);
                     weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
                         (
                             accumulator: number,
@@ -572,9 +546,7 @@ class CertificateGenerationService {
                 async (
                     response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
                 ) => {
-                    console.log('validate invocation response before test results');
                     const payload: any = await this.lambdaClient.validateInvocationResponse(response);
-                    // TODO: convert to correct type
                     const testResults: any[] = JSON.parse(payload.body);
 
                     if (!testResults || testResults.length === 0) {
@@ -641,24 +613,9 @@ class CertificateGenerationService {
      * @param testResult - the testResult for which the tech record search is done for
      */
     public getVehicleMakeAndModel = async (testResult: any) => {
-        // TODO change here
         const searchRes = await this.callSearchTechRecords(testResult.vin);
-        console.log(`in vehicle make and model, search res: ${searchRes}`);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
         // Return bodyMake and bodyModel values for PSVs
-        console.log(`tech record coming back from process get current provisonal records: ${JSON.stringify(techRecord)}`);
-        // if (techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV) {
-        //     return {
-        //         Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
-        //         Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
-        //     };
-        // } else {
-        //     // Return make and model values for HGV and TRL vehicle types
-        //     return {
-        //         Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
-        //         Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
-        //     };
-        // }
         return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV ? {
             Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
             Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
@@ -666,10 +623,13 @@ class CertificateGenerationService {
             Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
             Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
         };
-    };
+    }
 
+    /**
+     * Used to return a subset of technical record information.
+     * @param searchIdentifier
+     */
     public callSearchTechRecords = async (searchIdentifier: string) => {
-        console.log('in call search tech records');
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecordsSearch.name,
@@ -686,20 +646,22 @@ class CertificateGenerationService {
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
-                    let res = await this.lambdaClient.validateInvocationResponse(response);
+                    const res = await this.lambdaClient.validateInvocationResponse(response);
                     return JSON.parse(res.body);
                 } catch (e) {
-                    console.log('in search tech record catch block');
+                    console.log("in search tech record catch block");
                     console.log(e);
                     return undefined;
                 }
             });
-    };
+    }
 
+    /**
+     * Used to get a singular whole technical record.
+     * @param systemNumber
+     * @param createdTimestamp
+     */
     public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string): Promise<TechRecordType<T> | undefined> => {
-        console.log('in call get tech records');
-        console.log(`system number: ${systemNumber}`);
-        console.log(`createdTimestamp: ${createdTimestamp}`);
         const config: IInvokeConfig = this.config.getInvokeConfig();
         const invokeParams: InvocationRequest = {
             FunctionName: config.functions.techRecords.name,
@@ -714,20 +676,18 @@ class CertificateGenerationService {
                 }
             }),
         };
-
-        console.log(JSON.stringify(invokeParams));
         return await this.lambdaClient.invoke(invokeParams)
             .then(async (response) => {
                 try {
-                    let res = await this.lambdaClient.validateInvocationResponse(response);
+                    const res = await this.lambdaClient.validateInvocationResponse(response);
                     return JSON.parse(res.body);
                 } catch (e) {
-                    console.log('in get tech record catch block');
+                    console.log("in get tech record catch block");
                     console.log(e);
                     return undefined;
                 }
             });
-    };
+    }
 
 
     /**
@@ -788,7 +748,6 @@ class CertificateGenerationService {
     /**
      * To check if the testResult is valid for fetching Trn.
      * @param vehicleType the vehicle type
-     * @param testTypes the test type
      * @param makeAndModel object containing Make and Model
      * @returns returns if the condition is satisfied else false
      */
@@ -804,9 +763,7 @@ class CertificateGenerationService {
      * @param testTypes - the source test type for defect generation
      * @param type - the certificate type
      */
-    private generateDefects(testTypes: any, type: string) {
-        console.log('in generate defects');
-        console.log(`test types: ${JSON.stringify(testTypes)}`);
+    private async generateDefects(testTypes: any, type: string) {
         const rawDefects: any = testTypes.defects;
         const defects: any = {
             DangerousDefects: [],
@@ -815,7 +772,6 @@ class CertificateGenerationService {
             MinorDefects: [],
             AdvisoryDefects: [],
         };
-
         rawDefects.forEach((defect: any) => {
             switch (defect.deficiencyCategory.toLowerCase()) {
                 case "dangerous":
@@ -846,13 +802,11 @@ class CertificateGenerationService {
                     break;
             }
         });
-
         Object.entries(defects).forEach(([k, v]: [string, any]) => {
             if (v.length === 0) {
                 Object.assign(defects, {[k]: undefined});
             }
         });
-
         return defects;
     }
 

@@ -734,20 +734,11 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
-
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
                                 getTechRecordStub.restore();
                                 getTechRecordSearchStub.restore();
                             });
@@ -1502,7 +1493,6 @@ describe("cert-gen", () => {
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
-
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
                         const getOdometerHistoryStub = sandbox
@@ -1511,13 +1501,6 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
@@ -1812,7 +1795,6 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
                             .resolves(techRecordsRwtSearch);
@@ -1834,19 +1816,11 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
                                 getTechRecordStub.restore();
                                 getTechRecordSearchStub.restore();
                             });
@@ -2138,6 +2112,7 @@ describe("cert-gen", () => {
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
 
+
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
                         const getOdometerHistoryStub = sandbox
@@ -2147,13 +2122,6 @@ describe("cert-gen", () => {
                             )
                             .resolves(undefined);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
-
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
@@ -2360,7 +2328,7 @@ describe("cert-gen", () => {
                                 IssuersName: "CVS Dev1",
                                 DateOfTheTest: "26.02.2019",
                                 IsTrailer: true,
-                                "Trn": "ABC123",
+                                Trn: "ABC123",
                                 CountryOfRegistrationCode: "gb",
                                 VehicleEuClassification: "M1",
                                 RawVIN: "T12876765",
@@ -2396,13 +2364,6 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
@@ -2471,7 +2432,8 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2503,6 +2465,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                             });
                     });
                 }
@@ -2570,7 +2534,8 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -2641,7 +2606,8 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .catch((err: any) => {
                                 expect(err.statusCode).toEqual(500);
-
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -2731,6 +2697,8 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                             });
                     });
                 });
@@ -2809,13 +2777,6 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
@@ -2823,7 +2784,6 @@ describe("cert-gen", () => {
                                 getOdometerHistoryStub.restore();
                                 getTechRecordStub.restore();
                                 getTechRecordSearchStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
                             });
                     });
                 });
@@ -2910,6 +2870,8 @@ describe("cert-gen", () => {
                                 resBody = payload.body;
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                             });
                     });
                 });
@@ -2939,6 +2901,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                             });
                     });
                 }
@@ -3005,7 +2969,10 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                             });
+
                     });
                 });
 
@@ -3070,14 +3037,6 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
-
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
@@ -3154,7 +3113,8 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3185,7 +3145,10 @@ describe("cert-gen", () => {
                                 expect(response.certificateOrder).toEqual({
                                     current: 2,
                                     total: 2,
+
                                 });
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
                             });
                     });
                 }
@@ -3253,7 +3216,8 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-
+                                getTechRecordSearchStub.restore();
+                                getTechRecordStub.restore();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -3298,9 +3262,9 @@ describe("cert-gen", () => {
                             .resolves(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        delete expectedResult.techRecord_make
-                        delete expectedResult.techRecord_model
-                        delete expectedResult.ApplicantDetails
+                        delete expectedResult.techRecord_make;
+                        delete expectedResult.techRecord_model;
+                        delete expectedResult.ApplicantDetails;
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -3311,7 +3275,6 @@ describe("cert-gen", () => {
                                 expect(payload).toEqual(expectedResult);
                                 getTechRecordStub.restore();
                                 getTechRecordSearchStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
                             });
                     });
                 });
@@ -3333,8 +3296,7 @@ describe("cert-gen", () => {
                                 path.resolve(__dirname, `../resources/signatures/1.base64`)
                             )
                             .toString();
-
-                        const techRecordResponseAdrMock = JSON.parse(
+                        JSON.parse(
                             fs.readFileSync(
                                 path.resolve(
                                     __dirname,
@@ -3343,22 +3305,11 @@ describe("cert-gen", () => {
                                 "utf8"
                             )
                         );
-
-                        // Add a new signature
+// Add a new signature
                         S3BucketMockService.buckets.push({
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
-                        // const getTechRecordStub = sandbox
-                        //     .stub(CertificateGenerationService.prototype, "callGetTechRecords")
-                        //     .resolves(techRecordResponseAdrMock);
 
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
@@ -3400,12 +3351,6 @@ describe("cert-gen", () => {
                                 docGenRwt[0]
                             );
 
-                            // const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            //
-                            // const getTechRecordStub = sandbox
-                            //     .stub(CertificateGenerationService.prototype, "callGetTechRecords")
-                            //     .resolves((techRecordResponseRwtMock) as any);
-                            //
                             const getTechRecordSearchStub = sandbox
                                 .stub(certificateGenerationService, "callSearchTechRecords")
                                 .resolves(techRecordsRwtSearch);

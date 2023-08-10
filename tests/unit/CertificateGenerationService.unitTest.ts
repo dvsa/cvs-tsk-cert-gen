@@ -1,7 +1,8 @@
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import sinon from "sinon";
 import techRecordResp from "../resources/tech-records-response.json";
-import techRecordRespHGV from "../resources/tech-records-response-HGV.json";
+import techRecordRwHgv from "../resources/tech-records-response-rwt-hgv.json";
+import techRecordRwHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
 import testResultsResp from "../resources/test-results-response.json";
 import testResultsRespFail from "../resources/test-results-fail-response.json";
 import testResultsRespPrs from "../resources/test-results-prs-response.json";
@@ -165,7 +166,6 @@ describe("Certificate Generation Service", () => {
           );
           expect(LambdaStub.calledOnce).toBeFalsy();
           expect(LambdaStub.calledTwice).toBeFalsy();
-          // expect(LambdaStub.calledThrice).toBeTruthy();
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
           getTechRecordStub.restore();
           getTechRecordSearchStub.restore();
@@ -177,16 +177,6 @@ describe("Certificate Generation Service", () => {
       "when given a vin, partialVin and VRM with no matching record but a matching TrailerID",
       () => {
         it("should return the record & invoke the LambdaService four times", async () => {
-          // const LambdaStub = sandbox
-          //   .stub(LambdaService.prototype, "invoke")
-          //   .onFirstCall()
-          //   .resolves(AWSReject("no"))
-          //   .onSecondCall()
-          //   .resolves(AWSReject("no"))
-          //   .onThirdCall()
-          //   .resolves(AWSReject("no"))
-          //   .onCall(3)
-          //   .resolves(AWSResolve(JSON.stringify(techRecordResp)));
           // @ts-ignore
           const certGenSvc = new CertificateGenerationService(
             null as any,
@@ -211,7 +201,6 @@ describe("Certificate Generation Service", () => {
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
             testResultMock
           );
-          // expect(LambdaStub.callCount).toEqual(4);
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
           getTechRecordStub.restore();
           getTechRecordSearchStub.restore();
@@ -302,10 +291,6 @@ describe("Certificate Generation Service", () => {
 
     context("when lookup returns a PSV tech record", () => {
       it("should return make and model from chassis details", async () => {
-        // const techRecord = JSON.parse(techRecordResp.body);
-        // const LambdaStub = sandbox
-        //   .stub(LambdaService.prototype, "invoke")
-        //   .resolves(AWSResolve(JSON.stringify(techRecordResp)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
           null as any,
@@ -327,8 +312,8 @@ describe("Certificate Generation Service", () => {
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
           testResultMock
         );
-        expect(makeAndModel.Make).toBe('AEC');
-        expect(makeAndModel.Model).toBe('RELIANCE');
+        expect(makeAndModel.Make).toBe("AEC");
+        expect(makeAndModel.Model).toBe("RELIANCE");
         getTechRecordStub.restore();
         getTechRecordSearchStub.restore();
       });
@@ -336,10 +321,6 @@ describe("Certificate Generation Service", () => {
 
     context("when lookup returns a non-PSV tech record", () => {
       it("should return make and model from not-chassis details", async () => {
-        // const techRecord = JSON.parse(techRecordRespHGV.body);
-        // const LambdaStub = sandbox
-        //   .stub(LambdaService.prototype, "invoke")
-        //   .resolves(AWSResolve(JSON.stringify(techRecordRespHGV)));
         const certGenSvc = new CertificateGenerationService(
           // @ts-ignore
           null,
@@ -348,9 +329,6 @@ describe("Certificate Generation Service", () => {
         const getTechRecordSearchStub = sandbox
             .stub(certGenSvc, "callSearchTechRecords")
             .resolves(techRecordsRwtHgvSearch);
-
-
-        // const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
         const getTechRecordStub = sandbox
             .stub(certGenSvc, "callGetTechRecords")
             .resolves((techRecordsRwtHgv) as any);
@@ -361,12 +339,8 @@ describe("Certificate Generation Service", () => {
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
           testResultMock
         );
-        expect(makeAndModel.Make).toBe('Isuzu');
-        expect(makeAndModel.Model).toBe('FM');
-        // expect(makeAndModel).toEqual({
-        //   Make: getTechRecordStub.techRecord_make,
-        //   Model: techRecord[0].techRecord[0].model,
-        // });
+        expect(makeAndModel.Make).toBe("Isuzu");
+        expect(makeAndModel.Model).toBe("FM");
         getTechRecordStub.restore();
         getTechRecordSearchStub.restore();
       });

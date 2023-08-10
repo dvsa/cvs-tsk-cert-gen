@@ -39,7 +39,6 @@ class LambdaService {
   public validateInvocationResponse(
     response: Lambda.Types.InvocationResponse
   ): Promise<any> {
-    console.log('in validate invocation response');
     if (
       !response.Payload ||
       response.Payload === "" ||
