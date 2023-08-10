@@ -1055,13 +1055,6 @@ describe("cert-gen", () => {
                                 "getOdometerHistory"
                             )
                             .resolves(undefined);
-                        // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
-                        // const getVehicleMakeAndModelStub = sandbox
-                        //     .stub(
-                        //         CertificateGenerationService.prototype,
-                        //         "getVehicleMakeAndModel"
-                        //     )
-                        //     .resolves(undefined);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
@@ -1201,9 +1194,9 @@ describe("cert-gen", () => {
                     it("successfully generate a certificate", async () => {
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsSearchPsv);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -1406,8 +1399,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -1434,9 +1427,9 @@ describe("cert-gen", () => {
 
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -1483,9 +1476,9 @@ describe("cert-gen", () => {
                         };
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
@@ -1536,8 +1529,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -1573,9 +1566,9 @@ describe("cert-gen", () => {
 
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -1600,9 +1593,9 @@ describe("cert-gen", () => {
                     it("successfully generate a certificate", async () => {
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -1660,8 +1653,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -1700,8 +1693,8 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -1728,9 +1721,9 @@ describe("cert-gen", () => {
 
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -1797,9 +1790,9 @@ describe("cert-gen", () => {
                         };
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
@@ -1807,7 +1800,6 @@ describe("cert-gen", () => {
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
-
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
                         const getOdometerHistoryStub = sandbox
@@ -1821,6 +1813,7 @@ describe("cert-gen", () => {
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
+                                // getVehicleMakeAndModelStub.restore();
                                 getTechRecordStub.restore();
                                 getTechRecordSearchStub.restore();
                             });
@@ -1850,8 +1843,8 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -1890,8 +1883,8 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -1926,9 +1919,9 @@ describe("cert-gen", () => {
                         });
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -1953,9 +1946,9 @@ describe("cert-gen", () => {
                     it("successfully generate a certificate", async () => {
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -2017,8 +2010,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -2044,9 +2037,9 @@ describe("cert-gen", () => {
                         };
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -2101,9 +2094,9 @@ describe("cert-gen", () => {
                         };
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
@@ -2111,8 +2104,6 @@ describe("cert-gen", () => {
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
-
-
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
                         const getOdometerHistoryStub = sandbox
@@ -2127,7 +2118,6 @@ describe("cert-gen", () => {
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 getOdometerHistoryStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
                                 getTechRecordStub.restore();
                                 getTechRecordSearchStub.restore();
                             });
@@ -2166,8 +2156,8 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
+                                Make: "Isuzu",
+                                Model: "FM",
                                 OdometerHistoryList: [
                                     {
                                         value: 400000,
@@ -2202,9 +2192,9 @@ describe("cert-gen", () => {
                         });
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
@@ -2228,9 +2218,9 @@ describe("cert-gen", () => {
                     it("successfully generate a certificate", async () => {
                         const getTechRecordSearchStub = sandbox
                             .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                            .resolves(techRecordsRwtHgvSearch);
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         const getTechRecordStub = sandbox
                             .stub(certificateGenerationService, "callGetTechRecords")
                             .resolves((techRecordResponseRwtMock) as any);
