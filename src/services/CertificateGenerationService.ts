@@ -234,6 +234,10 @@ class CertificateGenerationService {
   public async lookupPostcode(postcode: string) {
     const secretConfig = await this.getSecret();
 
+    console.log("Got secret values");
+    console.log("url " + secretConfig?.url);
+    console.log("key " + secretConfig?.key);
+
     if (secretConfig) {
       // TODO: get info out of secrets manager for these
       const smcUrl: string = secretConfig.url + "/" + postcode;
@@ -249,16 +253,16 @@ class CertificateGenerationService {
           })
           .catch((error) => {
             console.log(`Error looking up postcode ${postcode}`);
+            console.log(error);
             return false;
           });
 
-      console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`
-      );
+      console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`);
+      return addressResponse;
     } else {
       console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
+      return false;
     }
-
-    return false; // addressResponse;
   }
 
   /**
@@ -266,38 +270,25 @@ class CertificateGenerationService {
    * @private
    */
   private async getSecret() {
-    console.log("in get secrets");
 
     // first need to find the secret name from the ev
     const welshConfigSecretKey: string = this.config.getWelshSecretKey();
 
-    console.log(welshConfigSecretKey);
+    console.log("secret key " + welshConfigSecretKey);
 
     if (welshConfigSecretKey) {
-      console.log("found secret key");
+      const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
+      const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
 
-      try {
-        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
-        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+      if (secretResponse.SecretString) {
+        const secretString = JSON.parse(secretResponse.SecretString);
 
-        console.log("secret response = " + secretResponse);
-
-        if (secretResponse.SecretString) {
-          const secretString = JSON.parse(secretResponse.SecretString);
-          console.log("secret string is " + secretString);
-
-          const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
-
-          console.log("secret config " + JSON.stringify(secretConfig));
-
-          return secretConfig;
-        } else {
+        const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
+        console.log("secret config " + JSON.stringify(secretConfig));
+        return secretConfig;
+      } else {
           console.log("No secret details found for " + welshConfigSecretKey);
           return null;
-        }
-      } catch (e) {
-        console.log("error getting secret");
-        return null;
       }
     } else {
       console.log("No Secret key configured");
