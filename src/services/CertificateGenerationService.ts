@@ -38,7 +38,6 @@ import SecretsManager, {
   GetSecretValueRequest,
   GetSecretValueResponse,
 } from "aws-sdk/clients/secretsmanager";
-import { safeLoad } from "js-yaml";
 import {ISecret} from "../models/ISecret";
 
 /**
@@ -50,6 +49,8 @@ class CertificateGenerationService {
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
   private secretsClient: SecretsManager;
+  private smcUrl: string = "";
+  private smcApiKey: string = "";
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
@@ -234,19 +235,11 @@ class CertificateGenerationService {
   public async lookupPostcode(postcode: string) {
     const secretConfig = await this.getSecret();
 
-    console.log("Got secret values");
-    console.log("url " + secretConfig?.url);
-    console.log("key " + secretConfig?.key);
-
     if (secretConfig) {
-      // TODO: get info out of secrets manager for these
-      const smcUrl: string = secretConfig.url + "/" + postcode;
-      const smcApiKey: string = secretConfig.key;
-
       const addressResponse: boolean = await axios({
         method: "get",
-        url: smcUrl,
-        headers: {"x-api-key": smcApiKey},
+        url: this.smcUrl + "/" + postcode,
+        headers: {"x-api-key": this.smcApiKey},
       })
           .then((response) => {
             return response.data.isWelshAddress;
@@ -281,10 +274,14 @@ class CertificateGenerationService {
       const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
 
       if (secretResponse.SecretString) {
-        const secretString = JSON.parse(secretResponse.SecretString);
-
         const secretConfig: ISecret = secretResponse.SecretString as unknown as ISecret;
         console.log("secret config " + JSON.stringify(secretConfig));
+
+        this.smcUrl = secretConfig.url;
+        this.smcApiKey = secretConfig.key;
+        console.log("url " + this.smcUrl);
+        console.log("key " + this.smcApiKey);
+
         return secretConfig;
       } else {
           console.log("No secret details found for " + welshConfigSecretKey);
