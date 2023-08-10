@@ -568,6 +568,7 @@ class CertificateGenerationService {
                 async (
                     response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
                 ) => {
+                    console.log('validate invocation response before test results');
                     const payload: any = await this.lambdaClient.validateInvocationResponse(response);
                     // TODO: convert to correct type
                     const testResults: any[] = JSON.parse(payload.body);
