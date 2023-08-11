@@ -202,7 +202,7 @@ class CertificateGenerationService {
    * Check if the specific test station is in Wales
    * @param testStations list of all test stations
    * @param testStationPNumber pNumber from the test result
-   * @returns boolean
+   * @returns string postcode of the pNumber test station
    */
   public getThisTestStation(
     testStations: ITestStation[],
@@ -238,8 +238,8 @@ class CertificateGenerationService {
     if (secretConfig) {
       const addressResponse: boolean = await axios({
         method: "get",
-        url: this.smcUrl + "/" + postcode,
-        headers: {"x-api-key": this.smcApiKey},
+        url: secretConfig.url + "/" + postcode,
+        headers: {"x-api-key": secretConfig.key},
       })
           .then((response) => {
             return response.data.isWelshAddress;
@@ -259,15 +259,12 @@ class CertificateGenerationService {
   }
 
   /**
-   * Method to get the config details for the welsh lookup
-   * @private
+   * Method to get the secret details for the welsh lookup
+   * @returns ISecret secret containing SMC url and api key
    */
   private async getSecret() {
-
     // first need to find the secret name from the ev
     const welshConfigSecretKey: string = this.config.getWelshSecretKey();
-
-    console.log("secret key " + welshConfigSecretKey);
 
     if (welshConfigSecretKey) {
       const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
@@ -275,16 +272,10 @@ class CertificateGenerationService {
 
       if (secretResponse.SecretString) {
         const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
-        console.log("secret config " + JSON.stringify(secretConfig));
-        this.smcUrl = secretConfig.url;
-        this.smcApiKey = secretConfig.key;
-        console.log("url " + this.smcUrl);
-        console.log("key " + this.smcApiKey);
-
         return secretConfig;
       } else {
-          console.log("No secret details found for " + welshConfigSecretKey);
-          return null;
+        console.log("No secret details found for " + welshConfigSecretKey);
+        return null;
       }
     } else {
       console.log("No Secret key configured");
