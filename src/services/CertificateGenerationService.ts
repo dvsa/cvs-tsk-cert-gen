@@ -1,15 +1,4 @@
-import {
-    ICertificatePayload,
-    IGeneratedCertificateResponse,
-    IInvokeConfig,
-    IMOTConfig,
-    IRoadworthinessCertificateData,
-    ITestResult,
-    IWeightDetails,
-    ITrailerRegistration,
-    IMakeAndModel,
-    ITestType,
-} from "../models";
+import {ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMakeAndModel, IMOTConfig, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails} from "../models";
 import {Configuration} from "../utils/Configuration";
 import {S3BucketService} from "./S3BucketService";
 import S3 from "aws-sdk/clients/s3";
@@ -18,15 +7,9 @@ import moment from "moment";
 import {PromiseResult} from "aws-sdk/lib/request";
 import {Service} from "../models/injector/ServiceDecorator";
 import {LambdaService} from "./LambdaService";
-import {
-    CERTIFICATE_DATA,
-    ERRORS,
-    HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-    TEST_RESULTS,
-    VEHICLE_TYPES,
-} from "../models/Enums";
+import {CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES} from "../models/Enums";
 import {HTTPError} from "../models/HTTPError";
-import {NestedObject, ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {ISearchResult, NestedObject, TechRecordGet, TechRecordType} from "../models/Types";
 import {InvocationRequest} from "aws-sdk/clients/lambda";
 
 /**
@@ -353,12 +336,12 @@ class CertificateGenerationService {
                 };
                 return resultPass;
             case CERTIFICATE_DATA.ADR_DATA:
-                const adrDetails = await this.getAdrDetails(testResult);
+                const adrDetails: TechRecordType<any> = await this.getAdrDetails(testResult);
                 const docGenPayloadAdr = {
                     ChasisNumber: testResult.vin,
                     RegistrationNumber: testResult.vrm,
                     ApplicantDetails: adrDetails
-                        ? await this.unflattenFlatObject(adrDetails, "applicantDetails")
+                        ? this.unflattenFlatObject(adrDetails, "applicantDetails")
                         : undefined,
                     VehicleType:
                         adrDetails && adrDetails.techRecord_adrDetails_vehicleDetails_type
@@ -374,7 +357,7 @@ class CertificateGenerationService {
                         : undefined,
                     Tc2InitApprovalNo:
                         await this.containsTankDetails(adrDetails) &&
-                        !!await this.unflattenFlatObject(adrDetails, "tc2Details")
+                        !!this.unflattenFlatObject(adrDetails, "tc2Details")
                             ? adrDetails.techRecord_adrDetails_tank_tankDetails_tc2Details_tc2IntermediateApprovalNo
                             : undefined,
                     TankManufactureSerialNo: await this.containsTankDetails(adrDetails)
@@ -390,7 +373,7 @@ class CertificateGenerationService {
                         ? adrDetails.techRecord_adrDetails_tank_tankDetails_specialProvisions
                         : undefined,
                     TankStatement:
-                        adrDetails && !!await this.unflattenFlatObject(adrDetails, "tank")
+                        adrDetails && !!this.unflattenFlatObject(adrDetails, "tank")
                             ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankStatement_statement
                             : undefined,
                     ExpiryDate: testResult.testTypes.testExpiryDate,
@@ -412,7 +395,7 @@ class CertificateGenerationService {
      */
     public getAdrDetails = async (testResult: any) => {
         const searchRes = await this.callSearchTechRecords(testResult.vin);
-        return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl" | undefined>;
+        return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl">;
     }
 
     /**
@@ -420,7 +403,7 @@ class CertificateGenerationService {
      * @param obj
      * @param keyFilter
      */
-    public unflattenFlatObject<T extends { [key: string]: any }>(obj: T, keyFilter: string): Promise<NestedObject<T>> {
+    public unflattenFlatObject<T extends { [key: string]: any }>(obj: T, keyFilter: string): NestedObject<T> {
         return Object.entries(obj).reduce((result: any, [key, value]) => {
             const parts = key.split("_");
             return parts[0] === keyFilter ? parts.reduce((target: any, part: string, idx: number) => {
@@ -432,7 +415,7 @@ class CertificateGenerationService {
 
     public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {
         if (searchResult) {
-            const processRecordsRes = this.processRecords(searchResult);
+            const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
             return processRecordsRes.currentCount !== 0
                 ? this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
                     processRecordsRes.currentRecords[0].createdTimestamp)
@@ -450,7 +433,7 @@ class CertificateGenerationService {
      * helper function is used to process records and count provisional and current records
      * @param records
      */
-    public processRecords = (records: ISearchResult[]
+    public groupRecordsByStatusCode = (records: ISearchResult[]
     ): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
         const currentRecords: ISearchResult[] = [];
         const provisionalRecords: ISearchResult[] = [];
@@ -475,7 +458,7 @@ class CertificateGenerationService {
      * @param testResult - testResult from which the VIN is used to search a tech-record
      */
     public async containsTankDetails(adrDetails: any) {
-        return adrDetails && !!await this.unflattenFlatObject(adrDetails, "tank") && !!await this.unflattenFlatObject(adrDetails, "tankDetails");
+        return adrDetails && !!this.unflattenFlatObject(adrDetails, "tank") && !!await this.unflattenFlatObject(adrDetails, "tankDetails");
     }
 
     /**
@@ -494,7 +477,7 @@ class CertificateGenerationService {
                 weightDetails.weight2 = (techRecord as TechRecordType<"hgv">).techRecord_trainDesignWeight ?? 0;
             } else {
                 if (
-                    techRecord.techRecord_noOfAxles ?? -1 > 0
+                    (techRecord.techRecord_noOfAxles ?? -1) > 0
                 ) {
                     const initialValue: number = 0;
                     weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
@@ -643,17 +626,15 @@ class CertificateGenerationService {
                 },
             }),
         };
-        return await this.lambdaClient.invoke(invokeParams)
-            .then(async (response) => {
-                try {
-                    const res = await this.lambdaClient.validateInvocationResponse(response);
-                    return JSON.parse(res.body);
-                } catch (e) {
-                    console.log("in search tech record catch block");
-                    console.log(e);
-                    return undefined;
-                }
-            });
+        try {
+            const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
+            const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
+            return JSON.parse(res.body);
+        } catch (e) {
+            console.log("Error searching technical records");
+            console.log(JSON.stringify(e));
+            return undefined;
+        }
     }
 
     /**
@@ -676,17 +657,15 @@ class CertificateGenerationService {
                 }
             }),
         };
-        return await this.lambdaClient.invoke(invokeParams)
-            .then(async (response) => {
-                try {
-                    const res = await this.lambdaClient.validateInvocationResponse(response);
-                    return JSON.parse(res.body);
-                } catch (e) {
-                    console.log("in get tech record catch block");
-                    console.log(e);
-                    return undefined;
-                }
-            });
+        try {
+            const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
+            const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
+            return JSON.parse(res.body);
+        } catch (e) {
+            console.log("Error in get technical record");
+            console.log(JSON.stringify(e));
+            return undefined;
+        }
     }
 
 
