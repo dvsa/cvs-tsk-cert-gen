@@ -54,9 +54,3 @@ export interface ISearchResult {
   techRecord_model?: string;
   techRecord_statusCode?: string;
 }
-
-type SplitObjectKey<T> = T extends `${infer K}_${infer R}` ? K : T;
-
-export type NestedObject<T, U = any> = {
-  [K in keyof T as SplitObjectKey<string & K>]: T[K] extends `${infer _}_${infer R}` ? NestedObject<{ [R: string]: T[K] }, T[K]> : U;
-};

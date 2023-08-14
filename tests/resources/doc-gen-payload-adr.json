@@ -1,6 +1,15 @@
 {
   "ADR_DATA": {
-    "ApplicantDetails": {},
+    "ApplicantDetails": {
+      "address1": "123 High Street",
+      "address2": "2nd Avenue",
+      "address3": "123 High Street",
+      "emailAddress": "autotester@tester.com",
+      "name": "Auto Tester",
+      "postCode": "M1 8DB",
+      "postTown": "Manchester",
+      "telephoneNumber": "0161458079"
+    },
     "AtfNameAtfPNumber": "Abshire-Kub 09-4129632",
     "ChasisNumber": "P012301098765",
     "ExpiryDate": "2020-02-25T15:29:40.032Z",
