@@ -1,31 +1,16 @@
-import {
-  ICertificatePayload,
-  IGeneratedCertificateResponse,
-  IInvokeConfig,
-  IMOTConfig,
-  IRoadworthinessCertificateData,
-  ITestResult,
-  IWeightDetails,
-  ITrailerRegistration,
-  IMakeAndModel,
-  ITestType,
-} from "../models";
-import { Configuration } from "../utils/Configuration";
-import { S3BucketService } from "./S3BucketService";
+import {ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMakeAndModel, IMOTConfig, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails} from "../models";
+import {Configuration} from "../utils/Configuration";
+import {S3BucketService} from "./S3BucketService";
 import S3 from "aws-sdk/clients/s3";
-import { AWSError, config as AWSConfig, Lambda } from "aws-sdk";
+import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
 import moment from "moment";
-import { PromiseResult } from "aws-sdk/lib/request";
-import { Service } from "../models/injector/ServiceDecorator";
-import { LambdaService } from "./LambdaService";
-import {
-  CERTIFICATE_DATA,
-  ERRORS,
-  HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-  TEST_RESULTS,
-  VEHICLE_TYPES,
-} from "../models/Enums";
-import { HTTPError } from "../models/HTTPError";
+import {PromiseResult} from "aws-sdk/lib/request";
+import {Service} from "../models/injector/ServiceDecorator";
+import {LambdaService} from "./LambdaService";
+import {CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES} from "../models/Enums";
+import {HTTPError} from "../models/HTTPError";
+import {ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {InvocationRequest} from "aws-sdk/clients/lambda";
 
 /**
  * Service class for Certificate Generation
@@ -98,42 +83,39 @@ class CertificateGenerationService {
       }),
     };
     return this.lambdaClient
-      .invoke(invokeParams)
-      .then(
-        (
-          response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
-        ) => {
-          const documentPayload: any =
-            this.lambdaClient.validateInvocationResponse(response);
-          const resBody: string = documentPayload.body;
-          const responseBuffer: Buffer = Buffer.from(resBody, "base64");
-          return {
-            vrm:
-              testResult.vehicleType === VEHICLE_TYPES.TRL
-                ? testResult.trailerId
-                : testResult.vrm,
-            testTypeName: testResult.testTypes.testTypeName,
-            testTypeResult: testResult.testTypes.testResult,
-            dateOfIssue: moment(
-              testResult.testTypes.testTypeStartTimestamp
-            ).format("D MMMM YYYY"),
-            certificateType: certificateTypes[vehicleTestRes].split(".")[0],
-            fileFormat: "pdf",
-            fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
-            fileSize: responseBuffer.byteLength.toString(),
-            certificate: responseBuffer,
-            certificateOrder: testResult.order,
-            email:
-              testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
-            shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
-          };
-        }
-      )
-      .catch((error: AWSError | Error) => {
-        console.log(error);
-        throw error;
-      });
-  }
+            .invoke(invokeParams)
+            .then(
+                async (response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>) => {
+                    const documentPayload: any = await this.lambdaClient.validateInvocationResponse(response);
+                    const resBody: string = documentPayload.body;
+                    const responseBuffer: Buffer = Buffer.from(resBody, "base64");
+                    return {
+                        vrm:
+                            testResult.vehicleType === VEHICLE_TYPES.TRL
+                                ? testResult.trailerId
+                                : testResult.vrm,
+                        testTypeName: testResult.testTypes.testTypeName,
+                        testTypeResult: testResult.testTypes.testResult,
+                        dateOfIssue: moment(
+                            testResult.testTypes.testTypeStartTimestamp
+                        ).format("D MMMM YYYY"),
+                        certificateType: certificateTypes[vehicleTestRes].split(".")[0],
+                        fileFormat: "pdf",
+                        fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
+                        fileSize: responseBuffer.byteLength.toString(),
+                        certificate: responseBuffer,
+                        certificateOrder: testResult.order,
+                        email:
+                            testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
+                        shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
+                    };
+                }
+            )
+            .catch((error: AWSError | Error) => {
+                console.log(error);
+                throw error;
+            });
+    }
 
   /**
    * Retrieves a signature from the cvs-signature S3 bucket
@@ -270,225 +252,240 @@ class CertificateGenerationService {
     return payload;
   }
 
-  /**
-   * Generates certificate data for a given test result and certificate type
-   * @param testResult - the source test result for certificate generation
-   * @param type - the certificate type
-   */
-  public async generateCertificateData(testResult: ITestResult, type: string) {
-    const testType: any = testResult.testTypes;
-    switch (type) {
-      case CERTIFICATE_DATA.PASS_DATA:
-      case CERTIFICATE_DATA.FAIL_DATA:
-        const defects: any = this.generateDefects(testResult.testTypes, type);
+    /**
+     * Generates certificate data for a given test result and certificate type
+     * @param testResult - the source test result for certificate generation
+     * @param type - the certificate type
+     */
+    public async generateCertificateData(testResult: ITestResult, type: string) {
+        const testType: any = testResult.testTypes;
+        switch (type) {
+            case CERTIFICATE_DATA.PASS_DATA:
+            case CERTIFICATE_DATA.FAIL_DATA:
+                const defects: any = await this.generateDefects(testResult.testTypes, type);
+                return {
+                    TestNumber: testType.testNumber,
+                    TestStationPNumber: testResult.testStationPNumber,
+                    TestStationName: testResult.testStationName,
+                    CurrentOdometer: {
+                        value: testResult.odometerReading,
+                        unit: testResult.odometerReadingUnits,
+                    },
+                    IssuersName: testResult.testerName,
+                    DateOfTheTest: moment(testResult.testEndTimestamp).format(
+                        "DD.MM.YYYY"
+                    ),
+                    CountryOfRegistrationCode: testResult.countryOfRegistration,
+                    VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
+                    RawVIN: testResult.vin,
+                    RawVRM:
+                        testResult.vehicleType === VEHICLE_TYPES.TRL
+                            ? testResult.trailerId
+                            : testResult.vrm,
+                    ExpiryDate: testType.testExpiryDate
+                        ? moment(testType.testExpiryDate).format("DD.MM.YYYY")
+                        : undefined,
+                    EarliestDateOfTheNextTest:
+                        (testResult.vehicleType === VEHICLE_TYPES.HGV ||
+                            testResult.vehicleType === VEHICLE_TYPES.TRL) &&
+                        (testResult.testTypes.testResult === TEST_RESULTS.PASS ||
+                            testResult.testTypes.testResult === TEST_RESULTS.PRS)
+                            ? moment(testType.testAnniversaryDate)
+                                .subtract(1, "months")
+                                .startOf("month")
+                                .format("DD.MM.YYYY")
+                            : moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
+                    SeatBeltTested: testType.seatbeltInstallationCheckDate ? "Yes" : "No",
+                    SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate
+                        ? moment(testType.lastSeatbeltInstallationCheckDate).format(
+                            "DD.MM.YYYY"
+                        )
+                        : "\u00A0",
+                    SeatBeltNumber: testType.numberOfSeatbeltsFitted,
+                    ...defects,
+                };
+            case CERTIFICATE_DATA.RWT_DATA:
+                const weightDetails = await this.getWeightDetails(testResult);
+                let defectRWTList: any;
+                if (testResult.testTypes.testResult === TEST_RESULTS.FAIL) {
+                    defectRWTList = [];
+                    testResult.testTypes.defects.forEach((defect: any) => {
+                        defectRWTList.push(this.formatDefect(defect));
+                    });
+                } else {
+                    defectRWTList = undefined;
+                }
+
+                const resultPass: IRoadworthinessCertificateData = {
+                    Dgvw: weightDetails.dgvw,
+                    Weight2: weightDetails.weight2,
+                    VehicleNumber:
+                        testResult.vehicleType === VEHICLE_TYPES.TRL
+                            ? testResult.trailerId
+                            : testResult.vrm,
+                    Vin: testResult.vin,
+                    IssuersName: testResult.testerName,
+                    DateOfInspection: moment(testType.testTypeStartTimestamp).format(
+                        "DD.MM.YYYY"
+                    ),
+                    TestStationPNumber: testResult.testStationPNumber,
+                    DocumentNumber: testType.certificateNumber,
+                    Date: moment(testType.testTypeStartTimestamp).format("DD.MM.YYYY"),
+                    Defects: defectRWTList,
+                    IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL,
+                };
+                return resultPass;
+            case CERTIFICATE_DATA.ADR_DATA:
+                const adrDetails: TechRecordType<any> = await this.getAdrDetails(testResult);
+                const docGenPayloadAdr = {
+                    ChasisNumber: testResult.vin,
+                    RegistrationNumber: testResult.vrm,
+                    ApplicantDetails: {
+                            name: adrDetails?.techRecord_applicantDetails_name,
+                            address1: adrDetails?.techRecord_applicantDetails_address1,
+                            address2: adrDetails?.techRecord_applicantDetails_address2,
+                            address3: adrDetails?.techRecord_applicantDetails_address1,
+                            postTown: adrDetails?.techRecord_applicantDetails_postTown,
+                            postCode: adrDetails?.techRecord_applicantDetails_postCode,
+                            telephoneNumber: adrDetails?.techRecord_applicantDetails_telephoneNumber,
+                            emailAddress: adrDetails?.techRecord_applicantDetails_emailAddress,
+                        },
+                    VehicleType: adrDetails?.techRecord_adrDetails_vehicleDetails_type,
+                    PermittedDangerousGoods: adrDetails?.techRecord_adrDetails_permittedDangerousGoods,
+                    BrakeEndurance: adrDetails?.techRecord_adrDetails_brakeEndurance,
+                    Weight: adrDetails?.techRecord_adrDetails_weight,
+                    TankManufacturer: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankStatement_statement
+                        ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankManufacturer
+                        : undefined,
+                    Tc2InitApprovalNo: adrDetails?.techRecord_adrDetails_tank_tankDetails_tc2Details_tc2IntermediateApprovalNo,
+                    TankManufactureSerialNo: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankManufacturerSerialNo,
+                    YearOfManufacture: adrDetails?.techRecord_adrDetails_tank_tankDetails_yearOfManufacture,
+                    TankCode: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankCode,
+                    SpecialProvisions: adrDetails?.techRecord_adrDetails_tank_tankDetails_specialProvisions,
+                    TankStatement: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankStatement_statement,
+                    ExpiryDate: testResult.testTypes.testExpiryDate,
+                    AtfNameAtfPNumber:
+                        testResult.testStationName + " " + testResult.testStationPNumber,
+                    Notes: testResult.testTypes.additionalNotesRecorded,
+                    TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
+                };
+                console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
+                return docGenPayloadAdr;
+        }
+    }
+
+    /**
+     * Retrieves the adrDetails from a techRecord searched by vin
+     * @param testResult - testResult from which the VIN is used to search a tech-record
+     */
+    public getAdrDetails = async (testResult: any) => {
+        const searchRes = await this.callSearchTechRecords(testResult.vin);
+        return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl">;
+    }
+
+
+    public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {
+        if (searchResult) {
+            const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
+            return processRecordsRes.currentCount !== 0
+                ? this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
+                    processRecordsRes.currentRecords[0].createdTimestamp)
+                : processRecordsRes.provisionalCount === 1
+                    ? this.callGetTechRecords(processRecordsRes.provisionalRecords[0].systemNumber,
+                        processRecordsRes.provisionalRecords[0].createdTimestamp)
+                    : this.callGetTechRecords(processRecordsRes.provisionalRecords[1].systemNumber,
+                        processRecordsRes.provisionalRecords[1].createdTimestamp);
+        } else {
+            await Promise.reject("Tech record Search returned nothing.");
+        }
+    }
+
+    /**
+     * helper function is used to process records and count provisional and current records
+     * @param records
+     */
+    public groupRecordsByStatusCode = (records: ISearchResult[]
+    ): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
+        const currentRecords: ISearchResult[] = [];
+        const provisionalRecords: ISearchResult[] = [];
+        records.forEach((record) => {
+            if (record.techRecord_statusCode === "current") {
+                currentRecords.push(record);
+            } else if (record.techRecord_statusCode === "provisional") {
+                provisionalRecords.push(record);
+            }
+        });
+
         return {
-          TestNumber: testType.testNumber,
-          TestStationPNumber: testResult.testStationPNumber,
-          TestStationName: testResult.testStationName,
-          CurrentOdometer: {
-            value: testResult.odometerReading,
-            unit: testResult.odometerReadingUnits,
-          },
-          IssuersName: testResult.testerName,
-          DateOfTheTest: moment(testResult.testEndTimestamp).format(
-            "DD.MM.YYYY"
-          ),
-          CountryOfRegistrationCode: testResult.countryOfRegistration,
-          VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
-          RawVIN: testResult.vin,
-          RawVRM:
-            testResult.vehicleType === VEHICLE_TYPES.TRL
-              ? testResult.trailerId
-              : testResult.vrm,
-          ExpiryDate: testType.testExpiryDate
-            ? moment(testType.testExpiryDate).format("DD.MM.YYYY")
-            : undefined,
-          EarliestDateOfTheNextTest:
-            (testResult.vehicleType === VEHICLE_TYPES.HGV ||
-              testResult.vehicleType === VEHICLE_TYPES.TRL) &&
-            (testResult.testTypes.testResult === TEST_RESULTS.PASS ||
-              testResult.testTypes.testResult === TEST_RESULTS.PRS)
-              ? moment(testType.testAnniversaryDate)
-                  .subtract(1, "months")
-                  .startOf("month")
-                  .format("DD.MM.YYYY")
-              : moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
-          SeatBeltTested: testType.seatbeltInstallationCheckDate ? "Yes" : "No",
-          SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate
-            ? moment(testType.lastSeatbeltInstallationCheckDate).format(
-                "DD.MM.YYYY"
-              )
-            : "\u00A0",
-          SeatBeltNumber: testType.numberOfSeatbeltsFitted,
-          ...defects,
+            currentRecords,
+            provisionalRecords,
+            currentCount: currentRecords.length,
+            provisionalCount: provisionalRecords.length
         };
-      case CERTIFICATE_DATA.RWT_DATA:
-        const weightDetails = await this.getWeightDetails(testResult);
-        let defectRWTList: any;
-        if (testResult.testTypes.testResult === TEST_RESULTS.FAIL) {
-          defectRWTList = [];
-          testResult.testTypes.defects.forEach((defect: any) => {
-            defectRWTList.push(this.formatDefect(defect));
-          });
-        } else {
-          defectRWTList = undefined;
-        }
-
-        const resultPass: IRoadworthinessCertificateData = {
-          Dgvw: weightDetails.dgvw,
-          Weight2: weightDetails.weight2,
-          VehicleNumber:
-            testResult.vehicleType === VEHICLE_TYPES.TRL
-              ? testResult.trailerId
-              : testResult.vrm,
-          Vin: testResult.vin,
-          IssuersName: testResult.testerName,
-          DateOfInspection: moment(testType.testTypeStartTimestamp).format(
-            "DD.MM.YYYY"
-          ),
-          TestStationPNumber: testResult.testStationPNumber,
-          DocumentNumber: testType.certificateNumber,
-          Date: moment(testType.testTypeStartTimestamp).format("DD.MM.YYYY"),
-          Defects: defectRWTList,
-          IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL,
-        };
-        return resultPass;
-      case CERTIFICATE_DATA.ADR_DATA:
-        const adrDetails = await this.getAdrDetails(testResult);
-
-        const docGenPayloadAdr = {
-          ChasisNumber: testResult.vin,
-          RegistrationNumber: testResult.vrm,
-          ApplicantDetails: adrDetails
-            ? adrDetails.applicantDetails
-            : undefined,
-          VehicleType:
-            adrDetails && adrDetails.vehicleDetails
-              ? adrDetails.vehicleDetails.type
-              : undefined,
-          PermittedDangerousGoods: adrDetails
-            ? adrDetails.permittedDangerousGoods
-            : undefined,
-          BrakeEndurance: adrDetails ? adrDetails.brakeEndurance : undefined,
-          Weight: adrDetails ? adrDetails.weight : undefined,
-          TankManufacturer: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.tankManufacturer
-            : undefined,
-          Tc2InitApprovalNo:
-            this.containsTankDetails(adrDetails) &&
-            adrDetails.tank.tankDetails.tc2Details
-              ? adrDetails.tank.tankDetails.tc2Details.tc2IntermediateApprovalNo
-              : undefined,
-          TankManufactureSerialNo: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.tankManufacturerSerialNo
-            : undefined,
-          YearOfManufacture: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.yearOfManufacture
-            : undefined,
-          TankCode: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.tankCode
-            : undefined,
-          SpecialProvisions: this.containsTankDetails(adrDetails)
-            ? adrDetails.tank.tankDetails.specialProvisions
-            : undefined,
-          TankStatement:
-            adrDetails && adrDetails.tank
-              ? adrDetails.tank.tankStatement
-              : undefined,
-          ExpiryDate: testResult.testTypes.testExpiryDate,
-          AtfNameAtfPNumber:
-            testResult.testStationName + " " + testResult.testStationPNumber,
-          Notes: testResult.testTypes.additionalNotesRecorded,
-          TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
-        };
-
-        console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
-
-        return docGenPayloadAdr;
     }
-  }
-
-  /**
-   * Retrieves the adrDetails from a techRecord searched by vin
-   * @param testResult - testResult from which the VIN is used to search a tech-record
-   */
-  public async getAdrDetails(testResult: any) {
-    const techRecord = await this.getTechRecord(testResult);
-
-    return techRecord.techRecord[0].adrDetails;
-  }
-
-  /**
-   * Returns true if an adrDetails object contains a tankDetails object
-   * @param testResult - testResult from which the VIN is used to search a tech-record
-   */
-  public containsTankDetails(adrDetails: any) {
-    return adrDetails && adrDetails.tank && adrDetails.tank.tankDetails;
-  }
-
-  /**
-   * Retrieves the vehicle weight details for Roadworthisness certificates
-   * @param testResult
-   */
-  public async getWeightDetails(testResult: any) {
-    const result = await this.getTechRecord(testResult);
-    if (result) {
-      console.log("techRecord for weight details found");
-      const weightDetails: IWeightDetails = {
-        dgvw: result.techRecord[0].grossDesignWeight,
-        weight2: 0,
-      };
-      if (testResult.vehicleType === VEHICLE_TYPES.HGV) {
-        weightDetails.weight2 = result.techRecord[0].trainDesignWeight;
-      } else {
-        if (
-          result.techRecord[0].axles &&
-          result.techRecord[0].axles.length > 0
-        ) {
-          const initialValue = 0;
-          weightDetails.weight2 = result.techRecord[0].axles.reduce(
-            (
-              accumulator: number,
-              currentValue: { weights: { designWeight: number } }
-            ) => accumulator + currentValue.weights.designWeight,
-            initialValue
-          );
+    /**
+     * Retrieves the vehicle weight details for Roadworthisness certificates
+     * @param testResult
+     */
+    public async getWeightDetails(testResult: any) {
+        const searchRes = await this.callSearchTechRecords(testResult.vin);
+        const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
+        if (techRecord) {
+            const weightDetails: IWeightDetails = {
+                dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
+                weight2: 0,
+            };
+            if (testResult.vehicleType === VEHICLE_TYPES.HGV) {
+                weightDetails.weight2 = (techRecord as TechRecordType<"hgv">).techRecord_trainDesignWeight ?? 0;
+            } else {
+                if (
+                    (techRecord.techRecord_noOfAxles ?? -1) > 0
+                ) {
+                    const initialValue: number = 0;
+                    weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
+                        (
+                            accumulator: number,
+                            currentValue: { weights_designWeight: number }
+                        ) => accumulator + currentValue.weights_designWeight,
+                        initialValue
+                    );
+                } else {
+                    throw new HTTPError(
+                        500,
+                        "No axle weights for Roadworthiness test certificates!"
+                    );
+                }
+            }
+            return weightDetails;
         } else {
-          throw new HTTPError(
-            500,
-            "No axle weights for Roadworthiness test certificates!"
-          );
+            console.log("No techRecord found for weight details");
+            throw new HTTPError(
+                500,
+                "No vehicle found for Roadworthiness test certificate!"
+            );
         }
-      }
-      return weightDetails;
-    } else {
-      console.log("No techRecord found for weight details");
-      throw new HTTPError(
-        500,
-        "No vehicle found for Roadworthiness test certificate!"
-      );
     }
-  }
-  /**
-   * Retrieves the odometer history for a given VIN from the Test Results microservice
-   * @param systemNumber - systemNumber for which to retrieve odometer history
-   */
-  public async getOdometerHistory(systemNumber: string) {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: any = {
-      FunctionName: config.functions.testResults.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
-      Payload: JSON.stringify({
-        httpMethod: "GET",
-        path: `/test-results/${systemNumber}`,
-        pathParameters: {
-          systemNumber,
-        },
-      }),
-    };
 
-    return this.lambdaClient
+    /**
+     * Retrieves the odometer history for a given VIN from the Test Results microservice
+     * @param systemNumber - systemNumber for which to retrieve odometer history
+     */
+    public async getOdometerHistory(systemNumber: string) {
+        const config: IInvokeConfig = this.config.getInvokeConfig();
+        const invokeParams: any = {
+            FunctionName: config.functions.testResults.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "GET",
+                path: `/test-results/${systemNumber}`,
+                pathParameters: {
+                    systemNumber,
+                },
+            }),
+        };
+
+        return this.lambdaClient
       .invoke(invokeParams)
       .then(
         (
@@ -558,120 +555,83 @@ class CertificateGenerationService {
       });
   }
 
-  /**
-   * Method for getting make and model based on the vehicle from a test-result
-   * @param testResult - the testResult for which the tech record search is done for
-   */
-  public async getVehicleMakeAndModel(testResult: any) {
-    const techRecord = await this.getTechRecord(testResult);
-    // Return bodyMake and bodyModel values for PSVs
-    if (techRecord.techRecord[0].vehicleType === VEHICLE_TYPES.PSV) {
-      return {
-        Make: techRecord.techRecord[0].chassisMake,
-        Model: techRecord.techRecord[0].chassisModel,
-      };
-    } else {
-      // Return make and model values for HGV and TRL vehicle types
-      return {
-        Make: techRecord.techRecord[0].make,
-        Model: techRecord.techRecord[0].model,
-      };
-    }
-  }
-
-  /**
-   * Method for getting techRecord to which the test-results reffer to
-   * @param testResult - the testResult for which the tech record search is done for
-   */
-  public async getTechRecord(testResult: any) {
-    let techRecords: any | any[] = testResult.systemNumber
-      ? await this.queryTechRecords(testResult.systemNumber, "systemNumber")
-      : undefined;
-    if (!isSingleRecord(techRecords) && testResult.vin) {
-      console.log(
-        "No unique Tech Record found for systemNumber ",
-        testResult.systemNumber,
-        ". Trying vin"
-      );
-      techRecords = await this.queryTechRecords(testResult.vin);
-    }
-    if (!isSingleRecord(techRecords) && testResult.partialVin) {
-      console.log(
-        "No unique Tech Record found for vin ",
-        testResult.vin,
-        ". Trying Partial Vin"
-      );
-      techRecords = await this.queryTechRecords(testResult.partialVin);
-    }
-    if (!isSingleRecord(techRecords) && testResult.vrm) {
-      console.log(
-        "No unique Tech Record found for partial vin ",
-        testResult.partialVin,
-        ". Trying VRM"
-      );
-      techRecords = await this.queryTechRecords(testResult.vrm);
-    }
-    if (!isSingleRecord(techRecords) && testResult.trailerId) {
-      console.log(
-        "No unique Tech Record found for vrm ",
-        testResult.vrm,
-        ". Trying TrailerID"
-      );
-      techRecords = await this.queryTechRecords(testResult.trailerId);
-    }
-    // @ts-ignore - already handled undefined case.
-    if (!isSingleRecord(techRecords) || !techRecords[0].techRecord) {
-      console.error(
-        `Unable to retrieve unique Tech Record for Test Result:`,
-        testResult
-      );
-      throw new Error(`Unable to retrieve unique Tech Record for Test Result`);
+    /**
+     * Method for getting make and model based on the vehicle from a test-result
+     * @param testResult - the testResult for which the tech record search is done for
+     */
+    public getVehicleMakeAndModel = async (testResult: any) => {
+        const searchRes = await this.callSearchTechRecords(testResult.vin);
+        const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
+        // Return bodyMake and bodyModel values for PSVs
+        return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV ? {
+            Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
+            Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
+        } : {
+            Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
+            Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
+        };
     }
 
-    // @ts-ignore - already handled undefined case.
-    const techRecord =
-      techRecords instanceof Array ? techRecords[0] : techRecords;
+    /**
+     * Used to return a subset of technical record information.
+     * @param searchIdentifier
+     */
+    public callSearchTechRecords = async (searchIdentifier: string) => {
+        const config: IInvokeConfig = this.config.getInvokeConfig();
+        const invokeParams: InvocationRequest = {
+            FunctionName: config.functions.techRecordsSearch.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "GET",
+                path: `/v3/technical-records/search/${searchIdentifier}`,
+                pathParameters: {
+                    searchIdentifier
+                },
+            }),
+        };
+        try {
+            const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
+            const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
+            return JSON.parse(res.body);
+        } catch (e) {
+            console.log("Error searching technical records");
+            console.log(JSON.stringify(e));
+            return undefined;
+        }
+    }
 
-    return techRecord;
-  }
+    /**
+     * Used to get a singular whole technical record.
+     * @param systemNumber
+     * @param createdTimestamp
+     */
+    public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string): Promise<TechRecordType<T> | undefined> => {
+        const config: IInvokeConfig = this.config.getInvokeConfig();
+        const invokeParams: InvocationRequest = {
+            FunctionName: config.functions.techRecords.name,
+            InvocationType: "RequestResponse",
+            LogType: "Tail",
+            Payload: JSON.stringify({
+                httpMethod: "GET",
+                path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
+                pathParameters: {
+                    systemNumber,
+                    createdTimestamp
+                }
+            }),
+        };
+        try {
+            const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
+            const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
+            return JSON.parse(res.body);
+        } catch (e) {
+            console.log("Error in get technical record");
+            console.log(JSON.stringify(e));
+            return undefined;
+        }
+    }
 
-  /**
-   * Helper method for Technical Records Lambda calls. Accepts any search term now, rather than just the VIN
-   * Created as part of CVSB-8582
-   * @param searchTerm - the value of your search term
-   * @param searchType - the kind of value your searchTerm represents in camel case e.g. vin, vrm, systemNumber
-   */
-  public async queryTechRecords(
-    searchTerm: string,
-    searchType: string = "all"
-  ) {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: any = {
-      FunctionName: config.functions.techRecords.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
-      Payload: JSON.stringify({
-        httpMethod: "GET",
-        path: `/vehicles/${searchTerm}/tech-records`,
-        pathParameters: {
-          proxy: `${searchTerm}/tech-records`,
-        },
-        queryStringParameters: {
-          searchCriteria: searchType,
-        },
-      }),
-    };
-
-    return this.lambdaClient.invoke(invokeParams).then((response) => {
-      try {
-        const payload: any =
-          this.lambdaClient.validateInvocationResponse(response);
-        return JSON.parse(payload.body);
-      } catch (e) {
-        return undefined;
-      }
-    });
-  }
 
   /**
    * To fetch trailer registration
@@ -882,17 +842,4 @@ class CertificateGenerationService {
   //#endregion
 }
 
-/**
- * Checks a techRecord to  see if it's a single, valid record
- * @param techRecord
- */
-const isSingleRecord = (techRecords: any): boolean => {
-  if (!techRecords) {
-    return false;
-  }
-  return techRecords && techRecords instanceof Array
-    ? techRecords.length === 1
-    : true;
-};
-
-export { CertificateGenerationService, IGeneratedCertificateResponse };
+export {CertificateGenerationService, IGeneratedCertificateResponse};

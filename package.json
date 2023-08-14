@@ -4,8 +4,7 @@
   "description": "Certificate generation initiation task",
   "main": "handler.js",
   "engines": {
-    "node": "14.*",
-    "npm": "5.6.0"
+    "node": "^18.15.0"
   },
   "scripts": {
     "start": "npm run kill:offline && npm run start:offline && serverless invoke local -f main --path tests/resources/queue-event.json",
@@ -16,7 +15,7 @@
     "build:dev": "tsc && npm run build:copy",
     "build:copy": "find src -type f \\( -name \"*.yml\" -or -name \"*.json\" \\) | cpio -pdm .build && find tests -type f \\( -name \"*.yml\" -or -name \"*.json\" -or -name \"*.base64\" \\)  | cpio -pdm .build",
     "build:docker": "docker-compose -f docker-compose.yml up -d --build",
-    "test:unit": "BRANCH=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest --testMatch=\"**/*.unitTest.ts\" --runInBand --detectOpenHandles",
+    "test:unit": "BRANCH=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest --testMatch=\"**/*.unitTest.ts\" --runInBand",
     "test": "npm run test:unit -- --coveragePathIgnorePatterns='<rootDir>/tests/' --coverage",
     "test-i": "BRANCH=local jest --testMatch=\"**/*.intTest.ts\" --runInBand",
     "lint": "tslint src/**/*.ts tests/**/*.ts -q",
@@ -84,18 +83,13 @@
     "ts-jest": "^26.4.4",
     "tslint": "^5.20.0",
     "tslint-no-unused-expression-chai": "^0.1.4",
-    "typescript": "^3.9.7"
+    "typescript": "^4.9.5",
+    "@dvsa/cvs-type-definitions": "^2.1.11"
   },
   "jestSonar": {
     "reportPath": "coverage",
     "reportFile": "test-report.xml",
     "indent": 4
-  },
-  "jest": {
-    "coverageDirectory": "./coverage",
-    "collectCoverage": true,
-    "testResultsProcessor": "jest-sonar-reporter",
-    "testURL": "http://localhost"
   },
   "husky": {
     "hooks": {

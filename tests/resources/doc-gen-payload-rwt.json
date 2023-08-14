@@ -2,16 +2,16 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-      "Dgvw": 98204,
-      "Weight2": 40568,
+      "Date": "26.02.2019",
+      "DateOfInspection": "26.02.2019",
+      "Dgvw": 2000,
+      "DocumentNumber": "123",
+      "IsTrailer": false,
+      "IssuersName": "CVS Dev1",
+      "TestStationPNumber": "09-4129632",
       "VehicleNumber": "NKPILNCN",
       "Vin": "GYFC26269R240355",
-      "IssuersName": "CVS Dev1",
-      "DateOfInspection": "26.02.2019",
-      "TestStationPNumber": "09-4129632",
-      "DocumentNumber": "123",
-      "Date": "26.02.2019",
-      "IsTrailer": false
+      "Weight2": 0
     },
     "Signature": {
       "ImageType": "png",
@@ -21,16 +21,16 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-      "Dgvw": 98204,
-      "Weight2": 40568,
+      "Date": "26.02.2019",
+      "DateOfInspection": "26.02.2019",
+      "Dgvw": 2000,
+      "DocumentNumber": "123",
+      "IsTrailer": false,
+      "IssuersName": "CVS Dev1",
+      "TestStationPNumber": "09-4129632",
       "VehicleNumber": "NKPILNCN",
       "Vin": "GYFC26269R240355",
-      "IssuersName": "CVS Dev1",
-      "DateOfInspection": "26.02.2019",
-      "TestStationPNumber": "09-4129632",
-      "DocumentNumber": "123",
-      "Date": "26.02.2019",
-      "IsTrailer": false
+      "Weight2": 0
     },
     "Signature": {
       "ImageType": "png",
@@ -59,8 +59,8 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-      "Dgvw": 98204,
-      "Weight2": 9400,
+      "Dgvw": 2000,
+      "Weight2": 0,
       "VehicleNumber": "0285678",
       "Vin": "T12768594",
       "IssuersName": "CVS Dev1",
@@ -83,8 +83,8 @@
   {
     "Watermark": "NOT VALID",
     "RWT_DATA": {
-      "Dgvw": 98204,
-      "Weight2": 9400,
+      "Dgvw": 2000,
+      "Weight2": 0,
       "VehicleNumber": "0285678",
       "Vin": "T12768594",
       "IssuersName": "CVS Dev1",
