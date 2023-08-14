@@ -1,0 +1,75 @@
+[
+  {
+    "testStationAddress": "123 High Street",
+    "testStationName": "New Test ATF 1",
+    "testStationId": "23",
+    "testStationEmails": [
+      "automation@nonprod.cvs.dvsacloud.uk"
+    ],
+    "testStationCountry": "Wales",
+    "testStationLatitude": 180,
+    "testStationPNumber": "P11223",
+    "testStationPostcode": "SY231AB",
+    "testStationAccessNotes": "",
+    "testStationType": "atf",
+    "testStationLongitude": 360,
+    "testStationContactNumber": "1234567890",
+    "testStationStatus": "active",
+    "testStationTown": "Aberystwyth",
+    "testStationGeneralNotes": ""
+  },
+  {
+    "testStationAddress": "110 Anywhere Avenue",
+    "testStationName": "New Test ATF 2",
+    "testStationId": "24",
+    "testStationEmails": [
+      "automation@nonprod.cvs.dvsacloud.uk"
+    ],
+    "testStationCountry": "Wales",
+    "testStationLatitude": 181,
+    "testStationPNumber": "44556",
+    "testStationPostcode": "LL152RS",
+    "testStationAccessNotes": "",
+    "testStationType": "atf",
+    "testStationLongitude": 362,
+    "testStationContactNumber": "9876543210",
+    "testStationStatus": "active",
+    "testStationTown": "Ruthin",
+    "testStationGeneralNotes": ""
+  },
+  {
+    "testStationAddress": "711 Macpherson Place",
+    "testStationName": "Shields LLC",
+    "testStationId": "14",
+    "testStationCountry": "Scotland",
+    "testStationEmails": [
+      "automation@nonprod.cvs.dvsacloud.uk"
+    ],
+    "testStationLatitude": 40.417358,
+    "testStationPNumber": "69-2361520",
+    "testStationPostcode": "65923-007",
+    "testStationAccessNotes": "Nulla ut erat id mauris vulputate elementum. Nullam varius. Nulla facilisi.\n\nCras non velit nec nisi vulputate nonummy. Maecenas tincidunt lacus at velit. Vivamus vel nulla eget eros elementum pellentesque.\n\nQuisque porta volutpat erat. Quisque erat eros, viverra eget, congue eget, semper rutrum, nulla. Nunc purus.",
+    "testStationType": "atf",
+    "testStationLongitude": 117.500558,
+    "testStationContactNumber": "+86 619 125 2939",
+    "testStationStatus": "active",
+    "testStationTown": "Xianglong",
+    "testStationGeneralNotes": "Suspendisse potenti. In eleifend quam a odio. In hac habitasse platea dictumst."
+  },
+  {
+    "testStationAddress": "Unit 1, Eastern Road",
+    "testStationName": "Rossetts UK Limited",
+    "testStationId": "7a2bfacc-12b0-ec11-9840-000d3a7f10f6",
+    "testStationEmails": [],
+    "testStationLatitude": 51.2488267,
+    "testStationPNumber": "P50742",
+    "testStationPostcode": "GU12 4TD",
+    "testStationAccessNotes": "",
+    "testStationType": "atf",
+    "testStationLongitude": -0.7373383,
+    "testStationContactNumber": "8000000800",
+    "testStationStatus": "active",
+    "testStationTown": "Aldershot",
+    "testStationGeneralNotes": "Not applicable"
+  }
+]

@@ -1,6 +1,7 @@
 // @ts-ignore
 import * as yml from "node-yaml";
 import { IInvokeConfig, IMOTConfig, IS3Config } from "../models";
+import {ERRORS} from "../models/Enums";
 
 /**
  * Configuration class for retrieving project config
@@ -103,6 +104,22 @@ class Configuration {
     }
 
     return this.config.mot;
+  }
+
+  /**
+   * Retrieves the Welsh address secret key
+   * @returns string secret name
+   */
+  public getWelshSecretKey() {
+    if (!process.env.BRANCH || process.env.BRANCH === "local") {
+      if (!this.config.welsh.secret_key) {
+        throw new Error(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
+      } else {
+        return this.config.welsh.secret_key;
+      }
+    } else {
+      return process.env.SECRET_KEY;
+    }
   }
 }
 

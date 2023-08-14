@@ -3,7 +3,8 @@ export enum ERRORS {
     LAMBDA_INVOCATION_ERROR = "Lambda invocation returned error:",
     EMPTY_PAYLOAD = "with empty payload.",
     LAMBDA_INVOCATION_BAD_DATA = "Lambda invocation returned bad data:",
-    RETRO_ERROR_OR_CVS_UPDATED = "Not eligible for certificate generation.",
+    SECRET_ENV_VAR_NOT_EXIST = "SECRET_KEY environment variable does not exist.",
+    SECRET_DETAILS_NOT_FOUND = "No secret details found.",
 }
 
 export enum VEHICLE_TYPES {
@@ -55,9 +56,3 @@ export enum LOCATION_WELSH {
 export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {
   IDS: ["62", "63", "91", "101", "122"],
 };
-
-export enum ATF_COUNTRIES {
-    ENGLAND = "ENGLAND",
-    SCOTLAND = "SCOTLAND",
-    WALES = "WALES"
-}
