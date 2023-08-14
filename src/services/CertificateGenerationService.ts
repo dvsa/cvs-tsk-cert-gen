@@ -265,14 +265,19 @@ class CertificateGenerationService {
     const welshConfigSecretKey: string = this.config.getWelshSecretKey();
 
     if (welshConfigSecretKey) {
-      const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
-      const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+      try {
+        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
+        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
 
-      if (secretResponse.SecretString) {
-        const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
-        return secretConfig;
-      } else {
-        console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
+        if (secretResponse.SecretString) {
+          const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
+          return secretConfig;
+        } else {
+          console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
+          return null;
+        }
+      } catch (error) {
+        console.log(error);
         return null;
       }
     } else {
