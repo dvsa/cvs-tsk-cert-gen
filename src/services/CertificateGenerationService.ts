@@ -48,9 +48,8 @@ class CertificateGenerationService {
   private readonly s3Client: S3BucketService;
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
-  private secretsClient: SecretsManager;
-  private smcUrl: string = "";
-  private smcApiKey: string = "";
+  private readonly secretsClient: SecretsManager;
+
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
@@ -199,7 +198,7 @@ class CertificateGenerationService {
   }
 
   /**
-   * Check if the specific test station is in Wales
+   * Find the details of the test station used on the test result
    * @param testStations list of all test stations
    * @param testStationPNumber pNumber from the test result
    * @returns string postcode of the pNumber test station
@@ -259,11 +258,10 @@ class CertificateGenerationService {
   }
 
   /**
-   * Method to get the secret details for the welsh lookup
+   * Method to get the secret details for the Welsh lookup
    * @returns ISecret secret containing SMC url and api key
    */
   private async getSecret() {
-    // first need to find the secret name from the ev
     const welshConfigSecretKey: string = this.config.getWelshSecretKey();
 
     if (welshConfigSecretKey) {
@@ -274,11 +272,11 @@ class CertificateGenerationService {
         const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
         return secretConfig;
       } else {
-        console.log("No secret details found for " + welshConfigSecretKey);
+        console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
         return null;
       }
     } else {
-      console.log("No Secret key configured");
+      console.log(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
       return null;
     }
   }
@@ -431,10 +429,8 @@ class CertificateGenerationService {
     type: string,
     isWelsh: boolean = false
   ) {
-    const defectListFromApi: IDefectParent[] =
-      await this.getDefectTranslations();
-    const flattenedDefects: IFlatDefect[] =
-      this.flattenDefectsFromApi(defectListFromApi);
+    const defectListFromApi: IDefectParent[] = await this.getDefectTranslations();
+    const flattenedDefects: IFlatDefect[] = this.flattenDefectsFromApi(defectListFromApi);
     const testType: any = testResult.testTypes;
     switch (type) {
       case CERTIFICATE_DATA.PASS_DATA:

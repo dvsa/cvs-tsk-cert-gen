@@ -3,9 +3,8 @@ export enum ERRORS {
     LAMBDA_INVOCATION_ERROR = "Lambda invocation returned error:",
     EMPTY_PAYLOAD = "with empty payload.",
     LAMBDA_INVOCATION_BAD_DATA = "Lambda invocation returned bad data:",
-    RETRO_ERROR_OR_CVS_UPDATED = "Not eligible for certificate generation.",
-    SECRET_ENV_VAR_NOT_EXIST = "SECRET_NAME environment variable does not exist.",
-    SECRET_FILE_NOT_EXIST = "The secret file does not exist.",
+    SECRET_ENV_VAR_NOT_EXIST = "SECRET_KEY environment variable does not exist.",
+    SECRET_DETAILS_NOT_FOUND = "No secret details found.",
 }
 
 export enum VEHICLE_TYPES {
