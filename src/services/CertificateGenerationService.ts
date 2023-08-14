@@ -455,10 +455,10 @@ class CertificateGenerationService {
 
     /**
      * Returns true if an adrDetails object contains a tankDetails object
-     * @param testResult - testResult from which the VIN is used to search a tech-record
+     * @param adrDetails
      */
     public async containsTankDetails(adrDetails: any) {
-        return adrDetails && !!this.unflattenFlatObject(adrDetails, "tank") && !!await this.unflattenFlatObject(adrDetails, "tankDetails");
+        return adrDetails && !!this.unflattenFlatObject(adrDetails, "tank") && !!this.unflattenFlatObject(adrDetails, "tankDetails");
     }
 
     /**
