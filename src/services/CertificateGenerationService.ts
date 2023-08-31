@@ -70,11 +70,19 @@ class CertificateGenerationService {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
+    const { STOP_WELSH_GEN } = process.env;
 
-    // Find out if Welsh certificate is needed
-    const testStations = await this.getTestStations();
-    const testStationPostcode = this.getThisTestStation(testStations, testResult.testStationPNumber);
-    const isTestStationWelsh = testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
+    let isTestStationWelsh = false;
+
+    // Circumvent bilingual certificate generation and logic if EV set to TRUE
+    if (STOP_WELSH_GEN === undefined || STOP_WELSH_GEN.toUpperCase() === "FALSE") {
+      // Find out if Welsh certificate is needed
+      const testStations = await this.getTestStations();
+      const testStationPostcode = this.getThisTestStation(testStations, testResult.testStationPNumber);
+      isTestStationWelsh = testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
+    } else {
+      console.log(`Welsh certificate generation deactivated via environment variable set to ${STOP_WELSH_GEN}`);
+    }
 
     const payload: string = JSON.stringify(await this.generatePayload(testResult, isTestStationWelsh));
 
