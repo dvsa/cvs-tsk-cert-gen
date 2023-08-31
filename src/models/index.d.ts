@@ -29,6 +29,7 @@ interface IMOTConfig {
     psv_prs: "PSV_PRS.pdf";
     vtg5: "VTG5.pdf";
     vtg5a: "VTG5A.pdf";
+    vtg5_bilingual: "VTG5_BILINGUAL.pdf";
     vtg30: "VTG30.pdf";
     hgv_prs: "HGV_PRS.pdf";
     trl_prs: "TRL_PRS.pdf";
