@@ -1,0 +1,35 @@
+[
+  {
+    "trailerId": "T021718S",
+    "techRecord_manufactureYear": 2000,
+    "techRecord_make": "STANLEY",
+    "vin": "TRL021718S",
+    "techRecord_statusCode": "current",
+    "systemNumber": "10000051",
+    "techRecord_vehicleType": "trl",
+    "createdTimestamp": "2023-08-07T06:47:15.351Z",
+    "techRecord_model": "AUTOTRL"
+  },
+  {
+    "trailerId": "T021718S",
+    "techRecord_manufactureYear": 2000,
+    "techRecord_make": "STANLEY",
+    "vin": "TRL021718S",
+    "techRecord_statusCode": "archived",
+    "systemNumber": "10000051",
+    "techRecord_vehicleType": "trl",
+    "createdTimestamp": "2023-08-07T06:47:15.351Z",
+    "techRecord_model": "AUTOTRL"
+  },
+  {
+    "trailerId": "T021718S",
+    "techRecord_manufactureYear": 2000,
+    "techRecord_make": "STANLEY",
+    "vin": "TRL021718S",
+    "techRecord_statusCode": "archived",
+    "systemNumber": "10000051",
+    "techRecord_vehicleType": "trl",
+    "createdTimestamp": "2023-08-07T06:47:15.351Z",
+    "techRecord_model": "AUTOTRL"
+  }
+]

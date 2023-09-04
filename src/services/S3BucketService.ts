@@ -6,9 +6,7 @@ import { Configuration } from "../utils/Configuration";
 import { IS3Config } from "../models";
 import { ManagedUpload } from "aws-sdk/lib/s3/managed_upload";
 import { PromiseResult } from "aws-sdk/lib/request";
-/* tslint:disable */
-const AWSXRay = require("aws-xray-sdk");
-/* tslint:enable */
+import AWSXRay from "aws-xray-sdk";
 
 /**
  * Service class for communicating with Simple Storage Service

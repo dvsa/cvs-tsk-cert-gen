@@ -1,283 +1,93 @@
-[
-  {
-    "partialVin": "768594",
-    "techRecord": [
-      {
-        "brakes": {
-          "brakeCodeOriginal": "12412",
-          "brakeCode": "123",
-          "dataTrBrakeOne": "None",
-          "dataTrBrakeTwo": "None",
-          "dataTrBrakeThree": "None",
-          "retarderBrakeOne": "electric",
-          "retarderBrakeTwo": "exhaust",
-          "dtpNumber": "sdgsd",
-          "brakeForceWheelsNotLocked": {
-            "serviceBrakeForceA": 6424,
-            "secondaryBrakeForceA": 2512,
-            "parkingBrakeForceA": 2332
-          },
-          "brakeForceWheelsUpToHalfLocked": {
-            "serviceBrakeForceB": 5521,
-            "secondaryBrakeForceB": 2512,
-            "parkingBrakeForceB": 3512
-          },
-          "loadSensingValve": true,
-          "antilockBrakingSystem": true
-        },
-        "axles": [
-          {
-            "axleNumber": 1,
-            "tyres": {
-              "dataTrAxles": 345,
-              "fitmentCode": "single",
-              "plyRating": "AB",
-              "speedCategorySymbol": "a7",
-              "tyreCode": 1234,
-              "tyreSize": "9.23648E+11"
-            },
-            "weights": {
-              "designWeight": 1800,
-              "gbWeight": 1400
-            }
-          },
-          {
-            "axleNumber": 2,
-            "brakes": {
-              "brakeActuator": 113,
-              "leverLength": 125,
-              "springBrakeParking": true
-            },
-            "tyres": {
-              "dataTrAxles": 345,
-              "fitmentCode": "single",
-              "plyRating": "AB",
-              "speedCategorySymbol": "a7",
-              "tyreCode": 5678,
-              "tyreSize": "9.23648E+11"
-            },
-            "weights": {
-              "designWeight": 1900,
-              "gbWeight": 1600
-            }
-          },
-          {
-            "axleNumber": 3,
-            "brakes": {
-              "brakeActuator": 113,
-              "leverLength": 125,
-              "springBrakeParking": true
-            },
-            "tyres": {
-              "dataTrAxles": 345,
-              "fitmentCode": "single",
-              "plyRating": "AB",
-              "speedCategorySymbol": "a7",
-              "tyreCode": 5678,
-              "tyreSize": "9.23648E+11"
-            },
-            "weights": {
-              "designWeight": 1900,
-              "gbWeight": 1600
-            }
-          },
-          {
-            "axleNumber": 4,
-            "brakes": {
-              "brakeActuator": 113,
-              "leverLength": 125,
-              "springBrakeParking": true
-            },
-            "tyres": {
-              "dataTrAxles": 345,
-              "fitmentCode": "single",
-              "plyRating": "AB",
-              "speedCategorySymbol": "a7",
-              "tyreCode": 5678,
-              "tyreSize": "9.23648E+11"
-            },
-            "weights": {
-              "designWeight": 1900,
-              "gbWeight": 1600
-            }
-          },
-          {
-            "axleNumber": 5,
-            "brakes": {
-              "brakeActuator": 113,
-              "leverLength": 125,
-              "springBrakeParking": true
-            },
-            "tyres": {
-              "dataTrAxles": 345,
-              "fitmentCode": "single",
-              "plyRating": "AB",
-              "speedCategorySymbol": "a7",
-              "tyreCode": 5678,
-              "tyreSize": "9.23648E+11"
-            },
-            "weights": {
-              "designWeight": 1900,
-              "gbWeight": 1600
-            }
-          }
-        ],
-        "bodyType": {
-          "code": "t",
-          "description": "tipper"
-        },
-        "brakeCode": "178202",
-        "conversionRefNo": "7891234",
-        "couplingCenterToRearAxleMax": 900,
-        "couplingCenterToRearAxleMin": 1000,
-        "couplingCenterToRearTrlMax": 700,
-        "couplingCenterToRearTrlMin": 800,
-        "couplingType": "F",
-        "createdAt": "2019-06-24T10:26:54.903Z",
-        "dimensions": {
-          "axleSpacing": [
-            {
-              "axles": "1-2",
-              "value": 1200
-            }
-          ],
-          "length": 7500,
-          "width": 2200
-        },
-        "drawbarCouplingFitted": true,
-        "firstUseDate": "2019-06-24",
-        "frontAxleToRearAxle": 1700,
-        "grossKerbWeight": 2500,
-        "grossLadenWeight": 3000,
-        "grossDesignWeight": 98204,
-        "lastUpdatedAt": "2019-06-24T10:26:54.903Z",
-        "make": "Isuzu",
-        "manufactureYear": 2018,
-        "maxLoadOnCoupling": 7000,
-        "model": "F06",
-        "noOfAxles": 5,
-        "notes": "some note",
-        "ntaNumber": "123456",
-        "rearAxleToRearTrl": 400,
-        "reasonForCreation": "new trailer",
-        "regnDate": "2019-06-24",
-        "roadFriendly": true,
-        "statusCode": "current",
-        "suspensionType": "Y",
-        "tyreUseCode": "2B",
-        "vehicleType": "trl",
-        "vehicleClass": {
-          "code": "t",
-          "description": "trailer"
-        },
-        "vehicleConfiguration": "other"
-      }
-    ],
-    "trailerId": "0285678",
-    "vin": "T12768594"
-  },
-  {
-    "vin": "GYFC26269R240355",
-    "partialVin": "240355",
-    "primaryVrm": "NKPILNCN",
-    "secondaryVrms": null,
-    "techRecord": [
-      {
-        "axles": [
-          {
-            "tyres": {
-              "tyreCode": 6066,
-              "tyreSize": "MEPBXOX49CXC",
-              "plyRating": "WY",
-              "datatraxles": 319,
-              "fitmentCode": "single"
-            },
-            "weights": {
-              "gbWeight": 31432,
-              "designWeight": 23921
-            },
-            "axleNumber": 6,
-            "parkingBrakeMrk": "Y"
-          },
-          {
-            "tyres": {
-              "tyreCode": 6066,
-              "tyreSize": "MEPBXOX49CXC",
-              "plyRating": "WY",
-              "datatraxles": 319,
-              "fitmentCode": "single",
-              "speedCategorySymbol": "43 mph"
-            },
-            "weights": {
-              "gbWeight": 31432,
-              "designWeight": 23921
-            },
-            "axleNumber": 5,
-            "parkingBrakeMrk": "Y"
-          },
-          {
-            "tyres": {
-              "tyreCode": 6066,
-              "tyreSize": "MEPBXOX49CXC",
-              "plyRating": "WY",
-              "datatraxles": 319,
-              "fitmentCode": "single"
-            },
-            "weights": {
-              "gbWeight": 31432,
-              "designWeight": 23921
-            },
-            "axleNumber": 4,
-            "parkingBrakeMrk": "Y"
-          }
-        ],
-        "brakes": {
-          "dtpNumber": "dtpn"
-        },
-        "bodyType": {
-          "code": "D",
-          "description": "double decker"
-        },
-        "regnDate": "2017-08-27 00:00:00.000000",
-        "createdAt": "2019-03-11T14:33:27.000000Z",
-        "noOfAxles": 3,
-        "ntaNumber": "DASVZKFBYMFCBTELBBWHCOXXWBHUNV3711183985",
-        "statusCode": "confirmed",
-        "make": "OTXD TDPM GRSE",
-        "functionCode": "HBUL DOST PREJ",
-        "vehicleType": "hgv",
-        "model": "CHEF VHYZ RFFZ",
-        "vehicleClass": {
-          "code": "N",
-          "description": "not applicable"
-        },
-        "grossGbWeight": 57151,
-        "lastUpdatedAt": "2019-03-11T14:33:27.000000Z",
-        "tachoExemptMrk": "N",
-        "conversionRefNo": "HGRNJQ55UU",
-        "manufactureYear": 2014,
-        "speedLimiterMrk": "Y",
-        "grossDesignWeight": 98204,
-        "trainGbWeight": 20356,
-        "trainDesignWeight": 40568,
-        "maxTrainGbWeight": 34789,
-        "maxTrainDesignWeight": 65789,
-        "tyreUseCode": "used",
-        "roadFriendly": "N",
-        "euroStandard": 4,
-        "dimensions": {
-          "length": 300,
-          "width": 300
-        },
-        "frontAxleTo5thWheelMin": 20,
-        "frontAxleTo5thWheelMax": 30,
-        "frontVehicleTo5thWheelCouplingMin": 30,
-        "frontVehicleTo5thWheelCouplingMax": 20,
-        "drawbarCouplingFitted": "N",
-        "notes": "note",
-        "reasonForCreation": "XYUDXG",
-        "vehicleConfiguration": "rigid"
-      }
-    ]
-  }
-]
+{
+  "createdTimestamp": "2023-08-07T06:47:15.351Z",
+  "partialVin": "21718S",
+  "systemNumber": "10000051",
+  "techRecord_applicantDetails_address1": "123 High Street",
+  "techRecord_applicantDetails_address2": "2nd Avenue",
+  "techRecord_applicantDetails_address3": "Northumberland",
+  "techRecord_applicantDetails_emailAddress": "autotester@tester.com",
+  "techRecord_applicantDetails_name": "Auto Tester",
+  "techRecord_applicantDetails_postCode": "M1 8DB",
+  "techRecord_applicantDetails_postTown": "Manchester",
+  "techRecord_applicantDetails_telephoneNumber": "0161458079",
+  "techRecord_applicationId": null,
+  "techRecord_authIntoService": null,
+  "techRecord_bodyType_code": "t",
+  "techRecord_bodyType_description": "tipper",
+  "techRecord_brakes_antilockBrakingSystem": false,
+  "techRecord_brakes_dtpNumber": "TRL123",
+  "techRecord_brakes_loadSensingValve": true,
+  "techRecord_centreOfRearmostAxleToRearOfTrl": 1000,
+  "techRecord_conversionRefNo": "23456",
+  "techRecord_couplingCenterToRearAxleMax": 600,
+  "techRecord_couplingCenterToRearAxleMin": 300,
+  "techRecord_couplingCenterToRearTrlMax": 600,
+  "techRecord_couplingCenterToRearTrlMin": 300,
+  "techRecord_couplingType": "S",
+  "techRecord_createdAt": "2023-08-07T06:47:15.351Z",
+  "techRecord_createdById": "aa22e698-d041-4401-8a86-ff6fb77fa883",
+  "techRecord_createdByName": "VTM ADMIN1",
+  "techRecord_departmentalVehicleMarker": true,
+  "techRecord_dimensions_length": 1200,
+  "techRecord_dimensions_width": 300,
+  "techRecord_euVehicleCategory": "o4",
+  "techRecord_firstUseDate": "2001-04-30",
+  "techRecord_frameDescription": "Space frame",
+  "techRecord_frontAxleToRearAxle": 900,
+  "techRecord_functionCode": "R",
+  "techRecord_grossDesignWeight": 2000,
+  "techRecord_grossEecWeight": 17000,
+  "techRecord_grossGbWeight": 1000,
+  "techRecord_letterOfAuth": null,
+  "techRecord_make": "STANLEY",
+  "techRecord_manufactureYear": 2000,
+  "techRecord_manufacturerDetails": null,
+  "techRecord_maxLoadOnCoupling": 12345,
+  "techRecord_microfilm_microfilmDocumentType": "NPT - Trailer Alteration",
+  "techRecord_microfilm_microfilmRollNumber": "12346",
+  "techRecord_microfilm_microfilmSerialNumber": "5433",
+  "techRecord_model": "AUTOTRL",
+  "techRecord_noOfAxles": 1,
+  "techRecord_notes": "Automation test for a new TRL tech record",
+  "techRecord_ntaNumber": "787878",
+  "techRecord_purchaserDetails_address1": null,
+  "techRecord_purchaserDetails_address2": null,
+  "techRecord_purchaserDetails_address3": null,
+  "techRecord_purchaserDetails_emailAddress": null,
+  "techRecord_purchaserDetails_faxNumber": "01514578652",
+  "techRecord_purchaserDetails_name": null,
+  "techRecord_purchaserDetails_postCode": null,
+  "techRecord_purchaserDetails_postTown": null,
+  "techRecord_purchaserDetails_purchaserNotes": "This is purchaser notes",
+  "techRecord_purchaserDetails_telephoneNumber": null,
+  "techRecord_rearAxleToRearTrl": 900,
+  "techRecord_reasonForCreation": "Automation test for correcting an error TRL",
+  "techRecord_recordCompleteness": "skeleton",
+  "techRecord_regnDate": "2001-03-30",
+  "techRecord_roadFriendly": true,
+  "techRecord_statusCode": "current",
+  "techRecord_suspensionType": "R",
+  "techRecord_tyreUseCode": "99",
+  "techRecord_variantNumber": "654321",
+  "techRecord_variantVersionNumber": "123456",
+  "techRecord_vehicleClass_code": "t",
+  "techRecord_vehicleClass_description": "trailer",
+  "techRecord_vehicleConfiguration": "semi-trailer",
+  "techRecord_vehicleType": "trl",
+  "trailerId": "T021718S",
+  "vin": "TRL021718S",
+  "techRecord_axles": [
+    {
+      "axleNumber": 1,
+      "brakes": null,
+      "tyres_dataTrAxles": null,
+      "tyres_fitmentCode": null,
+      "tyres_plyRating": null,
+      "tyres_tyreCode": null,
+      "tyres_tyreSize": null,
+      "weights_designWeight": null,
+      "weights_eecWeight": null,
+      "weights_gbWeight": null
+    }
+  ]
+}
