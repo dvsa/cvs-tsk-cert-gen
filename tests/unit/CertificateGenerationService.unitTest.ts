@@ -593,6 +593,25 @@ describe("Certificate Generation Service", () => {
     });
   });
 
+  describe("welsh address logic", () => {
+    context("test STOP_WELSH_GEN environment variable", () => {
+      it("should circumvent the Welsh certificate generation logic and log message if set to true", async () => {
+        process.env.STOP_WELSH_GEN = "TRUE";
+        const logSpy = jest.spyOn(console, "log");
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        await certGenSvc.generateCertificate(mockTestResult)
+            .catch(() => {
+              expect(logSpy).toHaveBeenCalledWith(
+                  "Welsh certificate generation deactivated via environment variable set to TRUE"
+              );
+            });
+      });
+    });
+  });
+
   describe("welsh address function", () => {
     context("test getTestStations method", () => {
       it("should return a postcode if pNumber exists in the list of test stations", () => {
