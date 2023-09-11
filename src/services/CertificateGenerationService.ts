@@ -91,6 +91,7 @@ class CertificateGenerationService {
       psv_fail: config.documentNames.vtp30,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,
+      hgv_pass_bilingual: config.documentNames.vtg5_bilingual,
       hgv_fail: config.documentNames.vtg30,
       hgv_prs: config.documentNames.hgv_prs,
       trl_pass: config.documentNames.vtg5a,
@@ -108,9 +109,18 @@ class CertificateGenerationService {
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
+    } else if (testResult.vehicleType === "hgv" && testType.testResult === "pass" && isTestStationWelsh) {
+      vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
+      console.log("** THIS IS THE vehicleTestRes in the else if " + vehicleTestRes);
     } else {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
     }
+
+    console.log("** THIS IS THE vehicleType after the else if: " + testResult.vehicleType);
+    console.log("** THIS IS THE testResult after the else if: " + testType.testResult);
+    console.log("** THIS IS THE isTestStationWelsh in the else if: " + isTestStationWelsh);
+    console.log("** THIS IS THE vehicleTestRes after the else if: " + vehicleTestRes);
+
     const invokeParams: any = {
       FunctionName: iConfig.functions.certGen.name,
       InvocationType: "RequestResponse",
@@ -1014,11 +1024,7 @@ class CertificateGenerationService {
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
-          if (type === CERTIFICATE_DATA.PASS_DATA && isWelsh) {
-            // TODO - remove this once tested
-            console.log(
-              this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
-            );
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && vehicleType === "hgv") {
             // TODO - add logic to only push to array if not null
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
@@ -1027,9 +1033,7 @@ class CertificateGenerationService {
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
-          if (type === CERTIFICATE_DATA.PASS_DATA && isWelsh) {
-            // TODO - remove this once tested
-            console.log(this.formatDefect(defect));
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && vehicleType === "hgv") {
             // TODO - add logic to only push to array if not null
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
@@ -1213,7 +1217,7 @@ class CertificateGenerationService {
     } else if (filteredFlatDefects.length === 1) {
       // TODO - remove this once tested
       console.log(
-        `Filtered to one defect on def ref id: ${filteredFlatDefects[0]}`
+        `Filtered to one defect on def ref id: ${JSON.stringify(filteredFlatDefects[0])}`
       );
       return filteredFlatDefects[0];
     } else {
@@ -1223,7 +1227,7 @@ class CertificateGenerationService {
       );
       // TODO - remove this once tested
       console.log(
-        `Filtered to one defect on def ref id and vehicle type: ${filteredWelshDefectsOnVehicleType[0]}`
+        `Filtered to one defect on def ref id and vehicle type: ${JSON.stringify(filteredWelshDefectsOnVehicleType[0])}`
       );
       return filteredWelshDefectsOnVehicleType[0];
     }
