@@ -1025,7 +1025,7 @@ class CertificateGenerationService {
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
-          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && vehicleType === "hgv") {
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             // TODO - add logic to only push to array if not null
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
@@ -1034,7 +1034,7 @@ class CertificateGenerationService {
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
-          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && vehicleType === "hgv") {
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             // TODO - add logic to only push to array if not null
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
