@@ -26,7 +26,7 @@ import {
   LOCATION_ENGLISH,
   LOCATION_WELSH,
   TEST_RESULTS,
-  VEHICLE_TYPES,
+  VEHICLE_TYPES, WELSH_CERT_VEHICLES,
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
 import { IFlatDefect } from "../models/IFlatDefect";
@@ -95,6 +95,7 @@ class CertificateGenerationService {
       hgv_fail: config.documentNames.vtg30,
       hgv_prs: config.documentNames.hgv_prs,
       trl_pass: config.documentNames.vtg5a,
+      trl_pass_bilingual: config.documentNames.vtg5a_bilingual,
       trl_fail: config.documentNames.vtg30,
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
@@ -109,7 +110,7 @@ class CertificateGenerationService {
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
-    } else if (testResult.vehicleType === "hgv" && testType.testResult === "pass" && isTestStationWelsh) {
+    } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
       console.log("** THIS IS THE vehicleTestRes in the else if " + vehicleTestRes);
     } else {
@@ -1024,7 +1025,7 @@ class CertificateGenerationService {
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
-          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && vehicleType === "hgv") {
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             // TODO - add logic to only push to array if not null
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
@@ -1033,7 +1034,7 @@ class CertificateGenerationService {
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
-          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && vehicleType === "hgv") {
+          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             // TODO - add logic to only push to array if not null
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
