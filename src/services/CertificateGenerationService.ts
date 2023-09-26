@@ -89,7 +89,7 @@ class CertificateGenerationService {
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
-      psv_pass_bilingual: config.documentNames.vpt20_bilingual,
+      psv_pass_bilingual: config.documentNames.vtp20_bilingual,
       psv_fail: config.documentNames.vtp30,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,
