@@ -26,7 +26,8 @@ import {
   LOCATION_ENGLISH,
   LOCATION_WELSH,
   TEST_RESULTS,
-  VEHICLE_TYPES, WELSH_CERT_VEHICLES,
+  VEHICLE_TYPES,
+  WELSH_CERT_VEHICLES,
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
 import { IFlatDefect } from "../models/IFlatDefect";
@@ -88,6 +89,7 @@ class CertificateGenerationService {
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
+      psv_pass_bilingual: config.documentNames.vpt20_bilingual,
       psv_fail: config.documentNames.vtp30,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,

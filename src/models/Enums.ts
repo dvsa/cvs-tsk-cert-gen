@@ -58,5 +58,5 @@ export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {
 };
 
 export const WELSH_CERT_VEHICLES = {
-    TYPES: ["hgv", "trl"]
+    TYPES: ["hgv", "trl", "psv"]
 };
