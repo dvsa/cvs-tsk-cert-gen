@@ -588,7 +588,7 @@ describe("Certificate Generation Service", () => {
         const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
         console.log(flattenedArray);
         expect(flattenedArray).toEqual(flatDefectsMock);
-        expect(flattenedArray).toHaveLength(2);
+        expect(flattenedArray).toHaveLength(7);
       });
     });
   });

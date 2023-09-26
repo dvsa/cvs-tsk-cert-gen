@@ -507,6 +507,9 @@ describe("cert-gen", () => {
       const trlTestResultWithMinorDefect: any = JSON.parse(event.Records[9].body);
       const trlTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[10].body);
 
+      const psvTestResultWithMinorDefect: any = JSON.parse(event.Records[11].body);
+      const psvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[12].body);
+
       context("and the hgv result has a minor defect", () => {
         context("and the test station location is not in Wales", () => {
           it("should return a VTG5 payload without the MinorDefectsWelsh array populated", () => {
@@ -931,6 +934,257 @@ describe("cert-gen", () => {
 
               return certificateGenerationService
                   .generatePayload(trlTestResultWithAdvisoryDefect, true)
+                  .then((payload: any) => {
+                    expect(payload).toEqual(expectedResult);
+                  });
+            });
+          });
+        });
+      });
+
+      context("and the psv result has a minor defect", () => {
+        context("and the test station location is not in Wales", () => {
+          it("should return a VTP20 payload without the MinorDefectsWelsh array populated", () => {
+            const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                TestNumber: "W01A00310",
+                TestStationPNumber: "09-4129632",
+                TestStationName: "Abshire-Kub",
+                CurrentOdometer: {
+                  value: 12312,
+                  unit: "kilometres",
+                },
+                IssuersName: "CVS, Test, Dev1",
+                DateOfTheTest: "26.02.2019",
+                CountryOfRegistrationCode: "gb",
+                VehicleEuClassification: "M1",
+                RawVIN: "XMGDE02FS0H012345",
+                RawVRM: "BQ91YHQ",
+                ExpiryDate: "25.02.2020",
+                EarliestDateOfTheNextTest: "26.12.2019",
+                SeatBeltTested: "Yes",
+                SeatBeltPreviousCheckDate: "26.02.2019",
+                SeatBeltNumber: 2,
+                Make: "Mercedes",
+                MinorDefects: [
+                  "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                ],
+                Model: "632,01",
+                OdometerHistoryList: [
+                  {
+                    value: 400000,
+                    unit: "kilometres",
+                    date: "19.01.2019",
+                  },
+                  {
+                    value: 390000,
+                    unit: "kilometres",
+                    date: "18.01.2019",
+                  },
+                  {
+                    value: 380000,
+                    unit: "kilometres",
+                    date: "17.01.2019",
+                  },
+                ],
+              },
+              Signature: {
+                ImageType: "png",
+                ImageData: null,
+              }
+            };
+
+            return certificateGenerationService
+                .generatePayload(psvTestResultWithMinorDefect)
+                .then((payload: any) => {
+                  expect(payload).toEqual(expectedResult);
+                });
+          });
+          context("and the test station location is in Wales", () => {
+            it("should return a VTP20 payload with the MinorDefectsWelsh array populated", () => {
+              const expectedResult: any = {
+                Watermark: "NOT VALID",
+                DATA: {
+                  TestNumber: "W01A00310",
+                  TestStationPNumber: "09-4129632",
+                  TestStationName: "Abshire-Kub",
+                  CurrentOdometer: {
+                    value: 12312,
+                    unit: "kilometres",
+                  },
+                  IssuersName: "CVS, Test, Dev1",
+                  DateOfTheTest: "26.02.2019",
+                  CountryOfRegistrationCode: "gb",
+                  VehicleEuClassification: "M1",
+                  RawVIN: "XMGDE02FS0H012345",
+                  RawVRM: "BQ91YHQ",
+                  ExpiryDate: "25.02.2020",
+                  EarliestDateOfTheNextTest: "26.12.2019",
+                  SeatBeltTested: "Yes",
+                  SeatBeltPreviousCheckDate: "26.02.2019",
+                  SeatBeltNumber: 2,
+                  Make: "Mercedes",
+                  MinorDefects: [
+                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                  ],
+                  MinorDefectsWelsh: [
+                      "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen.",
+                  ],
+                  Model: "632,01",
+                  OdometerHistoryList: [
+                    {
+                      value: 400000,
+                      unit: "kilometres",
+                      date: "19.01.2019",
+                    },
+                    {
+                      value: 390000,
+                      unit: "kilometres",
+                      date: "18.01.2019",
+                    },
+                    {
+                      value: 380000,
+                      unit: "kilometres",
+                      date: "17.01.2019",
+                    },
+                  ],
+                },
+                Signature: {
+                  ImageType: "png",
+                  ImageData: null,
+                }
+              };
+
+              return certificateGenerationService
+                  .generatePayload(psvTestResultWithMinorDefect, true)
+                  .then((payload: any) => {
+                    expect(payload).toEqual(expectedResult);
+                  });
+            });
+          });
+        });
+      });
+
+      context("and the psv result has an advisory defect", () => {
+        context("and the test station location is not in Wales", () => {
+          it("should return a VTP20 payload without the AdvisoryDefectsWelsh array populated", () => {
+            const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                AdvisoryDefects: [
+                    "1.1 A registration plate: Notes here",
+                    "6.3 A hub: Second advisory note"
+                ],
+                TestNumber: "W01A00310",
+                TestStationPNumber: "09-4129632",
+                TestStationName: "Abshire-Kub",
+                CurrentOdometer: {
+                  value: 12312,
+                  unit: "kilometres",
+                },
+                IssuersName: "CVS, Test, Dev1",
+                DateOfTheTest: "26.02.2019",
+                CountryOfRegistrationCode: "gb",
+                VehicleEuClassification: "M1",
+                RawVIN: "XMGDE02FS0H012345",
+                RawVRM: "BQ91YHQ",
+                ExpiryDate: "25.02.2020",
+                EarliestDateOfTheNextTest: "26.12.2019",
+                SeatBeltTested: "Yes",
+                SeatBeltPreviousCheckDate: "26.02.2019",
+                SeatBeltNumber: 2,
+                Make: "Mercedes",
+                Model: "632,01",
+                OdometerHistoryList: [
+                  {
+                    value: 400000,
+                    unit: "kilometres",
+                    date: "19.01.2019",
+                  },
+                  {
+                    value: 390000,
+                    unit: "kilometres",
+                    date: "18.01.2019",
+                  },
+                  {
+                    value: 380000,
+                    unit: "kilometres",
+                    date: "17.01.2019",
+                  },
+                ],
+              },
+              Signature: {
+                ImageType: "png",
+                ImageData: null,
+              }
+            };
+
+            return certificateGenerationService
+                .generatePayload(psvTestResultWithAdvisoryDefect)
+                .then((payload: any) => {
+                  expect(payload).toEqual(expectedResult);
+                });
+          });
+          context("and the test station location is in Wales", () => {
+            it("should return a VTP20 payload with the AdvisoryDefectsWelsh array populated", () => {
+              const expectedResult: any = {
+                Watermark: "NOT VALID",
+                DATA: {
+                  AdvisoryDefects: [
+                    "1.1 A registration plate: Notes here",
+                    "6.3 A hub: Second advisory note"
+                  ],
+                  AdvisoryDefectsWelsh: [
+                    "1.1 A registration plate: Notes here",
+                    "6.3 A hub: Second advisory note"
+                  ],
+                  TestNumber: "W01A00310",
+                  TestStationPNumber: "09-4129632",
+                  TestStationName: "Abshire-Kub",
+                  CurrentOdometer: {
+                    value: 12312,
+                    unit: "kilometres",
+                  },
+                  IssuersName: "CVS, Test, Dev1",
+                  DateOfTheTest: "26.02.2019",
+                  CountryOfRegistrationCode: "gb",
+                  VehicleEuClassification: "M1",
+                  RawVIN: "XMGDE02FS0H012345",
+                  RawVRM: "BQ91YHQ",
+                  ExpiryDate: "25.02.2020",
+                  EarliestDateOfTheNextTest: "26.12.2019",
+                  SeatBeltTested: "Yes",
+                  SeatBeltPreviousCheckDate: "26.02.2019",
+                  SeatBeltNumber: 2,
+                  Make: "Mercedes",
+                  Model: "632,01",
+                  OdometerHistoryList: [
+                    {
+                      value: 400000,
+                      unit: "kilometres",
+                      date: "19.01.2019",
+                    },
+                    {
+                      value: 390000,
+                      unit: "kilometres",
+                      date: "18.01.2019",
+                    },
+                    {
+                      value: 380000,
+                      unit: "kilometres",
+                      date: "17.01.2019",
+                    },
+                  ],
+                },
+                Signature: {
+                  ImageType: "png",
+                  ImageData: null,
+                }
+              };
+
+              return certificateGenerationService
+                  .generatePayload(psvTestResultWithAdvisoryDefect, true)
                   .then((payload: any) => {
                     expect(payload).toEqual(expectedResult);
                   });

@@ -81,5 +81,115 @@
         ]
       }
     ]
+  },
+  {
+    "id": 30,
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": ["psv", "hgv"],
+    "additionalInfo": {
+      "psv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": ["nearside", "offside", "centre"],
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      },
+      "trl": {},
+      "hgv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": ["nearside", "offside", "centre"],
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      }
+    },
+    "items": [
+      {
+        "itemNumber": 1,
+        "itemDescription": "Switch(es) controlling windscreen wipers and/or washers",
+        "itemDescriptionWelsh": "Switsys sy'n rheoli sychwyr sgrin wynt a/neu wasieri",
+        "forVehicleType": ["psv", "hgv"],
+        "deficiencies": [
+          {
+            "ref": "25.",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "minor",
+            "deficiencyText": "missing or defective.",
+            "deficiencyTextWelsh": "ar goll neu'n ddiffygiol.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          }
+        ]
+      },
+      {
+        "itemNumber": 2,
+        "itemDescription": "Wipers:",
+        "itemDescriptionWelsh": "Sychwyr:",
+        "forVehicleType": ["psv", "hgv"],
+        "deficiencies": [
+          {
+            "ref": "25.2.a",
+            "deficiencyId": "a",
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "do not move over an adequate area.",
+            "deficiencyTextWelsh": "ddim yn symud dros ardal ddigonol.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          },
+          {
+            "ref": "25.2.b",
+            "deficiencyId": "b",
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "do not work continually when switched on.",
+            "deficiencyTextWelsh": "ddim yn gweithio'n barhaus pan gaiff ei droi ymlaen.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          },
+          {
+            "ref": "25.2.c",
+            "deficiencyId": "c",
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "a blade missing, insecure or so deteriorated that it cannot clear the screen effectively.",
+            "deficiencyTextWelsh": "llafn ar goll, yn ansefydlog neu wedi dirywio cymaint fel na all glirio'r sgrin yn effeithiol.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          }
+        ]
+      },
+      {
+        "itemNumber": 3,
+        "itemDescription": "Windscreen washers",
+        "itemDescriptionWelsh": "Golchwyr sgrin wynt",
+        "forVehicleType": ["psv", "hgv"],
+        "deficiencies": [
+          {
+            "ref": "25.3",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "not working or not providing sufficient fluid to clear the windscreen.",
+            "deficiencyTextWelsh": "ddim yn gweithio neu ddim yn darparu digon o hylif i glirio'r ffenestr flaen. ",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          }
+        ]
+      }
+    ]
   }
 ]
