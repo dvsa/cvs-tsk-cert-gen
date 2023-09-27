@@ -1008,6 +1008,7 @@ class CertificateGenerationService {
     };
 
     console.log(`In generateDefects before forEach`);
+    console.log(`This is the test type: ` + JSON.stringify(testTypes));
 
     // TODO - look at complexity of this method
     rawDefects.forEach((defect: any) => {
