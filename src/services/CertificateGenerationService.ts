@@ -455,8 +455,12 @@ class CertificateGenerationService {
     type: string,
     isWelsh: boolean = false
   ) {
-    const defectListFromApi: IDefectParent[] = await this.getDefectTranslations();
-    const flattenedDefects: IFlatDefect[] = this.flattenDefectsFromApi(defectListFromApi);
+    let defectListFromApi: IDefectParent[] = [];
+    let flattenedDefects: IFlatDefect[] = [];
+    if (isWelsh) {
+      defectListFromApi = await this.getDefectTranslations();
+      flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
+    }
     const testType: any = testResult.testTypes;
     switch (type) {
       case CERTIFICATE_DATA.PASS_DATA:
