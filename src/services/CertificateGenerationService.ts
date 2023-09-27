@@ -458,6 +458,7 @@ class CertificateGenerationService {
     let defectListFromApi: IDefectParent[] = [];
     let flattenedDefects: IFlatDefect[] = [];
     if (isWelsh) {
+      console.log(`In isWelsh IF block, in generateCertificateData`);
       defectListFromApi = await this.getDefectTranslations();
       flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
     }
@@ -1006,6 +1007,8 @@ class CertificateGenerationService {
       AdvisoryDefectsWelsh: [],
     };
 
+    console.log(`In generateDefects before forEach`);
+
     // TODO - look at complexity of this method
     rawDefects.forEach((defect: any) => {
       switch (defect.deficiencyCategory.toLowerCase()) {
@@ -1047,6 +1050,8 @@ class CertificateGenerationService {
           break;
       }
     });
+
+    console.log(`In generateDefects after forEach`);
 
     Object.entries(defects).forEach(([k, v]: [string, any]) => {
       if (v.length === 0) {
@@ -1247,6 +1252,9 @@ class CertificateGenerationService {
   public flattenDefectsFromApi(defects: IDefectParent[]): IFlatDefect[] {
     const flatDefects: IFlatDefect[] = [];
 
+    console.log(`In flattenDefectsFromApi before forEach`);
+    console.log(`Defects: ` + JSON.stringify(defects));
+
     // go through each defect in un-flattened array
     defects.forEach((defect: IDefectParent) => {
       const { imNumber, imDescription, imDescriptionWelsh, items } = defect;
@@ -1289,6 +1297,8 @@ class CertificateGenerationService {
         });
       }
     });
+    console.log(`In flattenDefectsFromApi before forEach`);
+
     // TODO - remove this once tested
     console.log("Flattened defect array length: " + flatDefects.length);
     return flatDefects;
