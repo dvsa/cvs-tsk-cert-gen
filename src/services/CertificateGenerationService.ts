@@ -1246,51 +1246,54 @@ class CertificateGenerationService {
    */
   public flattenDefectsFromApi(defects: IDefectParent[]): IFlatDefect[] {
     const flatDefects: IFlatDefect[] = [];
-
-    // go through each defect in un-flattened array
-    defects.forEach((defect: IDefectParent) => {
-      const { imNumber, imDescription, imDescriptionWelsh, items } = defect;
-      if (defect.items !== undefined && defect.items.length !== 0) {
-        // go through each item of defect
-        items.forEach((item: IItem) => {
-          const {
-            itemNumber,
-            itemDescription,
-            itemDescriptionWelsh,
-            deficiencies,
-          } = item;
-          if (
-            item.deficiencies !== undefined &&
-            item.deficiencies.length !== 0
-          ) {
-            // go through each deficiency and push to flatDefects array
-            deficiencies.forEach((deficiency: IDefectChild) => {
-              const {
-                ref,
-                deficiencyText,
-                deficiencyTextWelsh,
-                forVehicleType,
-              } = deficiency;
-              const lowLevelDeficiency: IFlatDefect = {
-                imNumber,
-                imDescription,
-                imDescriptionWelsh,
-                itemNumber,
-                itemDescription,
-                itemDescriptionWelsh,
-                ref,
-                deficiencyText,
-                deficiencyTextWelsh,
-                forVehicleType,
-              };
-              flatDefects.push(lowLevelDeficiency);
-            });
-          }
-        });
-      }
-    });
-    // TODO - remove this once tested
-    console.log("Flattened defect array length: " + flatDefects.length);
+    try {
+      // go through each defect in un-flattened array
+      defects.forEach((defect: IDefectParent) => {
+        const { imNumber, imDescription, imDescriptionWelsh, items } = defect;
+        if (defect.items !== undefined && defect.items.length !== 0) {
+          // go through each item of defect
+          items.forEach((item: IItem) => {
+            const {
+              itemNumber,
+              itemDescription,
+              itemDescriptionWelsh,
+              deficiencies,
+            } = item;
+            if (
+                item.deficiencies !== undefined &&
+                item.deficiencies.length !== 0
+            ) {
+              // go through each deficiency and push to flatDefects array
+              deficiencies.forEach((deficiency: IDefectChild) => {
+                const {
+                  ref,
+                  deficiencyText,
+                  deficiencyTextWelsh,
+                  forVehicleType,
+                } = deficiency;
+                const lowLevelDeficiency: IFlatDefect = {
+                  imNumber,
+                  imDescription,
+                  imDescriptionWelsh,
+                  itemNumber,
+                  itemDescription,
+                  itemDescriptionWelsh,
+                  ref,
+                  deficiencyText,
+                  deficiencyTextWelsh,
+                  forVehicleType,
+                };
+                flatDefects.push(lowLevelDeficiency);
+              });
+            }
+          });
+        }
+      });
+      // TODO - remove this once tested
+      console.log("Flattened defect array length: " + flatDefects.length);
+    } catch (e) {
+      console.error(`Error flattening defects: ${e}`);
+    }
     return flatDefects;
   }
 
