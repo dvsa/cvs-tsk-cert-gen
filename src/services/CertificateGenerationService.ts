@@ -1,16 +1,16 @@
-import {ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMakeAndModel, IMOTConfig, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails} from "../models";
-import {Configuration} from "../utils/Configuration";
-import {S3BucketService} from "./S3BucketService";
+import { config as AWSConfig, AWSError, Lambda } from "aws-sdk";
+import { InvocationRequest } from "aws-sdk/clients/lambda";
 import S3 from "aws-sdk/clients/s3";
-import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
+import { PromiseResult } from "aws-sdk/lib/request";
 import moment from "moment";
-import {PromiseResult} from "aws-sdk/lib/request";
-import {Service} from "../models/injector/ServiceDecorator";
-import {LambdaService} from "./LambdaService";
-import {CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES} from "../models/Enums";
-import {HTTPError} from "../models/HTTPError";
-import {ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
-import {InvocationRequest} from "aws-sdk/clients/lambda";
+import { ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, IMakeAndModel, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails } from "../models";
+import { CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES } from "../models/Enums";
+import { HTTPError } from "../models/HTTPError";
+import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
+import { Service } from "../models/injector/ServiceDecorator";
+import { Configuration } from "../utils/Configuration";
+import { LambdaService } from "./LambdaService";
+import { S3BucketService } from "./S3BucketService";
 
 /**
  * Service class for Certificate Generation
@@ -562,6 +562,9 @@ class CertificateGenerationService {
     public getVehicleMakeAndModel = async (testResult: any) => {
         const searchRes = await this.callSearchTechRecords(testResult.vin);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
+        if (techRecord?.vin !== testResult.vin) {
+          throw new Error("Could not locate technical record from search provided.");
+        }
         // Return bodyMake and bodyModel values for PSVs
         return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV ? {
             Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
@@ -584,7 +587,7 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/v3/technical-records/search/${searchIdentifier}`,
+                path: `/v3/technical-records/search/${searchIdentifier}?searchCriteria=vin`,
                 pathParameters: {
                     searchIdentifier
                 },
@@ -842,4 +845,5 @@ class CertificateGenerationService {
   //#endregion
 }
 
-export {CertificateGenerationService, IGeneratedCertificateResponse};
+export { CertificateGenerationService, IGeneratedCertificateResponse };
+
