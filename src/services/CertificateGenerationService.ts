@@ -379,7 +379,7 @@ class CertificateGenerationService {
      * @param testResult - testResult from which the VIN is used to search a tech-record
      */
     public getAdrDetails = async (testResult: any) => {
-        const searchRes = await this.callSearchTechRecords(testResult.vin);
+        const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
         return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl">;
     }
 
@@ -428,7 +428,7 @@ class CertificateGenerationService {
      * @param testResult
      */
     public async getWeightDetails(testResult: any) {
-        const searchRes = await this.callSearchTechRecords(testResult.vin);
+        const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
         if (techRecord) {
             const weightDetails: IWeightDetails = {
