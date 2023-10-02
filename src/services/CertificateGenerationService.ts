@@ -560,11 +560,8 @@ class CertificateGenerationService {
      * @param testResult - the testResult for which the tech record search is done for
      */
     public getVehicleMakeAndModel = async (testResult: any) => {
-        const searchRes = await this.callSearchTechRecords(testResult.vin);
+        const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
         const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
-        if (techRecord?.vin !== testResult.vin) {
-          throw new Error("Could not locate technical record from search provided.");
-        }
         // Return bodyMake and bodyModel values for PSVs
         return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV ? {
             Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
@@ -587,7 +584,7 @@ class CertificateGenerationService {
             LogType: "Tail",
             Payload: JSON.stringify({
                 httpMethod: "GET",
-                path: `/v3/technical-records/search/${searchIdentifier}?searchCriteria=vin`,
+                path: `/v3/technical-records/search/${searchIdentifier}?searchCriteria=systemNumber`,
                 pathParameters: {
                     searchIdentifier
                 },
