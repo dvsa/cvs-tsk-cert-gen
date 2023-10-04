@@ -1192,6 +1192,73 @@ describe("cert-gen", () => {
           });
         });
       });
+
+      context("and the test result has a defect", () => {
+        context("and the test station location is not in Wales", () => {
+          it("should return a VTP20 without calling getDefect or flattenDefects methods", () => {
+            const expectedResult: any = {
+              Watermark: "NOT VALID",
+              DATA: {
+                TestNumber: "W01A00310",
+                TestStationPNumber: "09-4129632",
+                TestStationName: "Abshire-Kub",
+                CurrentOdometer: {
+                  value: 12312,
+                  unit: "kilometres",
+                },
+                IssuersName: "CVS, Test, Dev1",
+                DateOfTheTest: "26.02.2019",
+                CountryOfRegistrationCode: "gb",
+                VehicleEuClassification: "M1",
+                RawVIN: "XMGDE02FS0H012345",
+                RawVRM: "BQ91YHQ",
+                ExpiryDate: "25.02.2020",
+                EarliestDateOfTheNextTest: "26.12.2019",
+                SeatBeltTested: "Yes",
+                SeatBeltPreviousCheckDate: "26.02.2019",
+                SeatBeltNumber: 2,
+                Make: "Mercedes",
+                MinorDefects: [
+                  "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                ],
+                Model: "632,01",
+                OdometerHistoryList: [
+                  {
+                    value: 400000,
+                    unit: "kilometres",
+                    date: "19.01.2019",
+                  },
+                  {
+                    value: 390000,
+                    unit: "kilometres",
+                    date: "18.01.2019",
+                  },
+                  {
+                    value: 380000,
+                    unit: "kilometres",
+                    date: "17.01.2019",
+                  },
+                ],
+              },
+              Signature: {
+                ImageType: "png",
+                ImageData: null,
+              }
+            };
+
+            const defectSpy = jest.spyOn(certificateGenerationService, "getDefectTranslations");
+            const flattenSpy = jest.spyOn(certificateGenerationService, "flattenDefectsFromApi");
+
+            return certificateGenerationService
+                .generatePayload(psvTestResultWithMinorDefect)
+                .then((payload: any) => {
+                  expect(payload).toEqual(expectedResult);
+                  expect(defectSpy).not.toHaveBeenCalled();
+                  expect(flattenSpy).not.toHaveBeenCalled();
+                });
+          });
+        });
+      });
     });
 
     context("when a failing test result is read from the queue", () => {
