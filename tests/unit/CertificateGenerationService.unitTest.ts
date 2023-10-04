@@ -479,6 +479,26 @@ describe("Certificate Generation Service", () => {
           "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None"
         );
       });
+      it("should return welsh string for trl vehicle type when there are shared defect refs", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        // get mock of defect or test result
+        const testResultWithDefect = cloneDeep(mockTestResult);
+        console.log(testResultWithDefect.testTypes[0].defects[0]);
+        const format = certGenSvc.formatDefectWelsh(
+            testResultWithDefect.testTypes[0].defects[0],
+            "trl",
+            flatDefectsMock
+        );
+        console.log(format);
+        expect(format).toEqual(
+            "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None"
+        );
+      });
       it("should return welsh string for psv vehicle type when there are shared defect refs", () => {
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
@@ -606,25 +626,6 @@ describe("Certificate Generation Service", () => {
     });
   });
 
-  describe("welsh address logic", () => {
-    context("test STOP_WELSH_GEN environment variable", () => {
-      it("should circumvent the Welsh certificate generation logic and log message if set to true", async () => {
-        process.env.STOP_WELSH_GEN = "TRUE";
-        const logSpy = jest.spyOn(console, "log");
-        const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
-        );
-        await certGenSvc.generateCertificate(mockTestResult)
-            .catch(() => {
-              expect(logSpy).toHaveBeenCalledWith(
-                  "Welsh certificate generation deactivated via environment variable set to TRUE"
-              );
-            });
-      });
-    });
-  });
-
   describe("welsh address function", () => {
     context("test getTestStations method", () => {
       it("should return a postcode if pNumber exists in the list of test stations", () => {
@@ -665,6 +666,23 @@ describe("Certificate Generation Service", () => {
         const postCode = certGenSvc.getThisTestStation([], "P50742");
         expect(postCode).toBeNull();
         expect(logSpy).toHaveBeenCalledWith("Test stations data is empty");
+      });
+    });
+
+    context("test STOP_WELSH_GEN environment variable", () => {
+      it("should circumvent the Welsh certificate generation logic and log message if set to true", async () => {
+        process.env.STOP_WELSH_GEN = "TRUE";
+        const logSpy = jest.spyOn(console, "log");
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        await certGenSvc.generateCertificate(mockTestResult)
+            .catch(() => {
+              expect(logSpy).toHaveBeenCalledWith(
+                  "Welsh certificate generation deactivated via environment variable set to TRUE"
+              );
+            });
       });
     });
 
