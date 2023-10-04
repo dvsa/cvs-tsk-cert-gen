@@ -563,7 +563,20 @@ describe("Certificate Generation Service", () => {
         );
         expect(filterFlatDefect).toEqual(flatDefect);
       });
-      it("should return a filtered flat defect for hgv", () => {
+      it("should return a filtered flat defect for trl", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const flatDefect = flatDefectsMock[0];
+        const filterFlatDefect = certGenSvc.filterFlatDefects(
+            flatDefectsMock,
+            "trl"
+        );
+        expect(filterFlatDefect).toEqual(flatDefect);
+      });
+      it("should return a filtered flat defect for psv", () => {
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
           null as any,
