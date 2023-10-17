@@ -22,6 +22,7 @@ import defectsMock from "../../tests/resources/defects_mock.json";
 import flatDefectsMock from "../../tests/resources/flattened-defects.json";
 import testStationsMock from "../../tests/resources/testStationsMock.json";
 import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
+import {Configuration} from "../../src/utils/Configuration";
 
 describe("Certificate Generation Service", () => {
   const sandbox = sinon.createSandbox();
@@ -565,6 +566,28 @@ describe("Certificate Generation Service", () => {
             "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall. Blaen. None"
         );
       });
+      it("should return null if filteredFlatDefect array is empty", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        const filterFlatDefectsStub = sandbox
+            .stub(certGenSvc, "filterFlatDefects").returns(null);
+
+        // get mock of defect or test result
+        const testResultWithDefect = cloneDeep(mockTestResult);
+        console.log(testResultWithDefect.testTypes[0].defects[0]);
+        const format = certGenSvc.formatDefectWelsh(
+            testResultWithDefect.testTypes[0].defects[0],
+            "hgv",
+            []
+        );
+        console.log(format);
+        expect(format).toBeNull();
+        filterFlatDefectsStub.restore();
+      });
     });
 
     context("test convertLocationWelsh method", () => {
@@ -655,6 +678,19 @@ describe("Certificate Generation Service", () => {
         );
         expect(filterFlatDefect).toEqual(flatDefect);
       });
+      it("should return null if array is empty", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const flatDefect = flatDefectsMock[0];
+        const filterFlatDefect = certGenSvc.filterFlatDefects(
+            [],
+            "hgv"
+        );
+        expect(filterFlatDefect).toBeNull();
+      });
     });
 
     context("test flattenDefectsFromApi method", () => {
@@ -665,10 +701,20 @@ describe("Certificate Generation Service", () => {
             new LambdaService(new Lambda())
         );
         const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
-        console.log(flattenedArray);
         expect(flattenedArray).toEqual(flatDefectsMock);
         expect(flattenedArray).toHaveLength(7);
       });
+      // it("should catch any exceptions", () => {
+      //   const certGenSvc = new CertificateGenerationService(
+      //       null as any,
+      //       new LambdaService(new Lambda())
+      //   );
+      //
+      //   const pushMock = jest.fn().mockRejectedValue(new Error);
+      //   const arrayPushStub = Array.prototype.push = pushMock;
+      //
+      //   const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
+      // });
     });
   });
 
@@ -701,6 +747,7 @@ describe("Certificate Generation Service", () => {
         expect(logSpy).toHaveBeenCalledWith(
             "Test station details could not be found for 445567"
         );
+        logSpy.mockClear();
       });
       it("should return a null and message if the list of test stations is empty", () => {
         const logSpy = jest.spyOn(console, "log");
@@ -712,6 +759,7 @@ describe("Certificate Generation Service", () => {
         const postCode = certGenSvc.getThisTestStation([], "P50742");
         expect(postCode).toBeNull();
         expect(logSpy).toHaveBeenCalledWith("Test stations data is empty");
+        logSpy.mockClear();
       });
     });
 
@@ -728,7 +776,28 @@ describe("Certificate Generation Service", () => {
               expect(logSpy).toHaveBeenCalledWith(
                   "Welsh certificate generation deactivated via environment variable set to TRUE"
               );
+              logSpy.mockClear();
             });
+      });
+    });
+
+    context("test postcode lookup method", () => {
+      context("when the SECRET_KEY environment variable does not exist", () => {
+        it("should log the the errors", async () => {
+          Configuration.prototype.getWelshSecretKey = jest.fn().mockReturnValue(null);
+          const logSpy = jest.spyOn(console, "log");
+
+          const certGenSvc = new CertificateGenerationService(
+              null as any,
+              new LambdaService(new Lambda())
+          );
+
+          await certGenSvc.lookupPostcode("some_postcode");
+          expect(logSpy.mock.calls[0][0]).toBe("SECRET_KEY environment variable does not exist.");
+          expect(logSpy.mock.calls[1][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for some_postcode is false");
+
+          logSpy.mockClear();
+        });
       });
     });
 
