@@ -434,7 +434,9 @@ class CertificateGenerationService {
         let flattenedDefects: IFlatDefect[] = [];
         if (isWelsh) {
           defectListFromApi = await this.getDefectTranslations();
+          console.log(`Defects List from API - ${defectListFromApi}`);
           flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
+          console.log(`Flattened Defects - ${flattenedDefects}`);
         }
         const testType: any = testResult.testTypes;
         switch (type) {
@@ -970,6 +972,9 @@ class CertificateGenerationService {
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
+          console.log(`Test Result - ${TEST_RESULTS.PASS}`);
+          console.log(`Is Welsh - ${isWelsh}`);
+          console.log(`Includes vehicle type ${vehicleType} - ${WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)}`);
           if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
@@ -978,6 +983,9 @@ class CertificateGenerationService {
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
+          console.log(`Test Result - ${TEST_RESULTS.PASS}`);
+          console.log(`Is Welsh - ${isWelsh}`);
+          console.log(`Includes vehicle type ${vehicleType} - ${WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)}`);
           if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
