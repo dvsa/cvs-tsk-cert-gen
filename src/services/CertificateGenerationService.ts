@@ -67,7 +67,7 @@ class CertificateGenerationService {
       console.log(`Welsh certificate generation deactivated via environment variable set to ${STOP_WELSH_GEN}`);
     }
     const payload: string = JSON.stringify(
-      await this.generatePayload(testResult)
+      await this.generatePayload(testResult, isTestStationWelsh)
     );
 
     const certificateTypes: any = {
