@@ -97,15 +97,9 @@ class CertificateGenerationService {
       vehicleTestRes = "adr_pass";
     } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
-      console.log("** THIS IS THE vehicleTestRes in the else if " + vehicleTestRes);
     } else {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
     }
-
-    console.log("** THIS IS THE vehicleType after the else if: " + testResult.vehicleType);
-    console.log("** THIS IS THE testResult after the else if: " + testType.testResult);
-    console.log("** THIS IS THE isTestStationWelsh in the else if: " + isTestStationWelsh);
-    console.log("** THIS IS THE vehicleTestRes after the else if: " + vehicleTestRes);
 
     const invokeParams: any = {
       FunctionName: iConfig.functions.certGen.name,
@@ -428,15 +422,14 @@ class CertificateGenerationService {
      * Generates certificate data for a given test result and certificate type
      * @param testResult - the source test result for certificate generation
      * @param type - the certificate type
+     * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
      */
     public async generateCertificateData(testResult: ITestResult, type: string, isWelsh: boolean = false) {
         let defectListFromApi: IDefectParent[] = [];
         let flattenedDefects: IFlatDefect[] = [];
         if (isWelsh) {
           defectListFromApi = await this.getDefectTranslations();
-          console.log(`Defects List from API - ${defectListFromApi}`);
           flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
-          console.log(`Flattened Defects - ${flattenedDefects}`);
         }
         const testType: any = testResult.testTypes;
         switch (type) {
@@ -972,9 +965,6 @@ class CertificateGenerationService {
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
-          console.log(`Test Result - ${TEST_RESULTS.PASS}`);
-          console.log(`Is Welsh - ${isWelsh}`);
-          console.log(`Includes vehicle type ${vehicleType} - ${WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)}`);
           if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
@@ -983,9 +973,6 @@ class CertificateGenerationService {
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
-          console.log(`Test Result - ${TEST_RESULTS.PASS}`);
-          console.log(`Is Welsh - ${isWelsh}`);
-          console.log(`Includes vehicle type ${vehicleType} - ${WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)}`);
           if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
@@ -1115,8 +1102,6 @@ class CertificateGenerationService {
       if (defect.additionalInformation.notes) {
         defectString += ` ${defect.additionalInformation.notes}`;
       }
-      // TODO - remove this once tested
-      console.log(`Defect: ${JSON.stringify(defect)}`);
       console.log(`Welsh Defect String Generated: ${defectString}`);
       return defectString;
     } else {
@@ -1166,19 +1151,11 @@ class CertificateGenerationService {
     if (filteredFlatDefects.length === 0) {
       return null;
     } else if (filteredFlatDefects.length === 1) {
-      // TODO - remove this once tested
-      console.log(
-        `Filtered to one defect on def ref id: ${JSON.stringify(filteredFlatDefects[0])}`
-      );
       return filteredFlatDefects[0];
     } else {
       const filteredWelshDefectsOnVehicleType = filteredFlatDefects.filter(
         (flatDefect: IFlatDefect) =>
           flatDefect.forVehicleType!.includes(vehicleType)
-      );
-      // TODO - remove this once tested
-      console.log(
-        `Filtered to one defect on def ref id and vehicle type: ${JSON.stringify(filteredWelshDefectsOnVehicleType[0])}`
       );
       return filteredWelshDefectsOnVehicleType[0];
     }
@@ -1233,8 +1210,6 @@ class CertificateGenerationService {
           });
         }
       });
-      // TODO - remove this once tested
-      console.log("Flattened defect array length: " + flatDefects.length);
     } catch (e) {
       console.error(`Error flattening defects: ${e}`);
     }
