@@ -800,47 +800,6 @@ describe("Certificate Generation Service", () => {
         });
       });
     });
-
-    // TODO: url and api key need to be populated in lookupPostcode method for this test to pass
-    // TODO: need to mock secret values as tests fail with security token expired
-    // context("test postcode lookup method", () => {
-    //   it("should return true for a Welsh postcode", async () => {
-    //
-    //     const certGenSvc = new CertificateGenerationService(
-    //       null as any,
-    //       new LambdaService(new Lambda())
-    //     );
-    //     const welshPostcode = await certGenSvc.lookupPostcode("sa18an");
-    //     expect(welshPostcode).toBeTruthy();
-    //   });
-    //   it("should return false for a non-Welsh postcode", async () => {
-    //     const certGenSvc = new CertificateGenerationService(
-    //       null as any,
-    //       new LambdaService(new Lambda())
-    //     );
-    //     const welshPostcode = await certGenSvc.lookupPostcode("BS50DA");
-    //     expect(welshPostcode).toBeFalsy();
-    //   });
-    //   it("should return false for a nonsense postcode", async () => {
-    //     const certGenSvc = new CertificateGenerationService(
-    //       null as any,
-    //       new LambdaService(new Lambda())
-    //     );
-    //     const welshPostcode = await certGenSvc.lookupPostcode("123456");
-    //     expect(welshPostcode).toBeFalsy();
-    //   });
-    //   it("should return false when a postcode is not provided", async () => {
-    //     const logSpy = jest.spyOn(console, "log");
-    //
-    //     const certGenSvc = new CertificateGenerationService(
-    //       null as any,
-    //       new LambdaService(new Lambda())
-    //     );
-    //     const welshPostcode = await certGenSvc.lookupPostcode("");
-    //     expect(welshPostcode).toBeFalsy();
-    //     expect(logSpy).toHaveBeenCalledWith("Error looking up postcode ");
-    //   });
-    // });
   });
 });
 
