@@ -1,8 +1,6 @@
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import sinon from "sinon";
 import techRecordResp from "../resources/tech-records-response.json";
-import techRecordRwHgv from "../resources/tech-records-response-rwt-hgv.json";
-import techRecordRwHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
 import testResultsResp from "../resources/test-results-response.json";
 import testResultsRespFail from "../resources/test-results-fail-response.json";
 import testResultsRespPrs from "../resources/test-results-prs-response.json";
@@ -11,7 +9,7 @@ import testResultsRespNoCert from "../resources/test-results-nocert-response.jso
 import { AWSError, Lambda, Response } from "aws-sdk";
 import { LambdaService } from "../../src/services/LambdaService";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
-import {cloneDeep} from "lodash";
+import { cloneDeep } from "lodash";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
 import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
@@ -23,6 +21,9 @@ import flatDefectsMock from "../../tests/resources/flattened-defects.json";
 import testStationsMock from "../../tests/resources/testStationsMock.json";
 import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
 import {Configuration} from "../../src/utils/Configuration";
+import { ITestStation } from "../../src/models/ITestStations";
+import { IDefectParent } from "../../src/models/IDefectParent";
+import { HTTPError } from "../../src/models/HTTPError";
 
 describe("Certificate Generation Service", () => {
   const sandbox = sinon.createSandbox();
@@ -566,6 +567,29 @@ describe("Certificate Generation Service", () => {
             "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall. Blaen. None"
         );
       });
+      it("should return welsh string including location numbers if populated ", () => {
+        // @ts-ignore
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        // get mock of defect or test result
+        const testResultWithDefect = cloneDeep(mockTestResult);
+        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { rowNumber: 1 });
+        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { seatNumber: 2 });
+        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { axleNumber: 3 });
+        console.log(testResultWithDefect.testTypes[0].defects[0]);
+        const format = certGenSvc.formatDefectWelsh(
+            testResultWithDefect.testTypes[0].defects[0],
+            "hgv",
+            flatDefectsMock
+        );
+        console.log(format);
+        expect(format).toEqual(
+            "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Echelau: 3. Blaen Rhesi: 1. Seddi: 2.. None"
+        );
+      });
       it("should return null if filteredFlatDefect array is empty", () => {
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
@@ -684,7 +708,6 @@ describe("Certificate Generation Service", () => {
             null as any,
             new LambdaService(new Lambda())
         );
-        const flatDefect = flatDefectsMock[0];
         const filterFlatDefect = certGenSvc.filterFlatDefects(
             [],
             "hgv"
@@ -704,22 +727,31 @@ describe("Certificate Generation Service", () => {
         expect(flattenedArray).toEqual(flatDefectsMock);
         expect(flattenedArray).toHaveLength(7);
       });
-      // it("should catch any exceptions", () => {
-      //   const certGenSvc = new CertificateGenerationService(
-      //       null as any,
-      //       new LambdaService(new Lambda())
-      //   );
-      //
-      //   const pushMock = jest.fn().mockRejectedValue(new Error);
-      //   const arrayPushStub = Array.prototype.push = pushMock;
-      //
-      //   const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
-      // });
+      it("should log any exceptions flattening defects", () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+        const logSpy = jest.spyOn(console, "error");
+
+        const defectsMockForError = cloneDeep(defectsMock);
+        defectsMockForError.forEach = jest.fn(() => {
+          throw new Error("Some random error");
+        });
+
+        const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMockForError);
+        expect(logSpy).toHaveBeenCalledWith(
+            "Error flattening defects: Error: Some random error"
+        );
+        expect(flattenedArray).toEqual([]);
+        logSpy.mockClear();
+        jest.clearAllMocks();
+      });
     });
   });
 
   describe("welsh address function", () => {
-    context("test getTestStations method", () => {
+    context("test getThisTestStation method", () => {
       it("should return a postcode if pNumber exists in the list of test stations", () => {
         const certGenSvc = new CertificateGenerationService(
             null as any,
@@ -760,6 +792,170 @@ describe("Certificate Generation Service", () => {
         expect(postCode).toBeNull();
         expect(logSpy).toHaveBeenCalledWith("Test stations data is empty");
         logSpy.mockClear();
+      });
+    });
+
+    context("test getTestStation method", () => {
+      it("should return an array of test stations if invoke is successful", async () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        const mockStations = testStationsMock;
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const testStations = await certGenSvc.getTestStations();
+
+        expect(testStations).toEqual(mockStations);
+        jest.clearAllMocks();
+      });
+      it("should invoke test stations up to 3 times if there is an issue", async () => {
+        const logSpy = jest.spyOn(console, "error");
+
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: "" }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const testStations = await certGenSvc.getTestStations();
+
+        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the test stations: Error");
+        expect(logSpy).toHaveBeenCalledTimes(3);
+        expect(testStations).not.toBeNull();
+        logSpy.mockClear();
+        jest.clearAllMocks();
+      });
+      it("should return an empty array if test stations invoke is unsuccessful", async () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: "" }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const testStations = await certGenSvc.getTestStations();
+
+        expect(testStations).toEqual([]);
+        jest.clearAllMocks();
+      });
+      it("should throw error if issue when parsing test stations", async () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        const mockStations: ITestStation[] = [];
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const defects = await certGenSvc.getTestStations()
+            .catch((e) => {
+              expect(e).toBeInstanceOf(HTTPError);
+            });
+        expect(defects).toEqual(mockStations);
+        jest.clearAllMocks();
+      });
+    });
+
+    context("test getDefectTranslations method", () => {
+      it("should return an array of defects if invoke is successful", async () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        const mockDefects = defectsMock;
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const defects = await certGenSvc.getDefectTranslations();
+
+        expect(defects).toEqual(mockDefects);
+        jest.clearAllMocks();
+      });
+      it("should invoke defects up to 3 times if there is an issue", async () => {
+        const logSpy = jest.spyOn(console, "error");
+
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: "" }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const defects = await certGenSvc.getDefectTranslations();
+
+        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the welsh defect translations: Error");
+        expect(logSpy).toHaveBeenCalledTimes(3);
+        expect(defects).not.toBeNull();
+        logSpy.mockClear();
+        jest.clearAllMocks();
+      });
+      it("should return an empty array if defects invoke is unsuccessful", async () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: "" }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const defects = await certGenSvc.getDefectTranslations();
+
+        expect(defects).toEqual([]);
+        jest.clearAllMocks();
+      });
+      it("should throw error if issue when parsing defects", async () => {
+        const certGenSvc = new CertificateGenerationService(
+            null as any,
+            new LambdaService(new Lambda())
+        );
+
+        const mockDefects: IDefectParent[] = [];
+
+        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+          Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
+          FunctionError: undefined,
+          StatusCode: 200,
+        });
+
+        const defects = await certGenSvc.getDefectTranslations()
+            .catch((e) => {
+              expect(e).toBeInstanceOf(HTTPError);
+            });
+        expect(defects).toEqual(mockDefects);
+        jest.clearAllMocks();
       });
     });
 
