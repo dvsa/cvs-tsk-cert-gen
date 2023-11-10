@@ -230,22 +230,18 @@ class CertificateGenerationService {
     const secretConfig = await this.getSecret();
 
     if (secretConfig) {
-      const addressResponse: boolean = await axios({
-        method: "get",
-        url: secretConfig.url + "/" + postcode,
-        headers: {"x-api-key": secretConfig.key},
-      })
-          .then((response) => {
-            return response.data.isWelshAddress;
-          })
-          .catch((error) => {
+        try {
+            const addressResponse = await axios({
+                method: "get",
+                url: secretConfig.url + "/" + postcode,
+                headers: {"x-api-key": secretConfig.key},
+            });
+            return addressResponse.data.isWelshAddress;
+        } catch (error) {
             console.log(`Error looking up postcode ${postcode}`);
             console.log(error);
             return false;
-          });
-
-      console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`);
-      return addressResponse;
+        }
     } else {
       console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
       return false;
