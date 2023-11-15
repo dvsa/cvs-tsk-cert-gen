@@ -222,10 +222,11 @@ class CertificateGenerationService {
    * @param postcode
    * @returns boolean true if Welsh
    */
-  public async lookupPostcode(postcode: string) {
+  public async lookupPostcode(postcode: string): Promise<boolean> {
     const secretConfig = await this.getSecret();
 
     if (secretConfig) {
+        let isWelsh: boolean = false;
         let retries = 0;
         while (retries < 3) {
             try {
@@ -234,7 +235,12 @@ class CertificateGenerationService {
                     url: secretConfig.url + "/" + postcode,
                     headers: {"x-api-key": secretConfig.key},
                 });
-                return addressResponse.data.isWelshAddress;
+
+                if (typeof addressResponse.data.isWelshAddress !== "boolean") {
+                    throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
+                }
+                isWelsh = addressResponse.data.isWelshAddress;
+                return isWelsh;
             } catch (error) {
                 retries++;
                 console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);

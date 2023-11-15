@@ -6,6 +6,7 @@ export enum ERRORS {
     RETRO_ERROR_OR_CVS_UPDATED = "Not eligible for certificate generation.",
     SECRET_ENV_VAR_NOT_EXIST = "SECRET_KEY environment variable does not exist.",
     SECRET_DETAILS_NOT_FOUND = "No secret details found.",
+    ADDRESS_BOOLEAN_DOES_NOT_EXIST = "Payload does not include boolean value for isWelshAddress: "
 }
 
 export enum VEHICLE_TYPES {
