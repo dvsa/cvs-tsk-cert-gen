@@ -150,10 +150,11 @@ class CertificateGenerationService {
             });
     }
 
-  /**
-   * Method to retrieve Test Station details from API
-   */
-  public async getTestStations() {
+    /**
+     * Method to retrieve Test Station details from API
+     * @returns list of test stations
+     */
+  public async getTestStations(): Promise<ITestStation[]> {
       const config: IInvokeConfig = this.config.getInvokeConfig();
       const invokeParams: any = {
           FunctionName: config.functions.testStations.name,
@@ -181,7 +182,7 @@ class CertificateGenerationService {
               return testStations;
           } catch (error) {
               retries++;
-              console.error(`There was an error retrieving the test stations: ${error}`);
+              console.error(`There was an error retrieving the test stations on attempt ${retries}: ${error}`);
           }
       }
       return testStations;
@@ -236,7 +237,7 @@ class CertificateGenerationService {
                 return addressResponse.data.isWelshAddress;
             } catch (error) {
                 retries++;
-                console.log(`Error looking up postcode ${postcode}`);
+                console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);
                 console.log(error);
             }
         }
@@ -871,8 +872,9 @@ class CertificateGenerationService {
 
   /**
    * Method used to retrieve the Welsh translations for the certificates
+   * @returns a list of defects
    */
-  public async getDefectTranslations() {
+  public async getDefectTranslations(): Promise<IDefectParent[]> {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
       FunctionName: config.functions.defects.name,
@@ -898,7 +900,7 @@ class CertificateGenerationService {
             return defects;
         } catch (error) {
             retries++;
-            console.error(`There was an error retrieving the welsh defect translations: ${error}`);
+            console.error(`There was an error retrieving the welsh defect translations on attempt ${retries}: ${error}`);
         }
     }
     return defects;

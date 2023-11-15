@@ -831,7 +831,7 @@ describe("Certificate Generation Service", () => {
 
         const testStations = await certGenSvc.getTestStations();
 
-        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the test stations: Error");
+        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the test stations on attempt 3: Error");
         expect(logSpy).toHaveBeenCalledTimes(3);
         expect(testStations).not.toBeNull();
         logSpy.mockClear();
@@ -913,7 +913,7 @@ describe("Certificate Generation Service", () => {
 
         const defects = await certGenSvc.getDefectTranslations();
 
-        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the welsh defect translations: Error");
+        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the welsh defect translations on attempt 3: Error");
         expect(logSpy).toHaveBeenCalledTimes(3);
         expect(defects).not.toBeNull();
         logSpy.mockClear();
