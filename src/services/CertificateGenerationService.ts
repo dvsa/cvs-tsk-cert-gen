@@ -240,6 +240,7 @@ class CertificateGenerationService {
                     throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
                 }
                 isWelsh = addressResponse.data.isWelshAddress;
+                console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
                 return isWelsh;
             } catch (error) {
                 retries++;
