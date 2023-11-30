@@ -150,46 +150,42 @@ class CertificateGenerationService {
             });
     }
 
-  /**
-   * Method to retrieve Test Station details from API
-   */
-  public async getTestStations() {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: any = {
-      FunctionName: config.functions.testStations.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
-      Payload: JSON.stringify({
-        httpMethod: "GET",
-        path: `/test-stations/`,
-      }),
-    };
-    let testStations: ITestStation[] = [];
-    return this.lambdaClient
-      .invoke(invokeParams)
-      .then(
-        (
-          response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
-        ) => {
-          const payload: any =
-            this.lambdaClient.validateInvocationResponse(response);
-          testStations = JSON.parse(payload.body);
+    /**
+     * Method to retrieve Test Station details from API
+     * @returns list of test stations
+     */
+  public async getTestStations(): Promise<ITestStation[]> {
+      const config: IInvokeConfig = this.config.getInvokeConfig();
+      const invokeParams: any = {
+          FunctionName: config.functions.testStations.name,
+          InvocationType: "RequestResponse",
+          LogType: "Tail",
+          Payload: JSON.stringify({
+              httpMethod: "GET",
+              path: `/test-stations/`,
+          }),
+      };
+      let testStations: ITestStation[] = [];
+      let retries = 0;
 
-          if (!testStations || testStations.length === 0) {
-            throw new HTTPError(
-              400,
-              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
-            );
+      while (retries < 3) {
+          try {
+              const response: PromiseResult<Lambda.Types.InvocationResponse, AWSError> = await this.lambdaClient.invoke(invokeParams);
+              const payload: any = this.lambdaClient.validateInvocationResponse(response);
+              const testStationsParsed = JSON.parse(payload.body);
+
+              if (!testStationsParsed || testStationsParsed.length === 0) {
+                  throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+                  );
+              }
+              testStations = testStationsParsed;
+              return testStations;
+          } catch (error) {
+              retries++;
+              console.error(`There was an error retrieving the test stations on attempt ${retries}: ${error}`);
           }
-          return testStations;
-        }
-      )
-      .catch((error: AWSError | Error) => {
-        console.error(
-          `There was an error retrieving the test stations: ${error}`
-        );
-        return testStations;
-      });
+      }
+      return testStations;
   }
 
   /**
@@ -226,26 +222,33 @@ class CertificateGenerationService {
    * @param postcode
    * @returns boolean true if Welsh
    */
-  public async lookupPostcode(postcode: string) {
+  public async lookupPostcode(postcode: string): Promise<boolean> {
     const secretConfig = await this.getSecret();
 
     if (secretConfig) {
-      const addressResponse: boolean = await axios({
-        method: "get",
-        url: secretConfig.url + "/" + postcode,
-        headers: {"x-api-key": secretConfig.key},
-      })
-          .then((response) => {
-            return response.data.isWelshAddress;
-          })
-          .catch((error) => {
-            console.log(`Error looking up postcode ${postcode}`);
-            console.log(error);
-            return false;
-          });
+        let isWelsh: boolean = false;
+        let retries = 0;
+        while (retries < 3) {
+            try {
+                const addressResponse = await axios({
+                    method: "get",
+                    url: secretConfig.url + "/" + postcode,
+                    headers: {"x-api-key": secretConfig.key},
+                });
 
-      console.log(`Return value for isWelsh for ${postcode} is ${addressResponse}`);
-      return addressResponse;
+                if (typeof addressResponse.data.isWelshAddress !== "boolean") {
+                    throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
+                }
+                isWelsh = addressResponse.data.isWelshAddress;
+                console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
+                return isWelsh;
+            } catch (error) {
+                retries++;
+                console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);
+                console.log(error);
+            }
+        }
+        return false;
     } else {
       console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
       return false;
@@ -876,8 +879,9 @@ class CertificateGenerationService {
 
   /**
    * Method used to retrieve the Welsh translations for the certificates
+   * @returns a list of defects
    */
-  public async getDefectTranslations() {
+  public async getDefectTranslations(): Promise<IDefectParent[]> {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: any = {
       FunctionName: config.functions.defects.name,
@@ -889,36 +893,24 @@ class CertificateGenerationService {
       }),
     };
     let defects: IDefectParent[] = [];
-    return this.lambdaClient
-      .invoke(invokeParams)
-      .then(
-        (
-          response: PromiseResult<Lambda.Types.InvocationResponse, AWSError>
-        ) => {
-          const payload: any =
-            this.lambdaClient.validateInvocationResponse(response);
-          defects = JSON.parse(payload.body);
+    let retries = 0;
+    while (retries < 3) {
+        try {
+            const response: PromiseResult<Lambda.Types.InvocationResponse, AWSError> = await this.lambdaClient.invoke(invokeParams);
+            const payload: any = this.lambdaClient.validateInvocationResponse(response);
+            const defectsParsed = JSON.parse(payload.body);
 
-          if (!defects || defects.length === 0) {
-            throw new HTTPError(
-              400,
-              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
-            );
-          }
-
-          console.log(
-            `Successfully retrieved ${defects.length} welsh defects translations.`
-          );
-
-          return defects;
+            if (!defectsParsed || defectsParsed.length === 0) {
+                throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
+            }
+            defects = defectsParsed;
+            return defects;
+        } catch (error) {
+            retries++;
+            console.error(`There was an error retrieving the welsh defect translations on attempt ${retries}: ${error}`);
         }
-      )
-      .catch((error: AWSError | Error) => {
-        console.error(
-          `There was an error retrieving the welsh defect translations: ${error}`
-        );
-        return defects;
-      });
+    }
+    return defects;
   }
 
   /**
