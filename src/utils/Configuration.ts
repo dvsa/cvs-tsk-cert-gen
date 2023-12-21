@@ -2,6 +2,8 @@
 import * as yml from "node-yaml";
 import { IInvokeConfig, IMOTConfig, IS3Config } from "../models";
 import {ERRORS} from "../models/Enums";
+import SecretsManager, {GetSecretValueRequest, GetSecretValueResponse} from "aws-sdk/clients/secretsmanager";
+import {ISecret} from "../models/ISecret";
 
 /**
  * Configuration class for retrieving project config
@@ -9,8 +11,10 @@ import {ERRORS} from "../models/Enums";
 class Configuration {
   private static instance: Configuration;
   private readonly config: any;
+  private readonly secretsClient: SecretsManager;
 
   private constructor(configPath: string) {
+    this.secretsClient = new SecretsManager({ region: "eu-west-1" });
     const config = yml.readSync(configPath);
 
     // Replace environment variable references
@@ -119,6 +123,35 @@ class Configuration {
       }
     } else {
       return process.env.SECRET_KEY;
+    }
+  }
+
+  /**
+   * Method to get the secret details for the Welsh lookup
+   * @returns ISecret secret containing SMC url and api key
+   */
+  public async getSecret() {
+    const welshConfigSecretKey: string = this.getWelshSecretKey();
+
+    if (welshConfigSecretKey) {
+      try {
+        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
+        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+
+        if (secretResponse.SecretString) {
+          const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
+          return secretConfig;
+        } else {
+          console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
+          return null;
+        }
+      } catch (error) {
+        console.log(error);
+        return null;
+      }
+    } else {
+      console.log(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
+      return null;
     }
   }
 }

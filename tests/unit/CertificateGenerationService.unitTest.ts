@@ -24,6 +24,7 @@ import {Configuration} from "../../src/utils/Configuration";
 import { ITestStation } from "../../src/models/ITestStations";
 import { IDefectParent } from "../../src/models/IDefectParent";
 import { HTTPError } from "../../src/models/HTTPError";
+import Axios from "axios";
 
 describe("Certificate Generation Service", () => {
   const sandbox = sinon.createSandbox();
@@ -962,11 +963,14 @@ describe("Certificate Generation Service", () => {
     context("test STOP_WELSH_GEN environment variable", () => {
       it("should circumvent the Welsh certificate generation logic and log message if set to true", async () => {
         process.env.STOP_WELSH_GEN = "TRUE";
-        const logSpy = jest.spyOn(console, "log");
+
         const certGenSvc = new CertificateGenerationService(
             null as any,
             new LambdaService(new Lambda())
         );
+
+        const logSpy = jest.spyOn(console, "log");
+
         await certGenSvc.generateCertificate(mockTestResult)
             .catch(() => {
               expect(logSpy).toHaveBeenCalledWith(
@@ -980,19 +984,115 @@ describe("Certificate Generation Service", () => {
     context("test postcode lookup method", () => {
       context("when the SECRET_KEY environment variable does not exist", () => {
         it("should log the the errors", async () => {
-          Configuration.prototype.getWelshSecretKey = jest.fn().mockReturnValue(null);
-          const logSpy = jest.spyOn(console, "log");
-
           const certGenSvc = new CertificateGenerationService(
               null as any,
               new LambdaService(new Lambda())
           );
 
+          const logSpy = jest.spyOn(console, "log");
+
+          Configuration.prototype.getWelshSecretKey = jest.fn().mockReturnValue(null);
+
           await certGenSvc.lookupPostcode("some_postcode");
           expect(logSpy.mock.calls[0][0]).toBe("SECRET_KEY environment variable does not exist.");
-          expect(logSpy.mock.calls[1][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for some_postcode is false");
+          expect(logSpy.mock.calls[1][0]).toBe("Secret details not found.");
 
           logSpy.mockClear();
+        });
+      });
+      context("when the SECRET_KEY environment variable does exist", () => {
+        const mockSecretResponse = {
+          url: "mockUrl",
+          key: "mockKey"
+        };
+        it("should log correctly if isWelshAddress was true", async () => {
+          const certGenSvc = new CertificateGenerationService(
+              null as any,
+              new LambdaService(new Lambda())
+          );
+
+          const logSpy = jest.spyOn(console, "log");
+
+          Axios.create = jest.fn().mockReturnValueOnce(({
+            get: jest.fn().mockResolvedValueOnce({ data: {
+                isWelshAddress: true
+              }})
+          }));
+          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
+
+          const response = await certGenSvc.lookupPostcode("welsh_postcode");
+          expect(logSpy.mock.calls[0][0]).toBe("Return value for isWelsh for welsh_postcode is true");
+          expect(response).toBeTruthy();
+
+          logSpy.mockClear();
+          jest.resetAllMocks();
+        });
+        it("should log correctly if isWelshAddress was false", async () => {
+          const certGenSvc = new CertificateGenerationService(
+              null as any,
+              new LambdaService(new Lambda())
+          );
+
+          const logSpy = jest.spyOn(console, "log");
+
+          Axios.create = jest.fn().mockReturnValueOnce(({
+            get: jest.fn().mockResolvedValueOnce({ data: {
+                isWelshAddress: false
+              }})
+          }));
+
+          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
+
+          const response = await certGenSvc.lookupPostcode("non_welsh_postcode");
+          expect(logSpy.mock.calls[0][0]).toBe("Return value for isWelsh for non_welsh_postcode is false");
+          expect(response).toBeFalsy();
+
+          logSpy.mockClear();
+          jest.resetAllMocks();
+        });
+        it("should return false if error is thrown due to invalid type in response from api call", async () => {
+          const certGenSvc = new CertificateGenerationService(
+              null as any,
+              new LambdaService(new Lambda())
+          );
+
+          const logSpy = jest.spyOn(console, "log");
+
+          Axios.create = jest.fn().mockReturnValueOnce(({
+            get: jest.fn().mockResolvedValueOnce({ data: {
+                someRandomKey: true
+              }})
+          }));
+
+          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
+
+          const response = await certGenSvc.lookupPostcode("welsh_postcode")
+              .catch((e) => {
+                expect(e).toBeInstanceOf(HTTPError);
+              });
+          expect(response).toBeFalsy();
+
+          logSpy.mockClear();
+          jest.resetAllMocks();
+        });
+        it("should return false if axios client is null", async () => {
+          const certGenSvc = new CertificateGenerationService(
+              null as any,
+              new LambdaService(new Lambda())
+          );
+
+          const logSpy = jest.spyOn(console, "log");
+
+          Axios.create = jest.fn().mockReturnValueOnce(null);
+
+          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
+
+          const response = await certGenSvc.lookupPostcode("welsh_postcode");
+          expect(logSpy.mock.calls[0][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for welsh_postcode is false");
+          expect(response).toBeFalsy();
+
+          logSpy.mockClear();
+          jest.resetAllMocks();
         });
       });
     });

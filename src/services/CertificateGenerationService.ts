@@ -16,12 +16,7 @@ import { IFlatDefect } from "../models/IFlatDefect";
 import { IDefectParent } from "../models/IDefectParent";
 import { IItem } from "../models/IItem";
 import { IDefectChild } from "../models/IDefectChild";
-import axios from "axios";
-import SecretsManager, {
-  GetSecretValueRequest,
-  GetSecretValueResponse,
-} from "aws-sdk/clients/secretsmanager";
-import {ISecret} from "../models/ISecret";
+import axiosClient from "../client/AxiosClient";
 
 /**
  * Service class for Certificate Generation
@@ -31,14 +26,12 @@ class CertificateGenerationService {
   private readonly s3Client: S3BucketService;
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
-  private readonly secretsClient: SecretsManager;
 
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
-    this.secretsClient = new SecretsManager({ region: "eu-west-1" });
 
     AWSConfig.lambda = this.config.getInvokeConfig().params;
   }
@@ -223,64 +216,31 @@ class CertificateGenerationService {
    * @returns boolean true if Welsh
    */
   public async lookupPostcode(postcode: string): Promise<boolean> {
-    const secretConfig = await this.getSecret();
+      const axiosInstance = await axiosClient();
 
-    if (secretConfig) {
-        let isWelsh: boolean = false;
-        let retries = 0;
-        while (retries < 3) {
-            try {
-                const addressResponse = await axios({
-                    method: "get",
-                    url: secretConfig.url + "/" + postcode,
-                    headers: {"x-api-key": secretConfig.key},
-                });
+      if (axiosInstance) {
+          let isWelsh: boolean = false;
+          let retries = 0;
+          while (retries < 3) {
+              try {
+                  const addressResponse = await axiosInstance.get("/" + postcode);
 
-                if (typeof addressResponse.data.isWelshAddress !== "boolean") {
+                  if (typeof addressResponse.data.isWelshAddress !== "boolean") {
                     throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
-                }
-                isWelsh = addressResponse.data.isWelshAddress;
-                console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
-                return isWelsh;
-            } catch (error) {
+                  }
+                  isWelsh = addressResponse.data.isWelshAddress;
+                  console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
+                  return isWelsh;
+              } catch (error) {
                 retries++;
                 console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);
                 console.log(error);
-            }
-        }
-        return false;
+              }
+          }
+          return false;
     } else {
       console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
       return false;
-    }
-  }
-
-  /**
-   * Method to get the secret details for the Welsh lookup
-   * @returns ISecret secret containing SMC url and api key
-   */
-  private async getSecret() {
-    const welshConfigSecretKey: string = this.config.getWelshSecretKey();
-
-    if (welshConfigSecretKey) {
-      try {
-        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
-        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
-
-        if (secretResponse.SecretString) {
-          const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
-          return secretConfig;
-        } else {
-          console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
-          return null;
-        }
-      } catch (error) {
-        console.log(error);
-        return null;
-      }
-    } else {
-      console.log(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
-      return null;
     }
   }
 
