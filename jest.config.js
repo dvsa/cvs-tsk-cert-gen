@@ -9,7 +9,4 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest",
   },
   testMatch: ["**/*.*Test.ts"],
-  moduleNameMapper: {
-    axios: 'axios/dist/node/axios.cjs',
-  }
 };
