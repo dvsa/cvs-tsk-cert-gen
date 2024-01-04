@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as yml from "node-yaml";
-import { IInvokeConfig, IMOTConfig, IS3Config } from "../models";
+import {IInvokeConfig, IMOTConfig, IS3Config} from "../models";
 import {ERRORS} from "../models/Enums";
 import SecretsManager, {GetSecretValueRequest, GetSecretValueResponse} from "aws-sdk/clients/secretsmanager";
 import {ISecret} from "../models/ISecret";
@@ -130,28 +130,27 @@ class Configuration {
    * Method to get the secret details for the Welsh lookup
    * @returns ISecret secret containing SMC url and api key
    */
-  public async getSecret() {
-    const welshConfigSecretKey: string = this.getWelshSecretKey();
+  public async getSecret(): Promise<ISecret|null> {
+    try {
+      const welshConfigSecretKey: string = this.getWelshSecretKey();
 
-    if (welshConfigSecretKey) {
-      try {
-        const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
-        const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+      if (!welshConfigSecretKey) {
+          console.error(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
+          return null;
+      }
 
-        if (secretResponse.SecretString) {
-          const secretConfig: ISecret = JSON.parse(secretResponse.SecretString);
-          return secretConfig;
-        } else {
+      const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
+      const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+
+      if (secretResponse.SecretString) {
+          return JSON.parse(secretResponse.SecretString);
+      } else {
           console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
           return null;
-        }
-      } catch (error) {
+      }
+    } catch (error) {
         console.log(error);
         return null;
-      }
-    } else {
-      console.log(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
-      return null;
     }
   }
 }

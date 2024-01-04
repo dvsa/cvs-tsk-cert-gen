@@ -994,8 +994,8 @@ describe("Certificate Generation Service", () => {
           Configuration.prototype.getWelshSecretKey = jest.fn().mockReturnValue(null);
 
           await certGenSvc.lookupPostcode("some_postcode");
-          expect(logSpy.mock.calls[0][0]).toBe("SECRET_KEY environment variable does not exist.");
-          expect(logSpy.mock.calls[1][0]).toBe("Secret details not found.");
+          expect(logSpy.mock.calls[0][0]).toBe("Secret details not found.");
+          expect(logSpy.mock.calls[1][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for some_postcode is false");
 
           logSpy.mockClear();
         });
@@ -1089,6 +1089,24 @@ describe("Certificate Generation Service", () => {
 
           const response = await certGenSvc.lookupPostcode("welsh_postcode");
           expect(logSpy.mock.calls[0][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for welsh_postcode is false");
+          expect(response).toBeFalsy();
+
+          logSpy.mockClear();
+          jest.resetAllMocks();
+        });
+        it("should return false if an error occurs in axios client", async () => {
+          const certGenSvc = new CertificateGenerationService(
+              null as any,
+              new LambdaService(new Lambda())
+          );
+
+          const logSpy = jest.spyOn(console, "error");
+
+          const mockError = new Error("some random error");
+          Configuration.prototype.getSecret = jest.fn().mockRejectedValue(mockError);
+
+          const response = await certGenSvc.lookupPostcode("welsh_postcode");
+          expect(logSpy.mock.calls[0][0]).toBe("Error generating Axios Instance: Error: some random error");
           expect(response).toBeFalsy();
 
           logSpy.mockClear();
