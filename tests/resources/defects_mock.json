@@ -1,0 +1,195 @@
+[
+  {
+    "id": 61,
+    "imNumber": 74,
+    "imDescription": "Other Dangerous Defects",
+    "imDescriptionWelsh": "Diffygion Peryglus Eraill",
+    "forVehicleType": ["hgv", "trl", "psv"],
+    "additionalInfo": {
+      "psv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": null,
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      },
+      "hgv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": null,
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      },
+      "trl": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": null,
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      }
+    },
+    "items": [
+      {
+        "itemNumber": 1,
+        "itemDescription": "A defect not described elsewhere in the manual such that:",
+        "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+        "forVehicleType": ["hgv", "trl"],
+        "deficiencies": [
+          {
+            "ref": "74.1",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "dangerous",
+            "deficiencyText": "the use of the vehicle or trailer on the road would involve an immediate danger of injury to any person.",
+            "deficiencyTextWelsh": "byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson.",
+            "stdForProhibition": true,
+            "forVehicleType": ["hgv", "trl"]
+          }
+        ]
+      },
+      {
+        "itemNumber": 1,
+        "itemDescription": "A defect not described elsewhere in the manual such that:",
+        "itemDescriptionWelsh": "Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel:",
+        "forVehicleType": ["psv"],
+        "deficiencies": [
+          {
+            "ref": "74.1",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "dangerous",
+            "deficiencyText": "the use of the vehicle on the road would involve an immediate danger of injury to any other person.",
+            "deficiencyTextWelsh": "byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall.",
+            "stdForProhibition": true,
+            "forVehicleType": ["psv"]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "imNumber": 25,
+    "imDescription": "Windscreen Wipers and Washers",
+    "imDescriptionWelsh": "Sychwyr a Golchwyr Sgrin Wynt",
+    "forVehicleType": ["psv", "hgv"],
+    "additionalInfo": {
+      "psv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": ["nearside", "offside", "centre"],
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      },
+      "trl": {},
+      "hgv": {
+        "location": {
+          "vertical": null,
+          "horizontal": null,
+          "lateral": ["nearside", "offside", "centre"],
+          "longitudinal": null,
+          "rowNumber": null,
+          "seatNumber": null,
+          "axleNumber": null
+        },
+        "notes": true
+      }
+    },
+    "items": [
+      {
+        "itemNumber": 1,
+        "itemDescription": "Switch(es) controlling windscreen wipers and/or washers",
+        "itemDescriptionWelsh": "Switsys sy'n rheoli sychwyr sgrin wynt a/neu wasieri",
+        "forVehicleType": ["psv", "hgv"],
+        "deficiencies": [
+          {
+            "ref": "25.",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "minor",
+            "deficiencyText": "missing or defective.",
+            "deficiencyTextWelsh": "ar goll neu'n ddiffygiol.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          }
+        ]
+      },
+      {
+        "itemNumber": 2,
+        "itemDescription": "Wipers:",
+        "itemDescriptionWelsh": "Sychwyr:",
+        "forVehicleType": ["psv", "hgv"],
+        "deficiencies": [
+          {
+            "ref": "25.2.a",
+            "deficiencyId": "a",
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "do not move over an adequate area.",
+            "deficiencyTextWelsh": "ddim yn symud dros ardal ddigonol.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          },
+          {
+            "ref": "25.2.b",
+            "deficiencyId": "b",
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "do not work continually when switched on.",
+            "deficiencyTextWelsh": "ddim yn gweithio'n barhaus pan gaiff ei droi ymlaen.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          },
+          {
+            "ref": "25.2.c",
+            "deficiencyId": "c",
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "a blade missing, insecure or so deteriorated that it cannot clear the screen effectively.",
+            "deficiencyTextWelsh": "llafn ar goll, yn ansefydlog neu wedi dirywio cymaint fel na all glirio'r sgrin yn effeithiol.",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          }
+        ]
+      },
+      {
+        "itemNumber": 3,
+        "itemDescription": "Windscreen washers",
+        "itemDescriptionWelsh": "Golchwyr sgrin wynt",
+        "forVehicleType": ["psv", "hgv"],
+        "deficiencies": [
+          {
+            "ref": "25.3",
+            "deficiencyId": null,
+            "deficiencySubId": null,
+            "deficiencyCategory": "major",
+            "deficiencyText": "not working or not providing sufficient fluid to clear the windscreen.",
+            "deficiencyTextWelsh": "ddim yn gweithio neu ddim yn darparu digon o hylif i glirio'r ffenestr flaen. ",
+            "stdForProhibition": false,
+            "forVehicleType": ["psv", "hgv"]
+          }
+        ]
+      }
+    ]
+  }
+]

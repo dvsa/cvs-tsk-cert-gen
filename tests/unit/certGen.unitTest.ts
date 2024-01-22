@@ -593,6 +593,911 @@ describe("cert-gen", () => {
             });
         });
 
+        context("when a passing test result is read from the queue", () => {
+        const event: any = { ...queueEventPass };
+        const hgvTestResultWithMinorDefect: any = JSON.parse(event.Records[7].body);
+        const hgvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[8].body);
+
+        const trlTestResultWithMinorDefect: any = JSON.parse(event.Records[9].body);
+        const trlTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[10].body);
+
+        const psvTestResultWithMinorDefect: any = JSON.parse(event.Records[11].body);
+        const psvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[12].body);
+
+        context("and the hgv result has a minor defect", () => {
+          context("and the test station location is not in Wales", () => {
+            it("should return a VTG5 payload without the MinorDefectsWelsh array populated", async () => {
+              const expectedResult: any = {
+                Watermark: "NOT VALID",
+                DATA: {
+                  TestNumber: "W01A00310",
+                  TestStationPNumber: "09-4129632",
+                  TestStationName: "Abshire-Kub",
+                  CurrentOdometer: {
+                    value: 12312,
+                    unit: "kilometres",
+                  },
+                  IssuersName: "CVS Dev1",
+                  DateOfTheTest: "26.02.2019",
+                  CountryOfRegistrationCode: "gb",
+                  VehicleEuClassification: "M1",
+                  RawVIN: "P012301098765",
+                  RawVRM: "VM14MDT",
+                  ExpiryDate: "25.02.2020",
+                  EarliestDateOfTheNextTest: "01.11.2019",
+                  SeatBeltTested: "Yes",
+                  SeatBeltPreviousCheckDate: "26.02.2019",
+                  SeatBeltNumber: 2,
+                  Make: "Isuzu",
+                  MinorDefects: [
+                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                  ],
+                  Model: "FM",
+                  OdometerHistoryList: [
+                    {
+                      value: 400000,
+                      unit: "kilometres",
+                      date: "19.01.2019",
+                    },
+                    {
+                      value: 390000,
+                      unit: "kilometres",
+                      date: "18.01.2019",
+                    },
+                    {
+                      value: 380000,
+                      unit: "kilometres",
+                      date: "17.01.2019",
+                    },
+                  ],
+                },
+                Signature: {
+                    ImageType: "png",
+                    ImageData: null,
+                },
+              };
+
+              const getTechRecordSearchStub = sandbox
+                  .stub(certificateGenerationService, "callSearchTechRecords")
+                  .resolves(techRecordsRwtHgvSearch);
+              const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+              const getTechRecordStub = sandbox
+                  .stub(certificateGenerationService, "callGetTechRecords")
+                  .resolves((techRecordResponseRwtMock) as any);
+
+              return await certificateGenerationService
+                  .generatePayload(hgvTestResultWithMinorDefect)
+                  .then((payload: any) => {
+                    expect(payload).toEqual(expectedResult);
+                    getTechRecordStub.restore();
+                    getTechRecordSearchStub.restore();
+                  });
+            });
+
+            context("and the test station location is in Wales", () => {
+                it("should return a VTG5 payload with the MinorDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "P012301098765",
+                            RawVRM: "VM14MDT",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "Isuzu",
+                            MinorDefects: [
+                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                            ],
+                            MinorDefectsWelsh: [
+                                "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
+                            ],
+                            Model: "FM",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtHgvSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                    .generatePayload(hgvTestResultWithMinorDefect, true)
+                    .then((payload: any) => {
+                      expect(payload).toEqual(expectedResult);
+                      getTechRecordStub.restore();
+                      getTechRecordSearchStub.restore();
+                    });
+              });
+            });
+          });
+        });
+
+        context("and the hgv result has an advisory defect", () => {
+            context("and the test station location is not in Wales", () => {
+                it("should return a VTG5 payload without the AdvisoryDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "P012301098765",
+                            RawVRM: "VM14MDT",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "Isuzu",
+                            AdvisoryDefects: [
+                                "1.1 A registration plate: Note one"
+                            ],
+                            Model: "FM",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtHgvSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                        .generatePayload(hgvTestResultWithAdvisoryDefect)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+            context("and the test station location is in Wales", () => {
+                it("should return a VTG5 payload with the AdvisoryDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "P012301098765",
+                            RawVRM: "VM14MDT",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "Isuzu",
+                            AdvisoryDefects: [
+                                "1.1 A registration plate: Note one"
+                            ],
+                            AdvisoryDefectsWelsh: [
+                                "1.1 A registration plate: Note one"
+                            ],
+                            Model: "FM",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtHgvSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return certificateGenerationService
+                        .generatePayload(hgvTestResultWithAdvisoryDefect, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+        });
+
+        context("and the trl result has a minor defect", () => {
+            context("and the test station location is not in Wales", () => {
+                it("should return a VTG5A payload without the MinorDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "T12876765",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "STANLEY",
+                            Model: "AUTOTRL",
+                            MinorDefects: [
+                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                            ],
+                            Trn: "ABC123",
+                            IsTrailer: true
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                        .generatePayload(trlTestResultWithMinorDefect)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                  });
+                });
+            });
+            context("and the test station location is in Wales", () => {
+                it("should return a VTG5A payload with the MinorDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "T12876765",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "STANLEY",
+                            Model: "AUTOTRL",
+                            MinorDefects: [
+                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                            ],
+                            MinorDefectsWelsh: [
+                                "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
+                            ],
+                            Trn: "ABC123",
+                            IsTrailer: true
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                        .generatePayload(trlTestResultWithMinorDefect, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+        });
+
+        context("and the trl result has an advisory defect", () => {
+            context("and the test station location is not in Wales", () => {
+                it("should return a VTG5A payload without the AdvisoryDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "T12876765",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "STANLEY",
+                            Model: "AUTOTRL",
+                            AdvisoryDefects: [
+                                "1.1 A registration plate: Note one"
+                            ],
+                            Trn: "ABC123",
+                            IsTrailer: true
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                        .generatePayload(trlTestResultWithAdvisoryDefect)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+            context("and the test station location is in Wales", () => {
+                it("should return a VTG5A payload with the AdvisoryDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "T12876765",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "01.11.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "STANLEY",
+                            Model: "AUTOTRL",
+                            AdvisoryDefects: [
+                                "1.1 A registration plate: Note one"
+                            ],
+                            AdvisoryDefectsWelsh: [
+                                "1.1 A registration plate: Note one"
+                            ],
+                            Trn: "ABC123",
+                            IsTrailer: true
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsRwtSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return certificateGenerationService
+                        .generatePayload(trlTestResultWithAdvisoryDefect, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+        });
+
+        context("and the psv result has a minor defect", () => {
+            context("and the test station location is not in Wales", () => {
+                it("should return a VTP20 payload without the MinorDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS, Test, Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "AEC",
+                            MinorDefects: [
+                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                            ],
+                            Model: "RELIANCE",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        }
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                        .generatePayload(psvTestResultWithMinorDefect)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+            context("and the test station location is in Wales", () => {
+                it("should return a VTP20 payload with the MinorDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS, Test, Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "AEC",
+                            MinorDefects: [
+                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                            ],
+                            MinorDefectsWelsh: [
+                                "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen.",
+                            ],
+                            Model: "RELIANCE",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        }
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return certificateGenerationService
+                        .generatePayload(psvTestResultWithMinorDefect, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+        });
+
+        context("and the psv result has an advisory defect", () => {
+            context("and the test station location is not in Wales", () => {
+                it("should return a VTP20 payload without the AdvisoryDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            AdvisoryDefects: [
+                                "1.1 A registration plate: Notes here",
+                                "6.3 A hub: Second advisory note"
+                            ],
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS, Test, Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "AEC",
+                            Model: "RELIANCE",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        }
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return await certificateGenerationService
+                        .generatePayload(psvTestResultWithAdvisoryDefect)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+            context("and the test station location is in Wales", () => {
+                it("should return a VTP20 payload with the AdvisoryDefectsWelsh array populated", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            AdvisoryDefects: [
+                                "1.1 A registration plate: Notes here",
+                                "6.3 A hub: Second advisory note"
+                            ],
+                            AdvisoryDefectsWelsh: [
+                                "1.1 A registration plate: Notes here",
+                                "6.3 A hub: Second advisory note"
+                            ],
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS, Test, Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "AEC",
+                            Model: "RELIANCE",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        }
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    return certificateGenerationService
+                        .generatePayload(psvTestResultWithAdvisoryDefect, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+        });
+
+        context("and the test result has a defect", () => {
+            context("and the test station location is not in Wales", () => {
+                it("should return a VTP20 without calling getDefect or flattenDefects methods", async () => {
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "CVS, Test, Dev1",
+                            DateOfTheTest: "26.02.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "AEC",
+                            MinorDefects: [
+                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                            ],
+                            Model: "RELIANCE",
+                            OdometerHistoryList: [
+                                {
+                                    value: 400000,
+                                    unit: "kilometres",
+                                    date: "19.01.2019",
+                                },
+                                {
+                                    value: 390000,
+                                    unit: "kilometres",
+                                    date: "18.01.2019",
+                                },
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019",
+                                },
+                            ],
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        }
+                    };
+
+                    const getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                    const getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordResponseRwtMock) as any);
+
+                    const defectSpy = jest.spyOn(certificateGenerationService, "getDefectTranslations");
+                    const flattenSpy = jest.spyOn(certificateGenerationService, "flattenDefectsFromApi");
+
+                    return await certificateGenerationService
+                        .generatePayload(psvTestResultWithMinorDefect)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            expect(defectSpy).not.toHaveBeenCalled();
+                            expect(flattenSpy).not.toHaveBeenCalled();
+                            getTechRecordStub.restore();
+                            getTechRecordSearchStub.restore();
+                        });
+                });
+            });
+        });
+        });
+
         context("when a failing test result is read from the queue", () => {
             const event: any = {...queueEventFail};
             const testResult: any = JSON.parse(event.Records[0].body);
