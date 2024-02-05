@@ -1,21 +1,42 @@
-import { config as AWSConfig, AWSError, Lambda } from "aws-sdk";
-import { InvocationRequest } from "aws-sdk/clients/lambda";
+import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
+import {InvocationRequest} from "aws-sdk/clients/lambda";
 import S3 from "aws-sdk/clients/s3";
-import { PromiseResult } from "aws-sdk/lib/request";
+import {PromiseResult} from "aws-sdk/lib/request";
 import moment from "moment";
-import { ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, IMakeAndModel, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails } from "../models";
-import { CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES, LOCATION_ENGLISH, LOCATION_WELSH, WELSH_CERT_VEHICLES } from "../models/Enums";
-import { HTTPError } from "../models/HTTPError";
-import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Configuration } from "../utils/Configuration";
-import { LambdaService } from "./LambdaService";
-import { S3BucketService } from "./S3BucketService";
-import { ITestStation } from "../models/ITestStations";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IDefectParent } from "../models/IDefectParent";
-import { IItem } from "../models/IItem";
-import { IDefectChild } from "../models/IDefectChild";
+import {
+    ICertificatePayload,
+    IGeneratedCertificateResponse,
+    IInvokeConfig,
+    IMakeAndModel,
+    IMOTConfig,
+    IRoadworthinessCertificateData,
+    ITestResult,
+    ITestType,
+    ITrailerRegistration,
+    IWeightDetails
+} from "../models";
+import {
+    CERTIFICATE_DATA,
+    ERRORS,
+    HGV_TRL_ROADWORTHINESS_TEST_TYPES,
+    IVA_30,
+    LOCATION_ENGLISH,
+    LOCATION_WELSH,
+    TEST_RESULTS,
+    VEHICLE_TYPES,
+    WELSH_CERT_VEHICLES
+} from "../models/Enums";
+import {HTTPError} from "../models/HTTPError";
+import {ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {Service} from "../models/injector/ServiceDecorator";
+import {Configuration} from "../utils/Configuration";
+import {LambdaService} from "./LambdaService";
+import {S3BucketService} from "./S3BucketService";
+import {ITestStation} from "../models/ITestStations";
+import {IFlatDefect} from "../models/IFlatDefect";
+import {IDefectParent} from "../models/IDefectParent";
+import {IItem} from "../models/IItem";
+import {IDefectChild} from "../models/IDefectChild";
 import axiosClient from "../client/AxiosClient";
 
 /**
@@ -518,25 +539,26 @@ class CertificateGenerationService {
                 console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
                 return docGenPayloadAdr;
             case CERTIFICATE_DATA.IVA_DATA:
-                const ivaDefects: any[] = this.generateIvaDefects(testResult.testTypes.ivaDefects); // bust out logic
-                // do we need to make a call here to get make/model from the tech record?
                 const ivaFailDetailsForDocGen = {
                     SerialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
                     VehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
                     TestCategoryClass: testResult.euVehicleCategory,
-                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult) ? "Basic" : "Normal",
-                    MakeModel: "Make/Model",
-                    BodyType: "BodyType",
-                    Date: testResult.testTypes.createdAt,
-                    ReapplicationDate: this.generateReapplicationDate(testResult.testTypes.createdAt),
+                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult) ? IVA_30.BASIC : IVA_30.NORMAL,
+                    MakeModel: "Make/Model", // testResult.make + " " + testResult.model when available
+                    BodyType: "BodyType", // testResult.bodyType when available
+                    Date: moment(testResult.testTypes.createdAt).format("DD.MM.YYYY"),
+                    ReapplicationDate: moment(testResult.testTypes.createdAt)
+                        .add(6, "months")
+                        .subtract(1, "day")
+                        .format("DD.MM.YYYY"),
                     Station: testType.testStationName,
                     AdditionalDefects:
                         testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
                             ? testResult.testTypes.customDefects
-                            : "N/A",
-                    ... ivaDefects,
+                            : IVA_30.EMPTY_CUSTOM_DEFECTS,
+                    ... testResult.testTypes.ivaDefects,
                 };
-
+                console.log("CHECK HERE DOCGENPAYLOAD -> ", ivaFailDetailsForDocGen);
                 return ivaFailDetailsForDocGen;
         }
     }
@@ -555,17 +577,6 @@ class CertificateGenerationService {
             "185"
         ];
         return basicIvaTests.includes(testResult.testTypes.testTypeId);
-    }
-
-    /**
-     * Uses the createdAt value to generate and return the reapplication date string value
-     * @param createdAtDate - the date of the test
-     */
-    public generateReapplicationDate = (createdAtDate: string): string => {
-        return moment(createdAtDate)
-            .add(6, "months")
-            .subtract(1, "day")
-            .format("DD.MM.YYYY");
     }
 
     /**
@@ -997,15 +1008,6 @@ class CertificateGenerationService {
     });
     console.log(JSON.stringify(defects));
     return defects;
-  }
-
-    /**
-     * Generates an object containing iva defects for a given test type and certificate type
-     * @param testTypes
-     * @private
-     */
-  private generateIvaDefects(testTypes: any) {
-      return testTypes.ivaDefects;
   }
 
   /**

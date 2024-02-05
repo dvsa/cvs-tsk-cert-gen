@@ -163,6 +163,9 @@ interface ITestResult {
   noOfAxles: number;
   regnDate: string;
   firstUseDate: string;
+  make?: string;
+  model?: string;
+  bodyType?: string;
   testTypes: ITestType;
 }
 

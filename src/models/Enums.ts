@@ -56,6 +56,12 @@ export enum LOCATION_WELSH {
     AXLE_NUMBER = "Echelau"
 }
 
+export enum IVA_30 {
+    BASIC = "Basic",
+    NORMAL = "Normal",
+    EMPTY_CUSTOM_DEFECTS = "N/A"
+}
+
 export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {
   IDS: ["62", "63", "91", "101", "122"],
 };
