@@ -99,6 +99,7 @@ class CertificateGenerationService {
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass,
+      iva_fail: config.documentNames.iva_fail,
     };
 
     let vehicleTestRes: string;
@@ -109,6 +110,8 @@ class CertificateGenerationService {
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
+    } else if (this.isIvaTest(testResult.testTypes) && testType.testResult === "fail") {
+      vehicleTestRes = "iva_fail";
     } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
     } else {
@@ -129,6 +132,9 @@ class CertificateGenerationService {
         body: payload,
       }),
     };
+
+    // TODO remove this log after testing
+    console.log(`These are the invoke params: ${invokeParams}`);
     return this.lambdaClient
             .invoke(invokeParams)
             .then(
@@ -551,7 +557,7 @@ class CertificateGenerationService {
                         .add(6, "months")
                         .subtract(1, "day")
                         .format("DD.MM.YYYY"),
-                    Station: testType.testStationName,
+                    Station: testResult.testStationName,
                     AdditionalDefects:
                         testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
                             ? testResult.testTypes.customDefects

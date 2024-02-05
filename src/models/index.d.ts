@@ -38,6 +38,7 @@ interface IMOTConfig {
     trl_prs: "TRL_PRS.pdf";
     adr_pass: "ADR_PASS.pdf";
     rwt: "RWT.pdf;";
+    iva_fail: "IVA_30.pdf";
   };
   api_key: string;
 }
