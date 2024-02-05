@@ -26,6 +26,7 @@ export enum CERTIFICATE_DATA {
   PASS_DATA = "PASS_DATA",
   FAIL_DATA = "FAIL_DATA",
   ADR_DATA = "ADR_DATA",
+  IVA_DATA = "IVA_DATA"
 }
 
 export enum LOCATION_ENGLISH {

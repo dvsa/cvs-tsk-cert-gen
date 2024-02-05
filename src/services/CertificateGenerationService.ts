@@ -297,6 +297,7 @@ class CertificateGenerationService {
       FAIL_DATA: undefined,
       RWT_DATA: undefined,
       ADR_DATA: undefined,
+      IVA_DATA: undefined,
       Signature: {
         ImageType: "png",
         ImageData: signature,
@@ -338,6 +339,15 @@ class CertificateGenerationService {
         CERTIFICATE_DATA.ADR_DATA
       );
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
+    } else if (
+      testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
+      this.isIvaTest(testResult.testTypes)
+    ) {
+      const ivaData = await this.generateCertificateData(
+        testResult,
+        CERTIFICATE_DATA.IVA_DATA
+        );
+      payload.IVA_DATA = {...ivaData};
     } else {
       const odometerHistory =
         vehicleType === VEHICLE_TYPES.TRL
@@ -507,7 +517,55 @@ class CertificateGenerationService {
                 };
                 console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
                 return docGenPayloadAdr;
+            case CERTIFICATE_DATA.IVA_DATA:
+                const ivaDefects: any[] = this.generateIvaDefects(testResult.testTypes.ivaDefects); // bust out logic
+                // do we need to make a call here to get make/model from the tech record?
+                const ivaFailDetailsForDocGen = {
+                    SerialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
+                    VehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
+                    TestCategoryClass: testResult.euVehicleCategory,
+                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult) ? "Basic" : "Normal",
+                    MakeModel: "Make/Model",
+                    BodyType: "BodyType",
+                    Date: testResult.testTypes.createdAt,
+                    ReapplicationDate: this.generateReapplicationDate(testResult.testTypes.createdAt),
+                    Station: testType.testStationName,
+                    AdditionalDefects:
+                        testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
+                            ? testResult.testTypes.customDefects
+                            : "N/A",
+                    ... ivaDefects,
+                };
+
+                return ivaFailDetailsForDocGen;
         }
+    }
+
+    /**
+     * Returns a boolean value indicating whether the test type is a basic IVA test
+     * @param testResult - the test result
+     */
+    public isBasicIvaTest = (testResult: ITestResult): boolean => {
+        const basicIvaTests: string[] = [
+            "125",
+            "129",
+            "154",
+            "158",
+            "159",
+            "185"
+        ];
+        return basicIvaTests.includes(testResult.testTypes.testTypeId);
+    }
+
+    /**
+     * Uses the createdAt value to generate and return the reapplication date string value
+     * @param createdAtDate - the date of the test
+     */
+    public generateReapplicationDate = (createdAtDate: string): string => {
+        return moment(createdAtDate)
+            .add(6, "months")
+            .subtract(1, "day")
+            .format("DD.MM.YYYY");
     }
 
     /**
@@ -941,6 +999,15 @@ class CertificateGenerationService {
     return defects;
   }
 
+    /**
+     * Generates an object containing iva defects for a given test type and certificate type
+     * @param testTypes
+     * @private
+     */
+  private generateIvaDefects(testTypes: any) {
+      return testTypes.ivaDefects;
+  }
+
   /**
    * Returns a formatted string containing data about a given defect
    * @param defect - defect for which to generate the formatted string
@@ -1176,6 +1243,56 @@ class CertificateGenerationService {
     const adrTestTypeIds = ["50", "59", "60"];
 
     return adrTestTypeIds.includes(testType.testTypeId);
+  }
+
+    /**
+     * Returns true if testType is iva and false if not
+     * @param testType - testType which is tested
+     */
+  public isIvaTest(testType: any): boolean {
+    const ivaTestTypeIds = [
+        "125",
+        "126",
+        "128",
+        "129",
+        "130",
+        "133",
+        "134",
+        "135",
+        "136",
+        "138",
+        "139",
+        "140",
+        "153",
+        "154",
+        "158",
+        "159",
+        "161",
+        "162",
+        "163",
+        "166",
+        "167",
+        "169",
+        "170",
+        "172",
+        "173",
+        "184",
+        "185",
+        "186",
+        "187",
+        "188",
+        "189",
+        "190",
+        "191",
+        "192",
+        "193",
+        "194",
+        "195",
+        "196",
+        "197",
+    ];
+
+    return ivaTestTypeIds.includes(testType.testTypeId);
   }
 
   //#region Private Static Functions

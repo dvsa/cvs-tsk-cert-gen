@@ -98,6 +98,7 @@ interface ICertificatePayload {
   FAIL_DATA?: any;
   RWT_DATA?: any;
   ADR_DATA?: any;
+  IVA_DATA?: any;
   Signature: ISignature;
   Reissue?: IReissue;
 }
@@ -193,6 +194,8 @@ interface ITestType {
   emissionStandard: string;
   fuelType: string;
   defects: IDefect[];
+  ivaDefects?: IDefectIVA[];
+  customDefects?: string[];
 }
 
 interface IDefect {
@@ -210,6 +213,8 @@ interface IDefect {
   prs: boolean;
   prohibitionIssued: boolean;
 }
+
+type InspectionType = "basic" | "normal";
 
 interface IAdditionalInformation {
   location: ILocation;
@@ -245,6 +250,18 @@ interface IMakeAndModel {
   Model: string;
 }
 
+interface IDefectIVA {
+  sectionNumber: string;
+  sectionDescription: string;
+  rsNumber: number;
+  requiredStandard: string;
+  refCalculation: string;
+  additionalInfo: boolean;
+  inspectionTypes: InspectionType[];
+  prs: boolean;
+  additionalNotes?: string;
+}
+
 export {
   IInvokeConfig,
   IMOTConfig,
@@ -258,4 +275,5 @@ export {
   ITestType,
   ITrailerRegistration,
   IMakeAndModel,
+  IDefectIVA,
 };
