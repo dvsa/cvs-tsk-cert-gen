@@ -1,21 +1,42 @@
-import { config as AWSConfig, AWSError, Lambda } from "aws-sdk";
-import { InvocationRequest } from "aws-sdk/clients/lambda";
+import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
+import {InvocationRequest} from "aws-sdk/clients/lambda";
 import S3 from "aws-sdk/clients/s3";
-import { PromiseResult } from "aws-sdk/lib/request";
+import {PromiseResult} from "aws-sdk/lib/request";
 import moment from "moment";
-import { ICertificatePayload, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, IMakeAndModel, IRoadworthinessCertificateData, ITestResult, ITestType, ITrailerRegistration, IWeightDetails } from "../models";
-import { CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, TEST_RESULTS, VEHICLE_TYPES, LOCATION_ENGLISH, LOCATION_WELSH, WELSH_CERT_VEHICLES } from "../models/Enums";
-import { HTTPError } from "../models/HTTPError";
-import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Configuration } from "../utils/Configuration";
-import { LambdaService } from "./LambdaService";
-import { S3BucketService } from "./S3BucketService";
-import { ITestStation } from "../models/ITestStations";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IDefectParent } from "../models/IDefectParent";
-import { IItem } from "../models/IItem";
-import { IDefectChild } from "../models/IDefectChild";
+import {
+    ICertificatePayload,
+    IGeneratedCertificateResponse,
+    IInvokeConfig,
+    IMakeAndModel,
+    IMOTConfig,
+    IRoadworthinessCertificateData,
+    ITestResult,
+    ITestType,
+    ITrailerRegistration,
+    IWeightDetails
+} from "../models";
+import {
+    CERTIFICATE_DATA,
+    ERRORS,
+    HGV_TRL_ROADWORTHINESS_TEST_TYPES,
+    IVA_30,
+    LOCATION_ENGLISH,
+    LOCATION_WELSH,
+    TEST_RESULTS,
+    VEHICLE_TYPES,
+    WELSH_CERT_VEHICLES
+} from "../models/Enums";
+import {HTTPError} from "../models/HTTPError";
+import {ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {Service} from "../models/injector/ServiceDecorator";
+import {Configuration} from "../utils/Configuration";
+import {LambdaService} from "./LambdaService";
+import {S3BucketService} from "./S3BucketService";
+import {ITestStation} from "../models/ITestStations";
+import {IFlatDefect} from "../models/IFlatDefect";
+import {IDefectParent} from "../models/IDefectParent";
+import {IItem} from "../models/IItem";
+import {IDefectChild} from "../models/IDefectChild";
 import axiosClient from "../client/AxiosClient";
 
 /**
@@ -78,6 +99,7 @@ class CertificateGenerationService {
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass,
+      iva_fail: config.documentNames.iva_fail,
     };
 
     let vehicleTestRes: string;
@@ -88,6 +110,8 @@ class CertificateGenerationService {
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
+    } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
+      vehicleTestRes = "iva_fail";
     } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
     } else {
@@ -108,6 +132,9 @@ class CertificateGenerationService {
         body: payload,
       }),
     };
+
+    // TODO remove this log after testing
+    console.log(`These are the invoke params: ${JSON.stringify(invokeParams)}`);
     return this.lambdaClient
             .invoke(invokeParams)
             .then(
@@ -297,6 +324,7 @@ class CertificateGenerationService {
       FAIL_DATA: undefined,
       RWT_DATA: undefined,
       ADR_DATA: undefined,
+      IVA_DATA: undefined,
       Signature: {
         ImageType: "png",
         ImageData: signature,
@@ -338,6 +366,15 @@ class CertificateGenerationService {
         CERTIFICATE_DATA.ADR_DATA
       );
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
+    } else if (
+      testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
+      this.isIvaTest(testResult.testTypes.testTypeId)
+    ) {
+      const ivaData = await this.generateCertificateData(
+        testResult,
+        CERTIFICATE_DATA.IVA_DATA
+        );
+      payload.IVA_DATA = {...ivaData};
     } else {
       const odometerHistory =
         vehicleType === VEHICLE_TYPES.TRL
@@ -507,7 +544,46 @@ class CertificateGenerationService {
                 };
                 console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
                 return docGenPayloadAdr;
+            case CERTIFICATE_DATA.IVA_DATA:
+                const ivaFailDetailsForDocGen = {
+                    SerialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
+                    VehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
+                    TestCategoryClass: testResult.euVehicleCategory,
+                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
+                    Make: testResult.make,
+                    Model: testResult.model,
+                    BodyType: testResult.bodyType,
+                    Date: moment(testResult.testTypes.createdAt).format("DD.MM.YYYY"),
+                    ReapplicationDate: moment(testResult.testTypes.createdAt)
+                        .add(6, "months")
+                        .subtract(1, "day")
+                        .format("DD.MM.YYYY"),
+                    Station: testResult.testStationName,
+                    AdditionalDefects:
+                        testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
+                            ? testResult.testTypes.customDefects
+                            : IVA_30.EMPTY_CUSTOM_DEFECTS,
+                    IvaDefects: testResult.testTypes.ivaDefects,
+                };
+                console.log("CHECK HERE DOCGENPAYLOAD -> ", ivaFailDetailsForDocGen);
+                return ivaFailDetailsForDocGen;
         }
+    }
+
+    /**
+     * Returns a boolean value indicating whether the test type is a basic IVA test
+     * @param testTypeId - the test type ID on the test result
+     */
+    public isBasicIvaTest = (testTypeId: string): boolean => {
+        const basicIvaTests: string[] = [
+            "125",
+            "129",
+            "154",
+            "158",
+            "159",
+            "185"
+        ];
+        return basicIvaTests.includes(testTypeId);
     }
 
     /**
@@ -1176,6 +1252,56 @@ class CertificateGenerationService {
     const adrTestTypeIds = ["50", "59", "60"];
 
     return adrTestTypeIds.includes(testType.testTypeId);
+  }
+
+    /**
+     * Returns true if testType is iva and false if not
+     * @param testType - testType which is tested
+     */
+  public isIvaTest(testTypeId: string): boolean {
+    const ivaTestTypeIds = [
+        "125",
+        "126",
+        "128",
+        "129",
+        "130",
+        "133",
+        "134",
+        "135",
+        "136",
+        "138",
+        "139",
+        "140",
+        "153",
+        "154",
+        "158",
+        "159",
+        "161",
+        "162",
+        "163",
+        "166",
+        "167",
+        "169",
+        "170",
+        "172",
+        "173",
+        "184",
+        "185",
+        "186",
+        "187",
+        "188",
+        "189",
+        "190",
+        "191",
+        "192",
+        "193",
+        "194",
+        "195",
+        "196",
+        "197",
+    ];
+
+    return ivaTestTypeIds.includes(testTypeId);
   }
 
   //#region Private Static Functions
