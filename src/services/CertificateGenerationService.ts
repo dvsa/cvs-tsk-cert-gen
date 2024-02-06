@@ -134,7 +134,7 @@ class CertificateGenerationService {
     };
 
     // TODO remove this log after testing
-    console.log(`These are the invoke params: ${invokeParams}`);
+    console.log(`These are the invoke params: ${JSON.stringify(invokeParams)}`);
     return this.lambdaClient
             .invoke(invokeParams)
             .then(
