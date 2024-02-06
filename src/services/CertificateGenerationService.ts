@@ -110,7 +110,7 @@ class CertificateGenerationService {
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
-    } else if (this.isIvaTest(testResult.testTypes) && testType.testResult === "fail") {
+    } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
       vehicleTestRes = "iva_fail";
     } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
@@ -368,7 +368,7 @@ class CertificateGenerationService {
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
     } else if (
       testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
-      this.isIvaTest(testResult.testTypes)
+      this.isIvaTest(testResult.testTypes.testTypeId)
     ) {
       const ivaData = await this.generateCertificateData(
         testResult,
@@ -549,7 +549,7 @@ class CertificateGenerationService {
                     SerialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
                     VehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
                     TestCategoryClass: testResult.euVehicleCategory,
-                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult) ? IVA_30.BASIC : IVA_30.NORMAL,
+                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
                     MakeModel: "Make/Model", // testResult.make + " " + testResult.model when available
                     BodyType: "BodyType", // testResult.bodyType when available
                     Date: moment(testResult.testTypes.createdAt).format("DD.MM.YYYY"),
@@ -571,9 +571,9 @@ class CertificateGenerationService {
 
     /**
      * Returns a boolean value indicating whether the test type is a basic IVA test
-     * @param testResult - the test result
+     * @param testTypeId - the test type ID on the test result
      */
-    public isBasicIvaTest = (testResult: ITestResult): boolean => {
+    public isBasicIvaTest = (testTypeId: string): boolean => {
         const basicIvaTests: string[] = [
             "125",
             "129",
@@ -582,7 +582,7 @@ class CertificateGenerationService {
             "159",
             "185"
         ];
-        return basicIvaTests.includes(testResult.testTypes.testTypeId);
+        return basicIvaTests.includes(testTypeId);
     }
 
     /**
@@ -1257,7 +1257,7 @@ class CertificateGenerationService {
      * Returns true if testType is iva and false if not
      * @param testType - testType which is tested
      */
-  public isIvaTest(testType: any): boolean {
+  public isIvaTest(testTypeId: string): boolean {
     const ivaTestTypeIds = [
         "125",
         "126",
@@ -1300,7 +1300,7 @@ class CertificateGenerationService {
         "197",
     ];
 
-    return ivaTestTypeIds.includes(testType.testTypeId);
+    return ivaTestTypeIds.includes(testTypeId);
   }
 
   //#region Private Static Functions
