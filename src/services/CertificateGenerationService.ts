@@ -553,8 +553,8 @@ class CertificateGenerationService {
                     Make: testResult.make,
                     Model: testResult.model,
                     BodyType: testResult.bodyType,
-                    Date: moment(testResult.testTypes.createdAt).format("DD.MM.YYYY"),
-                    ReapplicationDate: moment(testResult.testTypes.createdAt)
+                    Date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD.MM.YYYY"),
+                    ReapplicationDate: moment(testResult.testTypes.testTypeStartTimestamp)
                         .add(6, "months")
                         .subtract(1, "day")
                         .format("DD.MM.YYYY"),

@@ -2287,7 +2287,7 @@ describe("cert-gen", () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
-                                Date: "26.01.2024",
+                                Date: "28.11.2023",
                                 IvaDefects: [
                                     {
                                         additionalInfo: true,
@@ -2306,7 +2306,7 @@ describe("cert-gen", () => {
                                 ],
                                 Make: "some make",
                                 Model: "some model",
-                                ReapplicationDate: "25.07.2024",
+                                ReapplicationDate: "27.05.2024",
                                 SerialNumber: "C456789",
                                 Station: "Abshire-Kub",
                                 TestCategoryBasicNormal: "Basic",
@@ -2331,7 +2331,7 @@ describe("cert-gen", () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
-                                Date: "26.01.2024",
+                                Date: "28.11.2023",
                                 IvaDefects: [
                                     {
                                         additionalInfo: true,
@@ -2363,7 +2363,7 @@ describe("cert-gen", () => {
                                 ],
                                 Make: "some make",
                                 Model: "some model",
-                                ReapplicationDate: "25.07.2024",
+                                ReapplicationDate: "27.05.2024",
                                 SerialNumber: "C456789",
                                 Station: "Abshire-Kub",
                                 TestCategoryBasicNormal: "Basic",
@@ -2391,7 +2391,7 @@ describe("cert-gen", () => {
                                     "Some other custom defect two"
                                 ],
                                 BodyType: "some bodyType",
-                                Date: "26.01.2024",
+                                Date: "28.11.2023",
                                 IvaDefects: [
                                     {
                                         additionalInfo: true,
@@ -2410,7 +2410,7 @@ describe("cert-gen", () => {
                                 ],
                                 Make: "some make",
                                 Model: "some model",
-                                ReapplicationDate: "25.07.2024",
+                                ReapplicationDate: "27.05.2024",
                                 SerialNumber: "C456789",
                                 Station: "Abshire-Kub",
                                 TestCategoryBasicNormal: "Basic",
@@ -2435,7 +2435,7 @@ describe("cert-gen", () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
-                                Date: "26.01.2024",
+                                Date: "28.11.2023",
                                 IvaDefects: [
                                     {
                                         additionalInfo: false,
@@ -2453,7 +2453,7 @@ describe("cert-gen", () => {
                                 ],
                                 Make: "some make",
                                 Model: "some model",
-                                ReapplicationDate: "25.07.2024",
+                                ReapplicationDate: "27.05.2024",
                                 SerialNumber: "C456789",
                                 Station: "Abshire-Kub",
                                 TestCategoryBasicNormal: "Basic",
@@ -2478,7 +2478,7 @@ describe("cert-gen", () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
-                                Date: "26.01.2024",
+                                Date: "28.11.2023",
                                 IvaDefects: [
                                     {
                                         additionalInfo: true,
@@ -2497,7 +2497,7 @@ describe("cert-gen", () => {
                                 ],
                                 Make: "some make",
                                 Model: "some model",
-                                ReapplicationDate: "25.07.2024",
+                                ReapplicationDate: "27.05.2024",
                                 SerialNumber: "C456789",
                                 Station: "Abshire-Kub",
                                 TestCategoryBasicNormal: "Normal",
