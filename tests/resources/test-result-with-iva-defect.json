@@ -28,6 +28,12 @@
   "testStationPNumber": "09-4129632",
   "testStationType": "gvts",
   "testStatus": "submitted",
+  "make": "make real",
+  "model": "model real" ,
+  "bodyType": {
+    "code": "some code",
+    "description": "body real"
+  },
   "testTypes": [
     {
       "additionalCommentsForAbandon": null,

@@ -166,7 +166,7 @@ interface ITestResult {
   firstUseDate: string;
   make?: string;
   model?: string;
-  bodyType?: string;
+  bodyType?: IBodyTypeModel;
   testTypes: ITestType;
 }
 
@@ -264,6 +264,11 @@ interface IDefectIVA {
   inspectionTypes: InspectionType[];
   prs: boolean;
   additionalNotes?: string;
+}
+
+interface IBodyTypeModel {
+  code: string;
+  description: string;
 }
 
 export {

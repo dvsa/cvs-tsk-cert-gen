@@ -552,7 +552,7 @@ class CertificateGenerationService {
                     TestCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
                     Make: testResult.make,
                     Model: testResult.model,
-                    BodyType: testResult.bodyType,
+                    BodyType: testResult.bodyType?.description,
                     Date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD.MM.YYYY"),
                     ReapplicationDate: moment(testResult.testTypes.testTypeStartTimestamp)
                         .add(6, "months")
