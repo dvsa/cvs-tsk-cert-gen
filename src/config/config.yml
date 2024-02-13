@@ -72,6 +72,7 @@ mot:
     trl_prs: TRL_PRS.pdf;
     rwt: RWT.pdf
     adr_pass: ADR_PASS.pdf;
+    iva_fail: IVA30.pdf;
   documentDir: CVS
 welsh:
   secret_key:

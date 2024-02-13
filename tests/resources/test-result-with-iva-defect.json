@@ -1,0 +1,98 @@
+{
+  "vin": "DP76UMK4DQLTOT400011",
+  "trailerId": null,
+  "numberOfSeats": null,
+  "vehicleSize": null,
+  "deletionFlag": false,
+  "testResultId": "9a19aa3a-523c-4572-b410-d4ef4de00001",
+  "countryOfRegistration": "gb",
+  "createdAt": "2024-02-06T09:00:42.905Z",
+  "createdById": "1",
+  "createdByName": "Dorel",
+  "euVehicleCategory": "m1",
+  "noOfAxles": 2,
+  "numberOfWheelsDriven": null,
+  "odometerReading": 3432,
+  "odometerReadingUnits": "kilometres",
+  "preparerId": "No preparer ID given",
+  "preparerName": null,
+  "reasonForCancellation": null,
+  "reasonForCreation": "Test conducted",
+  "systemNumber": "XYZEP5JYOMM00011",
+  "testEndTimestamp": "2023-11-28T10:19:00.103Z",
+  "testerEmailAddress": "dorel.popescu@dvsagov.uk",
+  "testerName": "Dorel",
+  "testerStaffId": "1",
+  "testStartTimestamp": "2023-11-28T10:18:25.963Z",
+  "testStationName": "Abshire-Kub",
+  "testStationPNumber": "09-4129632",
+  "testStationType": "gvts",
+  "testStatus": "submitted",
+  "make": "make real",
+  "model": "model real" ,
+  "bodyType": {
+    "code": "some code",
+    "description": "body real"
+  },
+  "testTypes": [
+    {
+      "additionalCommentsForAbandon": null,
+      "additionalNotesRecorded": null,
+      "certificateNumber": "4353",
+      "createdAt": "2024-02-06T09:00:42.905Z",
+      "customDefects": [
+      ],
+      "defects": [
+      ],
+      "emissionStandard": null,
+      "fuelType": null,
+      "ivaDefects": [
+        {
+          "additionalInfo": true,
+          "additionalNotes": "The exhaust was held on with blue tac",
+          "inspectionTypes": [
+            "normal",
+            "basic"
+          ],
+          "prs": false,
+          "refCalculation": "1.1",
+          "requiredStandard": "The exhaust must be securely mounted",
+          "rsNumber": 1,
+          "sectionDescription": "Noise",
+          "sectionNumber": "01"
+        }
+      ],
+      "lastUpdatedAt": "2024-02-06T09:00:42.905Z",
+      "modificationTypeUsed": null,
+      "modType": null,
+      "name": "Specialist test",
+      "particulateTrapFitted": null,
+      "particulateTrapSerialNumber": null,
+      "prohibitionIssued": false,
+      "reasonForAbandoning": null,
+      "secondaryCertificateNumber": null,
+      "smokeTestKLimitApplied": null,
+      "testCode": "yf4",
+      "testExpiryDate": null,
+      "testNumber": "W01A00532",
+      "testResult": "fail",
+      "testTypeClassification": "IVA With Certificate",
+      "testTypeEndTimestamp": "2023-11-28T10:19:00.907Z",
+      "testTypeId": "125",
+      "testTypeName": "Basic IVA inspection",
+      "testTypeStartTimestamp": "2023-11-28T10:18:44.191Z"
+    }
+  ],
+  "testVersion": "current",
+  "vehicleClass": {
+    "code": "v",
+    "description": "heavy goods vehicle"
+  },
+  "vehicleConfiguration": null,
+  "vehicleId": "SJG1011",
+  "vehicleSubclass": [
+    "a"
+  ],
+  "vehicleType": "car",
+  "vrm": "SJG1011"
+}
