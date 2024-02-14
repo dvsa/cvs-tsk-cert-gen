@@ -198,7 +198,7 @@ interface ITestType {
   emissionStandard: string;
   fuelType: string;
   defects: IDefect[];
-  ivaDefects?: IDefectIVA[];
+  requiredStandards?: IRequiredStandard[];
   customDefects?: string[];
 }
 
@@ -254,7 +254,7 @@ interface IMakeAndModel {
   Model: string;
 }
 
-interface IDefectIVA {
+interface IRequiredStandard {
   sectionNumber: string;
   sectionDescription: string;
   rsNumber: number;
@@ -284,5 +284,5 @@ export {
   ITestType,
   ITrailerRegistration,
   IMakeAndModel,
-  IDefectIVA,
+  IRequiredStandard,
 };

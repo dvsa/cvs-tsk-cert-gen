@@ -46,7 +46,7 @@
       ],
       "emissionStandard": null,
       "fuelType": null,
-      "ivaDefects": [
+      "requiredStandards": [
         {
           "additionalInfo": true,
           "additionalNotes": "The exhaust was held on with blue tac",

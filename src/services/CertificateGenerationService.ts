@@ -563,7 +563,7 @@ class CertificateGenerationService {
                         testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
                             ? testResult.testTypes.customDefects
                             : IVA_30.EMPTY_CUSTOM_DEFECTS,
-                    IvaDefects: testResult.testTypes.ivaDefects,
+                    RequiredStandards: testResult.testTypes.requiredStandards,
                 };
                 console.log("CHECK HERE DOCGENPAYLOAD -> ", ivaFailDetailsForDocGen);
                 return ivaFailDetailsForDocGen;

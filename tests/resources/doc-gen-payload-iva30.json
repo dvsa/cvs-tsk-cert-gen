@@ -12,7 +12,7 @@
       "ReapplicationDate": "27.05.2024",
       "Station": "Abshire-Kub",
       "AdditionalDefects": "N/A",
-      "IvaDefects":[
+      "RequiredStandards":[
         {
           "prs": false,
           "requiredStandard": "The exhaust must be securely mounted",
@@ -45,7 +45,7 @@
       "ReapplicationDate": "27.05.2024",
       "Station": "Abshire-Kub",
       "AdditionalDefects": "N/A",
-      "IvaDefects":[
+      "RequiredStandards":[
         {
           "prs": false,
           "requiredStandard": "The exhaust must be securely mounted",
