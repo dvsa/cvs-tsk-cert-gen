@@ -2283,12 +2283,12 @@ describe("cert-gen", () => {
                 context(
                     "and test-result is an IVA test with an ivaDefect and a test status of fail",
                     () => {
-                        it("should return Certificate Data with ivaDefects in IVA_DATA", async () => {
+                        it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
                                 Date: "28.11.2023",
-                                IvaDefects: [
+                                RequiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2325,14 +2325,14 @@ describe("cert-gen", () => {
 
                 const testResult2: any = JSON.parse(event.Records[4].body);
                 context(
-                    "and test-result is an IVA test with multiple ivaDefects and a test status of fail",
+                    "and test-result is an IVA test with multiple requiredStandards and a test status of fail",
                     () => {
-                        it("should return Certificate Data with ivaDefects in IVA_DATA", async () => {
+                        it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
                                 Date: "28.11.2023",
-                                IvaDefects: [
+                                RequiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2384,7 +2384,7 @@ describe("cert-gen", () => {
                 context(
                     "and test-result is an IVA test with an IVA defect and custom defect, with a test status of fail",
                     () => {
-                        it("should return Certificate Data with ivaDefects and additionalDefects in IVA_DATA", async () => {
+                        it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
                                 AdditionalDefects: [
                                     "Some custom defect one",
@@ -2392,7 +2392,7 @@ describe("cert-gen", () => {
                                 ],
                                 BodyType: "some bodyType",
                                 Date: "28.11.2023",
-                                IvaDefects: [
+                                RequiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2431,12 +2431,12 @@ describe("cert-gen", () => {
                 context(
                     "and trailer test-result is an IVA test with an IVA defect, with a test status of fail",
                     () => {
-                        it("return Certificate Data with ivaDefects and additionalDefects in IVA_DATA", async () => {
+                        it("return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
                                 Date: "28.11.2023",
-                                IvaDefects: [
+                                RequiredStandards: [
                                     {
                                         additionalInfo: false,
                                         additionalNotes: null,
@@ -2474,12 +2474,12 @@ describe("cert-gen", () => {
                 context(
                     "and test-result is a Normal IVA test with an ivaDefect and a test status of fail",
                     () => {
-                        it("should return Certificate Data with ivaDefects in IVA_DATA", async () => {
+                        it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
                                 AdditionalDefects: "N/A",
                                 BodyType: "some bodyType",
                                 Date: "28.11.2023",
-                                IvaDefects: [
+                                RequiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
