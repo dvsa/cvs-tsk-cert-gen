@@ -2285,10 +2285,15 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                AdditionalDefects: "N/A",
-                                BodyType: "some bodyType",
-                                Date: "28.11.2023",
-                                RequiredStandards: [
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: ""
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2304,14 +2309,16 @@ describe("cert-gen", () => {
                                         sectionNumber: "01"
                                     }
                                 ],
-                                Make: "some make",
-                                Model: "some model",
-                                ReapplicationDate: "27.05.2024",
-                                SerialNumber: "C456789",
-                                Station: "Abshire-Kub",
-                                TestCategoryBasicNormal: "Basic",
-                                TestCategoryClass: "m1",
-                                VehicleTrailerNrNo: "C456789"
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765",
                             };
 
                             return await certificateGenerationService
@@ -2329,10 +2336,15 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                AdditionalDefects: "N/A",
-                                BodyType: "some bodyType",
-                                Date: "28.11.2023",
-                                RequiredStandards: [
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2361,14 +2373,16 @@ describe("cert-gen", () => {
                                         sectionNumber: "01"
                                     },
                                 ],
-                                Make: "some make",
-                                Model: "some model",
-                                ReapplicationDate: "27.05.2024",
-                                SerialNumber: "C456789",
-                                Station: "Abshire-Kub",
-                                TestCategoryBasicNormal: "Basic",
-                                TestCategoryClass: "m1",
-                                VehicleTrailerNrNo: "C456789"
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
                             };
 
                             return await certificateGenerationService
@@ -2386,13 +2400,13 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                AdditionalDefects: [
+                                additionalDefects: [
                                     "Some custom defect one",
                                     "Some other custom defect two"
                                 ],
-                                BodyType: "some bodyType",
-                                Date: "28.11.2023",
-                                RequiredStandards: [
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2408,14 +2422,16 @@ describe("cert-gen", () => {
                                         sectionNumber: "01"
                                     }
                                 ],
-                                Make: "some make",
-                                Model: "some model",
-                                ReapplicationDate: "27.05.2024",
-                                SerialNumber: "C456789",
-                                Station: "Abshire-Kub",
-                                TestCategoryBasicNormal: "Basic",
-                                TestCategoryClass: "m1",
-                                VehicleTrailerNrNo: "C456789"
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
                             };
 
                             return await certificateGenerationService
@@ -2433,10 +2449,15 @@ describe("cert-gen", () => {
                     () => {
                         it("return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                AdditionalDefects: "N/A",
-                                BodyType: "some bodyType",
-                                Date: "28.11.2023",
-                                RequiredStandards: [
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
                                     {
                                         additionalInfo: false,
                                         additionalNotes: null,
@@ -2451,14 +2472,16 @@ describe("cert-gen", () => {
                                         sectionNumber: "01"
                                     }
                                 ],
-                                Make: "some make",
-                                Model: "some model",
-                                ReapplicationDate: "27.05.2024",
-                                SerialNumber: "C456789",
-                                Station: "Abshire-Kub",
-                                TestCategoryBasicNormal: "Basic",
-                                TestCategoryClass: "m1",
-                                VehicleTrailerNrNo: "C456789"
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
                             };
 
                             return await certificateGenerationService
@@ -2476,10 +2499,15 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                AdditionalDefects: "N/A",
-                                BodyType: "some bodyType",
-                                Date: "28.11.2023",
-                                RequiredStandards: [
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
                                     {
                                         additionalInfo: true,
                                         additionalNotes: "The exhaust was held on with blue tac",
@@ -2495,14 +2523,16 @@ describe("cert-gen", () => {
                                         sectionNumber: "01"
                                     }
                                 ],
-                                Make: "some make",
-                                Model: "some model",
-                                ReapplicationDate: "27.05.2024",
-                                SerialNumber: "C456789",
-                                Station: "Abshire-Kub",
-                                TestCategoryBasicNormal: "Normal",
-                                TestCategoryClass: "m1",
-                                VehicleTrailerNrNo: "C456789"
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Normal",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
                             };
 
                             return await certificateGenerationService

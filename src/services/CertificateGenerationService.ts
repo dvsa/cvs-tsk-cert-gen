@@ -546,24 +546,26 @@ class CertificateGenerationService {
                 return docGenPayloadAdr;
             case CERTIFICATE_DATA.IVA_DATA:
                 const ivaFailDetailsForDocGen = {
-                    SerialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
-                    VehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
-                    TestCategoryClass: testResult.euVehicleCategory,
-                    TestCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
-                    Make: testResult.make,
-                    Model: testResult.model,
-                    BodyType: testResult.bodyType?.description,
-                    Date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD.MM.YYYY"),
-                    ReapplicationDate: moment(testResult.testTypes.testTypeStartTimestamp)
+                    vin: testResult.vin,
+                    serialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
+                    vehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
+                    testCategoryClass: testResult.euVehicleCategory,
+                    testCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
+                    make: testResult.make,
+                    model: testResult.model,
+                    bodyType: testResult.bodyType?.description,
+                    date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
+                    testerName: testResult.testerName,
+                    reapplicationDate: moment(testResult.testTypes.testTypeStartTimestamp)
                         .add(6, "months")
                         .subtract(1, "day")
-                        .format("DD.MM.YYYY"),
-                    Station: testResult.testStationName,
-                    AdditionalDefects:
+                        .format("DD/MM/YYYY"),
+                    station: testResult.testStationName,
+                    additionalDefects:
                         testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
                             ? testResult.testTypes.customDefects
-                            : IVA_30.EMPTY_CUSTOM_DEFECTS,
-                    RequiredStandards: testResult.testTypes.requiredStandards,
+                            : [{ defectName: IVA_30.EMPTY_CUSTOM_DEFECTS, defectNotes: ""}],
+                    requiredStandards: testResult.testTypes.requiredStandards
                 };
                 console.log("CHECK HERE DOCGENPAYLOAD -> ", ivaFailDetailsForDocGen);
                 return ivaFailDetailsForDocGen;
