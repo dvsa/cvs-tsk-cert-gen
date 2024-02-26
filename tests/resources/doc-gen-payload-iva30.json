@@ -1,18 +1,25 @@
 [
   {
     "IVA_DATA": {
-      "SerialNumber": "C456789",
-      "VehicleTrailerNrNo": "C456789",
-      "TestCategoryClass": "m1",
-      "TestCategoryBasicNormal": "Basic",
-      "Make": "some make",
-      "Model": "some model",
-      "BodyType": "some bodyType",
-      "Date": "28.11.2023",
-      "ReapplicationDate": "27.05.2024",
-      "Station": "Abshire-Kub",
-      "AdditionalDefects": "N/A",
-      "RequiredStandards":[
+      "serialNumber": "C456789",
+      "vehicleTrailerNrNo": "C456789",
+      "testCategoryClass": "m1",
+      "testerName": "CVS Dev1",
+      "testCategoryBasicNormal": "Basic",
+      "make": "some make",
+      "model": "some model",
+      "bodyType": "some bodyType",
+      "date": "28/11/2023",
+      "reapplicationDate": "27/05/2024",
+      "station": "Abshire-Kub",
+      "vin": "T12876765",
+      "additionalDefects": [
+        {
+          "defectName": "N/A",
+          "defectNotes": ""
+        }
+      ],
+      "requiredStandards":[
         {
           "prs": false,
           "requiredStandard": "The exhaust must be securely mounted",
@@ -34,18 +41,25 @@
   },
   {
     "IVA_DATA": {
-      "SerialNumber": "C456789",
-      "VehicleTrailerNrNo": "C456789",
-      "TestCategoryClass": "m1",
-      "TestCategoryBasicNormal": "Basic",
-      "Make": "some make",
-      "Model": "some model",
-      "BodyType": "some bodyType",
-      "Date": "28.11.2023",
-      "ReapplicationDate": "27.05.2024",
-      "Station": "Abshire-Kub",
-      "AdditionalDefects": "N/A",
-      "RequiredStandards":[
+      "serialNumber": "C456789",
+      "vehicleTrailerNrNo": "C456789",
+      "testCategoryClass": "m1",
+      "testerName": "CVS Dev1",
+      "testCategoryBasicNormal": "Basic",
+      "make": "some make",
+      "model": "some model",
+      "bodyType": "some bodyType",
+      "date": "28/11/2023",
+      "reapplicationDate": "27/05/2024",
+      "station": "Abshire-Kub",
+      "vin": "T12876765",
+      "additionalDefects": [
+        {
+          "defectName": "N/A",
+          "defectNotes": ""
+        }
+      ],
+      "requiredStandards":[
         {
           "prs": false,
           "requiredStandard": "The exhaust must be securely mounted",
