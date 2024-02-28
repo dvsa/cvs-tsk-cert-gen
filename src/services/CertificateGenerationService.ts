@@ -132,9 +132,6 @@ class CertificateGenerationService {
         body: payload,
       }),
     };
-
-    // TODO remove this log after testing
-    console.log(`These are the invoke params: ${JSON.stringify(invokeParams)}`);
     return this.lambdaClient
             .invoke(invokeParams)
             .then(
@@ -567,7 +564,6 @@ class CertificateGenerationService {
                             : [{ defectName: IVA_30.EMPTY_CUSTOM_DEFECTS, defectNotes: ""}],
                     requiredStandards: testResult.testTypes.requiredStandards
                 };
-                console.log("CHECK HERE DOCGENPAYLOAD -> ", ivaFailDetailsForDocGen);
                 return ivaFailDetailsForDocGen;
         }
     }
