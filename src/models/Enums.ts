@@ -26,6 +26,7 @@ export enum CERTIFICATE_DATA {
   PASS_DATA = "PASS_DATA",
   FAIL_DATA = "FAIL_DATA",
   ADR_DATA = "ADR_DATA",
+  IVA_DATA = "IVA_DATA"
 }
 
 export enum LOCATION_ENGLISH {
@@ -53,6 +54,12 @@ export enum LOCATION_WELSH {
     ROW_NUMBER = "Rhesi",
     SEAT_NUMBER = "Seddi",
     AXLE_NUMBER = "Echelau"
+}
+
+export enum IVA_30 {
+    BASIC = "Basic",
+    NORMAL = "Normal",
+    EMPTY_CUSTOM_DEFECTS = "N/A"
 }
 
 export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {

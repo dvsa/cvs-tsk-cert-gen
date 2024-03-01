@@ -16,6 +16,7 @@ import queueEventFail from "../resources/queue-event-fail.json";
 import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import docGenRwt from "../resources/doc-gen-payload-rwt.json";
+import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
 
 const sandbox = sinon.createSandbox();
 import {cloneDeep} from "lodash";
@@ -2273,6 +2274,277 @@ describe("cert-gen", () => {
                 );
             });
         });
+
+        context("when a failing test result is read from the queue", () => {
+            const event: any = {...queueEventFail};
+            const testResult1: any = JSON.parse(event.Records[3].body);
+
+            context("and certificate Data is generated", () => {
+                context(
+                    "and test-result is an IVA test with an ivaDefect and a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: ""
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The exhaust was held on with blue tac",
+                                        inspectionTypes: [
+                                            "normal",
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        refCalculation: "1.1",
+                                        requiredStandard: "The exhaust must be securely mounted",
+                                        rsNumber: 1,
+                                        sectionDescription: "Noise",
+                                        sectionNumber: "01"
+                                    }
+                                ],
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765",
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult1, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult2: any = JSON.parse(event.Records[4].body);
+                context(
+                    "and test-result is an IVA test with multiple requiredStandards and a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The exhaust was held on with blue tac",
+                                        inspectionTypes: [
+                                            "normal",
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        refCalculation: "1.1",
+                                        requiredStandard: "The exhaust must be securely mounted",
+                                        rsNumber: 1,
+                                        sectionDescription: "Noise",
+                                        sectionNumber: "01"
+                                    },
+                                    {
+                                        additionalInfo: false,
+                                        additionalNotes: null,
+                                        inspectionTypes: [
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        refCalculation: "1.5",
+                                        requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                        rsNumber: 5,
+                                        sectionDescription: "Noise",
+                                        sectionNumber: "01"
+                                    },
+                                ],
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult2, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult3: any = JSON.parse(event.Records[5].body);
+                context(
+                    "and test-result is an IVA test with an IVA defect and custom defect, with a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                additionalDefects: [
+                                    "Some custom defect one",
+                                    "Some other custom defect two"
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The exhaust was held on with blue tac",
+                                        inspectionTypes: [
+                                            "normal",
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        refCalculation: "1.1",
+                                        requiredStandard: "The exhaust must be securely mounted",
+                                        rsNumber: 1,
+                                        sectionDescription: "Noise",
+                                        sectionNumber: "01"
+                                    }
+                                ],
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult3, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult4: any = JSON.parse(event.Records[6].body);
+                context(
+                    "and trailer test-result is an IVA test with an IVA defect, with a test status of fail",
+                    () => {
+                        it("return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: false,
+                                        additionalNotes: null,
+                                        inspectionTypes: [
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        refCalculation: "1.5",
+                                        requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                        rsNumber: 5,
+                                        sectionDescription: "Noise",
+                                        sectionNumber: "01"
+                                    }
+                                ],
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult4, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult5: any = JSON.parse(event.Records[7].body);
+                context(
+                    "and test-result is a Normal IVA test with an ivaDefect and a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                bodyType: "some bodyType",
+                                date: "28/11/2023",
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The exhaust was held on with blue tac",
+                                        inspectionTypes: [
+                                            "normal",
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        refCalculation: "1.1",
+                                        requiredStandard: "The exhaust must be securely mounted",
+                                        rsNumber: 1,
+                                        sectionDescription: "Noise",
+                                        sectionNumber: "01"
+                                    }
+                                ],
+                                make: "some make",
+                                model: "some model",
+                                reapplicationDate: "27/05/2024",
+                                serialNumber: "C456789",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Normal",
+                                testCategoryClass: "m1",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "C456789",
+                                vin: "T12876765"
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult5, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+            });
+        });
     });
 
     context("CertGenService for HGV", () => {
@@ -4392,6 +4664,107 @@ describe("cert-gen", () => {
                             getTechRecordSearchStub.restore();
                         });
                     });
+                });
+            }
+        );
+    });
+
+    context("CertGenService for IVA 30 test", () => {
+        context(
+            "when a failing test result for basic IVA test is read from the queue",
+            () => {
+                const event: any = cloneDeep(queueEventFail);
+                const testResult: ITestResult = JSON.parse(event.Records[3].body); // retrieve record
+                context("and a payload is generated", () => {
+                    context("and no signatures were found in the bucket", () => {
+                        it("should return an IVA_30 payload without signature", async () => {
+                            const expectedResult: ICertificatePayload = cloneDeep(
+                                docGenIva30[0]
+                            );
+
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(testResult)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+
+                    context("and signatures were found in the bucket", () => {
+                        it("should return an IVA 30 payload with signature", async () => {
+                            const expectedResult: ICertificatePayload = cloneDeep(
+                                docGenIva30[1]
+                            );
+
+                            // Add a new signature
+                            S3BucketMockService.buckets.push({
+                                bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                files: ["1.base64"],
+                            });
+
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(testResult)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    S3BucketMockService.buckets.pop();
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+
+                    context(
+                        "and the generated payload is used to call the MOT service",
+                        () => {
+                            it("successfully generate a certificate", async () => {
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                expect.assertions(3);
+                                return await certificateGenerationService
+                                    .generateCertificate(testResult)
+                                    .then((response: any) => {
+                                        expect(response.fileName).toEqual(
+                                            "W01A00310_T12876765.pdf"
+                                        );
+                                        expect(response.certificateType).toEqual("IVA30");
+                                        expect(response.certificateOrder).toEqual({
+                                            current: 2,
+                                            total: 2,
+                                        });
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        }
+                    );
                 });
             }
         );
