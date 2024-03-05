@@ -373,19 +373,19 @@ class CertificateGenerationService {
       this.isIvaTest(testResult.testTypes.testTypeId)
     ) {
       const ivaData = await this.generateCertificateData(
-        testResult,
-        CERTIFICATE_DATA.IVA_DATA
-        );
+      testResult,
+      CERTIFICATE_DATA.IVA_DATA
+      );
       payload.IVA_DATA = {...ivaData};
     } else if (
-        testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
-        this.isMsvaTest(testResult.testTypes.testTypeId)
+      testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
+      this.isMsvaTest(testResult.testTypes.testTypeId)
     ) {
-        const msvaData = await this.generateCertificateData(
-            testResult,
-            CERTIFICATE_DATA.MSVA_DATA
-        );
-        payload.MSVA_DATA = {...msvaData};
+      const msvaData = await this.generateCertificateData(
+      testResult,
+      CERTIFICATE_DATA.MSVA_DATA
+      );
+      payload.MSVA_DATA = {...msvaData};
     } else {
       const odometerHistory =
         vehicleType === VEHICLE_TYPES.TRL
