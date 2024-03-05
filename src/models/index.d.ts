@@ -39,6 +39,7 @@ interface IMOTConfig {
     adr_pass: "ADR_PASS.pdf";
     rwt: "RWT.pdf;";
     iva_fail: "IVA30.pdf";
+    msva_fail: "MSVA30.pdf";
   };
   api_key: string;
 }
@@ -100,6 +101,7 @@ interface ICertificatePayload {
   RWT_DATA?: any;
   ADR_DATA?: any;
   IVA_DATA?: any;
+  MSVA_DATA?: any;
   Signature: ISignature;
   Reissue?: IReissue;
 }
@@ -199,7 +201,7 @@ interface ITestType {
   fuelType: string;
   defects: IDefect[];
   requiredStandards?: IRequiredStandard[];
-  customDefects?: string[];
+  customDefects?: ICustomDefect[];
 }
 
 interface IDefect {
@@ -271,6 +273,12 @@ interface IBodyTypeModel {
   description: string;
 }
 
+interface ICustomDefect {
+  referenceNumber?: string;
+  defectName: string;
+  defectNotes: string;
+}
+
 export {
   IInvokeConfig,
   IMOTConfig,
@@ -285,4 +293,6 @@ export {
   ITrailerRegistration,
   IMakeAndModel,
   IRequiredStandard,
+  IBodyTypeModel,
+  ICustomDefect,
 };

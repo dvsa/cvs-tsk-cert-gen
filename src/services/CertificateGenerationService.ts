@@ -5,6 +5,7 @@ import {PromiseResult} from "aws-sdk/lib/request";
 import moment from "moment";
 import {
     ICertificatePayload,
+    ICustomDefect,
     IGeneratedCertificateResponse,
     IInvokeConfig,
     IMakeAndModel,
@@ -100,18 +101,21 @@ class CertificateGenerationService {
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass,
       iva_fail: config.documentNames.iva_fail,
+      msva_fail: config.documentNames.msva_fail,
     };
 
     let vehicleTestRes: string;
     if (
       CertificateGenerationService.isRoadworthinessTestType(testType.testTypeId)
     ) {
-      // CVSB-7677 is roadworthisness test
+      // CVSB-7677 is road-worthiness test
       vehicleTestRes = "rwt";
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
     } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
       vehicleTestRes = "iva_fail";
+    } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
+      vehicleTestRes = "msva_fail";
     } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
     } else {
@@ -322,6 +326,7 @@ class CertificateGenerationService {
       RWT_DATA: undefined,
       ADR_DATA: undefined,
       IVA_DATA: undefined,
+      MSVA_DATA: undefined,
       Signature: {
         ImageType: "png",
         ImageData: signature,
@@ -372,6 +377,15 @@ class CertificateGenerationService {
         CERTIFICATE_DATA.IVA_DATA
         );
       payload.IVA_DATA = {...ivaData};
+    } else if (
+        testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
+        this.isMsvaTest(testResult.testTypes.testTypeId)
+    ) {
+        const msvaData = await this.generateCertificateData(
+            testResult,
+            CERTIFICATE_DATA.MSVA_DATA
+        );
+        payload.MSVA_DATA = {...msvaData};
     } else {
       const odometerHistory =
         vehicleType === VEHICLE_TYPES.TRL
@@ -553,19 +567,53 @@ class CertificateGenerationService {
                     bodyType: testResult.bodyType?.description,
                     date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
                     testerName: testResult.testerName,
-                    reapplicationDate: moment(testResult.testTypes.testTypeStartTimestamp)
-                        .add(6, "months")
-                        .subtract(1, "day")
-                        .format("DD/MM/YYYY"),
+                    reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
                     station: testResult.testStationName,
-                    additionalDefects:
-                        testResult.testTypes.customDefects && testResult.testTypes.customDefects.length > 0
-                            ? testResult.testTypes.customDefects
-                            : [{ defectName: IVA_30.EMPTY_CUSTOM_DEFECTS, defectNotes: ""}],
+                    additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
                     requiredStandards: testResult.testTypes.requiredStandards
                 };
                 return ivaFailDetailsForDocGen;
+            case CERTIFICATE_DATA.MSVA_DATA:
+                const msvaFailDetailsForDocGen = {
+                    vin: testResult.vin,
+                    serialNumber: testResult.vrm,
+                    vehicleZNumber: testResult.vrm,
+                    make: testResult.make,
+                    model: testResult.model,
+                    type: testResult.vehicleType,
+                    testerName: testResult.testerName,
+                    date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
+                    retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+                    station: testResult.testStationName,
+                    additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
+                    requiredStandards: testResult.testTypes.requiredStandards
+                };
+                console.log("CHECK HERE DOCGENPAYLOAD -> ", msvaFailDetailsForDocGen);
+                return msvaFailDetailsForDocGen;
         }
+    }
+
+    /**
+     * Formats the additional defects for IVA and MSVA test based on whether custom defects is populated
+     * @param customDefects - the custom defects for the test
+     */
+    public formatVehicleApprovalAdditionalDefects = (customDefects: ICustomDefect[] | undefined): ICustomDefect[] | undefined => {
+        const defaultCustomDefect: ICustomDefect = {
+            defectName: IVA_30.EMPTY_CUSTOM_DEFECTS,
+            defectNotes: ""
+        };
+        return (customDefects && customDefects.length > 0) ? customDefects : [defaultCustomDefect];
+    }
+
+    /**
+     * Calculates the retest date for an IVA or MSVA test
+     * @param testTypeStartTimestamp - the test start timestamp of the test
+     */
+    public calculateVehicleApprovalRetestDate = (testTypeStartTimestamp: string): string => {
+        return moment(testTypeStartTimestamp)
+            .add(6, "months")
+            .subtract(1, "day")
+            .format("DD/MM/YYYY");
     }
 
     /**
@@ -1252,10 +1300,10 @@ class CertificateGenerationService {
     return adrTestTypeIds.includes(testType.testTypeId);
   }
 
-    /**
-     * Returns true if testType is iva and false if not
-     * @param testType - testType which is tested
-     */
+  /**
+   * Returns true if testType is iva and false if not
+   * @param testTypeId - test type id which is being tested
+   */
   public isIvaTest(testTypeId: string): boolean {
     const ivaTestTypeIds = [
         "125",
@@ -1263,13 +1311,6 @@ class CertificateGenerationService {
         "128",
         "129",
         "130",
-        "133",
-        "134",
-        "135",
-        "136",
-        "138",
-        "139",
-        "140",
         "153",
         "154",
         "158",
@@ -1277,12 +1318,6 @@ class CertificateGenerationService {
         "161",
         "162",
         "163",
-        "166",
-        "167",
-        "169",
-        "170",
-        "172",
-        "173",
         "184",
         "185",
         "186",
@@ -1301,6 +1336,30 @@ class CertificateGenerationService {
 
     return ivaTestTypeIds.includes(testTypeId);
   }
+
+  /**
+   * Returns true if testType is msva and false if not
+   * @param testTypeId - test type id which is being tested
+   */
+  public isMsvaTest(testTypeId: string): boolean {
+      const msvaTestTypeIds = [
+          "133",
+          "134",
+          "135",
+          "136",
+          "138",
+          "139",
+          "140",
+          "166",
+          "167",
+          "169",
+          "170",
+          "172",
+          "173"
+      ];
+
+      return msvaTestTypeIds.includes(testTypeId);
+    }
 
   //#region Private Static Functions
 

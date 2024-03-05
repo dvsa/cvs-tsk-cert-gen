@@ -17,6 +17,7 @@ import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import docGenRwt from "../resources/doc-gen-payload-rwt.json";
 import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
+import docGenMsva30 from "../resources/doc-gen-payload-msva30.json";
 
 const sandbox = sinon.createSandbox();
 import {cloneDeep} from "lodash";
@@ -2281,7 +2282,7 @@ describe("cert-gen", () => {
 
             context("and certificate Data is generated", () => {
                 context(
-                    "and test-result is an IVA test with an ivaDefect and a test status of fail",
+                    "and test-result is an IVA test with a required standard and a test status of fail",
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
@@ -2332,7 +2333,7 @@ describe("cert-gen", () => {
 
                 const testResult2: any = JSON.parse(event.Records[4].body);
                 context(
-                    "and test-result is an IVA test with multiple requiredStandards and a test status of fail",
+                    "and test-result is an IVA test with multiple required standards and a test status of fail",
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
@@ -2396,7 +2397,7 @@ describe("cert-gen", () => {
 
                 const testResult3: any = JSON.parse(event.Records[5].body);
                 context(
-                    "and test-result is an IVA test with an IVA defect and custom defect, with a test status of fail",
+                    "and test-result is an IVA test with a required standard and custom defect, with a test status of fail",
                     () => {
                         it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
@@ -2445,7 +2446,7 @@ describe("cert-gen", () => {
 
                 const testResult4: any = JSON.parse(event.Records[6].body);
                 context(
-                    "and trailer test-result is an IVA test with an IVA defect, with a test status of fail",
+                    "and trailer test-result is an IVA test with a required standard, with a test status of fail",
                     () => {
                         it("return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
@@ -2495,7 +2496,7 @@ describe("cert-gen", () => {
 
                 const testResult5: any = JSON.parse(event.Records[7].body);
                 context(
-                    "and test-result is a Normal IVA test with an ivaDefect and a test status of fail",
+                    "and test-result is a Normal IVA test with a required standard and a test status of fail",
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
@@ -2537,6 +2538,155 @@ describe("cert-gen", () => {
 
                             return await certificateGenerationService
                                 .generateCertificateData(testResult5, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult6: any = JSON.parse(event.Records[8].body);
+                context(
+                    "and test-result is a MSVA test with a required standard and a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
+                            const expectedResult: any = {
+                                vin: "P0123010956789",
+                                serialNumber: "ZX345CV",
+                                vehicleZNumber: "ZX345CV",
+                                make: null,
+                                model: null,
+                                type: "motorcycle",
+                                testerName: "CVS Dev1",
+                                date: "04/03/2024",
+                                retestDate: "03/09/2024",
+                                station: "Abshire-Kub",
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The bulbs were slightly worn",
+                                        inspectionTypes: [],
+                                        prs: false,
+                                        refCalculation: "6.2a",
+                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                        rsNumber: 2,
+                                        sectionDescription: "Lighting",
+                                        sectionNumber: "06"
+                                    }
+                                ],
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult6, "MSVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult7: any = JSON.parse(event.Records[9].body);
+                context(
+                    "and test-result is a MSVA test with multiple required standards and a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
+                            const expectedResult: any = {
+                                vin: "P0123010956789",
+                                serialNumber: "ZX345CV",
+                                vehicleZNumber: "ZX345CV",
+                                make: null,
+                                model: null,
+                                type: "motorcycle",
+                                testerName: "CVS Dev1",
+                                date: "04/03/2024",
+                                retestDate: "03/09/2024",
+                                station: "Abshire-Kub",
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The bulbs were slightly worn",
+                                        inspectionTypes: [],
+                                        prs: false,
+                                        refCalculation: "6.2a",
+                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                        rsNumber: 2,
+                                        sectionDescription: "Lighting",
+                                        sectionNumber: "06"
+                                    },
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "Switch was missing",
+                                        inspectionTypes: [],
+                                        prs: false,
+                                        refCalculation: "6.3a",
+                                        requiredStandard: "Any light switch; missing",
+                                        rsNumber: 3,
+                                        sectionDescription: "Lighting",
+                                        sectionNumber: "06"
+                                    },
+                                ],
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult7, "MSVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+                    }
+                );
+
+                const testResult8: any = JSON.parse(event.Records[10].body);
+                context(
+                    "and test-result is a MSVA test with a required standard and custom defect, with a test status of fail",
+                    () => {
+                        it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                vin: "P0123010956789",
+                                serialNumber: "ZX345CV",
+                                vehicleZNumber: "ZX345CV",
+                                make: null,
+                                model: null,
+                                type: "motorcycle",
+                                testerName: "CVS Dev1",
+                                date: "04/03/2024",
+                                retestDate: "03/09/2024",
+                                station: "Abshire-Kub",
+                                additionalDefects: [
+                                    {
+                                        defectName: "Rust",
+                                        defectNotes: "slight rust around the wheel arch",
+                                    }
+                                ],
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The bulbs were slightly worn",
+                                        inspectionTypes: [],
+                                        prs: false,
+                                        refCalculation: "6.2a",
+                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                        rsNumber: 2,
+                                        sectionDescription: "Lighting",
+                                        sectionNumber: "6"
+                                    }
+                                ],
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult8, "MSVA_DATA")
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
                                 });
@@ -4755,6 +4905,107 @@ describe("cert-gen", () => {
                                             "W01A00310_T12876765.pdf"
                                         );
                                         expect(response.certificateType).toEqual("IVA30");
+                                        expect(response.certificateOrder).toEqual({
+                                            current: 2,
+                                            total: 2,
+                                        });
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        }
+                    );
+                });
+            }
+        );
+    });
+
+    context("CertGenService for MSVA 30 test", () => {
+        context(
+            "when a failing test result MSVA test is read from the queue",
+            () => {
+                const event: any = cloneDeep(queueEventFail);
+                const testResult: ITestResult = JSON.parse(event.Records[8].body); // retrieve record
+                context("and a payload is generated", () => {
+                    context("and no signatures were found in the bucket", () => {
+                        it("should return an MSVA_30 payload without signature", async () => {
+                            const expectedResult: ICertificatePayload = cloneDeep(
+                                docGenMsva30[0]
+                            );
+
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(testResult)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+
+                    context("and signatures were found in the bucket", () => {
+                        it("should return a MSVA 30 payload with signature", async () => {
+                            const expectedResult: ICertificatePayload = cloneDeep(
+                                docGenMsva30[1]
+                            );
+
+                            // Add a new signature
+                            S3BucketMockService.buckets.push({
+                                bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                files: ["1.base64"],
+                            });
+
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(testResult)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    S3BucketMockService.buckets.pop();
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+
+                    context(
+                        "and the generated payload is used to call the MOT service",
+                        () => {
+                            it("successfully generate a certificate", async () => {
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                expect.assertions(3);
+                                return await certificateGenerationService
+                                    .generateCertificate(testResult)
+                                    .then((response: any) => {
+                                        expect(response.fileName).toEqual(
+                                            "W01A00128_P0123010956789.pdf"
+                                        );
+                                        expect(response.certificateType).toEqual("MSVA30");
                                         expect(response.certificateOrder).toEqual({
                                             current: 2,
                                             total: 2,
