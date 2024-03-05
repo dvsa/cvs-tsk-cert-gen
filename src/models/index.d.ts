@@ -100,6 +100,7 @@ interface ICertificatePayload {
   RWT_DATA?: any;
   ADR_DATA?: any;
   IVA_DATA?: any;
+  MSVA_DATA?: any;
   Signature: ISignature;
   Reissue?: IReissue;
 }

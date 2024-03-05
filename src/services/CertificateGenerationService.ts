@@ -111,7 +111,9 @@ class CertificateGenerationService {
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = "adr_pass";
     } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
-      vehicleTestRes = "iva_fail";
+        vehicleTestRes = "iva_fail";
+    } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
+        vehicleTestRes = "msva_fail";
     } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
     } else {
@@ -316,16 +318,17 @@ class CertificateGenerationService {
     }
 
     let payload: ICertificatePayload = {
-      Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
-      DATA: undefined,
-      FAIL_DATA: undefined,
-      RWT_DATA: undefined,
-      ADR_DATA: undefined,
-      IVA_DATA: undefined,
-      Signature: {
-        ImageType: "png",
-        ImageData: signature,
-      },
+        Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
+        DATA: undefined,
+        FAIL_DATA: undefined,
+        RWT_DATA: undefined,
+        ADR_DATA: undefined,
+        IVA_DATA: undefined,
+        MSVA_DATA: undefined,
+        Signature: {
+            ImageType: "png",
+            ImageData: signature,
+        },
     };
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
@@ -372,6 +375,10 @@ class CertificateGenerationService {
         CERTIFICATE_DATA.IVA_DATA
         );
       payload.IVA_DATA = {...ivaData};
+    } else if (  testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
+        this.isMsvaTest(testResult.testTypes.testTypeId)) {
+        const msvaData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.MSVA_DATA);
+        payload.MSVA_DATA = {...msvaData};
     } else {
       const odometerHistory =
         vehicleType === VEHICLE_TYPES.TRL
@@ -582,6 +589,11 @@ class CertificateGenerationService {
             "185"
         ];
         return basicIvaTests.includes(testTypeId);
+    }
+
+    public isMsvaIvaTest = (testTypeId: string): boolean => {
+        const msvaIvaTests: string[] = ["133", "134", "135", "136", "138", "139", "140", "166", "167", "169", "170", "172", "173"];
+        return msvaIvaTests.includes(testTypeId);
     }
 
     /**
@@ -1302,7 +1314,14 @@ class CertificateGenerationService {
     return ivaTestTypeIds.includes(testTypeId);
   }
 
-  //#region Private Static Functions
+    /**
+     * Checks whether the test type provided is msva
+     * param testType - test type being tested
+     * returns boolean true if test type is msva otherwise false
+     */
+    public isMsvaTest = (testTypeId: string): boolean =>
+        ["133", "134", "135", "136", "138", "139", "140", "166", "167", "169", "170", "172", "173"].includes(testTypeId)
+
 
   /**
    * Returns true if testType is roadworthiness test for HGV or TRL and false if not

@@ -4770,6 +4770,108 @@ describe("cert-gen", () => {
         );
     });
 
+    context("CertGenService for MSVA 30 test", () => {
+        context(
+            "when a failing test result for basic MSVA test is read from the queue",
+            () => {
+                const event: any = cloneDeep(queueEventFail);
+                const testResult: ITestResult = JSON.parse(event.Records[3].body);
+
+                context("and a payload is generated", () => {
+                    context("and no signatures were found in the bucket", () => {
+                        it("should return an MSVA_30 payload without signature", async () => {
+                            const expectedResult: ICertificatePayload = cloneDeep(
+                                docGenIva30[0]
+                            );
+
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(testResult)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+
+                    context("and signatures were found in the bucket", () => {
+                        it("should return an MSVA 30 payload with signature", async () => {
+                            const expectedResult: ICertificatePayload = cloneDeep(
+                                docGenIva30[1]
+                            );
+
+                            // Add a new signature
+                            S3BucketMockService.buckets.push({
+                                bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                files: ["1.base64"],
+                            });
+
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(testResult)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    S3BucketMockService.buckets.pop();
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+
+                    context(
+                        "and the generated payload is used to call the MOT service",
+                        () => {
+                            it("successfully generate a certificate", async () => {
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                expect.assertions(3);
+                                return await certificateGenerationService
+                                    .generateCertificate(testResult)
+                                    .then((response: any) => {
+                                        expect(response.fileName).toEqual(
+                                            "W01A00310_T12876765.pdf"
+                                        );
+                                        expect(response.certificateType).toEqual("IVA30");
+                                        expect(response.certificateOrder).toEqual({
+                                            current: 2,
+                                            total: 2,
+                                        });
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        }
+                    );
+                });
+            }
+        );
+    });
+
     context("CertificateUploadService", () => {
         context("when a valid event is received", () => {
             const event: any = JSON.parse(
