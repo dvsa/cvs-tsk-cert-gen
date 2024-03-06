@@ -588,7 +588,6 @@ class CertificateGenerationService {
                     additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
                     requiredStandards: testResult.testTypes.requiredStandards
                 };
-                console.log("CHECK HERE DOCGENPAYLOAD -> ", msvaFailDetailsForDocGen);
                 return msvaFailDetailsForDocGen;
         }
     }
