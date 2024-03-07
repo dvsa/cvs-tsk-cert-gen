@@ -1,25 +1,25 @@
 {
-  "vin": "DP76UMK4DQLTOT400011",
+  "vin": "P0123010956789",
   "trailerId": null,
   "numberOfSeats": null,
   "vehicleSize": null,
   "deletionFlag": false,
   "testResultId": "9a19aa3a-523c-4572-b410-d4ef4de00001",
   "countryOfRegistration": "gb",
-  "createdAt": "2024-02-06T09:00:42.905Z",
+  "createdAt": "2024-03-04T09:04:54.474Z",
   "createdById": "1",
   "createdByName": "Dorel",
-  "euVehicleCategory": "m1",
+  "euVehicleCategory": "l1e-a",
   "noOfAxles": 2,
-  "numberOfWheelsDriven": null,
-  "odometerReading": 3432,
-  "odometerReadingUnits": "kilometres",
+  "numberOfWheelsDriven": 2,
+  "odometerReading": null,
+  "odometerReadingUnits": null,
   "preparerId": "No preparer ID given",
   "preparerName": null,
   "reasonForCancellation": null,
   "reasonForCreation": "Test conducted",
-  "systemNumber": "XYZEP5JYOMM00011",
-  "testEndTimestamp": "2023-11-28T10:19:00.103Z",
+  "systemNumber": "1100077",
+  "testEndTimestamp": "2024-03-04T09:04:52.911Z",
   "testerEmailAddress": "dorel.popescu@dvsagov.uk",
   "testerName": "Dorel",
   "testerStaffId": "1",
@@ -28,18 +28,18 @@
   "testStationPNumber": "09-4129632",
   "testStationType": "gvts",
   "testStatus": "submitted",
-  "make": "make real",
-  "model": "model real",
+  "make": null,
+  "model": null,
   "bodyType": {
-    "code": "some code",
-    "description": "body real"
+    "code": "x",
+    "description": null
   },
   "testTypes": [
     {
       "additionalCommentsForAbandon": null,
       "additionalNotesRecorded": null,
-      "certificateNumber": "4353",
-      "createdAt": "2024-02-06T09:00:42.905Z",
+      "certificateNumber": null,
+      "createdAt": "2024-03-04T09:04:54.474Z",
       "customDefects": [
       ],
       "defects": [
@@ -49,20 +49,18 @@
       "requiredStandards": [
         {
           "additionalInfo": true,
-          "additionalNotes": "The exhaust was held on with blue tac",
+          "additionalNotes": "Some additional notes",
           "inspectionTypes": [
-            "normal",
-            "basic"
           ],
           "prs": false,
-          "refCalculation": "1.1",
-          "requiredStandard": "The exhaust must be securely mounted",
-          "rsNumber": 1,
-          "sectionDescription": "Noise",
-          "sectionNumber": "01"
+          "refCalculation": "6.2a",
+          "requiredStandard": "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+          "rsNumber": 2,
+          "sectionDescription": "Lighting",
+          "sectionNumber": "6"
         }
       ],
-      "lastUpdatedAt": "2024-02-06T09:00:42.905Z",
+      "lastUpdatedAt": "2024-03-04T09:04:54.474Z",
       "modificationTypeUsed": null,
       "modType": null,
       "name": "Specialist test",
@@ -72,27 +70,24 @@
       "reasonForAbandoning": null,
       "secondaryCertificateNumber": null,
       "smokeTestKLimitApplied": null,
-      "testCode": "yf4",
+      "testCode": "ea1",
       "testExpiryDate": null,
-      "testNumber": "W01A00532",
+      "testNumber": "W01A00128",
       "testResult": "fail",
-      "testTypeClassification": "IVA With Certificate",
+      "testTypeClassification": "MSVA With Certificate",
       "testTypeEndTimestamp": "2023-11-28T10:19:00.907Z",
-      "testTypeId": "125",
-      "testTypeName": "Basic IVA inspection",
-      "testTypeStartTimestamp": "2023-11-28T10:18:44.191Z"
+      "testTypeId": "133",
+      "testTypeName": "Full MSVA moped vehicle inspection",
+      "testTypeStartTimestamp": "2024-03-04T09:04:17.635Z"
     }
   ],
   "testVersion": "current",
   "vehicleClass": {
-    "code": "v",
-    "description": "heavy goods vehicle"
+    "code": "1",
+    "description": "motorbikes up to 200cc"
   },
-  "vehicleConfiguration": null,
-  "vehicleId": "SJG1011",
-  "vehicleSubclass": [
-    "a"
-  ],
-  "vehicleType": "car",
-  "vrm": "SJG1011"
+  "vehicleConfiguration": "rigid",
+  "vehicleId": "ZX345CV",
+  "vehicleType": "motorcycle",
+  "vrm": "ZX345CV"
 }
