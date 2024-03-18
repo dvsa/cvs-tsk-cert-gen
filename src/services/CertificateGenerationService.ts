@@ -18,15 +18,19 @@ import {
   IWeightDetails
 } from "../models";
 import {
+  ADR_TEST,
+  AVAILABLE_WELSH,
+  BASIC_IVA_TEST,
   CERTIFICATE_DATA,
   ERRORS,
   HGV_TRL_ROADWORTHINESS_TEST_TYPES,
+  IVA30_TEST,
   IVA_30,
   LOCATION_ENGLISH,
   LOCATION_WELSH,
+  MSVA30_TEST,
   TEST_RESULTS,
-  VEHICLE_TYPES,
-  WELSH_CERT_VEHICLES
+  VEHICLE_TYPES
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
 import { IDefectChild } from "../models/IDefectChild";
@@ -93,10 +97,12 @@ class CertificateGenerationService {
       hgv_pass: config.documentNames.vtg5,
       hgv_pass_bilingual: config.documentNames.vtg5_bilingual,
       hgv_fail: config.documentNames.vtg30,
+      hgv_fail_bilingual: config.documentNames.vtg30_bilingual,
       hgv_prs: config.documentNames.hgv_prs,
       trl_pass: config.documentNames.vtg5a,
       trl_pass_bilingual: config.documentNames.vtg5a_bilingual,
       trl_fail: config.documentNames.vtg30,
+      trl_fail_bilingual: config.documentNames.vtg30_bilingual,
       trl_prs: config.documentNames.trl_prs,
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass,
@@ -116,7 +122,7 @@ class CertificateGenerationService {
       vehicleTestRes = "iva_fail";
     } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
       vehicleTestRes = "msva_fail";
-    } else if (WELSH_CERT_VEHICLES.TYPES.includes(testResult.vehicleType) && testType.testResult === "pass" && isTestStationWelsh) {
+    } else if (this.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && isTestStationWelsh) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
     } else {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
@@ -413,7 +419,8 @@ class CertificateGenerationService {
       if (testTypes.testResult !== TEST_RESULTS.PASS) {
         const failData = await this.generateCertificateData(
           testResult,
-          CERTIFICATE_DATA.FAIL_DATA
+          CERTIFICATE_DATA.FAIL_DATA,
+          isWelsh
         );
         payload.FAIL_DATA = {
           ...failData,
@@ -447,7 +454,7 @@ class CertificateGenerationService {
             case CERTIFICATE_DATA.PASS_DATA:
             case CERTIFICATE_DATA.FAIL_DATA:
                 const defects: any = await this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, isWelsh);
-                return {
+                const payload = {
                     TestNumber: testType.testNumber,
                     TestStationPNumber: testResult.testStationPNumber,
                     TestStationName: testResult.testStationName,
@@ -613,22 +620,6 @@ class CertificateGenerationService {
             .add(6, "months")
             .subtract(1, "day")
             .format("DD/MM/YYYY");
-    }
-
-    /**
-     * Returns a boolean value indicating whether the test type is a basic IVA test
-     * @param testTypeId - the test type ID on the test result
-     */
-    public isBasicIvaTest = (testTypeId: string): boolean => {
-        const basicIvaTests: string[] = [
-            "125",
-            "129",
-            "154",
-            "158",
-            "159",
-            "185"
-        ];
-        return basicIvaTests.includes(testTypeId);
     }
 
     /**
@@ -1010,6 +1001,9 @@ class CertificateGenerationService {
       PRSDefects: [],
       MinorDefects: [],
       AdvisoryDefects: [],
+      DangerousDefectsWelsh: [],
+      MajorDefectsWelsh: [],
+      PRSDefectsWelsh: [],
       MinorDefectsWelsh: [],
       AdvisoryDefectsWelsh: [],
     };
@@ -1024,6 +1018,12 @@ class CertificateGenerationService {
             defects.PRSDefects.push(this.formatDefect(defect));
           } else if (testTypes.testResult === "fail") {
             defects.DangerousDefects.push(this.formatDefect(defect));
+            // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
+            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+              defects.DangerousDefectsWelsh.push(
+                  this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
+              );
+            }
           }
           break;
         case "major":
@@ -1034,11 +1034,17 @@ class CertificateGenerationService {
             defects.PRSDefects.push(this.formatDefect(defect));
           } else if (testTypes.testResult === "fail") {
             defects.MajorDefects.push(this.formatDefect(defect));
+              // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
+            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+                defects.MajorDefectsWelsh.push(
+                    this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
+                );
+            }
           }
           break;
         case "minor":
           defects.MinorDefects.push(this.formatDefect(defect));
-          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
+          if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
             );
@@ -1046,7 +1052,7 @@ class CertificateGenerationService {
           break;
         case "advisory":
           defects.AdvisoryDefects.push(this.formatDefect(defect));
-          if (testTypes.testResult === TEST_RESULTS.PASS && isWelsh && WELSH_CERT_VEHICLES.TYPES.includes(vehicleType)) {
+          if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
           break;
@@ -1060,6 +1066,15 @@ class CertificateGenerationService {
     });
     console.log(JSON.stringify(defects));
     return defects;
+  }
+
+    /**
+     * Check that the test result and vehicle type are a valid combination and bilingual certificate is available
+     * @param vehicleType - the vehicle type from the test result
+     * @param testResult - the result of the test
+     */
+  public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => {
+      return AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
   }
 
   /**
@@ -1294,9 +1309,15 @@ class CertificateGenerationService {
    * @param testType - testType which is tested
    */
   public isTestTypeAdr(testType: any): boolean {
-    const adrTestTypeIds = ["50", "59", "60"];
+    return ADR_TEST.IDS.includes(testType.testTypeId);
+  }
 
-    return adrTestTypeIds.includes(testType.testTypeId);
+  /**
+   * Returns a boolean value indicating whether the test type is a basic IVA test
+   * @param testTypeId - the test type ID on the test result
+   */
+  public isBasicIvaTest = (testTypeId: string): boolean => {
+      return BASIC_IVA_TEST.IDS.includes(testTypeId);
   }
 
   /**
@@ -1304,36 +1325,7 @@ class CertificateGenerationService {
    * @param testTypeId - test type id which is being tested
    */
   public isIvaTest(testTypeId: string): boolean {
-    const ivaTestTypeIds = [
-        "125",
-        "126",
-        "128",
-        "129",
-        "130",
-        "153",
-        "154",
-        "158",
-        "159",
-        "161",
-        "162",
-        "163",
-        "184",
-        "185",
-        "186",
-        "187",
-        "188",
-        "189",
-        "190",
-        "191",
-        "192",
-        "193",
-        "194",
-        "195",
-        "196",
-        "197",
-    ];
-
-    return ivaTestTypeIds.includes(testTypeId);
+    return IVA30_TEST.IDS.includes(testTypeId);
   }
 
   /**
@@ -1341,24 +1333,8 @@ class CertificateGenerationService {
    * @param testTypeId - test type id which is being tested
    */
   public isMsvaTest(testTypeId: string): boolean {
-      const msvaTestTypeIds = [
-          "133",
-          "134",
-          "135",
-          "136",
-          "138",
-          "139",
-          "140",
-          "166",
-          "167",
-          "169",
-          "170",
-          "172",
-          "173"
-      ];
-
-      return msvaTestTypeIds.includes(testTypeId);
-    }
+      return MSVA30_TEST.IDS.includes(testTypeId);
+  }
 
   //#region Private Static Functions
 
