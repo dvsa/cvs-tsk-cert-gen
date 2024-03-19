@@ -280,6 +280,15 @@ interface ICustomDefect {
   defectNotes: string;
 }
 
+interface IFeatureFlags {
+  welshTranslation: {
+    enabled: boolean;
+    translatePassTestResult: boolean;
+    translateFailTestResult: boolean;
+    translatePrsTestResult: boolean;
+  };
+}
+
 export {
   IInvokeConfig,
   IMOTConfig,
@@ -296,4 +305,5 @@ export {
   IRequiredStandard,
   IBodyTypeModel,
   ICustomDefect,
+  IFeatureFlags
 };

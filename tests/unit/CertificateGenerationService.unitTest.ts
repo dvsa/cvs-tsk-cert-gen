@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+const mockGetProfile = jest.fn();
+
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import sinon from "sinon";
 import techRecordResp from "../resources/tech-records-response.json";
@@ -25,7 +28,14 @@ import {Configuration} from "../../src/utils/Configuration";
 import { ITestStation } from "../../src/models/ITestStations";
 import { IDefectParent } from "../../src/models/IDefectParent";
 import { HTTPError } from "../../src/models/HTTPError";
+import queueEventPRS from "../resources/queue-event-prs.json";
+import queueEventPass from "../resources/queue-event-pass.json";
+import queueEventFail from "../resources/queue-event-fail.json";
 import Axios from "axios";
+
+jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+  getProfile: mockGetProfile
+}));
 
 describe("Certificate Generation Service", () => {
   const sandbox = sinon.createSandbox();
@@ -38,8 +48,8 @@ describe("Certificate Generation Service", () => {
       it("should return the record & only invoke the LambdaService once", async () => {
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new Lambda())
+            null as any,
+            new LambdaService(new Lambda())
         );
         const getTechRecordSearchStub = sandbox
             .stub(certGenSvc, "callSearchTechRecords")
@@ -55,177 +65,177 @@ describe("Certificate Generation Service", () => {
           systemNumber: "12345678",
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-          testResultMock
+            testResultMock
         );
-        expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
+        expect(makeAndModel).toEqual({Make: "STANLEY", Model: "AUTOTRL"});
         getTechRecordStub.restore();
         getTechRecordSearchStub.restore();
       });
     });
 
     context(
-      "when given a systemNumber  with no matching record and a vin with matching record",
-      () => {
-        it("should return the record & invoke the LambdaService twice", async () => {
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
-          );
+        "when given a systemNumber  with no matching record and a vin with matching record",
+        () => {
+          it("should return the record & invoke the LambdaService twice", async () => {
+            // @ts-ignore
+            const certGenSvc = new CertificateGenerationService(
+                null as any,
+                new LambdaService(new Lambda())
+            );
 
-          const getTechRecordSearchStub = sandbox
-              .stub(certGenSvc, "callSearchTechRecords")
-              .resolves(techRecordsRwtSearch);
+            const getTechRecordSearchStub = sandbox
+                .stub(certGenSvc, "callSearchTechRecords")
+                .resolves(techRecordsRwtSearch);
 
 
-          const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-              .stub(certGenSvc, "callGetTechRecords")
-              .resolves((techRecordResponseRwtMock) as any);
+            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+            const getTechRecordStub = sandbox
+                .stub(certGenSvc, "callGetTechRecords")
+                .resolves((techRecordResponseRwtMock) as any);
 
-          const testResultMock = {
-            systemNumber: "134567889",
-            vin: "abc123",
-          };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
-          );
-          expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
-          getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
-        });
-      }
+            const testResultMock = {
+              systemNumber: "134567889",
+              vin: "abc123",
+            };
+            const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+                testResultMock
+            );
+            expect(makeAndModel).toEqual({Make: "STANLEY", Model: "AUTOTRL"});
+            getTechRecordStub.restore();
+            getTechRecordSearchStub.restore();
+          });
+        }
     );
 
     context(
-      "when given a vin with no matching record but a matching partialVin",
-      () => {
-        it("should return the record & invoke the LambdaService twice", async () => {
-          const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
-            .onFirstCall()
-            .resolves(AWSReject("no"))
-            .onSecondCall()
-            .resolves(AWSResolve(JSON.stringify(techRecordResp)));
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
-          );
-          const getTechRecordSearchStub = sandbox
-              .stub(certGenSvc, "callSearchTechRecords")
-              .resolves(techRecordsRwtSearch);
+        "when given a vin with no matching record but a matching partialVin",
+        () => {
+          it("should return the record & invoke the LambdaService twice", async () => {
+            const LambdaStub = sandbox
+                .stub(LambdaService.prototype, "invoke")
+                .onFirstCall()
+                .resolves(AWSReject("no"))
+                .onSecondCall()
+                .resolves(AWSResolve(JSON.stringify(techRecordResp)));
+            // @ts-ignore
+            const certGenSvc = new CertificateGenerationService(
+                null as any,
+                new LambdaService(new Lambda())
+            );
+            const getTechRecordSearchStub = sandbox
+                .stub(certGenSvc, "callSearchTechRecords")
+                .resolves(techRecordsRwtSearch);
 
 
-          const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-              .stub(certGenSvc, "callGetTechRecords")
-              .resolves((techRecordResponseRwtMock) as any);
+            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+            const getTechRecordStub = sandbox
+                .stub(certGenSvc, "callGetTechRecords")
+                .resolves((techRecordResponseRwtMock) as any);
 
-          const testResultMock = {
-            vin: "abc123",
-            partialVin: "abc123",
-          };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
-          );
-          expect(LambdaStub.calledOnce).toBeFalsy();
-          // expect(LambdaStub.calledTwice).toBeTruthy();
-          expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
-          getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
-        });
-      }
+            const testResultMock = {
+              vin: "abc123",
+              partialVin: "abc123",
+            };
+            const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+                testResultMock
+            );
+            expect(LambdaStub.calledOnce).toBeFalsy();
+            // expect(LambdaStub.calledTwice).toBeTruthy();
+            expect(makeAndModel).toEqual({Make: "STANLEY", Model: "AUTOTRL"});
+            getTechRecordStub.restore();
+            getTechRecordSearchStub.restore();
+          });
+        }
     );
 
     context(
-      "when given a vin and partialVin with no matching record but a matching VRM",
-      () => {
-        it("should return the record & invoke the LambdaService three times", async () => {
-          const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
-            .onFirstCall()
-            .resolves(AWSReject("no"))
-            .onSecondCall()
-            .resolves(AWSReject("no"))
-            .onThirdCall()
-            .resolves(AWSResolve(JSON.stringify(techRecordResp)));
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
-          );
-          const getTechRecordSearchStub = sandbox
-              .stub(certGenSvc, "callSearchTechRecords")
-              .resolves(techRecordsRwtSearch);
+        "when given a vin and partialVin with no matching record but a matching VRM",
+        () => {
+          it("should return the record & invoke the LambdaService three times", async () => {
+            const LambdaStub = sandbox
+                .stub(LambdaService.prototype, "invoke")
+                .onFirstCall()
+                .resolves(AWSReject("no"))
+                .onSecondCall()
+                .resolves(AWSReject("no"))
+                .onThirdCall()
+                .resolves(AWSResolve(JSON.stringify(techRecordResp)));
+            // @ts-ignore
+            const certGenSvc = new CertificateGenerationService(
+                null as any,
+                new LambdaService(new Lambda())
+            );
+            const getTechRecordSearchStub = sandbox
+                .stub(certGenSvc, "callSearchTechRecords")
+                .resolves(techRecordsRwtSearch);
 
 
-          const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-              .stub(certGenSvc, "callGetTechRecords")
-              .resolves((techRecordResponseRwtMock) as any);
+            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+            const getTechRecordStub = sandbox
+                .stub(certGenSvc, "callGetTechRecords")
+                .resolves((techRecordResponseRwtMock) as any);
 
-          const testResultMock = {
-            vin: "abc123",
-            partialVin: "abc123",
-            vrm: "testvrm",
-          };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
-          );
-          expect(LambdaStub.calledOnce).toBeFalsy();
-          expect(LambdaStub.calledTwice).toBeFalsy();
-          expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
-          getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
-        });
-      }
+            const testResultMock = {
+              vin: "abc123",
+              partialVin: "abc123",
+              vrm: "testvrm",
+            };
+            const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+                testResultMock
+            );
+            expect(LambdaStub.calledOnce).toBeFalsy();
+            expect(LambdaStub.calledTwice).toBeFalsy();
+            expect(makeAndModel).toEqual({Make: "STANLEY", Model: "AUTOTRL"});
+            getTechRecordStub.restore();
+            getTechRecordSearchStub.restore();
+          });
+        }
     );
 
     context(
-      "when given a vin, partialVin and VRM with no matching record but a matching TrailerID",
-      () => {
-        it("should return the record & invoke the LambdaService four times", async () => {
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
-          );
-          const getTechRecordSearchStub = sandbox
-              .stub(certGenSvc, "callSearchTechRecords")
-              .resolves(techRecordsRwtSearch);
+        "when given a vin, partialVin and VRM with no matching record but a matching TrailerID",
+        () => {
+          it("should return the record & invoke the LambdaService four times", async () => {
+            // @ts-ignore
+            const certGenSvc = new CertificateGenerationService(
+                null as any,
+                new LambdaService(new Lambda())
+            );
+            const getTechRecordSearchStub = sandbox
+                .stub(certGenSvc, "callSearchTechRecords")
+                .resolves(techRecordsRwtSearch);
 
 
-          const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-              .stub(certGenSvc, "callGetTechRecords")
-              .resolves((techRecordResponseRwtMock) as any);
+            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+            const getTechRecordStub = sandbox
+                .stub(certGenSvc, "callGetTechRecords")
+                .resolves((techRecordResponseRwtMock) as any);
 
-          const testResultMock = {
-            vin: "abc123",
-            partialVin: "abc123",
-            vrm: "testvrm",
-            trailerId: "testTrailerId",
-          };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-            testResultMock
-          );
-          expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
-          getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
-        });
-      }
+            const testResultMock = {
+              vin: "abc123",
+              partialVin: "abc123",
+              vrm: "testvrm",
+              trailerId: "testTrailerId",
+            };
+            const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+                testResultMock
+            );
+            expect(makeAndModel).toEqual({Make: "STANLEY", Model: "AUTOTRL"});
+            getTechRecordStub.restore();
+            getTechRecordSearchStub.restore();
+          });
+        }
     );
 
     context("when given a vehicle details with no matching records", () => {
       it("should call Tech Records Lambda 4 times and then throw an error", async () => {
         const LambdaStub = sandbox
-          .stub(LambdaService.prototype, "invoke")
-          .resolves(AWSReject("no"));
+            .stub(LambdaService.prototype, "invoke")
+            .resolves(AWSReject("no"));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new Lambda())
+            null as any,
+            new LambdaService(new Lambda())
         );
         const getTechRecordSearchStub = sandbox
             .stub(certGenSvc, "callSearchTechRecords")
@@ -249,7 +259,7 @@ describe("Certificate Generation Service", () => {
           expect(LambdaStub.callCount).toEqual(4);
           expect(e).toBeInstanceOf(Error);
           expect((e as unknown as Error).message).toEqual(
-            "Unable to retrieve unique Tech Record for Test Result"
+              "Unable to retrieve unique Tech Record for Test Result"
           );
           getTechRecordStub.restore();
           getTechRecordSearchStub.restore();
@@ -258,52 +268,52 @@ describe("Certificate Generation Service", () => {
     });
 
     context(
-      "when given a vehicle details with missing vehicle detail fields and no match",
-      () => {
-        it("should call Tech Records Lambda matching number (2) times and then throw an error", async () => {
-          const LambdaStub = sandbox
-            .stub(LambdaService.prototype, "invoke")
-            .resolves(AWSReject("no"));
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new Lambda())
-          );
-          const getTechRecordSearchStub = sandbox
-              .stub(certGenSvc, "callSearchTechRecords")
-              .resolves(techRecordsRwtSearch);
-
-
-          const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-              .stub(certGenSvc, "callGetTechRecords")
-              .resolves((techRecordResponseRwtMock) as any);
-
-          const testResultMock = {
-            vin: "abc123",
-            trailerId: "testTrailerId",
-          };
-          try {
-            await certGenSvc.getVehicleMakeAndModel(testResultMock);
-          } catch (e) {
-            expect(LambdaStub.callCount).toEqual(2);
-            expect(e).toBeInstanceOf(Error);
-            expect((e as unknown as Error).message).toEqual(
-              "Unable to retrieve unique Tech Record for Test Result"
+        "when given a vehicle details with missing vehicle detail fields and no match",
+        () => {
+          it("should call Tech Records Lambda matching number (2) times and then throw an error", async () => {
+            const LambdaStub = sandbox
+                .stub(LambdaService.prototype, "invoke")
+                .resolves(AWSReject("no"));
+            // @ts-ignore
+            const certGenSvc = new CertificateGenerationService(
+                null as any,
+                new LambdaService(new Lambda())
             );
-            getTechRecordStub.restore();
-            getTechRecordSearchStub.restore();
-          }
-        });
-      }
+            const getTechRecordSearchStub = sandbox
+                .stub(certGenSvc, "callSearchTechRecords")
+                .resolves(techRecordsRwtSearch);
+
+
+            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+            const getTechRecordStub = sandbox
+                .stub(certGenSvc, "callGetTechRecords")
+                .resolves((techRecordResponseRwtMock) as any);
+
+            const testResultMock = {
+              vin: "abc123",
+              trailerId: "testTrailerId",
+            };
+            try {
+              await certGenSvc.getVehicleMakeAndModel(testResultMock);
+            } catch (e) {
+              expect(LambdaStub.callCount).toEqual(2);
+              expect(e).toBeInstanceOf(Error);
+              expect((e as unknown as Error).message).toEqual(
+                  "Unable to retrieve unique Tech Record for Test Result"
+              );
+              getTechRecordStub.restore();
+              getTechRecordSearchStub.restore();
+            }
+          });
+        }
     );
 
     context("when lookup returns a PSV tech record", () => {
       it("should return make and model from chassis details", async () => {
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new Lambda())
+            null as any,
+            new LambdaService(new Lambda())
         );
         const getTechRecordSearchStub = sandbox
             .stub(certGenSvc, "callSearchTechRecords")
@@ -319,7 +329,7 @@ describe("Certificate Generation Service", () => {
           systemNumber: "12345678",
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-          testResultMock
+            testResultMock
         );
         expect(makeAndModel.Make).toBe("AEC");
         expect(makeAndModel.Model).toBe("RELIANCE");
@@ -331,9 +341,9 @@ describe("Certificate Generation Service", () => {
     context("when lookup returns a non-PSV tech record", () => {
       it("should return make and model from not-chassis details", async () => {
         const certGenSvc = new CertificateGenerationService(
-          // @ts-ignore
-          null,
-          new LambdaService(new Lambda())
+            // @ts-ignore
+            null,
+            new LambdaService(new Lambda())
         );
         const getTechRecordSearchStub = sandbox
             .stub(certGenSvc, "callSearchTechRecords")
@@ -346,7 +356,7 @@ describe("Certificate Generation Service", () => {
           systemNumber: "12345678",
         };
         const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
-          testResultMock
+            testResultMock
         );
         expect(makeAndModel.Make).toBe("Isuzu");
         expect(makeAndModel.Model).toBe("FM");
@@ -391,7 +401,8 @@ describe("Certificate Generation Service", () => {
             systemNumberMock
         );
         expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
+        expect(odometerHistory).toEqual({
+          OdometerHistoryList: [
             {
               value: 400000,
               unit: "kilometres",
@@ -407,42 +418,45 @@ describe("Certificate Generation Service", () => {
               unit: "kilometres",
               date: "17.01.2019",
             },
-          ]});
+          ]
+        });
       });
     });
 
     context("when given a systemNumber which returns tests which include those that are not Annual With Certificate", () => {
       it("should omiting results that are not Annual With Certificate", async () => {
         const LambdaStub = sandbox
-          .stub(LambdaService.prototype, "invoke")
-          .resolves(AWSResolve(JSON.stringify(testResultsRespNoCert)));
+            .stub(LambdaService.prototype, "invoke")
+            .resolves(AWSResolve(JSON.stringify(testResultsRespNoCert)));
         // @ts-ignore
         const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new Lambda())
+            null as any,
+            new LambdaService(new Lambda())
         );
         const systemNumberMock = "12345678";
         const odometerHistory = await certGenSvc.getOdometerHistory(
-          systemNumberMock
+            systemNumberMock
         );
         expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
-          {
-            value: 400000,
-            unit: "kilometres",
-            date: "19.01.2019",
-          },
-          {
-            value: 380000,
-            unit: "kilometres",
-            date: "17.01.2019",
-          },
-          {
-            value: 360000,
-            unit: "kilometres",
-            date: "15.01.2019",
-          },
-        ]});
+        expect(odometerHistory).toEqual({
+          OdometerHistoryList: [
+            {
+              value: 400000,
+              unit: "kilometres",
+              date: "19.01.2019",
+            },
+            {
+              value: 380000,
+              unit: "kilometres",
+              date: "17.01.2019",
+            },
+            {
+              value: 360000,
+              unit: "kilometres",
+              date: "15.01.2019",
+            },
+          ]
+        });
       });
     });
 
@@ -461,13 +475,15 @@ describe("Certificate Generation Service", () => {
             systemNumberMock
         );
         expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
+        expect(odometerHistory).toEqual({
+          OdometerHistoryList: [
             {
               value: 350000,
               unit: "kilometres",
               date: "14.01.2019",
             },
-          ]});
+          ]
+        });
       });
     });
 
@@ -486,7 +502,8 @@ describe("Certificate Generation Service", () => {
             systemNumberMock
         );
         expect(LambdaStub.calledOnce).toBeTruthy();
-        expect(odometerHistory).toEqual({OdometerHistoryList: [
+        expect(odometerHistory).toEqual({
+          OdometerHistoryList: [
             {
               value: 400000,
               unit: "kilometres",
@@ -502,7 +519,8 @@ describe("Certificate Generation Service", () => {
               unit: "kilometres",
               date: "16.01.2019",
             },
-          ]});
+          ]
+        });
       });
     });
   });
@@ -578,9 +596,9 @@ describe("Certificate Generation Service", () => {
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
-        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { rowNumber: 1 });
-        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { seatNumber: 2 });
-        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { axleNumber: 3 });
+        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, {rowNumber: 1});
+        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, {seatNumber: 2});
+        Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, {axleNumber: 3});
         console.log(testResultWithDefect.testTypes[0].defects[0]);
         const format = certGenSvc.formatDefectWelsh(
             testResultWithDefect.testTypes[0].defects[0],
@@ -807,7 +825,7 @@ describe("Certificate Generation Service", () => {
         const mockStations = testStationsMock;
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
+          Payload: JSON.stringify({body: JSON.stringify(mockStations)}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -826,7 +844,7 @@ describe("Certificate Generation Service", () => {
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: "" }),
+          Payload: JSON.stringify({body: ""}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -846,7 +864,7 @@ describe("Certificate Generation Service", () => {
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: "" }),
+          Payload: JSON.stringify({body: ""}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -865,7 +883,7 @@ describe("Certificate Generation Service", () => {
         const mockStations: ITestStation[] = [];
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
+          Payload: JSON.stringify({body: JSON.stringify(mockStations)}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -889,7 +907,7 @@ describe("Certificate Generation Service", () => {
         const mockDefects = defectsMock;
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
+          Payload: JSON.stringify({body: JSON.stringify(mockDefects)}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -908,7 +926,7 @@ describe("Certificate Generation Service", () => {
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: "" }),
+          Payload: JSON.stringify({body: ""}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -928,7 +946,7 @@ describe("Certificate Generation Service", () => {
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: "" }),
+          Payload: JSON.stringify({body: ""}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -947,7 +965,7 @@ describe("Certificate Generation Service", () => {
         const mockDefects: IDefectParent[] = [];
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
+          Payload: JSON.stringify({body: JSON.stringify(mockDefects)}),
           FunctionError: undefined,
           StatusCode: 200,
         });
@@ -960,28 +978,283 @@ describe("Certificate Generation Service", () => {
         jest.clearAllMocks();
       });
     });
-
-    context("test STOP_WELSH_GEN environment variable", () => {
-      it("should circumvent the Welsh certificate generation logic and log message if set to true", async () => {
-        process.env.STOP_WELSH_GEN = "TRUE";
-
-        const certGenSvc = new CertificateGenerationService(
+    describe("Welsh feature flags", () => {
+      let certGenSvc: CertificateGenerationService;
+      beforeEach( () => {
+        certGenSvc = new CertificateGenerationService(
             null as any,
             new LambdaService(new Lambda())
         );
+      });
+      afterEach( () => {
+        jest.resetAllMocks();
+      });
 
-        const logSpy = jest.spyOn(console, "log");
+      context("test ShouldTranslateTestResult method", () => {
+        const event = cloneDeep(queueEventPass);
+        const testResult: any = JSON.parse(event.Records[0].body);
 
-        await certGenSvc.generateCertificate(mockTestResult)
-            .catch(() => {
-              expect(logSpy).toHaveBeenCalledWith(
-                  "Welsh certificate generation deactivated via environment variable set to TRUE"
-              );
+        it("should prevent Welsh translation if flag retrieval fails and log relevant message", async () => {
+          const generateCertificate = {
+            statusCode : 500,
+            body: "Failed retrieve feature flags"
+          };
+
+          mockGetProfile.mockRejectedValueOnce(generateCertificate);
+
+          const logSpy = jest.spyOn(console, "error");
+
+          const shouldTranslateTestResult = await certGenSvc.shouldTranslateTestResult(testResult);
+          expect(shouldTranslateTestResult).toBeFalsy();
+          expect(logSpy).toHaveBeenCalledWith(`Failed to retrieve feature flags - ${generateCertificate}`);
+          logSpy.mockClear();
+        });
+
+        it("should prevent Welsh translation when global and test result flag are invalid", async () => {
+          const globalFlagStub = sandbox.stub(certGenSvc, "isGlobalWelshFlagEnabled").resolves(false);
+          const testResultFlagStub = sandbox.stub(certGenSvc, "isTestResultFlagEnabled").resolves(false);
+          const isTestStationWelshStub =  sandbox.stub(certGenSvc, "isTestStationWelsh").resolves(false);
+
+          const shouldTranslateTestResult = await certGenSvc.shouldTranslateTestResult(testResult);
+          expect(shouldTranslateTestResult).toBeFalsy();
+          globalFlagStub.restore();
+          testResultFlagStub.restore();
+          isTestStationWelshStub.restore();
+        });
+
+        it("should allow Welsh translation if global and test result flag are enabled", async () => {
+          const globalFlagStub = sandbox.stub(certGenSvc, "isGlobalWelshFlagEnabled").resolves(true);
+          const testResultFlagStub = sandbox.stub(certGenSvc, "isTestResultFlagEnabled").resolves(true);
+          const isTestStationWelshStub =  sandbox.stub(certGenSvc, "isTestStationWelsh").resolves(true);
+
+          const shouldTranslateTestResult = await certGenSvc.shouldTranslateTestResult(testResult);
+          expect(shouldTranslateTestResult).toBeTruthy();
+          globalFlagStub.restore();
+          testResultFlagStub.restore();
+          isTestStationWelshStub.restore();
+        });
+      });
+      context("test isGlobalWelshFlagEnabled method", () => {
+        it("should allow Welsh translation when flag is enabled", () => {
+          const featureFlags = {
+            welshTranslation: {
+              enabled: true,
+              translatePassTestResult: false,
+              translatePrsTestResult: false,
+              translateFailTestResult: false,
+            },
+          };
+          mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+          const isWelsh = certGenSvc.isGlobalWelshFlagEnabled(featureFlags);
+          expect(isWelsh).toBeTruthy();
+        });
+        it("should prevent Welsh translation when flag is disabled and log relevant warning", () => {
+          const featureFlags = {
+            welshTranslation: {
+              enabled: false,
+              translatePassTestResult: false,
+              translatePrsTestResult: false,
+              translateFailTestResult: false,
+            },
+          };
+          mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+          const logSpy = jest.spyOn(console, "warn");
+
+          const isWelsh = certGenSvc.isGlobalWelshFlagEnabled(featureFlags);
+          expect(isWelsh).toBeFalsy();
+          expect(logSpy).toHaveBeenCalledWith("Unable to translate any test results: global Welsh flag disabled.");
+          logSpy.mockClear();
+        });
+      });
+
+      context("test isTestResultFlagEnabled method", () => {
+        context("when a test result is valid for Welsh translation", () => {
+          context("and the PASS Flag is valid", () => {
+            const event = cloneDeep(queueEventPass);
+            const testResult: any = JSON.parse(event.Records[0].body);
+
+            it("should allow PASS test result for Welsh translation", () => {
+              const featureFlags = {
+                welshTranslation: {
+                  enabled: true,
+                  translatePassTestResult: true,
+                  translatePrsTestResult: false,
+                  translateFailTestResult: false,
+                },
+              };
+              mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+              const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+              expect(isWelsh).toBeTruthy();
+            });
+
+            it("should prevent Welsh translation when PASS is disabled and log relevant warning", () => {
+              const featureFlags = {
+                welshTranslation: {
+                  enabled: true,
+                  translatePassTestResult: false,
+                  translatePrsTestResult: false,
+                  translateFailTestResult: false,
+                },
+              };
+              mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+              const logSpy = jest.spyOn(console, "warn");
+
+              const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+              expect(isWelsh).toBeFalsy();
+              expect(logSpy).toHaveBeenCalledWith(`Unable to translate for test result: pass flag disabled`);
               logSpy.mockClear();
             });
+          });
+
+          context("and the PRS Flag is valid", () => {
+            const event = cloneDeep(queueEventPRS);
+            const testResult: any = JSON.parse(event.Records[0].body);
+
+            it("should allow PRS test result for Welsh translation", () => {
+              const featureFlags = {
+                welshTranslation: {
+                  enabled: true,
+                  translatePassTestResult: false,
+                  translatePrsTestResult: true,
+                  translateFailTestResult: false,
+                },
+              };
+              mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+              const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+              expect(isWelsh).toBeTruthy();
+            });
+
+            it("should prevent Welsh translation when PRS is disabled and log relevant warning",  () => {
+              const featureFlags = {
+                welshTranslation: {
+                  enabled: true,
+                  translatePassTestResult: false,
+                  translatePrsTestResult: false,
+                  translateFailTestResult: false,
+                },
+              };
+              mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+              const logSpy = jest.spyOn(console, "warn");
+
+              const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+              expect(isWelsh).toBeFalsy();
+              expect(logSpy).toHaveBeenCalledWith(`Unable to translate for test result: prs flag disabled`);
+              logSpy.mockClear();
+            });
+          });
+
+          context("and the FAIL flag is valid", () => {
+            const event = cloneDeep(queueEventFail);
+            const testResult: any = JSON.parse(event.Records[0].body);
+
+            it("should allow FAIL test result for Welsh translation", () => {
+              const featureFlags = {
+                welshTranslation: {
+                  enabled: true,
+                  translatePassTestResult: false,
+                  translatePrsTestResult: false,
+                  translateFailTestResult: true,
+                },
+              };
+              mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+              const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+              expect(isWelsh).toBeTruthy();
+            });
+
+            it("should prevent Welsh translation when FAIL is disabled and log relevant warning", () => {
+              const featureFlags = {
+                welshTranslation: {
+                  enabled: true,
+                  translatePassTestResult: false,
+                  translatePrsTestResult: false,
+                  translateFailTestResult: false,
+                },
+              };
+              mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+              const logSpy = jest.spyOn(console, "warn");
+
+              const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+              expect(isWelsh).toBeFalsy();
+              expect(logSpy).toHaveBeenCalledWith(`Unable to translate for test result: fail flag disabled`);
+              logSpy.mockClear();
+            });
+          });
+        });
+
+        context("When a test result is invalid for Welsh translation", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testTypes.testResult = "Invalid_test_result";
+          it("should prevent translation and log relevant warning", () => {
+            const featureFlags = {
+              welshTranslation: {
+                enabled: true,
+                translatePassTestResult: true,
+                translatePrsTestResult: true,
+                translateFailTestResult: true,
+              },
+            };
+            mockGetProfile.mockReturnValueOnce(Promise.resolve(featureFlags));
+
+            const logSpy = jest.spyOn(console, "warn");
+
+            const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Translation not available for this test result type.`);
+            logSpy.mockClear();
+          });
+        });
+      });
+
+      context("test isTestStationWelsh method", () => {
+        context("with a valid Welsh test station P number", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "P11223";
+
+          it("should identify the test requires translation",  async ()  => {
+
+
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            jest.resetAllMocks();
+          });
+        });
+        context("with a non-Welsh test station P number",  () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+
+          it("should identify that the test does not require translation",  async () => {
+
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+          });
+        });
+        context("with an invalid Welsh test station P number",  () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "Nonsense_P_Number";
+
+          it("should identify no test stations exist with that P number and log relevant message", async  () => {
+
+            const logSpy = jest.spyOn(console, "log");
+
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Test stations data is empty`);
+            logSpy.mockClear();
+          });
+        });
       });
     });
-
     context("test postcode lookup method", () => {
       context("when the SECRET_KEY environment variable does not exist", () => {
         it("should log the the errors", async () => {
