@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+const mockGetProfile = jest.fn();
+
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import sinon from "sinon";
 import techRecordResp from "../resources/tech-records-response.json";
@@ -27,10 +30,25 @@ import { IDefectParent } from "../../src/models/IDefectParent";
 import { HTTPError } from "../../src/models/HTTPError";
 import Axios from "axios";
 
+jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+  getProfile: mockGetProfile
+}));
+
 describe("Certificate Generation Service", () => {
   const sandbox = sinon.createSandbox();
   afterEach(() => {
     sandbox.restore();
+  });
+
+  beforeAll(() => {
+    const featureFlags = {
+      welshTranslation: {
+        enabled: true,
+        translatePassTestResult: true,
+      },
+    };
+
+    mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
   });
 
   describe("getVehicleMakeAndModel function", () => {
@@ -963,7 +981,14 @@ describe("Certificate Generation Service", () => {
 
     context("test STOP_WELSH_GEN environment variable", () => {
       it("should circumvent the Welsh certificate generation logic and log message if set to true", async () => {
-        process.env.STOP_WELSH_GEN = "TRUE";
+        const featureFlags = {
+          welshTranslation: {
+            enabled: true,
+            translatePassTestResult: false,
+          },
+        };
+
+        mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
 
         const certGenSvc = new CertificateGenerationService(
             null as any,
@@ -975,7 +1000,7 @@ describe("Certificate Generation Service", () => {
         await certGenSvc.generateCertificate(mockTestResult)
             .catch(() => {
               expect(logSpy).toHaveBeenCalledWith(
-                  "Welsh certificate generation deactivated via environment variable set to TRUE"
+                  "Welsh certificate generation deactivated via feature flag"
               );
               logSpy.mockClear();
             });

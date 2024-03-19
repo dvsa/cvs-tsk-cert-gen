@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+const mockGetProfile = jest.fn();
+
 import {Injector} from "../../src/models/injector/Injector";
 import * as fs from "fs";
 import * as path from "path";
@@ -28,6 +31,10 @@ import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-
 import techRecordsPsv from "../resources/tech-records-response-PSV.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
 
+jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+    getProfile: mockGetProfile
+}));
+
 describe("cert-gen", () => {
     it("should pass", () => {
         expect(true).toBe(true);
@@ -43,6 +50,16 @@ describe("cert-gen", () => {
     afterAll(() => {
         sandbox.restore();
         jest.setTimeout(5000);
+    });
+    beforeEach(() => {
+        const featureFlags = {
+            welshTranslation: {
+              enabled: true,
+              translatePassTestResult: true,
+            },
+          };
+
+        mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
     });
     afterEach(() => {
         sandbox.restore();
