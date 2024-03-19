@@ -3,6 +3,7 @@ import {InvocationRequest} from "aws-sdk/clients/lambda";
 import S3 from "aws-sdk/clients/s3";
 import {PromiseResult} from "aws-sdk/lib/request";
 import moment from "moment";
+import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
 import {
     ICertificatePayload,
     ICustomDefect,
@@ -49,7 +50,6 @@ class CertificateGenerationService {
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
 
-
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
@@ -68,19 +68,23 @@ class CertificateGenerationService {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
-    const { STOP_WELSH_GEN } = process.env;
+
+    const flags = await getProfile();
+
+    console.log("Using feature flags ", flags);
 
     let isTestStationWelsh = false;
 
-    // Circumvent bilingual certificate generation and logic if EV set to TRUE
-    if (STOP_WELSH_GEN === undefined || STOP_WELSH_GEN.toUpperCase() === "FALSE") {
+    // Execute bilingual certificate generation and logic if FF enabled
+    if (flags.welshTranslation.enabled && flags.welshTranslation.translatePassTestResult) {
       // Find out if Welsh certificate is needed
       const testStations = await this.getTestStations();
       const testStationPostcode = this.getThisTestStation(testStations, testResult.testStationPNumber);
       isTestStationWelsh = testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
     } else {
-      console.log(`Welsh certificate generation deactivated via environment variable set to ${STOP_WELSH_GEN}`);
+      console.log(`Welsh certificate generation deactivated via feature flag`);
     }
+
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult, isTestStationWelsh)
     );
