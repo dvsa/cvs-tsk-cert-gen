@@ -1,18 +1,18 @@
-import {Injector} from "../../src/models/injector/Injector";
-import {CertificateGenerationService} from "../../src/services/CertificateGenerationService";
-import {S3BucketMockService} from "../models/S3BucketMockService";
-import {LambdaMockService} from "../models/LambdaMockService";
+import { Injector } from "../../src/models/injector/Injector";
+import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
+import { S3BucketMockService } from "../models/S3BucketMockService";
+import { LambdaMockService } from "../models/LambdaMockService";
 import sinon from "sinon";
 import queueEventPass from "../resources/queue-event-pass.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
 
 const sandbox = sinon.createSandbox();
-import {cloneDeep} from "lodash";
-import {IWeightDetails, ITestResult} from "../../src/models";
-import {HTTPError} from "../../src/models/HTTPError";
+import { cloneDeep } from "lodash";
+import { IWeightDetails, ITestResult } from "../../src/models";
+import { HTTPError } from "../../src/models/HTTPError";
 
-describe("cert-gen",  () => {
+describe("cert-gen", () => {
     const certificateGenerationService: CertificateGenerationService =
         Injector.resolve<CertificateGenerationService>(
             CertificateGenerationService,

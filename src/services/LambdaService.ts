@@ -1,25 +1,25 @@
 import { IInvokeConfig } from "../models";
 import { Configuration } from "../utils/Configuration";
-import { AWSError, config as AWSConfig, Lambda } from "aws-sdk";
+import { InvokeCommandInput, InvokeCommandOutput, LambdaClient, InvokeCommand, } from "@aws-sdk/client-lambda";
 import { Service } from "../models/injector/ServiceDecorator";
-import { PromiseResult } from "aws-sdk/lib/request";
 import { HTTPError } from "../models/HTTPError";
 import { ERRORS } from "../models/Enums";
-
-import AWSXRay from "aws-xray-sdk";
+import * as AWSXRay from "aws-xray-sdk";
 
 /**
  * Service class for invoking external lambda functions
  */
 @Service()
 class LambdaService {
-  public readonly lambdaClient: Lambda;
+  public readonly lambdaClient: LambdaClient;
 
-  constructor(lambdaClient: Lambda) {
+  constructor(lambdaClient: LambdaClient) {
     const config: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
-    this.lambdaClient = AWSXRay.captureAWSClient(lambdaClient);
 
-    AWSConfig.lambda = config.params;
+    this.lambdaClient = AWSXRay.captureAWSv3Client(new LambdaClient({
+      ...config,
+      ...lambdaClient
+    }));
   }
 
   /**
@@ -27,9 +27,9 @@ class LambdaService {
    * @param params - InvocationRequest params
    */
   public async invoke(
-    params: Lambda.Types.InvocationRequest
-  ): Promise<PromiseResult<Lambda.Types.InvocationResponse, AWSError>> {
-    return this.lambdaClient.invoke(params).promise();
+    params: InvokeCommandInput
+  ): Promise<InvokeCommandOutput> {
+    return this.lambdaClient.send(new InvokeCommand(params));
   }
 
   /**
@@ -37,11 +37,11 @@ class LambdaService {
    * @param response - the invocation response
    */
   public validateInvocationResponse(
-    response: Lambda.Types.InvocationResponse
+    response: InvokeCommandOutput
   ): Promise<any> {
     if (
       !response.Payload ||
-      response.Payload === "" ||
+      response.Payload as unknown as string === "" ||
       (response.StatusCode && response.StatusCode >= 400)
     ) {
       throw new HTTPError(
@@ -50,7 +50,7 @@ class LambdaService {
       );
     }
 
-    const payload: any = JSON.parse(response.Payload as string);
+    const payload: any = JSON.parse(response.Payload as unknown as string);
 
     if (payload.statusCode >= 400) {
       throw new HTTPError(

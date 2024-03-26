@@ -1,9 +1,9 @@
 // @ts-ignore
 import * as yml from "node-yaml";
-import {IInvokeConfig, IMOTConfig, IS3Config} from "../models";
-import {ERRORS} from "../models/Enums";
-import SecretsManager, {GetSecretValueRequest, GetSecretValueResponse} from "aws-sdk/clients/secretsmanager";
-import {ISecret} from "../models/ISecret";
+import { IInvokeConfig, IMOTConfig, IS3Config } from "../models";
+import { ERRORS } from "../models/Enums";
+import { GetSecretValueCommandInput, GetSecretValueCommandOutput, SecretsManager } from "@aws-sdk/client-secrets-manager";
+import { ISecret } from "../models/ISecret";
 
 /**
  * Configuration class for retrieving project config
@@ -14,7 +14,9 @@ class Configuration {
   private readonly secretsClient: SecretsManager;
 
   private constructor(configPath: string) {
-    this.secretsClient = new SecretsManager({ region: "eu-west-1" });
+    this.secretsClient = new SecretsManager({
+      region: "eu-west-1"
+    });
     const config = yml.readSync(configPath);
 
     // Replace environment variable references
@@ -130,27 +132,27 @@ class Configuration {
    * Method to get the secret details for the Welsh lookup
    * @returns ISecret secret containing SMC url and api key
    */
-  public async getSecret(): Promise<ISecret|null> {
+  public async getSecret(): Promise<ISecret | null> {
     try {
       const welshConfigSecretKey: string = this.getWelshSecretKey();
 
       if (!welshConfigSecretKey) {
-          console.error(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
-          return null;
+        console.error(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
+        return null;
       }
 
-      const secretRequest: GetSecretValueRequest = {SecretId: welshConfigSecretKey};
-      const secretResponse: GetSecretValueResponse = await this.secretsClient.getSecretValue(secretRequest).promise();
+      const secretRequest: GetSecretValueCommandInput = { SecretId: welshConfigSecretKey };
+      const secretResponse: GetSecretValueCommandOutput = await this.secretsClient.getSecretValue(secretRequest);
 
       if (secretResponse.SecretString) {
-          return JSON.parse(secretResponse.SecretString);
+        return JSON.parse(secretResponse.SecretString);
       } else {
-          console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
-          return null;
+        console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
+        return null;
       }
     } catch (error) {
-        console.log(error);
-        return null;
+      console.log(error);
+      return null;
     }
   }
 }

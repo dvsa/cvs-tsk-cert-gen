@@ -1,5 +1,5 @@
-import { AWSError, Lambda, Response } from "aws-sdk";
-import { PromiseResult } from "aws-sdk/lib/request";
+import { ServiceException } from "@smithy/smithy-client";
+import { InvokeCommandInput, InvokeCommandOutput } from "@aws-sdk/client-lambda";
 import { Configuration } from "../../src/utils/Configuration";
 import { IInvokeConfig } from "../../src/models";
 import * as fs from "fs";
@@ -46,38 +46,31 @@ class LambdaMockService {
    * @param params - InvocationRequest params
    */
   public async invoke(
-    params: Lambda.Types.InvocationRequest
-  ): Promise<PromiseResult<Lambda.Types.InvocationResponse, AWSError>> {
+    params: InvokeCommandInput
+  ): Promise<InvokeCommandOutput> {
     const mockFunction: IMockFunctions | undefined =
       LambdaMockService.responses.find(
         (item: IMockFunctions) => item.functionName === params.FunctionName
       );
     if (!mockFunction) {
-      const error: Error = new Error();
-      Object.assign(error, {
+      const error: ServiceException = {
+        $metadata: { httpStatusCode: 415 },
+        name: "UnsupportedMediaTypeException",
         message: "Unsupported Media Type",
-        code: "UnknownError",
-        statusCode: 415,
-        retryable: false,
-      });
-
+        $fault: "client",
+        $retryable: { throttling: false }
+      };
       throw error;
     }
-
     const payload: any = mockFunction.response;
-    const response = new Response<Lambda.Types.InvocationResponse, AWSError>();
-    Object.assign(response, {
-      data: {
-        StatusCode: 200,
-        Payload: payload,
-      },
-    });
 
-    return {
-      $response: response,
+    const response: InvokeCommandOutput = {
+      $metadata: {},
       StatusCode: 200,
       Payload: payload,
     };
+
+    return response;
   }
 
   /**
@@ -85,11 +78,11 @@ class LambdaMockService {
    * @param response - the invocation response
    */
   public validateInvocationResponse(
-    response: Lambda.Types.InvocationResponse
+    response: InvokeCommandOutput
   ): Promise<any> {
     if (
       !response.Payload ||
-      response.Payload === "" ||
+      response.Payload as unknown as string === "" ||
       (response.StatusCode && response.StatusCode >= 400)
     ) {
       throw new Error(
@@ -97,7 +90,7 @@ class LambdaMockService {
       );
     }
 
-    const payload: any = JSON.parse(response.Payload as string);
+    const payload: any = JSON.parse(response.Payload as unknown as string);
 
     if (!payload.body) {
       throw new Error(

@@ -1,6 +1,6 @@
 import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
 import { Injector } from "../models/injector/Injector";
-import S3, { ManagedUpload } from "aws-sdk/clients/s3";
+import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
@@ -8,7 +8,7 @@ import {
 import { CertificateUploadService } from "../services/CertificateUploadService";
 import { ERRORS } from "../models/Enums";
 
-type CertGenReturn = S3.ManagedUpload.SendData | S3.DeleteObjectOutput;
+type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
 /**
  * λ function to process an SQS message detailing info for certificate generation
@@ -51,7 +51,7 @@ const certGen: Handler = async (
       )
     ) {
       // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
-      const generatedCertificateResponse: Promise<ManagedUpload.SendData> =
+      const generatedCertificateResponse: Promise<PutObjectCommandOutput> =
         certificateGenerationService
           .generateCertificate(testResult)
           .then((response: IGeneratedCertificateResponse) => {
