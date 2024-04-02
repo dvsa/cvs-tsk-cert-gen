@@ -1787,7 +1787,6 @@ describe("cert-gen", () => {
             const hgvFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[3].body);
             const hgvFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[4].body);
             const psvPrsNotAcceptableForBilingualCert: any = JSON.parse(prsEvent.Records[0].body);
-
             const trlFailWithDangerousDefect: any = JSON.parse(event.Records[15].body);
             const trlFailWithMajorDefect: any = JSON.parse(event.Records[16].body);
             const trlFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[17].body);
@@ -3543,45 +3542,6 @@ describe("cert-gen", () => {
             context("and the vehicle type is not acceptable to generate a bilingual certificate", () => {
                 it("should return Certificate Data without any Welsh defect arrays populated", async () => {
                     const expectedResult: any = {
-                        DATA: {
-                            CountryOfRegistrationCode: "gb",
-                            CurrentOdometer: {
-                                unit: "kilometres",
-                                value: 12312
-                            },
-                            DateOfTheTest: "26.02.2019",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            ExpiryDate: "25.02.2020",
-                            IssuersName: "CVS Dev1",
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            OdometerHistoryList: [
-                                {
-                                    date: "19.01.2019",
-                                    unit: "kilometres",
-                                    value: 400000
-                                },
-                                {
-                                    date: "18.01.2019",
-                                    unit: "kilometres",
-                                    value: 390000
-                                },
-                                {
-                                    date: "17.01.2019",
-                                    unit: "kilometres",
-                                    value: 380000
-                                }
-                            ],
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            SeatBeltNumber: 2,
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltTested: "Yes",
-                            TestNumber: "W01A00310",
-                            TestStationName: "Abshire-Kub",
-                            TestStationPNumber: "09-4129632",
-                            VehicleEuClassification: "M1"
-                        },
                         FAIL_DATA: {
                             CountryOfRegistrationCode: "gb",
                             CurrentOdometer: {
