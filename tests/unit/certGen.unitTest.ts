@@ -14,6 +14,7 @@ import sinon from "sinon";
 import queueEventPass from "../resources/queue-event-pass.json";
 import queueEventFail from "../resources/queue-event-fail.json";
 import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
+import queueEventPRS from "../resources/queue-event-prs.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import docGenRwt from "../resources/doc-gen-payload-rwt.json";
 import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
@@ -1776,18 +1777,23 @@ describe("cert-gen", () => {
 
         context("when a failing test result is read from the queue", () => {
             const event: any = { ...queueEventFail };
-            const prsEvent: any = { ... queueEventFailPRS };
+            const failWithPrsEvent: any = { ... queueEventFailPRS };
+            const prsEvent: any = { ... queueEventPRS };
 
             const hgvFailWithDangerousDefect: any = JSON.parse(event.Records[11].body);
             const hgvFailWithMajorDefect: any = JSON.parse(event.Records[12].body);
             const hgvFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[13].body);
             const hgvFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[14].body);
+            const hgvFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[3].body);
+            const hgvFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[4].body);
             const psvPrsNotAcceptableForBilingualCert: any = JSON.parse(prsEvent.Records[0].body);
 
             const trlFailWithDangerousDefect: any = JSON.parse(event.Records[15].body);
             const trlFailWithMajorDefect: any = JSON.parse(event.Records[16].body);
             const trlFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[17].body);
             const trlFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[18].body);
+            const trlFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[5].body);
+            const trlFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[6].body);
 
             context("and the hgv result has a dangerous defect", () => {
                 context("and the test station location is not in Wales", () => {
@@ -2413,6 +2419,326 @@ describe("cert-gen", () => {
                 });
             });
 
+            context("and the hgv result has a Dangerous Defect with Major defect rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG30 payload with PRSDefects list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                ],
+                                MajorDefects: undefined,
+                                MinorDefects: undefined,
+                                PRSDefects: ["6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"],
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvFailWithDangerousDefectMajorRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG30W payload with PRSDefectsWelsh list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                ],
+                                DangerousDefectsWelsh: [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                MajorDefects: undefined,
+                                MajorDefectsWelsh: undefined,
+                                MinorDefects: undefined,
+                                MinorDefectsWelsh: undefined,
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvFailWithDangerousDefectMajorRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+            });
+
+            context("and the hgv result has a Major Defect with Dangerous defect rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG30 payload with PRSDefects list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: undefined,
+                                MajorDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                MinorDefects: undefined,
+                                PRSDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvFailWithMajorDefectDangerousRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG30W payload with PRSDefectsWelsh list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: undefined,
+                                MajorDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                MajorDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                MinorDefects: undefined,
+                                PRSDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvFailWithMajorDefectDangerousRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+            });
+
             context("and the trl result has a dangerous defect", () => {
                 context("and the test station location is not in Wales", () => {
                     it("should return a VTG30 payload without the DangerousDefectsWelsh array populated", async () => {
@@ -2925,29 +3251,348 @@ describe("cert-gen", () => {
                 });
             });
 
+            context("and the trl result has a Dangerous Defect with Major defect rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG30 payload with PRSDefects list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                MajorDefects: undefined,
+                                AdvisoryDefects: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                MinorDefects: [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(trlFailWithDangerousDefectMajorRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG30W payload with PRSDefectsWelsh list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                DangerousDefectsWelsh: [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                MajorDefects: undefined,
+                                MajorDefectsWelsh: undefined,
+                                AdvisoryDefects: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                AdvisoryDefectsWelsh: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                MinorDefects: [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                MinorDefectsWelsh: [
+                                    "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(trlFailWithDangerousDefectMajorRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+            });
+
+            context("and the trl result has a Major Defect with Dangerous defect rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG30 payload with PRSDefects list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: undefined,
+                                MajorDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                AdvisoryDefects: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                MinorDefects: [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                PRSDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(trlFailWithMajorDefectDangerousRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG30W payload with PRSDefectsWelsh list in fail data", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            FAIL_DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                DangerousDefects: undefined,
+                                MajorDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                MajorDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                AdvisoryDefects: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                AdvisoryDefectsWelsh: [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                MinorDefects: [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                MinorDefectsWelsh: [
+                                    "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
+                                ],
+                                PRSDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(trlFailWithMajorDefectDangerousRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+            });
+
             context("and the vehicle type is not acceptable to generate a bilingual certificate", () => {
                 it("should return Certificate Data without any Welsh defect arrays populated", async () => {
                     const expectedResult: any = {
-                        FAIL_DATA: {
-                            AdvisoryDefects: [
-                                "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                            ],
+                        DATA: {
                             CountryOfRegistrationCode: "gb",
                             CurrentOdometer: {
                                 unit: "kilometres",
                                 value: 12312
                             },
-                            DangerousDefects: [
-                                "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
-                            ],
                             DateOfTheTest: "26.02.2019",
                             EarliestDateOfTheNextTest: "26.12.2019",
                             ExpiryDate: "25.02.2020",
                             IssuersName: "CVS Dev1",
                             Make: "STANLEY",
-                            MinorDefects: [
-                                "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                            Model: "AUTOTRL",
+                            OdometerHistoryList: [
+                                {
+                                    date: "19.01.2019",
+                                    unit: "kilometres",
+                                    value: 400000
+                                },
+                                {
+                                    date: "18.01.2019",
+                                    unit: "kilometres",
+                                    value: 390000
+                                },
+                                {
+                                    date: "17.01.2019",
+                                    unit: "kilometres",
+                                    value: 380000
+                                }
                             ],
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            SeatBeltNumber: 2,
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltTested: "Yes",
+                            TestNumber: "W01A00310",
+                            TestStationName: "Abshire-Kub",
+                            TestStationPNumber: "09-4129632",
+                            VehicleEuClassification: "M1"
+                        },
+                        FAIL_DATA: {
+                            CountryOfRegistrationCode: "gb",
+                            CurrentOdometer: {
+                                unit: "kilometres",
+                                value: 12312
+                            },
+                            DateOfTheTest: "26.02.2019",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            ExpiryDate: "25.02.2020",
+                            IssuersName: "CVS Dev1",
+                            Make: "STANLEY",
                             Model: "AUTOTRL",
                             OdometerHistoryList: [
                                 {

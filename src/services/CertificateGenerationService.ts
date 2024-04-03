@@ -1016,6 +1016,9 @@ class CertificateGenerationService {
             type === CERTIFICATE_DATA.FAIL_DATA
           ) {
             defects.PRSDefects.push(this.formatDefect(defect));
+            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+                defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+            }
           } else if (testTypes.testResult === "fail") {
             defects.DangerousDefects.push(this.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
@@ -1032,6 +1035,9 @@ class CertificateGenerationService {
             type === CERTIFICATE_DATA.FAIL_DATA
           ) {
             defects.PRSDefects.push(this.formatDefect(defect));
+            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+                defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+            }
           } else if (testTypes.testResult === "fail") {
             defects.MajorDefects.push(this.formatDefect(defect));
               // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
