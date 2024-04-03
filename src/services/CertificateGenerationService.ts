@@ -1,44 +1,44 @@
-import {AWSError, config as AWSConfig, Lambda} from "aws-sdk";
-import {InvocationRequest} from "aws-sdk/clients/lambda";
+import { config as AWSConfig, AWSError, Lambda } from "aws-sdk";
+import { InvocationRequest } from "aws-sdk/clients/lambda";
 import S3 from "aws-sdk/clients/s3";
-import {PromiseResult} from "aws-sdk/lib/request";
+import { PromiseResult } from "aws-sdk/lib/request";
 import moment from "moment";
+import axiosClient from "../client/AxiosClient";
 import {
-    ICertificatePayload,
-    ICustomDefect,
-    IGeneratedCertificateResponse,
-    IInvokeConfig,
-    IMakeAndModel,
-    IMOTConfig,
-    IRoadworthinessCertificateData,
-    ITestResult,
-    ITestType,
-    ITrailerRegistration,
-    IWeightDetails
+  ICertificatePayload,
+  ICustomDefect,
+  IGeneratedCertificateResponse,
+  IInvokeConfig,
+  IMOTConfig,
+  IMakeAndModel,
+  IRoadworthinessCertificateData,
+  ITestResult,
+  ITestType,
+  ITrailerRegistration,
+  IWeightDetails
 } from "../models";
 import {
-    CERTIFICATE_DATA,
-    ERRORS,
-    HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-    IVA_30,
-    LOCATION_ENGLISH,
-    LOCATION_WELSH,
-    TEST_RESULTS,
-    VEHICLE_TYPES,
-    WELSH_CERT_VEHICLES
+  CERTIFICATE_DATA,
+  ERRORS,
+  HGV_TRL_ROADWORTHINESS_TEST_TYPES,
+  IVA_30,
+  LOCATION_ENGLISH,
+  LOCATION_WELSH,
+  TEST_RESULTS,
+  VEHICLE_TYPES,
+  WELSH_CERT_VEHICLES
 } from "../models/Enums";
-import {HTTPError} from "../models/HTTPError";
-import {ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
-import {Service} from "../models/injector/ServiceDecorator";
-import {Configuration} from "../utils/Configuration";
-import {LambdaService} from "./LambdaService";
-import {S3BucketService} from "./S3BucketService";
-import {ITestStation} from "../models/ITestStations";
-import {IFlatDefect} from "../models/IFlatDefect";
-import {IDefectParent} from "../models/IDefectParent";
-import {IItem} from "../models/IItem";
-import {IDefectChild} from "../models/IDefectChild";
-import axiosClient from "../client/AxiosClient";
+import { HTTPError } from "../models/HTTPError";
+import { IDefectChild } from "../models/IDefectChild";
+import { IDefectParent } from "../models/IDefectParent";
+import { IFlatDefect } from "../models/IFlatDefect";
+import { IItem } from "../models/IItem";
+import { ITestStation } from "../models/ITestStations";
+import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
+import { Service } from "../models/injector/ServiceDecorator";
+import { Configuration } from "../utils/Configuration";
+import { LambdaService } from "./LambdaService";
+import { S3BucketService } from "./S3BucketService";
 
 /**
  * Service class for Certificate Generation
@@ -244,7 +244,7 @@ class CertificateGenerationService {
    * @returns boolean true if Welsh
    */
   public async lookupPostcode(postcode: string): Promise<boolean> {
-      const axiosInstance = await axiosClient();
+      const axiosInstance = await axiosClient(7000);
 
       if (axiosInstance) {
           let isWelsh: boolean = false;
