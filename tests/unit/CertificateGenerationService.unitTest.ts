@@ -6,8 +6,7 @@ import testResultsRespFail from "../resources/test-results-fail-response.json";
 import testResultsRespPrs from "../resources/test-results-prs-response.json";
 import testResultsRespEmpty from "../resources/test-results-empty-response.json";
 import testResultsRespNoCert from "../resources/test-results-nocert-response.json";
-import { AWSError, Response } from "aws-sdk";
-import { InvocationResponse, Lambda } from "@aws-sdk/client-lambda";
+import { Lambda } from "@aws-sdk/client-lambda";
 import { LambdaService } from "../../src/services/LambdaService";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
 import { cloneDeep } from "lodash";
@@ -1165,32 +1164,18 @@ describe("Certificate Generation Service", () => {
 });
 
 const AWSResolve = (payload: any) => {
-  const response = new Response<InvocationResponse, AWSError>();
-  Object.assign(response, {
-    data: {
-      StatusCode: 200,
-      Payload: payload,
-    },
-  });
-
   return {
-    $response: response,
+    $response: { HttpStatusCode: 200, payload },
+    $metadata: {},
     StatusCode: 200,
     Payload: payload,
   };
 };
 
 const AWSReject = (payload: any) => {
-  const response = new Response<InvocationResponse, AWSError>();
-  Object.assign(response, {
-    data: {
-      StatusCode: 400,
-      Payload: payload,
-    },
-  });
-
   return {
-    $response: response,
+    $response: { HttpStatusCode: 400, payload },
+    $metadata: {},
     StatusCode: 400,
     Payload: payload,
   };

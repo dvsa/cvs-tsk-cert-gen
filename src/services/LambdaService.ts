@@ -1,6 +1,6 @@
 import { IInvokeConfig } from "../models";
 import { Configuration } from "../utils/Configuration";
-import { InvocationRequest, InvocationResponse, LambdaClient, InvokeCommand, InvokeCommandInput, InvokeCommandOutput } from "@aws-sdk/client-lambda";
+import { InvocationRequest, InvocationResponse, LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { Service } from "../models/injector/ServiceDecorator";
 import { HTTPError } from "../models/HTTPError";
 import { ERRORS } from "../models/Enums";
@@ -29,9 +29,8 @@ class LambdaService {
   ): Promise<InvocationResponse> {
     try {
       return await this.lambdaClient.send(new InvokeCommand(params));
-    }
-    catch (err) {
-      throw err
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -53,7 +52,7 @@ class LambdaService {
       );
     }
 
-    const payload: any = JSON.parse(Buffer.from(response.Payload).toString())
+    const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
 
     if (payload.statusCode >= 400) {
       throw new HTTPError(

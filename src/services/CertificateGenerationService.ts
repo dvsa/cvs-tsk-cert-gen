@@ -1,6 +1,4 @@
-import { AWSError, config as AWSConfig, Lambda } from "aws-sdk";
-import { InvocationRequest } from "@aws-sdk/client-lambda";
-import S3 from "aws-sdk/clients/s3";
+import { InvocationRequest, ServiceException } from "@aws-sdk/client-lambda";
 import moment from "moment";
 import {
   ICertificatePayload,
@@ -40,6 +38,7 @@ import { IDefectChild } from "../models/IDefectChild";
 import axiosClient from "../client/AxiosClient";
 import { InvocationResponse } from "@aws-sdk/client-lambda";
 import { toUint8Array } from "@aws-sdk/util-utf8";
+import { GetObjectOutput } from "@aws-sdk/client-s3";
 
 /**
  * Service class for Certificate Generation
@@ -56,7 +55,8 @@ class CertificateGenerationService {
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
 
-    AWSConfig.lambda = this.config.getInvokeConfig().params;
+    // TODO: something here?
+    // AWSConfig.lambda = this.config.getInvokeConfig().params;
   }
 
   /**
@@ -166,7 +166,7 @@ class CertificateGenerationService {
           };
         }
       )
-      .catch((error: AWSError | Error) => {
+      .catch((error: ServiceException | Error) => {
         console.log(error);
         throw error;
       });
@@ -281,10 +281,10 @@ class CertificateGenerationService {
   public async getSignature(staffId: string): Promise<string | null> {
     return this.s3Client
       .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-      .then((result: S3.Types.GetObjectOutput) => {
+      .then((result: GetObjectOutput) => {
         return result.Body!.toString();
       })
-      .catch((error: AWSError) => {
+      .catch((error: ServiceException) => {
         console.error(
           `Unable to fetch signature for staff id ${staffId}. ${error.message}`
         );
@@ -808,8 +808,9 @@ class CertificateGenerationService {
           };
         }
       )
-      .catch((error: AWSError | Error) => {
+      .catch((error: ServiceException | Error) => {
         console.log(error);
+        throw error;
       });
   }
 

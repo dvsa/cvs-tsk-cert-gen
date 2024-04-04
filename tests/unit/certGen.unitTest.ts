@@ -8,7 +8,6 @@ import {
 import { S3BucketMockService } from "../models/S3BucketMockService";
 import { LambdaMockService } from "../models/LambdaMockService";
 import { CertificateUploadService } from "../../src/services/CertificateUploadService";
-import { ManagedUpload } from "aws-sdk/clients/s3";
 import { certGen } from "../../src/functions/certGen";
 import sinon from "sinon";
 import queueEventPass from "../resources/queue-event-pass.json";
@@ -18,6 +17,7 @@ import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import docGenRwt from "../resources/doc-gen-payload-rwt.json";
 import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
 import docGenMsva30 from "../resources/doc-gen-payload-msva30.json";
+import { StreamingBlobPayloadInputTypes } from "@smithy/types"
 
 const sandbox = sinon.createSandbox();
 import { cloneDeep } from "lodash";
@@ -5065,7 +5065,7 @@ describe("cert-gen", () => {
 
                         return certificateUploadService
                             .uploadCertificate(generatedCertificateResponse)
-                            .then((response: ManagedUpload.SendData) => {
+                            .then((response: any) => {
                                 expect(response.Key).toEqual(
                                     `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
                                 );
