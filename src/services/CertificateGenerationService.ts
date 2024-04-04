@@ -1,5 +1,6 @@
 import { InvocationRequest, ServiceException } from "@aws-sdk/client-lambda";
 import moment from "moment";
+import axiosClient from "../client/AxiosClient";
 import {
   ICertificatePayload,
   ICustomDefect,
@@ -35,7 +36,6 @@ import { IFlatDefect } from "../models/IFlatDefect";
 import { IDefectParent } from "../models/IDefectParent";
 import { IItem } from "../models/IItem";
 import { IDefectChild } from "../models/IDefectChild";
-import axiosClient from "../client/AxiosClient";
 import { InvocationResponse } from "@aws-sdk/client-lambda";
 import { toUint8Array } from "@aws-sdk/util-utf8";
 import { GetObjectOutput } from "@aws-sdk/client-s3";
@@ -245,7 +245,7 @@ class CertificateGenerationService {
    * @returns boolean true if Welsh
    */
   public async lookupPostcode(postcode: string): Promise<boolean> {
-    const axiosInstance = await axiosClient();
+    const axiosInstance = await axiosClient(7000);
 
     if (axiosInstance) {
       let isWelsh: boolean = false;
