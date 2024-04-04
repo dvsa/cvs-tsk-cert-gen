@@ -42,7 +42,6 @@ const certGen: Handler = async (
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
     if (testResult.testStatus === "cancelled") {
-      console.log('removing certificate')
       const s3DeletePromise =
         certificateUploadService.removeCertificate(testResult);
       certificateUploadPromises.push(s3DeletePromise);
@@ -61,7 +60,6 @@ const certGen: Handler = async (
 
       certificateUploadPromises.push(generatedCertificateResponse);
     } else {
-      console.error(`${ERRORS.TESTRESULT_ID}`, testResult);
       console.error(`${ERRORS.TESTRESULT_ID}`, testResult.testResultId);
       throw new Error("Bad Test Record: " + testResult.testResultId);
     }
