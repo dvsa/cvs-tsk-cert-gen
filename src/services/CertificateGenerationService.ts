@@ -454,7 +454,7 @@ class CertificateGenerationService {
             case CERTIFICATE_DATA.PASS_DATA:
             case CERTIFICATE_DATA.FAIL_DATA:
                 const defects: any = await this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, isWelsh);
-                const payload = {
+                return {
                     TestNumber: testType.testNumber,
                     TestStationPNumber: testResult.testStationPNumber,
                     TestStationName: testResult.testStationName,
