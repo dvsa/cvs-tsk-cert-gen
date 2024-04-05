@@ -14,8 +14,7 @@ class S3BucketService {
 
   constructor(s3Client: S3Client) {
     const config: IS3Config = Configuration.getInstance().getS3Config();
-    this.s3Client = new S3Client(config);
-    this.s3Client = AWSXRay.captureAWSv3Client(s3Client);
+    this.s3Client = AWSXRay.captureAWSv3Client(new S3Client({ ...s3Client, ...config }));
   }
 
   /**

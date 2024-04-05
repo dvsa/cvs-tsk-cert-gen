@@ -16,8 +16,7 @@ class LambdaService {
 
   constructor(lambdaClient: LambdaClient) {
     const config: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
-    this.lambdaClient = new LambdaClient(config.params);
-    this.lambdaClient = AWSXRay.captureAWSv3Client(lambdaClient);
+    this.lambdaClient = AWSXRay.captureAWSv3Client(new LambdaClient({ ...lambdaClient, ...config.params }))
   }
 
   /**

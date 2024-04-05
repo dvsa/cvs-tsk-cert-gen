@@ -54,9 +54,6 @@ class CertificateGenerationService {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
-
-    // TODO: something here?
-    // AWSConfig.lambda = this.config.getInvokeConfig().params;
   }
 
   /**
