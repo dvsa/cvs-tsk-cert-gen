@@ -3702,6 +3702,8 @@ describe("cert-gen", () => {
                         SeatBeltTested: "Yes",
                         TestNumber: "W01A00310",
                         TestStationName: "Abshire-Kub",
+                        Make: "AEC",
+                        Model: "RELIANCE",
                         TestStationPNumber: "09-4129632",
                         VehicleEuClassification: "M1"
                     },
@@ -3826,6 +3828,8 @@ describe("cert-gen", () => {
                         TestNumber: "W01A00310",
                         TestStationName: "Abshire-Kub",
                         TestStationPNumber: "09-4129632",
+                        Model: "RELIANCE",
+                        Make: "AEC",
                         VehicleEuClassification: "M1"
                     },
                     Signature: {
