@@ -37,7 +37,7 @@ const certGen: Handler = async (
     );
   const certificateUploadService: CertificateUploadService =
     Injector.resolve<CertificateUploadService>(CertificateUploadService);
-  const certificateUploadPromises: Array<Promise<CertGenReturn>> = [];
+  const certificateUploadPromises: Promise<CertGenReturn>[] = [];
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
