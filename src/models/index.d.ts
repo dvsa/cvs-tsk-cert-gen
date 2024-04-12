@@ -37,6 +37,7 @@ interface IMOTConfig {
     vtg30: "VTG30.pdf";
     vtg30_bilingual: "VTG30_BILINGUAL.pdf";
     hgv_prs: "HGV_PRS.pdf";
+    hgv_prs_bilingual: "HGV_PRS_BILINGUAL.pdf";
     trl_prs: "TRL_PRS.pdf";
     adr_pass: "ADR_PASS.pdf";
     rwt: "RWT.pdf;";
