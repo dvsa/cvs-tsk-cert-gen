@@ -50,7 +50,7 @@
   "dependencies": {
     "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.1067.0",
-    "aws-xray-sdk": "^3.3.4",
+    "aws-xray-sdk": "^3.6.0",
     "js-yaml": "^3.14.1",
     "axios": "^1.6.8",
     "moment": "^2.24.0",
