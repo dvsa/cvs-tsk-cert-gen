@@ -48,7 +48,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-lambda-powertools/parameters": "^2.0.2",
+    "@aws-sdk/client-appconfigdata": "^3.525.0",
     "@dvsa/cvs-microservice-common": "^0.9.7",
+    "@dvsa/cvs-type-definitions": "^2.1.11",
     "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.1067.0",
     "aws-xray-sdk": "^3.3.4",
@@ -60,11 +63,8 @@
     "ts-node-register": "^1.0.0"
   },
   "devDependencies": {
-    "@aws-lambda-powertools/parameters": "^2.0.2",
-    "@aws-sdk/client-appconfigdata": "^3.525.0",
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
-    "@dvsa/cvs-type-definitions": "^2.1.11",
     "@types/aws-lambda": "^8.10.34",
     "@types/jest": "^28.1.8",
     "@types/jest-plugin-context": "^2.9.2",
