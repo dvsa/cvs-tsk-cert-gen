@@ -3919,10 +3919,10 @@ describe("cert-gen", () => {
                 )
             );
             const testResult: any = JSON.parse(event.Records[0].body);
-            const hgvWithDefectRectifiedAtTest: any = JSON.parse(event.Records[3].body);
             let resBody: string = "";
 
             context("and the result has a defect that is rectified at test", () => {
+                const hgvWithDefectRectifiedAtTest: any = JSON.parse(event.Records[3].body);
                 context("and the test station location is not in Wales", () => {
                     it("should return a VTG5 payload without the DangerousDefectsWelsh array populated", async () => {
                         const expectedResult: any = {
