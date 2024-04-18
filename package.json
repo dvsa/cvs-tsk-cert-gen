@@ -48,11 +48,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-lambda-powertools/parameters": "^2.0.2",
+    "@aws-sdk/client-appconfigdata": "^3.525.0",
+    "@dvsa/cvs-microservice-common": "^0.9.7",
+    "@dvsa/cvs-type-definitions": "^2.1.11",
     "aws-lambda": "^1.0.5",
     "aws-sdk": "^2.1067.0",
     "aws-xray-sdk": "^3.3.4",
-    "js-yaml": "^3.14.1",
     "axios": "^1.6.8",
+    "js-yaml": "^3.14.1",
     "moment": "^2.24.0",
     "node-yaml": "^4.0.1",
     "reflect-metadata": "^0.1.13",
@@ -84,8 +88,7 @@
     "ts-jest": "^28.0.8",
     "tslint": "^5.20.0",
     "tslint-no-unused-expression-chai": "^0.1.4",
-    "typescript": "^4.9.5",
-    "@dvsa/cvs-type-definitions": "^2.1.11"
+    "typescript": "^4.9.5"
   },
   "jestSonar": {
     "reportPath": "coverage",

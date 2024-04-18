@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+const mockGetProfile = jest.fn();
+
 import {Injector} from "../../src/models/injector/Injector";
 import * as fs from "fs";
 import * as path from "path";
@@ -22,12 +25,16 @@ import docGenMsva30 from "../resources/doc-gen-payload-msva30.json";
 
 const sandbox = sinon.createSandbox();
 import {cloneDeep} from "lodash";
-import {ITestResult, ICertificatePayload} from "../../src/models";
+import {ITestResult, ICertificatePayload, IFeatureFlags} from "../../src/models";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
 import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
 import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
 import techRecordsPsv from "../resources/tech-records-response-PSV.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
+
+jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+    getProfile: mockGetProfile
+}));
 
 describe("cert-gen", () => {
     it("should pass", () => {
@@ -44,6 +51,18 @@ describe("cert-gen", () => {
     afterAll(() => {
         sandbox.restore();
         jest.setTimeout(5000);
+    });
+    beforeEach(() => {
+        const featureFlags: IFeatureFlags = {
+            welshTranslation: {
+              enabled: false,
+              translatePassTestResult: false,
+              translatePrsTestResult: false,
+              translateFailTestResult: false,
+            },
+          };
+
+        mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
     });
     afterEach(() => {
         sandbox.restore();
