@@ -663,9 +663,9 @@ class CertificateGenerationService {
   }
 
   /**
-       * Formats the additional defects for IVA and MSVA test based on whether custom defects is populated
-       * @param customDefects - the custom defects for the test
-       */
+   * Formats the additional defects for IVA and MSVA test based on whether custom defects is populated
+   * @param customDefects - the custom defects for the test
+   */
   public formatVehicleApprovalAdditionalDefects = (customDefects: ICustomDefect[] | undefined): ICustomDefect[] | undefined => {
     const defaultCustomDefect: ICustomDefect = {
       defectName: IVA_30.EMPTY_CUSTOM_DEFECTS,
@@ -675,9 +675,9 @@ class CertificateGenerationService {
   }
 
   /**
-  * Calculates the retest date for an IVA or MSVA test
-  * @param testTypeStartTimestamp - the test start timestamp of the test
-  */
+   * Calculates the retest date for an IVA or MSVA test
+   * @param testTypeStartTimestamp - the test start timestamp of the test
+   */
   public calculateVehicleApprovalRetestDate = (testTypeStartTimestamp: string): string => {
     return moment(testTypeStartTimestamp)
       .add(6, "months")
@@ -686,9 +686,9 @@ class CertificateGenerationService {
   }
 
   /**
-  * Retrieves the adrDetails from a techRecord searched by vin
-  * @param testResult - testResult from which the VIN is used to search a tech-record
-  */
+   * Retrieves the adrDetails from a techRecord searched by vin
+   * @param testResult - testResult from which the VIN is used to search a tech-record
+   */
   public getAdrDetails = async (testResult: any) => {
     const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
     return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl">;
@@ -712,9 +712,9 @@ class CertificateGenerationService {
   }
 
   /**
-  * helper function is used to process records and count provisional and current records
-  * @param records
-  */
+   * helper function is used to process records and count provisional and current records
+   * @param records
+   */
   public groupRecordsByStatusCode = (records: ISearchResult[]
   ): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
     const currentRecords: ISearchResult[] = [];
