@@ -1,6 +1,7 @@
 import { InvocationRequest, ServiceException } from "@aws-sdk/client-lambda";
 import moment from "moment";
 import axiosClient from "../client/AxiosClient";
+import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
 import {
   ICertificatePayload,
   ICustomDefect,
@@ -12,7 +13,8 @@ import {
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IWeightDetails
+  IWeightDetails,
+  IFeatureFlags
 } from "../models";
 import {
   ADR_TEST,
@@ -53,7 +55,6 @@ class CertificateGenerationService {
   private readonly config: Configuration;
   private readonly lambdaClient: LambdaService;
 
-
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
@@ -70,27 +71,18 @@ class CertificateGenerationService {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
-    const { STOP_WELSH_GEN } = process.env;
 
-    let isTestStationWelsh = false;
+    const shouldTranslateTestResult = await this.shouldTranslateTestResult(testResult);
 
-    // Circumvent bilingual certificate generation and logic if EV set to TRUE
-    if (STOP_WELSH_GEN === undefined || STOP_WELSH_GEN.toUpperCase() === "FALSE") {
-      // Find out if Welsh certificate is needed
-      const testStations = await this.getTestStations();
-      const testStationPostcode = this.getThisTestStation(testStations, testResult.testStationPNumber);
-      isTestStationWelsh = testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
-    } else {
-      console.log(`Welsh certificate generation deactivated via environment variable set to ${STOP_WELSH_GEN}`);
-    }
     const payload: string = JSON.stringify(
-      await this.generatePayload(testResult, isTestStationWelsh)
+      await this.generatePayload(testResult, shouldTranslateTestResult)
     );
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
       psv_pass_bilingual: config.documentNames.vtp20_bilingual,
       psv_fail: config.documentNames.vtp30,
+      psv_fail_bilingual: config.documentNames.vtp30_bilingual,
       psv_prs: config.documentNames.psv_prs,
       hgv_pass: config.documentNames.vtg5,
       hgv_pass_bilingual: config.documentNames.vtg5_bilingual,
@@ -120,7 +112,7 @@ class CertificateGenerationService {
       vehicleTestRes = "iva_fail";
     } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
       vehicleTestRes = "msva_fail";
-    } else if (this.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && isTestStationWelsh) {
+    } else if (this.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
     } else {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
@@ -173,6 +165,78 @@ class CertificateGenerationService {
         console.log(error);
         throw error;
       });
+  }
+
+  /**
+   * Handler method for retrieving feature flags and checking if test station is in Wales
+   * @param testResult
+   * @returns Promise<boolean>
+   */
+  public async shouldTranslateTestResult(testResult: any): Promise<boolean> {
+    let shouldTranslateTestResult = false;
+    try {
+      const featureFlags: IFeatureFlags = await getProfile();
+      console.log("Using feature flags ", featureFlags);
+
+      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
+        shouldTranslateTestResult = await this.isTestStationWelsh(testResult.testStationPNumber);
+      }
+    } catch (e) {
+      console.error(`Failed to retrieve feature flags - ${e}`);
+    }
+    return shouldTranslateTestResult;
+  }
+
+  /**
+   * Method to check if Welsh translation is enabled.
+   * @param featureFlags IFeatureFlags interface
+   * @returns boolean
+   */
+  public isGlobalWelshFlagEnabled(featureFlags: IFeatureFlags): boolean {
+    if (!featureFlags.welshTranslation.enabled) {
+      console.warn(`Unable to translate any test results: global Welsh flag disabled.`);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Method to check if Welsh translation is enabled for the given test type.
+   * @param featureFlags IFeatureFlags interface
+   * @param testResult string of result, PASS/PRS/FAIL
+   * @returns boolean
+   */
+  public isTestResultFlagEnabled(testResult: string, featureFlags: IFeatureFlags): boolean {
+    let shouldTranslate: boolean = false;
+    switch (testResult) {
+      case TEST_RESULTS.PRS:
+        shouldTranslate = featureFlags.welshTranslation.translatePrsTestResult ?? false;
+        break;
+      case TEST_RESULTS.PASS:
+        shouldTranslate = featureFlags.welshTranslation.translatePassTestResult ?? false;
+        break;
+      case TEST_RESULTS.FAIL:
+        shouldTranslate = featureFlags.welshTranslation.translateFailTestResult ?? false;
+        break;
+      default:
+        console.warn("Translation not available for this test result type.");
+        return shouldTranslate;
+    }
+    if (!shouldTranslate) {
+      console.warn(`Unable to translate for test result: ${testResult} flag disabled`);
+    }
+    return shouldTranslate;
+  }
+
+  /**
+   * Determines if a test station is located in Wales
+   * @param testStationPNumber The test station's P-number.
+   * @returns Promise<boolean> true if the test station is Welsh, false otherwise
+   */
+  public async isTestStationWelsh(testStationPNumber: string): Promise<boolean> {
+    const testStations = await this.getTestStations();
+    const testStationPostcode = this.getThisTestStation(testStations, testStationPNumber);
+    return testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
   }
 
   /**

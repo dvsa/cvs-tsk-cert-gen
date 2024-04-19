@@ -56,6 +56,10 @@
     "@smithy/util-utf8": "^2.3.0",
     "aws-lambda": "^1.0.5",
     "aws-xray-sdk": "^3.6.0",
+    "@aws-lambda-powertools/parameters": "^2.0.2",
+    "@aws-sdk/client-appconfigdata": "^3.525.0",
+    "@dvsa/cvs-microservice-common": "^0.9.7",
+    "@dvsa/cvs-type-definitions": "^2.1.11",
     "axios": "^1.6.8",
     "js-yaml": "^3.14.1",
     "moment": "^2.24.0",
@@ -66,7 +70,6 @@
   "devDependencies": {
     "@commitlint/cli": "^19.2.1",
     "@commitlint/config-conventional": "^19.1.0",
-    "@dvsa/cvs-type-definitions": "^2.1.11",
     "@types/aws-lambda": "^8.10.34",
     "@types/jest": "^29.5.12",
     "@types/jest-plugin-context": "^2.9.2",

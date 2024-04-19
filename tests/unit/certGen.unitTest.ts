@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+const mockGetProfile = jest.fn();
+
 import { Injector } from "../../src/models/injector/Injector";
 import * as fs from "fs";
 import * as path from "path";
@@ -22,12 +25,16 @@ import { StreamingBlobPayloadInputTypes } from "@smithy/types"
 
 const sandbox = sinon.createSandbox();
 import { cloneDeep } from "lodash";
-import { ITestResult, ICertificatePayload } from "../../src/models";
+import { ITestResult, ICertificatePayload, IFeatureFlags } from "../../src/models";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
 import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
 import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
 import techRecordsPsv from "../resources/tech-records-response-PSV.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
+
+jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+    getProfile: mockGetProfile
+}));
 
 describe("cert-gen", () => {
     it("should pass", () => {
@@ -44,6 +51,18 @@ describe("cert-gen", () => {
     afterAll(() => {
         sandbox.restore();
         jest.setTimeout(5000);
+    });
+    beforeEach(() => {
+        const featureFlags: IFeatureFlags = {
+            welshTranslation: {
+                enabled: false,
+                translatePassTestResult: false,
+                translatePrsTestResult: false,
+                translateFailTestResult: false,
+            },
+        };
+
+        mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
     });
     afterEach(() => {
         sandbox.restore();
@@ -1777,8 +1796,8 @@ describe("cert-gen", () => {
 
         context("when a failing test result is read from the queue", () => {
             const event: any = { ...queueEventFail };
-            const failWithPrsEvent: any = { ... queueEventFailPRS };
-            const prsEvent: any = { ... queueEventPRS };
+            const failWithPrsEvent: any = { ...queueEventFailPRS };
+            const prsEvent: any = { ...queueEventPRS };
 
             const hgvFailWithDangerousDefect: any = JSON.parse(event.Records[11].body);
             const hgvFailWithMajorDefect: any = JSON.parse(event.Records[12].body);
@@ -1787,7 +1806,7 @@ describe("cert-gen", () => {
             const hgvFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[3].body);
             const hgvFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[4].body);
             const psvPrsNotAcceptableForBilingualCert: any = JSON.parse(prsEvent.Records[0].body);
-
+            const psvFailWithDefects: any = JSON.parse(event.Records[19].body);
             const trlFailWithDangerousDefect: any = JSON.parse(event.Records[15].body);
             const trlFailWithMajorDefect: any = JSON.parse(event.Records[16].body);
             const trlFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[17].body);
@@ -3649,7 +3668,249 @@ describe("cert-gen", () => {
                         });
                 });
             });
+
+            context("should return Certificate Data without any Welsh defect arrays populated", () => {
+                let getTechRecordSearchStub: any;
+                let getTechRecordStub: any;
+                let techRecordsPsvStub: any;
+                const expectedResultEnglish: any = {
+                    FAIL_DATA: {
+                        AdvisoryDefects: [
+                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                        ],
+                        CountryOfRegistrationCode: "gb",
+                        CurrentOdometer: {
+                            unit: "kilometres",
+                            value: 12312
+                        },
+                        DangerousDefects: [
+                            "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                        ],
+
+                        DateOfTheTest: "26.02.2019",
+                        EarliestDateOfTheNextTest: "26.12.2019",
+                        ExpiryDate: "25.02.2020",
+                        IssuersName: "Dev1 CVS",
+                        MajorDefects: [
+                            "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                        ],
+                        MinorDefects: [
+                            "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                        ],
+                        OdometerHistoryList: [
+                            {
+                                date: "19.01.2019",
+                                unit: "kilometres",
+                                value: 400000
+                            },
+                            {
+                                date: "18.01.2019",
+                                unit: "kilometres",
+                                value: 390000
+                            },
+                            {
+                                date: "17.01.2019",
+                                unit: "kilometres",
+                                value: 380000
+                            }
+                        ],
+                        RawVIN: "XMGDE02FS0H012345",
+                        RawVRM: "BQ91YHQ",
+                        SeatBeltNumber: 2,
+                        SeatBeltPreviousCheckDate: "26.02.2019",
+                        SeatBeltTested: "Yes",
+                        TestNumber: "W01A00310",
+                        TestStationName: "Abshire-Kub",
+                        Make: "AEC",
+                        Model: "RELIANCE",
+                        TestStationPNumber: "09-4129632",
+                        VehicleEuClassification: "M1"
+                    },
+                    Signature: {
+                        ImageData: null,
+                        ImageType: "png"
+                    },
+                    Watermark: "NOT VALID"
+                };
+                beforeEach(() => {
+                    getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    techRecordsPsvStub = cloneDeep(psvFailWithDefects);
+                    getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordsPsv) as any);
+                });
+
+                afterEach(() => {
+                    getTechRecordStub.restore();
+                    getTechRecordSearchStub.restore();
+                });
+                it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultEnglish);
+                            expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                        });
+                });
+
+                it("should return a VTP30W payload with the MinorDefectsWelsh array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultEnglish);
+                            expect(payload.FAIL_DATA.MinorDefectsWelsh).toBeUndefined();
+                        });
+
+                });
+
+                it("should return a VTP30W payload without the AdvisoryDefectsWelsh array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultEnglish);
+                            expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toBeUndefined();
+                        });
+                });
+                it("should return a VTP30W payload without the DangerousDefects array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultEnglish);
+                            expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                        });
+                });
+            });
+            context("should return certificate data with welsh defects array", () => {
+                let getTechRecordSearchStub: any;
+                let getTechRecordStub: any;
+                let techRecordsPsvStub: any;
+                const expectedResultWelsh: any = {
+                    FAIL_DATA: {
+                        AdvisoryDefects: [
+                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                        ],
+                        AdvisoryDefectsWelsh: [
+                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                        ],
+                        CountryOfRegistrationCode: "gb",
+                        CurrentOdometer: {
+                            unit: "kilometres",
+                            value: 12312
+                        },
+                        DangerousDefects: [
+                            "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                        ],
+                        DangerousDefectsWelsh: [
+                            "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                        ],
+                        DateOfTheTest: "26.02.2019",
+                        EarliestDateOfTheNextTest: "26.12.2019",
+                        ExpiryDate: "25.02.2020",
+                        IssuersName: "Dev1 CVS",
+                        MajorDefects: [
+                            "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                        ],
+                        MajorDefectsWelsh: [
+                            "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                        ],
+                        MinorDefects: [
+                            "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                        ],
+                        MinorDefectsWelsh: [
+                            "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
+                        ],
+                        OdometerHistoryList: [
+                            {
+                                date: "19.01.2019",
+                                unit: "kilometres",
+                                value: 400000
+                            },
+                            {
+                                date: "18.01.2019",
+                                unit: "kilometres",
+                                value: 390000
+                            },
+                            {
+                                date: "17.01.2019",
+                                unit: "kilometres",
+                                value: 380000
+                            }
+                        ],
+                        RawVIN: "XMGDE02FS0H012345",
+                        RawVRM: "BQ91YHQ",
+                        SeatBeltNumber: 2,
+                        SeatBeltPreviousCheckDate: "26.02.2019",
+                        SeatBeltTested: "Yes",
+                        TestNumber: "W01A00310",
+                        TestStationName: "Abshire-Kub",
+                        TestStationPNumber: "09-4129632",
+                        Model: "RELIANCE",
+                        Make: "AEC",
+                        VehicleEuClassification: "M1"
+                    },
+                    Signature: {
+                        ImageData: null,
+                        ImageType: "png"
+                    },
+                    Watermark: "NOT VALID"
+                };
+                beforeEach(() => {
+                    getTechRecordSearchStub = sandbox
+                        .stub(certificateGenerationService, "callSearchTechRecords")
+                        .resolves(techRecordsSearchPsv);
+
+                    techRecordsPsvStub = cloneDeep(psvFailWithDefects);
+                    getTechRecordStub = sandbox
+                        .stub(certificateGenerationService, "callGetTechRecords")
+                        .resolves((techRecordsPsv) as any);
+                });
+
+                afterEach(() => {
+                    getTechRecordStub.restore();
+                    getTechRecordSearchStub.restore();
+                });
+
+
+                it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultWelsh);
+                            expect(payload.FAIL_DATA.MajorDefectsWelsh).toEqual(["6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"]);
+                        });
+                });
+
+                it("should return a VTP30W payload with the MinorDefectsWelsh array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultWelsh);
+                            expect(payload.FAIL_DATA.MinorDefectsWelsh).toEqual(["54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."]);
+                        });
+
+                });
+                it("should return a VTP30W payload with the AdvisoryDefectsWelsh array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultWelsh);
+                            expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toEqual(["5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"]);
+                        });
+                });
+                it("should return a VTP30W payload with the DangerousDefects array populated", async () => {
+                    return await certificateGenerationService
+                        .generatePayload(psvFailWithDefects, true)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResultWelsh);
+                            expect(payload.FAIL_DATA.DangerousDefectsWelsh).toEqual(["54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"]);
+                        });
+                });
+            });
         });
+
 
         context("when a prs test result is read from the queue", () => {
             const event: any = JSON.parse(
