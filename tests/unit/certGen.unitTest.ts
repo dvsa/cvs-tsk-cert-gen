@@ -21,7 +21,6 @@ import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import docGenRwt from "../resources/doc-gen-payload-rwt.json";
 import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
 import docGenMsva30 from "../resources/doc-gen-payload-msva30.json";
-import { StreamingBlobPayloadInputTypes } from "@smithy/types"
 
 const sandbox = sinon.createSandbox();
 import { cloneDeep } from "lodash";
