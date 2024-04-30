@@ -3920,6 +3920,233 @@ describe("cert-gen", () => {
             );
             const testResult: any = JSON.parse(event.Records[0].body);
             let resBody: string = "";
+
+            context("and the result has a defect that is rectified at test", () => {
+                const hgvWithDefectRectifiedAtTest: any = JSON.parse(event.Records[3].body);
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG5 payload without the DangerousDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvWithDefectRectifiedAtTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG5W payload with the DangerousDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvWithDefectRectifiedAtTest, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+            });
+
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", async () => {
