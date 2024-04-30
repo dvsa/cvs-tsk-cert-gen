@@ -3919,7 +3919,7 @@ describe("cert-gen", () => {
                 )
             );
             context("and the TRL has defects that is rectified at the test", () => {
-                const trlPRS = JSON.parse(event.Records[3].body);
+                const trlPRS = JSON.parse(event.Records[4].body);
 
                 context("and the test station is not in wales", () => {
                     it("should return a TRL PRS certificate with the defects array populated", async () => {
