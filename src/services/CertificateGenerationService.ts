@@ -84,6 +84,7 @@ class CertificateGenerationService {
       psv_fail: config.documentNames.vtp30,
       psv_fail_bilingual: config.documentNames.vtp30_bilingual,
       psv_prs: config.documentNames.psv_prs,
+      psv_prs_bilingual: config.documentNames.psv_prs_bilingual,
       hgv_pass: config.documentNames.vtg5,
       hgv_pass_bilingual: config.documentNames.vtg5_bilingual,
       hgv_fail: config.documentNames.vtg30,
