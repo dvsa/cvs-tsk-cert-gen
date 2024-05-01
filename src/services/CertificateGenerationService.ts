@@ -95,6 +95,7 @@ class CertificateGenerationService {
       trl_fail: config.documentNames.vtg30,
       trl_fail_bilingual: config.documentNames.vtg30_bilingual,
       trl_prs: config.documentNames.trl_prs,
+      trl_prs_bilingual: config.documentNames.trl_prs_bilingual,
       rwt: config.documentNames.rwt,
       adr_pass: config.documentNames.adr_pass,
       iva_fail: config.documentNames.iva_fail,

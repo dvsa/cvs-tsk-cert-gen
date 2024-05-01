@@ -149,6 +149,7 @@ export const AVAILABLE_WELSH = {
         "hgv_fail",
         "trl_fail",
         "psv_fail",
-        "hgv_prs"
+        "hgv_prs",
+        "trl_prs"
     ]
 };

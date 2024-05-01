@@ -3918,6 +3918,167 @@ describe("cert-gen", () => {
                     "utf8"
                 )
             );
+            context("and the TRL has defects that is rectified at the test", () => {
+                const trlPRS = JSON.parse(event.Records[4].body);
+
+                context("and the test station is not in wales", () => {
+                    it("should return a TRL PRS certificate with the defects array populated", async () => {
+                            const expectedResult = {
+                                DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1"
+                                },
+                                FAIL_DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    PRSDefects: [
+                                        "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                    ],
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1"
+                                },
+                                Signature: {
+                                    ImageData: null,
+                                    ImageType: "png"
+                                },
+                                Watermark: "NOT VALID"
+                            };
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtHgvSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(trlPRS)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        }
+                    );
+                    context(" and the test station is in wales", () => {
+                        it("should return a TRL PRS bilingual certificate with the defects array populated", async () => {
+                            const expectedResult = {
+                                DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1"
+                                },
+                                FAIL_DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    PRSDefects: [
+                                        "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                    ],
+                                    PRSDefectsWelsh: [
+                                        "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                    ],
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1"
+                                },
+                                Signature: {
+                                    ImageData: null,
+                                    ImageType: "png"
+                                },
+                                Watermark: "NOT VALID"
+                            };
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtHgvSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(trlPRS, true)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
+                    });
+                });
+            });
+
             const testResult: any = JSON.parse(event.Records[0].body);
             let resBody: string = "";
 
