@@ -3970,7 +3970,7 @@ describe("cert-gen", () => {
             });
 
             context("and the PSV has defects that are rectified at the test", () => {
-                const psvPRS = JSON.parse(event.Records[4].body);
+                const psvPRS = JSON.parse(event.Records[5].body);
 
                 context("and the test station is not in wales", () => {
                     it("should return a PSV certificate with the defects array", async () => {
