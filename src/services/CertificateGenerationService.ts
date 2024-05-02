@@ -262,7 +262,7 @@ class CertificateGenerationService {
     while (retries < 3) {
       try {
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-        const payload: any = this.lambdaClient.validateInvocationResponse(response);
+        const payload: any = await this.lambdaClient.validateInvocationResponse(response);
         const testStationsParsed = JSON.parse(payload.body);
 
         if (!testStationsParsed || testStationsParsed.length === 0) {
@@ -800,12 +800,10 @@ class CertificateGenerationService {
 
     return this.lambdaClient
       .invoke(invokeParams)
-      .then(
-        (
+      .then( async (
           response: InvocationResponse
         ) => {
-          const payload: any =
-            this.lambdaClient.validateInvocationResponse(response);
+          const payload: any = await this.lambdaClient.validateInvocationResponse(response);
           // TODO: convert to correct type
           const testResults: any[] = JSON.parse(payload.body);
 
@@ -1035,7 +1033,7 @@ class CertificateGenerationService {
     while (retries < 3) {
       try {
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-        const payload: any = this.lambdaClient.validateInvocationResponse(response);
+        const payload: any = await this.lambdaClient.validateInvocationResponse(response);
         const defectsParsed = JSON.parse(payload.body);
 
         if (!defectsParsed || defectsParsed.length === 0) {
