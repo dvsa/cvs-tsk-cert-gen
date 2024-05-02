@@ -26,11 +26,7 @@ class LambdaService {
   public async invoke(
     params: InvocationRequest
   ): Promise<InvocationResponse> {
-    try {
-      return await this.lambdaClient.send(new InvokeCommand(params));
-    } catch (err) {
-      throw err;
-    }
+    return await this.lambdaClient.send(new InvokeCommand(params));
   }
 
   /**

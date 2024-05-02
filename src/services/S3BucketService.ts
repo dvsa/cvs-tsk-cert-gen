@@ -37,11 +37,7 @@ class S3BucketService {
       Metadata: metadata,
     });
 
-    try {
-      return await this.s3Client.send(command);
-    } catch (err) {
-      throw err;
-    }
+    return await this.s3Client.send(command);
   }
 
   /**
@@ -58,11 +54,7 @@ class S3BucketService {
       Key: `${process.env.BRANCH}/${fileName}`,
     });
 
-    try {
-      return this.s3Client.send(command);
-    } catch (err) {
-      throw err;
-    }
+    return this.s3Client.send(command);
   }
 
   /**
@@ -79,11 +71,7 @@ class S3BucketService {
       Key: `${process.env.BRANCH}/${fileName}`,
     });
 
-    try {
-      return this.s3Client.send(command);
-    } catch (err) {
-      throw err;
-    }
+    return this.s3Client.send(command);
   }
 }
 
