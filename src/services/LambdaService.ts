@@ -40,6 +40,7 @@ class LambdaService {
   public validateInvocationResponse(
     response: InvocationResponse
   ): Promise<any> {
+    console.warn('payload', response.Payload);
     if (
       !response.Payload ||
       Buffer.from(response.Payload).toString() === "" ||
@@ -50,7 +51,6 @@ class LambdaService {
         `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`
       );
     }
-
     const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
 
     if (payload.statusCode >= 400) {

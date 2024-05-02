@@ -164,7 +164,7 @@ class CertificateGenerationService {
         }
       )
       .catch((error: ServiceException | Error) => {
-        console.log(error);
+        console.log("failed in generate certificate", error);
         throw error;
       });
   }
