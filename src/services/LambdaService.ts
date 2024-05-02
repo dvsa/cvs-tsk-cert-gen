@@ -52,7 +52,7 @@ class LambdaService {
       );
     }
     const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
-
+    console.warn("parsed payload", payload);
     if (payload.statusCode >= 400) {
       throw new HTTPError(
         500,

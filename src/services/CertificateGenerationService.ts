@@ -68,6 +68,7 @@ class CertificateGenerationService {
   public async generateCertificate(
     testResult: any
   ): Promise<IGeneratedCertificateResponse> {
+    console.warn("this is the test result", JSON.stringify(testResult));
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
@@ -77,6 +78,7 @@ class CertificateGenerationService {
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult, shouldTranslateTestResult)
     );
+    console.warn("this is the payload in generate cert", payload);
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
@@ -164,7 +166,7 @@ class CertificateGenerationService {
         }
       )
       .catch((error: ServiceException | Error) => {
-        console.log("failed in generate certificate", error);
+        console.error("failed in generate certificate", error);
         throw error;
       });
   }
