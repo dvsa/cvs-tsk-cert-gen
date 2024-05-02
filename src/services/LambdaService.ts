@@ -40,7 +40,7 @@ class LambdaService {
   public validateInvocationResponse(
     response: InvocationResponse
   ): Promise<any> {
-    console.warn("payload", response.Payload);
+    // console.warn("payload", response.Payload);
     if (
       !response.Payload ||
       Buffer.from(response.Payload).toString() === "" ||

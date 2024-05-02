@@ -140,6 +140,7 @@ class CertificateGenerationService {
       .invoke(invokeParams)
       .then(
         async (response: InvocationResponse) => {
+          console.warn("validateInvocationResponse called in generateCertificate");
           const documentPayload: any = await this.lambdaClient.validateInvocationResponse(response);
           const resBody: string = documentPayload.body;
           const responseBuffer: Buffer = Buffer.from(resBody, "base64");
@@ -264,6 +265,7 @@ class CertificateGenerationService {
     while (retries < 3) {
       try {
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
+        console.warn("validateInvocationResponse called in getTestStations count -",retries);
         const payload: any = await this.lambdaClient.validateInvocationResponse(response);
         const testStationsParsed = JSON.parse(payload.body);
 
@@ -805,6 +807,7 @@ class CertificateGenerationService {
       .then( async (
           response: InvocationResponse
         ) => {
+          console.warn("validateInvocationResponse called in getOdometerHistory");
           const payload: any = await this.lambdaClient.validateInvocationResponse(response);
           // TODO: convert to correct type
           const testResults: any[] = JSON.parse(payload.body);
@@ -906,6 +909,7 @@ class CertificateGenerationService {
     };
     try {
       const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
+      console.warn("validateInvocationResponse called in callSearchTechRecords");
       const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
       return JSON.parse(res.body);
     } catch (e) {
@@ -937,6 +941,7 @@ class CertificateGenerationService {
     };
     try {
       const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
+      console.warn("validateInvocationResponse called in callGetTechRecords");
       const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
       return JSON.parse(res.body);
     } catch (e) {
@@ -1035,6 +1040,7 @@ class CertificateGenerationService {
     while (retries < 3) {
       try {
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
+        console.warn("validateInvocationResponse called in getDefectTranslations");
         const payload: any = await this.lambdaClient.validateInvocationResponse(response);
         const defectsParsed = JSON.parse(payload.body);
 
