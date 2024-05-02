@@ -265,7 +265,7 @@ class CertificateGenerationService {
     while (retries < 3) {
       try {
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-        console.warn("validateInvocationResponse called in getTestStations count -",retries);
+        console.warn("validateInvocationResponse called in getTestStations count -", retries);
         const payload: any = await this.lambdaClient.validateInvocationResponse(response);
         const testStationsParsed = JSON.parse(payload.body);
 
