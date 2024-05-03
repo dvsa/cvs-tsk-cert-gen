@@ -19,7 +19,7 @@
     "test": "npm run test:unit -- --coveragePathIgnorePatterns='<rootDir>/tests/' --coverage",
     "test-i": "BRANCH=local jest --testMatch=\"**/*.intTest.ts\" --runInBand",
     "lint": "tslint src/**/*.ts tests/**/*.ts -q",
-    "lint-fix": "tslint src/**/*.ts tests/**/*.ts -q --fix",
+    "lint:fix": "tslint src/**/*.ts tests/**/*.ts -q --fix",
     "security-checks": "git secrets --scan",
     "prepush": "npm run test && npm run build && npm run test-i",
     "sonar-scanner": "npm run test && sonar-scanner",
