@@ -3558,116 +3558,6 @@ describe("cert-gen", () => {
                 });
             });
 
-            context("and the vehicle type is not acceptable to generate a bilingual certificate", () => {
-                it("should return Certificate Data without any Welsh defect arrays populated", async () => {
-                    const expectedResult: any = {
-                        DATA: {
-                            CountryOfRegistrationCode: "gb",
-                            CurrentOdometer: {
-                                unit: "kilometres",
-                                value: 12312
-                            },
-                            DateOfTheTest: "26.02.2019",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            ExpiryDate: "25.02.2020",
-                            IssuersName: "CVS Dev1",
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            OdometerHistoryList: [
-                                {
-                                    date: "19.01.2019",
-                                    unit: "kilometres",
-                                    value: 400000
-                                },
-                                {
-                                    date: "18.01.2019",
-                                    unit: "kilometres",
-                                    value: 390000
-                                },
-                                {
-                                    date: "17.01.2019",
-                                    unit: "kilometres",
-                                    value: 380000
-                                }
-                            ],
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            SeatBeltNumber: 2,
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltTested: "Yes",
-                            TestNumber: "W01A00310",
-                            TestStationName: "Abshire-Kub",
-                            TestStationPNumber: "09-4129632",
-                            VehicleEuClassification: "M1"
-                        },
-                        FAIL_DATA: {
-                            CountryOfRegistrationCode: "gb",
-                            CurrentOdometer: {
-                                unit: "kilometres",
-                                value: 12312
-                            },
-                            DateOfTheTest: "26.02.2019",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            ExpiryDate: "25.02.2020",
-                            IssuersName: "CVS Dev1",
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            OdometerHistoryList: [
-                                {
-                                    date: "19.01.2019",
-                                    unit: "kilometres",
-                                    value: 400000
-                                },
-                                {
-                                    date: "18.01.2019",
-                                    unit: "kilometres",
-                                    value: 390000
-                                },
-                                {
-                                    date: "17.01.2019",
-                                    unit: "kilometres",
-                                    value: 380000
-                                }
-                            ],
-                            PRSDefects: [
-                                "1.1.a A registration plate: missing. Front."
-                            ],
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            SeatBeltNumber: 2,
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltTested: "Yes",
-                            TestNumber: "W01A00310",
-                            TestStationName: "Abshire-Kub",
-                            TestStationPNumber: "09-4129632",
-                            VehicleEuClassification: "M1"
-                        },
-                        Signature: {
-                            ImageData: null,
-                            ImageType: "png"
-                        },
-                        Watermark: "NOT VALID"
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return await certificateGenerationService
-                        .generatePayload(psvPrsNotAcceptableForBilingualCert, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-
             context("should return Certificate Data without any Welsh defect arrays populated", () => {
                 let getTechRecordSearchStub: any;
                 let getTechRecordStub: any;
@@ -4079,6 +3969,231 @@ describe("cert-gen", () => {
                 });
             });
 
+            context("and the PSV has defects that are rectified at the test", () => {
+                const psvPRS = JSON.parse(event.Records[5].body);
+
+                context("and the test station is not in wales", () => {
+                    it("should return a PSV certificate with the defects array", async () => {
+                        const expectedResult = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseRwtMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvPRS)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+
+                context("and the test station is in wales", () => {
+                    it("should return a PSV bilingual certificate with the defects array populated", async () => {
+                        const expectedResult = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+                        const getTechRecordSearchStub = sandbox
+                            .stub(certificateGenerationService, "callSearchTechRecords")
+                            .resolves(techRecordsSearchPsv);
+
+                        const techRecordResponseMock = cloneDeep(techRecordsPsv);
+                        const getTechRecordStub = sandbox
+                            .stub(certificateGenerationService, "callGetTechRecords")
+                            .resolves((techRecordResponseMock) as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvPRS, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                getTechRecordStub.restore();
+                                getTechRecordSearchStub.restore();
+                            });
+                    });
+                });
+            });
             const testResult: any = JSON.parse(event.Records[0].body);
             let resBody: string = "";
 
