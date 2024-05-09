@@ -1,20 +1,22 @@
-import { InvocationRequest, ServiceException } from "@aws-sdk/client-lambda";
+import { InvocationRequest, InvocationResponse, ServiceException } from "@aws-sdk/client-lambda";
+import { GetObjectOutput } from "@aws-sdk/client-s3";
+import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
+import { toUint8Array } from "@smithy/util-utf8";
 import moment from "moment";
 import axiosClient from "../client/AxiosClient";
-import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
 import {
   ICertificatePayload,
   ICustomDefect,
+  IFeatureFlags,
   IGeneratedCertificateResponse,
   IInvokeConfig,
-  IMakeAndModel,
   IMOTConfig,
+  IMakeAndModel,
   IRoadworthinessCertificateData,
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IWeightDetails,
-  IFeatureFlags
+  IWeightDetails
 } from "../models";
 import {
   ADR_TEST,
@@ -32,19 +34,16 @@ import {
   VEHICLE_TYPES
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
+import { IDefectChild } from "../models/IDefectChild";
+import { IDefectParent } from "../models/IDefectParent";
+import { IFlatDefect } from "../models/IFlatDefect";
+import { IItem } from "../models/IItem";
+import { ITestStation } from "../models/ITestStations";
 import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
 import { Service } from "../models/injector/ServiceDecorator";
 import { Configuration } from "../utils/Configuration";
 import { LambdaService } from "./LambdaService";
 import { S3BucketService } from "./S3BucketService";
-import { ITestStation } from "../models/ITestStations";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IDefectParent } from "../models/IDefectParent";
-import { IItem } from "../models/IItem";
-import { IDefectChild } from "../models/IDefectChild";
-import { InvocationResponse } from "@aws-sdk/client-lambda";
-import { toUint8Array } from "@smithy/util-utf8";
-import { GetObjectOutput } from "@aws-sdk/client-s3";
 
 /**
  * Service class for Certificate Generation
@@ -77,6 +76,8 @@ class CertificateGenerationService {
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult, shouldTranslateTestResult)
     );
+
+    console.log(`payload inside cert gen service: ${payload}`);
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
@@ -121,6 +122,8 @@ class CertificateGenerationService {
       vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
     }
 
+    console.log(`vehicleTestRes: ${vehicleTestRes}`);
+
     const invokeParams: InvocationRequest = {
       FunctionName: iConfig.functions.certGen.name,
       InvocationType: "RequestResponse",
@@ -142,6 +145,7 @@ class CertificateGenerationService {
           const documentPayload: any = await this.lambdaClient.validateInvocationResponse(response);
           const resBody: string = documentPayload.body;
           const responseBuffer: Buffer = Buffer.from(resBody, "base64");
+          console.log("return from doc gen!");
           return {
             vrm:
               testResult.vehicleType === VEHICLE_TYPES.TRL
