@@ -52,7 +52,6 @@ const certGen: Handler = async (
       )
     ) {
       // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
-      console.log("inside else if of handler");
       const generatedCertificateResponse: Promise<PutObjectCommandOutput> =
         certificateGenerationService
           .generateCertificate(testResult)
@@ -66,8 +65,6 @@ const certGen: Handler = async (
       throw new Error("Bad Test Record: " + testResult.testResultId);
     }
   });
-
-  console.log(`all promises are ${JSON.stringify(certificateUploadPromises)}`);
 
   return Promise.all(certificateUploadPromises).catch((error: Error) => {
     console.error(error);

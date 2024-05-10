@@ -41,7 +41,7 @@ class CertificateUploadService {
       "should-email-certificate": shouldEmailCertificate,
     };
 
-    console.log(`metadata in s3 upload: ${metadata}`);
+    console.log(`metadata in s3 upload: ${JSON.stringify(metadata)}`);
 
     return this.s3BucketService.upload(
       `cvs-cert-${process.env.BUCKET}`,
