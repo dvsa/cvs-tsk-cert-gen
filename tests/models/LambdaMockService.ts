@@ -1,9 +1,9 @@
-import { ServiceException } from "@smithy/smithy-client";
-import { InvocationRequest, InvocationResponse } from "@aws-sdk/client-lambda";
-import { Configuration } from "../../src/utils/Configuration";
-import { IInvokeConfig } from "../../src/models";
-import * as fs from "fs";
-import * as path from "path";
+import { ServiceException } from '@smithy/smithy-client';
+import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Configuration } from '../../src/utils/Configuration';
+import { IInvokeConfig } from '../../src/models';
 
 interface IMockFunctions {
   functionName: string;
@@ -20,17 +20,14 @@ class LambdaMockService {
    * Populates the mock function responses
    */
   public static populateFunctions(): void {
-    const invokeConfig: IInvokeConfig =
-      Configuration.getInstance().getInvokeConfig();
+    const invokeConfig: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
     this.responses = Object.entries(invokeConfig.functions).map(
-      ([k, v]: [string, any]) => {
-        return {
-          functionName: v.name,
-          response: fs
-            .readFileSync(path.resolve(__dirname, `../../${v.mock}`))
-            .toString(),
-        };
-      }
+      ([k, v]: [string, any]) => ({
+        functionName: v.name,
+        response: fs
+          .readFileSync(path.resolve(__dirname, `../../${v.mock}`))
+          .toString(),
+      }),
     );
   }
 
@@ -45,20 +42,20 @@ class LambdaMockService {
    * Invokes a lambda function based on the given parameters
    * @param params - InvocationRequest params
    */
+  // eslint-disable-next-line
   public async invoke(
-    params: InvocationRequest
+    params: InvocationRequest,
   ): Promise<InvocationResponse> {
-    const mockFunction: IMockFunctions | undefined =
-      LambdaMockService.responses.find(
-        (item: IMockFunctions) => item.functionName === params.FunctionName
-      );
+    const mockFunction: IMockFunctions | undefined = LambdaMockService.responses.find(
+      (item: IMockFunctions) => item.functionName === params.FunctionName,
+    );
     if (!mockFunction) {
       const error: ServiceException = {
         $metadata: { httpStatusCode: 415 },
-        name: "UnsupportedMediaTypeException",
-        message: "Unsupported Media Type",
-        $fault: "client",
-        $retryable: { throttling: false }
+        name: 'UnsupportedMediaTypeException',
+        message: 'Unsupported Media Type',
+        $fault: 'client',
+        $retryable: { throttling: false },
       };
       throw error;
     }
@@ -77,15 +74,15 @@ class LambdaMockService {
    * @param response - the invocation response
    */
   public validateInvocationResponse(
-    response: InvocationResponse
+    response: InvocationResponse,
   ): Promise<any> {
     if (
-      !response.Payload ||
-      response.Payload as unknown as string === "" ||
-      (response.StatusCode && response.StatusCode >= 400)
+      !response.Payload
+      || response.Payload as unknown as string === ''
+      || (response.StatusCode && response.StatusCode >= 400)
     ) {
       throw new Error(
-        `Lambda invocation returned error: ${response.StatusCode} with empty payload.`
+        `Lambda invocation returned error: ${response.StatusCode} with empty payload.`,
       );
     }
 
@@ -93,7 +90,7 @@ class LambdaMockService {
 
     if (!payload.body) {
       throw new Error(
-        `Lambda invocation returned bad data: ${JSON.stringify(payload)}.`
+        `Lambda invocation returned bad data: ${JSON.stringify(payload)}.`,
       );
     }
 

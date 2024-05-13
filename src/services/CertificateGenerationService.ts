@@ -1,7 +1,9 @@
-import { InvocationRequest, ServiceException } from "@aws-sdk/client-lambda";
-import moment from "moment";
-import axiosClient from "../client/AxiosClient";
-import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
+import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
+import moment from 'moment';
+import { getProfile } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
+import { toUint8Array } from '@smithy/util-utf8';
+import { GetObjectCommandOutput, GetObjectOutput } from '@aws-sdk/client-s3';
+import axiosClient from '../client/AxiosClient';
 import {
   ICertificatePayload,
   ICustomDefect,
@@ -14,8 +16,8 @@ import {
   ITestType,
   ITrailerRegistration,
   IWeightDetails,
-  IFeatureFlags
-} from "../models";
+  IFeatureFlags,
+} from '../models';
 import {
   ADR_TEST,
   AVAILABLE_WELSH,
@@ -29,22 +31,19 @@ import {
   LOCATION_WELSH,
   MSVA30_TEST,
   TEST_RESULTS,
-  VEHICLE_TYPES
-} from "../models/Enums";
-import { HTTPError } from "../models/HTTPError";
-import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Configuration } from "../utils/Configuration";
-import { LambdaService } from "./LambdaService";
-import { S3BucketService } from "./S3BucketService";
-import { ITestStation } from "../models/ITestStations";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IDefectParent } from "../models/IDefectParent";
-import { IItem } from "../models/IItem";
-import { IDefectChild } from "../models/IDefectChild";
-import { InvocationResponse } from "@aws-sdk/client-lambda";
-import { toUint8Array } from "@smithy/util-utf8";
-import { GetObjectOutput } from "@aws-sdk/client-s3";
+  VEHICLE_TYPES,
+} from '../models/Enums';
+import { HTTPError } from '../models/HTTPError';
+import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { Service } from '../models/injector/ServiceDecorator';
+import { Configuration } from '../utils/Configuration';
+import { LambdaService } from './LambdaService';
+import { S3BucketService } from './S3BucketService';
+import { ITestStation } from '../models/ITestStations';
+import { IFlatDefect } from '../models/IFlatDefect';
+import { IDefectParent } from '../models/IDefectParent';
+import { IItem } from '../models/IItem';
+import { IDefectChild } from '../models/IDefectChild';
 
 /**
  * Service class for Certificate Generation
@@ -52,7 +51,9 @@ import { GetObjectOutput } from "@aws-sdk/client-s3";
 @Service()
 class CertificateGenerationService {
   private readonly s3Client: S3BucketService;
+
   private readonly config: Configuration;
+
   private readonly lambdaClient: LambdaService;
 
   constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
@@ -66,7 +67,7 @@ class CertificateGenerationService {
    * @param testResult - source test result for certificate generation
    */
   public async generateCertificate(
-    testResult: any
+    testResult: any,
   ): Promise<IGeneratedCertificateResponse> {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
@@ -75,7 +76,7 @@ class CertificateGenerationService {
     const shouldTranslateTestResult = await this.shouldTranslateTestResult(testResult);
 
     const payload: string = JSON.stringify(
-      await this.generatePayload(testResult, shouldTranslateTestResult)
+      await this.generatePayload(testResult, shouldTranslateTestResult),
     );
 
     const certificateTypes: any = {
@@ -108,25 +109,25 @@ class CertificateGenerationService {
       CertificateGenerationService.isRoadworthinessTestType(testType.testTypeId)
     ) {
       // CVSB-7677 is road-worthiness test
-      vehicleTestRes = "rwt";
+      vehicleTestRes = 'rwt';
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
-      vehicleTestRes = "adr_pass";
-    } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
-      vehicleTestRes = "iva_fail";
-    } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === "fail") {
-      vehicleTestRes = "msva_fail";
+      vehicleTestRes = 'adr_pass';
+    } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+      vehicleTestRes = 'iva_fail';
+    } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+      vehicleTestRes = 'msva_fail';
     } else if (this.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
-      vehicleTestRes = testResult.vehicleType + "_" + testType.testResult + "_bilingual";
+      vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}_bilingual`;
     } else {
-      vehicleTestRes = testResult.vehicleType + "_" + testType.testResult;
+      vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}`;
     }
 
     const invokeParams: InvocationRequest = {
       FunctionName: iConfig.functions.certGen.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "POST",
+        httpMethod: 'POST',
         pathParameters: {
           documentName: certificateTypes[vehicleTestRes],
           documentDirectory: config.documentDir,
@@ -141,7 +142,7 @@ class CertificateGenerationService {
         async (response: InvocationResponse) => {
           const documentPayload: any = await this.lambdaClient.validateInvocationResponse(response);
           const resBody: string = documentPayload.body;
-          const responseBuffer: Buffer = Buffer.from(resBody, "base64");
+          const responseBuffer: Buffer = Buffer.from(resBody, 'base64');
           return {
             vrm:
               testResult.vehicleType === VEHICLE_TYPES.TRL
@@ -150,19 +151,19 @@ class CertificateGenerationService {
             testTypeName: testResult.testTypes.testTypeName,
             testTypeResult: testResult.testTypes.testResult,
             dateOfIssue: moment(
-              testResult.testTypes.testTypeStartTimestamp
-            ).format("D MMMM YYYY"),
-            certificateType: certificateTypes[vehicleTestRes].split(".")[0],
-            fileFormat: "pdf",
+              testResult.testTypes.testTypeStartTimestamp,
+            ).format('D MMMM YYYY'),
+            certificateType: certificateTypes[vehicleTestRes].split('.')[0],
+            fileFormat: 'pdf',
             fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
             fileSize: responseBuffer.byteLength.toString(),
             certificate: responseBuffer,
             certificateOrder: testResult.order,
             email:
               testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
-            shouldEmailCertificate: testResult.shouldEmailCertificate ?? "true",
+            shouldEmailCertificate: testResult.shouldEmailCertificate ?? 'true',
           };
-        }
+        },
       )
       .catch((error: ServiceException | Error) => {
         console.log(error);
@@ -179,13 +180,14 @@ class CertificateGenerationService {
     let shouldTranslateTestResult = false;
     try {
       const featureFlags: IFeatureFlags = await getProfile();
-      console.log("Using feature flags ", featureFlags);
+      console.log('Using feature flags ', featureFlags);
 
       if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
         shouldTranslateTestResult = await this.isTestStationWelsh(testResult.testStationPNumber);
       }
     } catch (e) {
-      console.error(`Failed to retrieve feature flags - ${e}`);
+      // eslint-disable-next-line
+      console.error(`Failed to retrieve feature flags`, e);
     }
     return shouldTranslateTestResult;
   }
@@ -197,7 +199,7 @@ class CertificateGenerationService {
    */
   public isGlobalWelshFlagEnabled(featureFlags: IFeatureFlags): boolean {
     if (!featureFlags.welshTranslation.enabled) {
-      console.warn(`Unable to translate any test results: global Welsh flag disabled.`);
+      console.warn('Unable to translate any test results: global Welsh flag disabled.');
       return false;
     }
     return true;
@@ -211,7 +213,7 @@ class CertificateGenerationService {
    */
   public isTestResultFlagEnabled(testResult: string, featureFlags: IFeatureFlags): boolean {
     let shouldTranslate: boolean = false;
-    switch (testResult) {
+    switch (testResult as TEST_RESULTS) {
       case TEST_RESULTS.PRS:
         shouldTranslate = featureFlags.welshTranslation.translatePrsTestResult ?? false;
         break;
@@ -222,7 +224,7 @@ class CertificateGenerationService {
         shouldTranslate = featureFlags.welshTranslation.translateFailTestResult ?? false;
         break;
       default:
-        console.warn("Translation not available for this test result type.");
+        console.warn('Translation not available for this test result type.');
         return shouldTranslate;
     }
     if (!shouldTranslate) {
@@ -239,7 +241,7 @@ class CertificateGenerationService {
   public async isTestStationWelsh(testStationPNumber: string): Promise<boolean> {
     const testStations = await this.getTestStations();
     const testStationPostcode = this.getThisTestStation(testStations, testStationPNumber);
-    return testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
+    return testStationPostcode ? this.lookupPostcode(testStationPostcode) : false;
   }
 
   /**
@@ -250,30 +252,34 @@ class CertificateGenerationService {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.testStations.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "GET",
-        path: `/test-stations/`,
+        httpMethod: 'GET',
+        path: '/test-stations/',
       })),
     };
+
     let testStations: ITestStation[] = [];
     let retries = 0;
 
     while (retries < 3) {
       try {
+        // eslint-disable-next-line
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
         const payload: any = this.lambdaClient.validateInvocationResponse(response);
         const testStationsParsed = JSON.parse(payload.body);
 
         if (!testStationsParsed || testStationsParsed.length === 0) {
-          throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
-          );
+          throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
         }
+
         testStations = testStationsParsed;
+
         return testStations;
       } catch (error) {
         retries++;
+        // eslint-disable-next-line
         console.error(`There was an error retrieving the test stations on attempt ${retries}: ${error}`);
       }
     }
@@ -288,26 +294,23 @@ class CertificateGenerationService {
    */
   public getThisTestStation(
     testStations: ITestStation[],
-    testStationPNumber: string
+    testStationPNumber: string,
   ) {
     if (!testStations || testStations.length === 0) {
-      console.log(`Test stations data is empty`);
+      console.log('Test stations data is empty');
       return null;
     }
 
     // find the specific test station by the PNumber used on the test result
-    const thisTestStation = testStations.filter((x) => {
-      return x.testStationPNumber === testStationPNumber;
-    });
+    const thisTestStation = testStations.filter((x) => x.testStationPNumber === testStationPNumber);
 
     if (thisTestStation && thisTestStation.length > 0) {
       return thisTestStation[0].testStationPostcode;
-    } else {
-      console.log(
-        `Test station details could not be found for ${testStationPNumber}`
-      );
-      return null;
     }
+    console.log(
+      `Test station details could not be found for ${testStationPNumber}`,
+    );
+    return null;
   }
 
   /** Call SMC postcode lookup with test station postcode
@@ -317,30 +320,31 @@ class CertificateGenerationService {
   public async lookupPostcode(postcode: string): Promise<boolean> {
     const axiosInstance = await axiosClient(7000);
 
-    if (axiosInstance) {
-      let isWelsh: boolean = false;
-      let retries = 0;
-      while (retries < 3) {
-        try {
-          const addressResponse = await axiosInstance.get("/" + postcode);
-
-          if (typeof addressResponse.data.isWelshAddress !== "boolean") {
-            throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
-          }
-          isWelsh = addressResponse.data.isWelshAddress;
-          console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
-          return isWelsh;
-        } catch (error) {
-          retries++;
-          console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);
-          console.log(error);
-        }
-      }
-      return false;
-    } else {
+    if (!axiosInstance) {
       console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
       return false;
     }
+
+    let isWelsh: boolean = false;
+    let retries = 0;
+    while (retries < 3) {
+      try {
+        // eslint-disable-next-line
+        const addressResponse = await axiosInstance.get("/" + postcode);
+
+        if (typeof addressResponse.data.isWelshAddress !== 'boolean') {
+          throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
+        }
+        isWelsh = addressResponse.data.isWelshAddress;
+        console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
+        return isWelsh;
+      } catch (error) {
+        retries++;
+        console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);
+        console.log(error);
+      }
+    }
+    return false;
   }
 
   /**
@@ -351,12 +355,10 @@ class CertificateGenerationService {
   public async getSignature(staffId: string): Promise<string | null> {
     return this.s3Client
       .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-      .then((result: GetObjectOutput) => {
-        return result.Body!.toString();
-      })
+      .then((result: GetObjectCommandOutput) => result.Body!.transformToString())
       .catch((error: ServiceException) => {
         console.error(
-          `Unable to fetch signature for staff id ${staffId}. ${error.message}`
+          `Unable to fetch signature for staff id ${staffId}. ${error.message}`,
         );
         return null;
       });
@@ -370,28 +372,28 @@ class CertificateGenerationService {
   public async generatePayload(testResult: any, isWelsh: boolean = false) {
     let name = testResult.testerName;
 
-    const nameArrayList: string[] = name.split(",");
+    const nameArrayList: string[] = name.split(',');
 
     if (nameArrayList.length === 2) {
-      name = name.split(", ").reverse().join(" ");
+      name = name.split(', ').reverse().join(' ');
       testResult.testerName = name;
     }
 
     const signature: string | null = await this.getSignature(
-      testResult.createdById ?? testResult.testerStaffId
+      testResult.createdById ?? testResult.testerStaffId,
     );
 
     let makeAndModel: any = null;
     if (
       !CertificateGenerationService.isRoadworthinessTestType(
-        testResult.testTypes.testTypeId
+        testResult.testTypes.testTypeId,
       )
     ) {
       makeAndModel = await this.getVehicleMakeAndModel(testResult);
     }
 
     let payload: ICertificatePayload = {
-      Watermark: process.env.BRANCH === "prod" ? "" : "NOT VALID",
+      Watermark: process.env.BRANCH === 'prod' ? '' : 'NOT VALID',
       DATA: undefined,
       FAIL_DATA: undefined,
       RWT_DATA: undefined,
@@ -399,21 +401,25 @@ class CertificateGenerationService {
       IVA_DATA: undefined,
       MSVA_DATA: undefined,
       Signature: {
-        ImageType: "png",
+        ImageType: 'png',
         ImageData: signature,
       },
     };
 
-    const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
+    const {
+      testTypes, vehicleType, systemNumber, testHistory,
+    } = testResult;
 
     if (testHistory) {
+      // eslint-disable-next-line
       for (const history of testHistory) {
+        // eslint-disable-next-line
         for (const testType of history.testTypes) {
           if (testType.testCode === testTypes.testCode) {
             payload.Reissue = {
-              Reason: "Replacement",
+              Reason: 'Replacement',
               Issuer: testResult.createdByName,
-              Date: moment(testResult.createdAt).format("DD.MM.YYYY"),
+              Date: moment(testResult.createdAt).format('DD.MM.YYYY'),
             };
             break;
           }
@@ -427,52 +433,51 @@ class CertificateGenerationService {
       // CVSB-7677 for roadworthiness test for hgv or trl.
       const rwtData = await this.generateCertificateData(
         testResult,
-        CERTIFICATE_DATA.RWT_DATA
+        CERTIFICATE_DATA.RWT_DATA,
       );
       payload.RWT_DATA = { ...rwtData };
     } else if (
-      testResult.testTypes.testResult === TEST_RESULTS.PASS &&
-      this.isTestTypeAdr(testResult.testTypes)
+      testResult.testTypes.testResult === TEST_RESULTS.PASS
+      && this.isTestTypeAdr(testResult.testTypes)
     ) {
       const adrData = await this.generateCertificateData(
         testResult,
-        CERTIFICATE_DATA.ADR_DATA
+        CERTIFICATE_DATA.ADR_DATA,
       );
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
     } else if (
-      testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
-      this.isIvaTest(testResult.testTypes.testTypeId)
+      testResult.testTypes.testResult === TEST_RESULTS.FAIL
+      && this.isIvaTest(testResult.testTypes.testTypeId)
     ) {
       const ivaData = await this.generateCertificateData(
         testResult,
-        CERTIFICATE_DATA.IVA_DATA
+        CERTIFICATE_DATA.IVA_DATA,
       );
       payload.IVA_DATA = { ...ivaData };
     } else if (
-      testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
-      this.isMsvaTest(testResult.testTypes.testTypeId)
+      testResult.testTypes.testResult === TEST_RESULTS.FAIL
+      && this.isMsvaTest(testResult.testTypes.testTypeId)
     ) {
       const msvaData = await this.generateCertificateData(
         testResult,
-        CERTIFICATE_DATA.MSVA_DATA
+        CERTIFICATE_DATA.MSVA_DATA,
       );
       payload.MSVA_DATA = { ...msvaData };
     } else {
-      const odometerHistory =
-        vehicleType === VEHICLE_TYPES.TRL
-          ? undefined
-          : await this.getOdometerHistory(systemNumber);
+      const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
+        ? undefined
+        : await this.getOdometerHistory(systemNumber);
       const TrnObj = this.isValidForTrn(vehicleType, makeAndModel)
         ? await this.getTrailerRegistrationObject(
           testResult.vin,
-          makeAndModel.Make
+          makeAndModel.Make,
         )
         : undefined;
       if (testTypes.testResult !== TEST_RESULTS.FAIL) {
         const passData = await this.generateCertificateData(
           testResult,
           CERTIFICATE_DATA.PASS_DATA,
-          isWelsh
+          isWelsh,
         );
         payload.DATA = {
           ...passData,
@@ -485,7 +490,7 @@ class CertificateGenerationService {
         const failData = await this.generateCertificateData(
           testResult,
           CERTIFICATE_DATA.FAIL_DATA,
-          isWelsh
+          isWelsh,
         );
         payload.FAIL_DATA = {
           ...failData,
@@ -507,7 +512,7 @@ class CertificateGenerationService {
    * @param type - the certificate type
    * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
    */
-  public async generateCertificateData(testResult: ITestResult, type: string, isWelsh: boolean = false) {
+  public async generateCertificateData(testResult: ITestResult, type: CERTIFICATE_DATA, isWelsh: boolean = false) {
     let defectListFromApi: IDefectParent[] = [];
     let flattenedDefects: IFlatDefect[] = [];
     if (isWelsh) {
@@ -518,150 +523,17 @@ class CertificateGenerationService {
     switch (type) {
       case CERTIFICATE_DATA.PASS_DATA:
       case CERTIFICATE_DATA.FAIL_DATA:
-        const defects: any = await this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, isWelsh);
-
-        return {
-          TestNumber: testType.testNumber,
-          TestStationPNumber: testResult.testStationPNumber,
-          TestStationName: testResult.testStationName,
-          CurrentOdometer: {
-            value: testResult.odometerReading,
-            unit: testResult.odometerReadingUnits,
-          },
-          IssuersName: testResult.testerName,
-          DateOfTheTest: moment(testResult.testEndTimestamp).format(
-            "DD.MM.YYYY"
-          ),
-          CountryOfRegistrationCode: testResult.countryOfRegistration,
-          VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
-          RawVIN: testResult.vin,
-          RawVRM:
-            testResult.vehicleType === VEHICLE_TYPES.TRL
-              ? testResult.trailerId
-              : testResult.vrm,
-          ExpiryDate: testType.testExpiryDate
-            ? moment(testType.testExpiryDate).format("DD.MM.YYYY")
-            : undefined,
-          EarliestDateOfTheNextTest:
-            (testResult.vehicleType === VEHICLE_TYPES.HGV ||
-              testResult.vehicleType === VEHICLE_TYPES.TRL) &&
-              (testResult.testTypes.testResult === TEST_RESULTS.PASS ||
-                testResult.testTypes.testResult === TEST_RESULTS.PRS)
-              ? moment(testType.testAnniversaryDate)
-                .subtract(1, "months")
-                .startOf("month")
-                .format("DD.MM.YYYY")
-              : moment(testType.testAnniversaryDate).format("DD.MM.YYYY"),
-          SeatBeltTested: testType.seatbeltInstallationCheckDate ? "Yes" : "No",
-          SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate
-            ? moment(testType.lastSeatbeltInstallationCheckDate).format(
-              "DD.MM.YYYY"
-            )
-            : "\u00A0",
-          SeatBeltNumber: testType.numberOfSeatbeltsFitted,
-          ...defects,
-        };
+        return this.generatePassOrFailCertificateData(testResult, type, flattenedDefects, isWelsh, testType);
       case CERTIFICATE_DATA.RWT_DATA:
-        const weightDetails = await this.getWeightDetails(testResult);
-        let defectRWTList: any;
-        if (testResult.testTypes.testResult === TEST_RESULTS.FAIL) {
-          defectRWTList = [];
-          testResult.testTypes.defects.forEach((defect: any) => {
-            defectRWTList.push(this.formatDefect(defect));
-          });
-        } else {
-          defectRWTList = undefined;
-        }
-
-        const resultPass: IRoadworthinessCertificateData = {
-          Dgvw: weightDetails.dgvw,
-          Weight2: weightDetails.weight2,
-          VehicleNumber:
-            testResult.vehicleType === VEHICLE_TYPES.TRL
-              ? testResult.trailerId
-              : testResult.vrm,
-          Vin: testResult.vin,
-          IssuersName: testResult.testerName,
-          DateOfInspection: moment(testType.testTypeStartTimestamp).format(
-            "DD.MM.YYYY"
-          ),
-          TestStationPNumber: testResult.testStationPNumber,
-          DocumentNumber: testType.certificateNumber,
-          Date: moment(testType.testTypeStartTimestamp).format("DD.MM.YYYY"),
-          Defects: defectRWTList,
-          IsTrailer: testResult.vehicleType === VEHICLE_TYPES.TRL,
-        };
-        return resultPass;
+        return this.generateRwtCertificateData(testResult, testType);
       case CERTIFICATE_DATA.ADR_DATA:
-        const adrDetails: TechRecordType<any> = await this.getAdrDetails(testResult);
-        const docGenPayloadAdr = {
-          ChasisNumber: testResult.vin,
-          RegistrationNumber: testResult.vrm,
-          ApplicantDetails: {
-            name: adrDetails?.techRecord_applicantDetails_name,
-            address1: adrDetails?.techRecord_applicantDetails_address1,
-            address2: adrDetails?.techRecord_applicantDetails_address2,
-            address3: adrDetails?.techRecord_applicantDetails_address1,
-            postTown: adrDetails?.techRecord_applicantDetails_postTown,
-            postCode: adrDetails?.techRecord_applicantDetails_postCode,
-            telephoneNumber: adrDetails?.techRecord_applicantDetails_telephoneNumber,
-            emailAddress: adrDetails?.techRecord_applicantDetails_emailAddress,
-          },
-          VehicleType: adrDetails?.techRecord_adrDetails_vehicleDetails_type,
-          PermittedDangerousGoods: adrDetails?.techRecord_adrDetails_permittedDangerousGoods,
-          BrakeEndurance: adrDetails?.techRecord_adrDetails_brakeEndurance,
-          Weight: adrDetails?.techRecord_adrDetails_weight,
-          TankManufacturer: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankStatement_statement
-            ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankManufacturer
-            : undefined,
-          Tc2InitApprovalNo: adrDetails?.techRecord_adrDetails_tank_tankDetails_tc2Details_tc2IntermediateApprovalNo,
-          TankManufactureSerialNo: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankManufacturerSerialNo,
-          YearOfManufacture: adrDetails?.techRecord_adrDetails_tank_tankDetails_yearOfManufacture,
-          TankCode: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankCode,
-          SpecialProvisions: adrDetails?.techRecord_adrDetails_tank_tankDetails_specialProvisions,
-          TankStatement: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankStatement_statement,
-          ExpiryDate: testResult.testTypes.testExpiryDate,
-          AtfNameAtfPNumber:
-            testResult.testStationName + " " + testResult.testStationPNumber,
-          Notes: testResult.testTypes.additionalNotesRecorded,
-          TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
-        };
-        console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
-        return docGenPayloadAdr;
+        return this.generateAdrCertificateData(testResult);
       case CERTIFICATE_DATA.IVA_DATA:
-        const ivaFailDetailsForDocGen = {
-          vin: testResult.vin,
-          serialNumber: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
-          vehicleTrailerNrNo: testResult.vehicleType === "trl" ? testResult.trailerId : testResult.vrm,
-          testCategoryClass: testResult.euVehicleCategory,
-          testCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
-          make: testResult.make,
-          model: testResult.model,
-          bodyType: testResult.bodyType?.description,
-          date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
-          testerName: testResult.testerName,
-          reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
-          station: testResult.testStationName,
-          additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: testResult.testTypes.requiredStandards
-        };
-        return ivaFailDetailsForDocGen;
+        return this.generateIvaCertificateData(testResult);
       case CERTIFICATE_DATA.MSVA_DATA:
-        const msvaFailDetailsForDocGen = {
-          vin: testResult.vin,
-          serialNumber: testResult.vrm,
-          vehicleZNumber: testResult.vrm,
-          make: testResult.make,
-          model: testResult.model,
-          type: testResult.vehicleType,
-          testerName: testResult.testerName,
-          date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
-          retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
-          station: testResult.testStationName,
-          additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: testResult.testTypes.requiredStandards
-        };
-        return msvaFailDetailsForDocGen;
+        return this.generateMsvaCertificateData(testResult);
+      default:
+        throw Error(`Certificate data request not found (${type as string})`);
     }
   }
 
@@ -672,21 +544,19 @@ class CertificateGenerationService {
   public formatVehicleApprovalAdditionalDefects = (customDefects: ICustomDefect[] | undefined): ICustomDefect[] | undefined => {
     const defaultCustomDefect: ICustomDefect = {
       defectName: IVA_30.EMPTY_CUSTOM_DEFECTS,
-      defectNotes: ""
+      defectNotes: '',
     };
     return (customDefects && customDefects.length > 0) ? customDefects : [defaultCustomDefect];
-  }
+  };
 
   /**
    * Calculates the retest date for an IVA or MSVA test
    * @param testTypeStartTimestamp - the test start timestamp of the test
    */
-  public calculateVehicleApprovalRetestDate = (testTypeStartTimestamp: string): string => {
-    return moment(testTypeStartTimestamp)
-      .add(6, "months")
-      .subtract(1, "day")
-      .format("DD/MM/YYYY");
-  }
+  public calculateVehicleApprovalRetestDate = (testTypeStartTimestamp: string): string => moment(testTypeStartTimestamp)
+    .add(6, 'months')
+    .subtract(1, 'day')
+    .format('DD/MM/YYYY');
 
   /**
    * Retrieves the adrDetails from a techRecord searched by vin
@@ -694,38 +564,47 @@ class CertificateGenerationService {
    */
   public getAdrDetails = async (testResult: any) => {
     const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
-    return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "trl">;
-  }
+    return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
+  };
 
-
-  public processGetCurrentProvisionalRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {
+  public processGetCurrentProvisionalRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {
     if (searchResult) {
       const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
-      return processRecordsRes.currentCount !== 0
-        ? this.callGetTechRecords(processRecordsRes.currentRecords[0].systemNumber,
-          processRecordsRes.currentRecords[0].createdTimestamp)
-        : processRecordsRes.provisionalCount === 1
-          ? this.callGetTechRecords(processRecordsRes.provisionalRecords[0].systemNumber,
-            processRecordsRes.provisionalRecords[0].createdTimestamp)
-          : this.callGetTechRecords(processRecordsRes.provisionalRecords[1].systemNumber,
-            processRecordsRes.provisionalRecords[1].createdTimestamp);
-    } else {
-      await Promise.reject("Tech record Search returned nothing.");
+
+      if (processRecordsRes.currentCount !== 0) {
+        return this.callGetTechRecords(
+          processRecordsRes.currentRecords[0].systemNumber,
+          processRecordsRes.currentRecords[0].createdTimestamp,
+        );
+      }
+
+      if (processRecordsRes.provisionalCount === 1) {
+        return this.callGetTechRecords(
+          processRecordsRes.provisionalRecords[0].systemNumber,
+          processRecordsRes.provisionalRecords[0].createdTimestamp,
+        );
+      }
+
+      return this.callGetTechRecords(
+        processRecordsRes.provisionalRecords[1].systemNumber,
+        processRecordsRes.provisionalRecords[1].createdTimestamp,
+      );
     }
-  }
+
+    return Promise.reject(new Error('Tech record Search returned nothing.'));
+  };
 
   /**
    * helper function is used to process records and count provisional and current records
    * @param records
    */
-  public groupRecordsByStatusCode = (records: ISearchResult[]
-  ): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
+  public groupRecordsByStatusCode = (records: ISearchResult[]): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
     const currentRecords: ISearchResult[] = [];
     const provisionalRecords: ISearchResult[] = [];
     records.forEach((record) => {
-      if (record.techRecord_statusCode === "current") {
+      if (record.techRecord_statusCode === 'current') {
         currentRecords.push(record);
-      } else if (record.techRecord_statusCode === "provisional") {
+      } else if (record.techRecord_statusCode === 'provisional') {
         provisionalRecords.push(record);
       }
     });
@@ -734,50 +613,199 @@ class CertificateGenerationService {
       currentRecords,
       provisionalRecords,
       currentCount: currentRecords.length,
-      provisionalCount: provisionalRecords.length
+      provisionalCount: provisionalRecords.length,
+    };
+  };
+
+  private generateMsvaCertificateData(testResult: ITestResult) {
+    const msvaFailDetailsForDocGen = {
+      vin: testResult.vin,
+      serialNumber: testResult.vrm,
+      vehicleZNumber: testResult.vrm,
+      make: testResult.make,
+      model: testResult.model,
+      type: testResult.vehicleType,
+      testerName: testResult.testerName,
+      date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
+      retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+      station: testResult.testStationName,
+      additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
+      requiredStandards: testResult.testTypes.requiredStandards,
+    };
+    return msvaFailDetailsForDocGen;
+  }
+
+  private generateIvaCertificateData(testResult: ITestResult) {
+    const ivaFailDetailsForDocGen = {
+      vin: testResult.vin,
+      serialNumber: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
+      vehicleTrailerNrNo: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
+      testCategoryClass: testResult.euVehicleCategory,
+      testCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
+      make: testResult.make,
+      model: testResult.model,
+      bodyType: testResult.bodyType?.description,
+      date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
+      testerName: testResult.testerName,
+      reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+      station: testResult.testStationName,
+      additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
+      requiredStandards: testResult.testTypes.requiredStandards,
+    };
+    return ivaFailDetailsForDocGen;
+  }
+
+  private async generateAdrCertificateData(testResult: ITestResult) {
+    const adrDetails: TechRecordType<any> = await this.getAdrDetails(testResult);
+    const docGenPayloadAdr = {
+      ChasisNumber: testResult.vin,
+      RegistrationNumber: testResult.vrm,
+      ApplicantDetails: {
+        name: adrDetails?.techRecord_applicantDetails_name,
+        address1: adrDetails?.techRecord_applicantDetails_address1,
+        address2: adrDetails?.techRecord_applicantDetails_address2,
+        address3: adrDetails?.techRecord_applicantDetails_address1,
+        postTown: adrDetails?.techRecord_applicantDetails_postTown,
+        postCode: adrDetails?.techRecord_applicantDetails_postCode,
+        telephoneNumber: adrDetails?.techRecord_applicantDetails_telephoneNumber,
+        emailAddress: adrDetails?.techRecord_applicantDetails_emailAddress,
+      },
+      VehicleType: adrDetails?.techRecord_adrDetails_vehicleDetails_type,
+      PermittedDangerousGoods: adrDetails?.techRecord_adrDetails_permittedDangerousGoods,
+      BrakeEndurance: adrDetails?.techRecord_adrDetails_brakeEndurance,
+      Weight: adrDetails?.techRecord_adrDetails_weight,
+      TankManufacturer: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankStatement_statement
+        ? adrDetails.techRecord_adrDetails_tank_tankDetails_tankManufacturer
+        : undefined,
+      Tc2InitApprovalNo: adrDetails?.techRecord_adrDetails_tank_tankDetails_tc2Details_tc2IntermediateApprovalNo,
+      TankManufactureSerialNo: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankManufacturerSerialNo,
+      YearOfManufacture: adrDetails?.techRecord_adrDetails_tank_tankDetails_yearOfManufacture,
+      TankCode: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankCode,
+      SpecialProvisions: adrDetails?.techRecord_adrDetails_tank_tankDetails_specialProvisions,
+      TankStatement: adrDetails?.techRecord_adrDetails_tank_tankDetails_tankStatement_statement,
+      ExpiryDate: testResult.testTypes.testExpiryDate,
+      AtfNameAtfPNumber: `${testResult.testStationName} ${testResult.testStationPNumber}`,
+      Notes: testResult.testTypes.additionalNotesRecorded,
+      TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
+    };
+    console.log('CHECK HERE DOCGENPAYLOAD -> ', docGenPayloadAdr);
+    return docGenPayloadAdr;
+  }
+
+  private async generateRwtCertificateData(testResult: ITestResult, testType: any) {
+    const weightDetails = await this.getWeightDetails(testResult);
+    let defectRWTList: any;
+    if (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.FAIL) {
+      defectRWTList = [];
+      testResult.testTypes.defects.forEach((defect: any) => {
+        defectRWTList.push(this.formatDefect(defect));
+      });
+    } else {
+      defectRWTList = undefined;
+    }
+
+    const resultPass: IRoadworthinessCertificateData = {
+      Dgvw: weightDetails.dgvw,
+      Weight2: weightDetails.weight2,
+      VehicleNumber: testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL
+        ? testResult.trailerId
+        : testResult.vrm,
+      Vin: testResult.vin,
+      IssuersName: testResult.testerName,
+      DateOfInspection: moment(testType.testTypeStartTimestamp).format(
+        'DD.MM.YYYY',
+      ),
+      TestStationPNumber: testResult.testStationPNumber,
+      DocumentNumber: testType.certificateNumber,
+      Date: moment(testType.testTypeStartTimestamp).format('DD.MM.YYYY'),
+      Defects: defectRWTList,
+      IsTrailer: testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL,
+    };
+    return resultPass;
+  }
+
+  private async generatePassOrFailCertificateData(testResult: ITestResult, type: CERTIFICATE_DATA, flattenedDefects: IFlatDefect[], isWelsh: boolean, testType: any) {
+    const defects: any = await this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, isWelsh);
+
+    return {
+      TestNumber: testType.testNumber,
+      TestStationPNumber: testResult.testStationPNumber,
+      TestStationName: testResult.testStationName,
+      CurrentOdometer: {
+        value: testResult.odometerReading,
+        unit: testResult.odometerReadingUnits,
+      },
+      IssuersName: testResult.testerName,
+      DateOfTheTest: moment(testResult.testEndTimestamp).format(
+        'DD.MM.YYYY',
+      ),
+      CountryOfRegistrationCode: testResult.countryOfRegistration,
+      VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
+      RawVIN: testResult.vin,
+      RawVRM: testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL
+        ? testResult.trailerId
+        : testResult.vrm,
+      ExpiryDate: testType.testExpiryDate
+        ? moment(testType.testExpiryDate).format('DD.MM.YYYY')
+        : undefined,
+      EarliestDateOfTheNextTest: (testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.HGV
+        || testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL)
+        && (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.PASS
+          || testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.PRS)
+        ? moment(testType.testAnniversaryDate)
+          .subtract(1, 'months')
+          .startOf('month')
+          .format('DD.MM.YYYY')
+        : moment(testType.testAnniversaryDate).format('DD.MM.YYYY'),
+      SeatBeltTested: testType.seatbeltInstallationCheckDate ? 'Yes' : 'No',
+      SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate
+        ? moment(testType.lastSeatbeltInstallationCheckDate).format(
+          'DD.MM.YYYY',
+        )
+        : '\u00A0',
+      SeatBeltNumber: testType.numberOfSeatbeltsFitted,
+      ...defects,
     };
   }
+
   /**
    * Retrieves the vehicle weight details for Roadworthisness certificates
    * @param testResult
    */
   public async getWeightDetails(testResult: any) {
     const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
-    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<"hgv" | "psv" | "trl">;
+    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
     if (techRecord) {
       const weightDetails: IWeightDetails = {
         dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
         weight2: 0,
       };
-      if (testResult.vehicleType === VEHICLE_TYPES.HGV) {
-        weightDetails.weight2 = (techRecord as TechRecordType<"hgv">).techRecord_trainDesignWeight ?? 0;
+      if (testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.HGV) {
+        weightDetails.weight2 = (techRecord as TechRecordType<'hgv'>).techRecord_trainDesignWeight ?? 0;
+      } else if (
+        (techRecord.techRecord_noOfAxles ?? -1) > 0
+      ) {
+        const initialValue: number = 0;
+        weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
+          (
+            accumulator: number,
+            currentValue: { weights_designWeight: number },
+          ) => accumulator + currentValue.weights_designWeight,
+          initialValue,
+        );
       } else {
-        if (
-          (techRecord.techRecord_noOfAxles ?? -1) > 0
-        ) {
-          const initialValue: number = 0;
-          weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
-            (
-              accumulator: number,
-              currentValue: { weights_designWeight: number }
-            ) => accumulator + currentValue.weights_designWeight,
-            initialValue
-          );
-        } else {
-          throw new HTTPError(
-            500,
-            "No axle weights for Roadworthiness test certificates!"
-          );
-        }
+        throw new HTTPError(
+          500,
+          'No axle weights for Roadworthiness test certificates!',
+        );
       }
       return weightDetails;
-    } else {
-      console.log("No techRecord found for weight details");
-      throw new HTTPError(
-        500,
-        "No vehicle found for Roadworthiness test certificate!"
-      );
     }
+    console.log('No techRecord found for weight details');
+    throw new HTTPError(
+      500,
+      'No vehicle found for Roadworthiness test certificate!',
+    );
   }
 
   /**
@@ -788,10 +816,10 @@ class CertificateGenerationService {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.testResults.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "GET",
+        httpMethod: 'GET',
         path: `/test-results/${systemNumber}`,
         pathParameters: {
           systemNumber,
@@ -803,17 +831,16 @@ class CertificateGenerationService {
       .invoke(invokeParams)
       .then(
         (
-          response: InvocationResponse
+          response: InvocationResponse,
         ) => {
-          const payload: any =
-            this.lambdaClient.validateInvocationResponse(response);
+          const payload: any = this.lambdaClient.validateInvocationResponse(response);
           // TODO: convert to correct type
           const testResults: any[] = JSON.parse(payload.body);
 
           if (!testResults || testResults.length === 0) {
             throw new HTTPError(
               400,
-              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`,
             );
           }
           // Sort results by testEndTimestamp
@@ -837,32 +864,25 @@ class CertificateGenerationService {
           testResults.shift();
 
           // Set the array to only submitted tests (exclude cancelled)
-          const submittedTests = testResults.filter((testResult) => {
-            return testResult.testStatus === "submitted";
-          });
+          const submittedTests = testResults.filter((testResult) => testResult.testStatus === 'submitted');
 
           const filteredTestResults = submittedTests
-            .filter(({ testTypes }) =>
-              testTypes?.some(
-                (testType: ITestType) =>
-                  testType.testTypeClassification ===
-                  "Annual With Certificate" &&
-                  (testType.testResult === "pass" ||
-                    testType.testResult === "prs")
-              )
-            )
+            .filter(({ testTypes }) => testTypes?.some(
+              (testType: ITestType) => testType.testTypeClassification
+                  === 'Annual With Certificate'
+                  && (testType.testResult === 'pass'
+                    || testType.testResult === 'prs'),
+            ))
             .slice(0, 3); // Only last three entries are used for the history.
 
           return {
-            OdometerHistoryList: filteredTestResults.map((testResult) => {
-              return {
-                value: testResult.odometerReading,
-                unit: testResult.odometerReadingUnits,
-                date: moment(testResult.testEndTimestamp).format("DD.MM.YYYY"),
-              };
-            }),
+            OdometerHistoryList: filteredTestResults.map((testResult) => ({
+              value: testResult.odometerReading,
+              unit: testResult.odometerReadingUnits,
+              date: moment(testResult.testEndTimestamp).format('DD.MM.YYYY'),
+            })),
           };
-        }
+        },
       )
       .catch((error: ServiceException | Error) => {
         console.log(error);
@@ -878,14 +898,14 @@ class CertificateGenerationService {
     const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
     const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
     // Return bodyMake and bodyModel values for PSVs
-    return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV ? {
-      Make: (techRecord as TechRecordType<"psv">).techRecord_chassisMake,
-      Model: (techRecord as TechRecordType<"psv">).techRecord_chassisModel
+    return techRecord?.techRecord_vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.PSV ? {
+      Make: (techRecord as TechRecordType<'psv'>).techRecord_chassisMake,
+      Model: (techRecord as TechRecordType<'psv'>).techRecord_chassisModel,
     } : {
-      Make: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_make,
-      Model: (techRecord as TechRecordType<"hgv" | "trl">).techRecord_model
+      Make: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_make,
+      Model: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_model,
     };
-  }
+  };
 
   /**
    * Used to return a subset of technical record information.
@@ -895,13 +915,13 @@ class CertificateGenerationService {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.techRecordsSearch.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "GET",
+        httpMethod: 'GET',
         path: `/v3/technical-records/search/${searchIdentifier}?searchCriteria=systemNumber`,
         pathParameters: {
-          searchIdentifier
+          searchIdentifier,
         },
       })),
     };
@@ -910,30 +930,30 @@ class CertificateGenerationService {
       const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
       return JSON.parse(res.body);
     } catch (e) {
-      console.log("Error searching technical records");
+      console.log('Error searching technical records');
       console.log(JSON.stringify(e));
       return undefined;
     }
-  }
+  };
 
   /**
    * Used to get a singular whole technical record.
    * @param systemNumber
    * @param createdTimestamp
    */
-  public callGetTechRecords = async <T extends TechRecordGet["techRecord_vehicleType"]>(systemNumber: string, createdTimestamp: string): Promise<TechRecordType<T> | undefined> => {
+  public callGetTechRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(systemNumber: string, createdTimestamp: string): Promise<TechRecordType<T> | undefined> => {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.techRecords.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "GET",
+        httpMethod: 'GET',
         path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
         pathParameters: {
           systemNumber,
-          createdTimestamp
-        }
+          createdTimestamp,
+        },
       })),
     };
     try {
@@ -941,12 +961,11 @@ class CertificateGenerationService {
       const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
       return JSON.parse(res.body);
     } catch (e) {
-      console.log("Error in get technical record");
+      console.log('Error in get technical record');
       console.log(JSON.stringify(e));
       return undefined;
     }
-  }
-
+  };
 
   /**
    * To fetch trailer registration
@@ -958,13 +977,13 @@ class CertificateGenerationService {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.trailerRegistration.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "GET",
+        httpMethod: 'GET',
         path: `/v1/trailers/${vin}`,
         pathParameters: {
-          proxy: `/v1/trailers`,
+          proxy: '/v1/trailers',
         },
         queryStringParameters: {
           make,
@@ -973,10 +992,10 @@ class CertificateGenerationService {
     };
     const response = await this.lambdaClient.invoke(invokeParams);
     try {
-      if (!response.Payload || Buffer.from(response.Payload).toString() === "") {
+      if (!response.Payload || Buffer.from(response.Payload).toString() === '') {
         throw new HTTPError(
           500,
-          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`
+          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`,
         );
       }
       const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
@@ -987,17 +1006,17 @@ class CertificateGenerationService {
       if (payload.statusCode >= 400) {
         throw new HTTPError(
           500,
-          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`
+          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`,
         );
       }
       const trailerRegistration = JSON.parse(
-        payload.body
+        payload.body,
       ) as ITrailerRegistration;
       return { Trn: trailerRegistration.trn, IsTrailer: true };
     } catch (err) {
       console.error(
         `Error on fetching vinOrChassisWithMake ${vin + make}`,
-        err
+        err,
       );
       throw err;
     }
@@ -1011,9 +1030,9 @@ class CertificateGenerationService {
    */
   public isValidForTrn(
     vehicleType: string,
-    makeAndModel: IMakeAndModel
+    makeAndModel: IMakeAndModel,
   ): boolean {
-    return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
+    return makeAndModel && vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL;
   }
 
   /**
@@ -1024,17 +1043,18 @@ class CertificateGenerationService {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.defects.name,
-      InvocationType: "RequestResponse",
-      LogType: "Tail",
+      InvocationType: 'RequestResponse',
+      LogType: 'Tail',
       Payload: toUint8Array(JSON.stringify({
-        httpMethod: "GET",
-        path: `/defects/`,
+        httpMethod: 'GET',
+        path: '/defects/',
       })),
     };
     let defects: IDefectParent[] = [];
     let retries = 0;
     while (retries < 3) {
       try {
+        // eslint-disable-next-line
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
         const payload: any = this.lambdaClient.validateInvocationResponse(response);
         const defectsParsed = JSON.parse(payload.body);
@@ -1046,6 +1066,7 @@ class CertificateGenerationService {
         return defects;
       } catch (error) {
         retries++;
+        // eslint-disable-next-line
         console.error(`There was an error retrieving the welsh defect translations on attempt ${retries}: ${error}`);
       }
     }
@@ -1077,57 +1098,59 @@ class CertificateGenerationService {
 
     rawDefects.forEach((defect: any) => {
       switch (defect.deficiencyCategory.toLowerCase()) {
-        case "dangerous":
+        case 'dangerous':
           if (
-            (testTypes.testResult === TEST_RESULTS.PRS || defect.prs) &&
-            type === CERTIFICATE_DATA.FAIL_DATA
+            (testTypes.testResult === TEST_RESULTS.PRS || defect.prs)
+            && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA
           ) {
             defects.PRSDefects.push(this.formatDefect(defect));
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             }
-          } else if (testTypes.testResult === "fail") {
+          } else if (testTypes.testResult === 'fail') {
             defects.DangerousDefects.push(this.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.DangerousDefectsWelsh.push(
-                this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
+                this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
               );
             }
           }
           break;
-        case "major":
+        case 'major':
           if (
-            (testTypes.testResult === TEST_RESULTS.PRS || defect.prs) &&
-            type === CERTIFICATE_DATA.FAIL_DATA
+            (testTypes.testResult === TEST_RESULTS.PRS || defect.prs)
+            && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA
           ) {
             defects.PRSDefects.push(this.formatDefect(defect));
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             }
-          } else if (testTypes.testResult === "fail") {
+          } else if (testTypes.testResult === 'fail') {
             defects.MajorDefects.push(this.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.MajorDefectsWelsh.push(
-                this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
+                this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
               );
             }
           }
           break;
-        case "minor":
+        case 'minor':
           defects.MinorDefects.push(this.formatDefect(defect));
           if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.MinorDefectsWelsh.push(
-              this.formatDefectWelsh(defect, vehicleType, flattenedDefects)
+              this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
             );
           }
           break;
-        case "advisory":
+        case 'advisory':
           defects.AdvisoryDefects.push(this.formatDefect(defect));
           if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
           }
+          break;
+        default:
           break;
       }
     });
@@ -1146,17 +1169,14 @@ class CertificateGenerationService {
    * @param vehicleType - the vehicle type from the test result
    * @param testResult - the result of the test
    */
-  public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => {
-    return AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
-  }
+  public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
 
   /**
    * Returns a formatted string containing data about a given defect
    * @param defect - defect for which to generate the formatted string
    */
   private formatDefect(defect: any) {
-    const toUpperFirstLetter: any = (word: string) =>
-      word.charAt(0).toUpperCase() + word.slice(1);
+    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
     let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
 
@@ -1169,27 +1189,27 @@ class CertificateGenerationService {
         (location: string, index: number, array: string[]) => {
           if (defect.additionalInformation.location[location]) {
             switch (location) {
-              case "rowNumber":
+              case 'rowNumber':
                 defectString += ` Rows: ${defect.additionalInformation.location.rowNumber}.`;
                 break;
-              case "seatNumber":
+              case 'seatNumber':
                 defectString += ` Seats: ${defect.additionalInformation.location.seatNumber}.`;
                 break;
-              case "axleNumber":
+              case 'axleNumber':
                 defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
                 break;
               default:
                 defectString += ` ${toUpperFirstLetter(
-                  defect.additionalInformation.location[location]
+                  defect.additionalInformation.location[location],
                 )}`;
                 break;
             }
           }
 
           if (index === array.length - 1) {
-            defectString += `.`;
+            defectString += '.';
           }
-        }
+        },
       );
     }
 
@@ -1209,18 +1229,17 @@ class CertificateGenerationService {
   public formatDefectWelsh(
     defect: any,
     vehicleType: any,
-    flattenedDefects: IFlatDefect[]
+    flattenedDefects: IFlatDefect[],
   ) {
-    const toUpperFirstLetter: any = (word: string) =>
-      word.charAt(0).toUpperCase() + word.slice(1);
+    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
     const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter(
-      (x: IFlatDefect) => defect.deficiencyRef === x.ref
+      (x: IFlatDefect) => defect.deficiencyRef === x.ref,
     );
 
     const filteredFlatDefect: IFlatDefect | null = this.filterFlatDefects(
       filteredFlatDefects,
-      vehicleType
+      vehicleType,
     );
 
     if (filteredFlatDefect !== null) {
@@ -1234,29 +1253,30 @@ class CertificateGenerationService {
         Object.keys(defect.additionalInformation.location).forEach(
           (location: string, index: number, array: string[]) => {
             if (defect.additionalInformation.location[location]) {
+              const welshLocation = this.convertLocationWelsh(
+                defect.additionalInformation.location[location],
+              );
+
               switch (location) {
-                case "rowNumber":
+                case 'rowNumber':
                   defectString += ` ${LOCATION_WELSH.ROW_NUMBER}: ${defect.additionalInformation.location.rowNumber}.`;
                   break;
-                case "seatNumber":
+                case 'seatNumber':
                   defectString += ` ${LOCATION_WELSH.SEAT_NUMBER}: ${defect.additionalInformation.location.seatNumber}.`;
                   break;
-                case "axleNumber":
+                case 'axleNumber':
                   defectString += ` ${LOCATION_WELSH.AXLE_NUMBER}: ${defect.additionalInformation.location.axleNumber}.`;
                   break;
                 default:
-                  const welshLocation = this.convertLocationWelsh(
-                    defect.additionalInformation.location[location]
-                  );
                   defectString += ` ${toUpperFirstLetter(welshLocation)}`;
                   break;
               }
             }
 
             if (index === array.length - 1) {
-              defectString += `.`;
+              defectString += '.';
             }
-          }
+          },
         );
       }
 
@@ -1265,10 +1285,9 @@ class CertificateGenerationService {
       }
       console.log(`Welsh Defect String Generated: ${defectString}`);
       return defectString;
-    } else {
-      console.log(`ERROR: Unable to find a filtered defect`);
-      return null;
     }
+    console.log('ERROR: Unable to find a filtered defect');
+    return null;
   }
 
   /**
@@ -1276,7 +1295,7 @@ class CertificateGenerationService {
    * @param locationToTranslate
    */
   public convertLocationWelsh(locationToTranslate: string) {
-    switch (locationToTranslate) {
+    switch (locationToTranslate as LOCATION_ENGLISH) {
       case LOCATION_ENGLISH.FRONT:
         return LOCATION_WELSH.FRONT;
       case LOCATION_ENGLISH.REAR:
@@ -1307,19 +1326,17 @@ class CertificateGenerationService {
    */
   public filterFlatDefects(
     filteredFlatDefects: IFlatDefect[],
-    vehicleType: string
+    vehicleType: string,
   ): IFlatDefect | null {
     if (filteredFlatDefects.length === 0) {
       return null;
-    } else if (filteredFlatDefects.length === 1) {
+    } if (filteredFlatDefects.length === 1) {
       return filteredFlatDefects[0];
-    } else {
-      const filteredWelshDefectsOnVehicleType = filteredFlatDefects.filter(
-        (flatDefect: IFlatDefect) =>
-          flatDefect.forVehicleType!.includes(vehicleType)
-      );
-      return filteredWelshDefectsOnVehicleType[0];
     }
+    const filteredWelshDefectsOnVehicleType = filteredFlatDefects.filter(
+      (flatDefect: IFlatDefect) => flatDefect.forVehicleType!.includes(vehicleType),
+    );
+    return filteredWelshDefectsOnVehicleType[0];
   }
 
   /**
@@ -1331,7 +1348,9 @@ class CertificateGenerationService {
     try {
       // go through each defect in un-flattened array
       defects.forEach((defect: IDefectParent) => {
-        const { imNumber, imDescription, imDescriptionWelsh, items } = defect;
+        const {
+          imNumber, imDescription, imDescriptionWelsh, items,
+        } = defect;
         if (defect.items !== undefined && defect.items.length !== 0) {
           // go through each item of defect
           items.forEach((item: IItem) => {
@@ -1342,8 +1361,8 @@ class CertificateGenerationService {
               deficiencies,
             } = item;
             if (
-              item.deficiencies !== undefined &&
-              item.deficiencies.length !== 0
+              item.deficiencies !== undefined
+              && item.deficiencies.length !== 0
             ) {
               // go through each deficiency and push to flatDefects array
               deficiencies.forEach((deficiency: IDefectChild) => {
@@ -1372,6 +1391,7 @@ class CertificateGenerationService {
         }
       });
     } catch (e) {
+      // eslint-disable-next-line
       console.error(`Error flattening defects: ${e}`);
     }
     return flatDefects;
@@ -1389,9 +1409,7 @@ class CertificateGenerationService {
    * Returns a boolean value indicating whether the test type is a basic IVA test
    * @param testTypeId - the test type ID on the test result
    */
-  public isBasicIvaTest = (testTypeId: string): boolean => {
-    return BASIC_IVA_TEST.IDS.includes(testTypeId);
-  }
+  public isBasicIvaTest = (testTypeId: string): boolean => BASIC_IVA_TEST.IDS.includes(testTypeId);
 
   /**
    * Returns true if testType is iva and false if not
@@ -1409,7 +1427,7 @@ class CertificateGenerationService {
     return MSVA30_TEST.IDS.includes(testTypeId);
   }
 
-  //#region Private Static Functions
+  // #region Private Static Functions
 
   /**
    * Returns true if testType is roadworthiness test for HGV or TRL and false if not
@@ -1425,15 +1443,14 @@ class CertificateGenerationService {
    */
   private static isHgvTrlRoadworthinessCertificate(testResult: any): boolean {
     return (
-      (testResult.vehicleType === VEHICLE_TYPES.HGV ||
-        testResult.vehicleType === VEHICLE_TYPES.TRL) &&
-      CertificateGenerationService.isRoadworthinessTestType(
-        testResult.testTypes.testTypeId
+      (testResult.vehicleType === VEHICLE_TYPES.HGV
+        || testResult.vehicleType === VEHICLE_TYPES.TRL)
+      && CertificateGenerationService.isRoadworthinessTestType(
+        testResult.testTypes.testTypeId,
       )
     );
   }
-  //#endregion
+  // #endregion
 }
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };
-

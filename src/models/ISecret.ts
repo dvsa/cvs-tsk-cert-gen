@@ -1,4 +1,4 @@
 export interface ISecret {
-    url: string;
-    key: string;
+  url: string;
+  key: string;
 }

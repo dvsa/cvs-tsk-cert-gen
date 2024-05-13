@@ -1,13 +1,15 @@
-import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
-import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
-import { validate as uuidValidate } from "uuid";
-import { Injector } from "../models/injector/Injector";
+import {
+  Callback, Context, Handler, SQSEvent, SQSRecord,
+} from 'aws-lambda';
+import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
+import { validate as uuidValidate } from 'uuid';
+import { Injector } from '../models/injector/Injector';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
-} from "../services/CertificateGenerationService";
-import { CertificateUploadService } from "../services/CertificateUploadService";
-import { ERRORS, TEST_RESULTS } from "../models/Enums";
+} from '../services/CertificateGenerationService';
+import { CertificateUploadService } from '../services/CertificateUploadService';
+import { ERRORS, TEST_RESULTS } from '../models/Enums';
 
 type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
@@ -19,8 +21,8 @@ type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
  */
 const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<CertGenReturn[]> => {
   if (!event?.Records?.length) {
-    console.error("ERROR: event is not defined.");
-    throw new Error("Event is empty");
+    console.error('ERROR: event is not defined.');
+    throw new Error('Event is empty');
   }
 
   const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService);
@@ -34,17 +36,14 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
       certificateUploadPromises.push(s3DeletePromise);
     } else if (uuidValidate(testResult.testResultId)) {
       // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
-      const generatedCertificateResponse: Promise<PutObjectCommandOutput> =
-        certificateGenerationService
-          .generateCertificate(testResult)
-          .then((response: IGeneratedCertificateResponse) => {
-            return certificateUploadService.uploadCertificate(response);
-          });
+      const generatedCertificateResponse: Promise<PutObjectCommandOutput> = certificateGenerationService
+        .generateCertificate(testResult)
+        .then((response: IGeneratedCertificateResponse) => certificateUploadService.uploadCertificate(response));
 
       certificateUploadPromises.push(generatedCertificateResponse);
     } else {
       console.error(`${ERRORS.TESTRESULT_ID}`, testResult.testResultId);
-      throw new Error("Bad Test Record: " + testResult.testResultId);
+      throw new Error(`Bad Test Record: ${testResult.testResultId}`);
     }
   });
 
