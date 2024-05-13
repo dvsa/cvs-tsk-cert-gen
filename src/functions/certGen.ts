@@ -21,12 +21,7 @@ const certGen: Handler = async (
   context?: Context,
   callback?: Callback
 ): Promise<CertGenReturn[]> => {
-  if (
-    !event ||
-    !event.Records ||
-    !Array.isArray(event.Records) ||
-    !event.Records.length
-  ) {
+  if (!event?.Records?.length) {
     console.error("ERROR: event is not defined.");
     throw new Error("Event is empty");
   }
