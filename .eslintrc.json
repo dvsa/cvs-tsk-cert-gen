@@ -1,0 +1,24 @@
+{
+  "extends": [
+    "@dvsa/eslint-config-ts"
+  ]//,
+  // "settings": {
+  //   "import/resolver": {
+  //     "typescript": {
+  //       "alwaysTryTypes": true
+  //     }
+  //   }
+  // },
+  // "rules": {
+  //   "import/no-extraneous-dependencies": [
+  //     "error",
+  //     {
+  //       "devDependencies": true
+  //     }
+  //   ],
+  //   "max-len":["error", {
+  //     "code": 150,
+  //     "ignoreComments": true
+  //   }]
+  // }
+}
