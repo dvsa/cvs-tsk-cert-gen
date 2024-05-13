@@ -1,4 +1,6 @@
 import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
+import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
+import { validate as uuidValidate } from "uuid";
 import { Injector } from "../models/injector/Injector";
 import {
   CertificateGenerationService,
@@ -6,7 +8,6 @@ import {
 } from "../services/CertificateGenerationService";
 import { CertificateUploadService } from "../services/CertificateUploadService";
 import { ERRORS, TEST_RESULTS } from "../models/Enums";
-import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 
 type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
@@ -31,11 +32,7 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
     if (testResult.testStatus === TEST_RESULTS.CANCELLED) {
       const s3DeletePromise = certificateUploadService.removeCertificate(testResult);
       certificateUploadPromises.push(s3DeletePromise);
-    } else if (
-      testResult.testResultId.match(
-        "\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b"
-      )
-    ) {
+    } else if (uuidValidate(testResult.testResultId)) {
       // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
       const generatedCertificateResponse: Promise<PutObjectCommandOutput> =
         certificateGenerationService
