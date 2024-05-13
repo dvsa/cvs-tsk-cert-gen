@@ -19,6 +19,7 @@ export enum TEST_RESULTS {
   PASS = "pass",
   FAIL = "fail",
   PRS = "prs",
+  CANCELLED = "cancelled",
 }
 
 export enum CERTIFICATE_DATA {

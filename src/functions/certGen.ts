@@ -5,7 +5,7 @@ import {
   IGeneratedCertificateResponse,
 } from "../services/CertificateGenerationService";
 import { CertificateUploadService } from "../services/CertificateUploadService";
-import { ERRORS } from "../models/Enums";
+import { ERRORS, TEST_RESULTS } from "../models/Enums";
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 
 type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
@@ -36,7 +36,7 @@ const certGen: Handler = async (
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
-    if (testResult.testStatus === "cancelled") {
+    if (testResult.testStatus === TEST_RESULTS.CANCELLED) {
       const s3DeletePromise =
         certificateUploadService.removeCertificate(testResult);
       certificateUploadPromises.push(s3DeletePromise);
