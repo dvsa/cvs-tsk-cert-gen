@@ -11,7 +11,7 @@ import {
 import { CertificateUploadService } from '../services/CertificateUploadService';
 import { ERRORS, TEST_RESULTS } from '../models/Enums';
 
-type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
+export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
 /**
  * λ function to process an SQS message detailing info for certificate generation

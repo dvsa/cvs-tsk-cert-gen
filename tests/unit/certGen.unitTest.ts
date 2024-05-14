@@ -5,13 +5,12 @@ const mockGetProfile = jest.fn();
 
 import Container from 'typedi';
 import sinon from 'sinon';
-import {
-  CertificateGenerationService,
-} from '../../src/services/CertificateGenerationService';
+import { CertificateUploadService } from '../../src/services/CertificateUploadService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { certGen } from '../../src/functions/certGen';
+import { CertGenReturn, certGen } from '../../src/functions/certGen';
 import queueEventFail from '../resources/queue-event-fail.json';
+import cancelledEvent from '../resources/queue-event-cancelled.json';
 
 const sandbox = sinon.createSandbox();
 import { IFeatureFlags } from '../../src/models';
@@ -29,8 +28,6 @@ describe('cert-gen', () => {
 
   Container.set(S3BucketService, new S3BucketMockService());
   Container.set(LambdaService, new LambdaMockService());
-
-  const certificateGenerationService = Container.get(CertificateGenerationService);
 
   beforeAll(() => {
     jest.setTimeout(10000);
@@ -119,8 +116,17 @@ describe('cert-gen', () => {
     });
 
     context('and the event is valid', () => {
-      it('should cancel an existing record', () => {
+      it('should cancel an existing record', async () => {
+        const uploadMock = jest.fn();
+        Container.set(CertificateUploadService, { removeCertificate: uploadMock });
 
+        const result = await certGen(cancelledEvent, undefined as any, undefined as any);
+
+        expect(result).toHaveLength(1);
+        cancelledEvent.Records.forEach((record: any) => {
+          const expected = JSON.parse(record.body);
+          expect(uploadMock).toHaveBeenCalledWith(expected);
+        });
       });
     });
   });
