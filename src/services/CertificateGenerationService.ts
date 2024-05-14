@@ -3,7 +3,7 @@ import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sd
 import moment from 'moment';
 import { getProfile, FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
-import { GetObjectCommandOutput, GetObjectOutput } from '@aws-sdk/client-s3';
+import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
 import { ICustomDefect } from '../models/ICustomDefect';
 import { IMakeAndModel } from '../models/IMakeAndModel';
@@ -41,6 +41,7 @@ import { IFlatDefect } from '../models/IFlatDefect';
 import { IDefectParent } from '../models/IDefectParent';
 import { IItem } from '../models/IItem';
 import { IDefectChild } from '../models/IDefectChild';
+import { TestService } from './TestService';
 
 /**
  * Service class for Certificate Generation
@@ -52,6 +53,8 @@ class CertificateGenerationService {
   private readonly config: Configuration;
 
   private readonly lambdaClient: LambdaService;
+
+  private readonly testService: TestService = new TestService();
 
   constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService) {
     this.s3Client = s3Client;
@@ -111,7 +114,7 @@ class CertificateGenerationService {
       vehicleTestRes = 'adr_pass';
     } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
       vehicleTestRes = 'iva_fail';
-    } else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+    } else if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
       vehicleTestRes = 'msva_fail';
     } else if (this.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
       vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}_bilingual`;
@@ -453,7 +456,7 @@ class CertificateGenerationService {
       payload.IVA_DATA = { ...ivaData };
     } else if (
       testResult.testTypes.testResult === TEST_RESULTS.FAIL
-      && this.isMsvaTest(testResult.testTypes.testTypeId)
+      && this.testService.isMsvaTest(testResult.testTypes.testTypeId)
     ) {
       const msvaData = await this.generateCertificateData(
         testResult,
@@ -1414,14 +1417,6 @@ class CertificateGenerationService {
    */
   public isIvaTest(testTypeId: string): boolean {
     return IVA30_TEST.IDS.includes(testTypeId);
-  }
-
-  /**
-   * Returns true if testType is msva and false if not
-   * @param testTypeId - test type id which is being tested
-   */
-  public isMsvaTest(testTypeId: string): boolean {
-    return MSVA30_TEST.IDS.includes(testTypeId);
   }
 
   // #region Private Static Functions
