@@ -1,4 +1,4 @@
-import { Inject, Service, Container } from 'typedi';
+import { Container } from 'typedi';
 import {
   Callback, Context, Handler, SQSEvent, SQSRecord,
 } from 'aws-lambda';
