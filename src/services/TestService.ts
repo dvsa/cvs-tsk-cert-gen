@@ -1,4 +1,5 @@
 import {
+  BASIC_IVA_TEST,
   MSVA30_TEST,
   IVA30_TEST,
 } from '../models/Enums';
@@ -15,4 +16,11 @@ export class TestService {
    * @param testTypeId - test type id which is being tested
    */
   public isIvaTest = (testTypeId: string): boolean => IVA30_TEST.IDS.includes(testTypeId);
+
+  /**
+   * Returns a boolean value indicating whether the test type is a basic IVA test
+   * @param testTypeId - the test type ID on the test result
+   */
+  public isBasicIvaTest = (testTypeId: string): boolean => BASIC_IVA_TEST.IDS.includes(testTypeId);
+
 }

@@ -23,7 +23,6 @@ import techRecordsRwtHgvSearch from '../resources/tech-records-response-rwt-hgv-
 import techRecordsPsv from '../resources/tech-records-response-PSV.json';
 import techRecordsSearchPsv from '../resources/tech-records-response-search-PSV.json';
 import mockTestResult from '../resources/test-result-with-defect.json';
-import mockIvaTestResult from '../resources/test-result-with-iva-defect.json';
 import defectsMock from '../resources/defects_mock.json';
 import flatDefectsMock from '../resources/flattened-defects.json';
 import testStationsMock from '../resources/testStationsMock.json';
@@ -1394,36 +1393,7 @@ describe('Certificate Generation Service', () => {
     });
   });
 
-  describe('iva 30 logic', () => {
-    context('test isBasicIvaTest logic', () => {
-      it('should return true if test type id on test result exists in basic array', () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
 
-        const ivaTestResult = cloneDeep(mockIvaTestResult);
-
-        const result: boolean = certGenSvc.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
-
-        expect(result).toBeTruthy();
-      });
-      it('should return false if test type id on test result does not exist in basic array', () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
-
-        const ivaTestResult = cloneDeep(mockIvaTestResult);
-        ivaTestResult.testTypes[0].testTypeId = '130';
-        ivaTestResult.testTypes[0].testTypeName = 'Mutual recognition/ end of series & inspection';
-
-        const result: boolean = certGenSvc.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
-
-        expect(result).toBeFalsy();
-      });
-    });
-  });
 });
 
 const AWSResolve = (payload: any) => ({

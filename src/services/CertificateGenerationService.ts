@@ -19,7 +19,6 @@ import { IMOTConfig } from '../models/IMOTConfig';
 import {
   ADR_TEST,
   AVAILABLE_WELSH,
-  BASIC_IVA_TEST,
   CERTIFICATE_DATA,
   ERRORS,
   HGV_TRL_ROADWORTHINESS_TEST_TYPES,
@@ -639,7 +638,7 @@ class CertificateGenerationService {
       serialNumber: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
       vehicleTrailerNrNo: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
       testCategoryClass: testResult.euVehicleCategory,
-      testCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
+      testCategoryBasicNormal: this.testService.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
       make: testResult.make,
       model: testResult.model,
       bodyType: testResult.bodyType?.description,
@@ -1402,12 +1401,6 @@ class CertificateGenerationService {
   public isTestTypeAdr(testType: any): boolean {
     return ADR_TEST.IDS.includes(testType.testTypeId);
   }
-
-  /**
-   * Returns a boolean value indicating whether the test type is a basic IVA test
-   * @param testTypeId - the test type ID on the test result
-   */
-  public isBasicIvaTest = (testTypeId: string): boolean => BASIC_IVA_TEST.IDS.includes(testTypeId);
 
   // #region Private Static Functions
 
