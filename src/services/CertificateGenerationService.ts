@@ -1,24 +1,21 @@
 import { Inject, Service } from 'typedi';
 import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
 import moment from 'moment';
-import { getProfile } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
+import { getProfile, FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import { GetObjectCommandOutput, GetObjectOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
-import {
-  ICertificatePayload,
-  ICustomDefect,
-  IGeneratedCertificateResponse,
-  IInvokeConfig,
-  IMakeAndModel,
-  IMOTConfig,
-  IRoadworthinessCertificateData,
-  ITestResult,
-  ITestType,
-  ITrailerRegistration,
-  IWeightDetails,
-  IFeatureFlags,
-} from '../models';
+import { ICustomDefect } from '../models/ICustomDefect';
+import { IMakeAndModel } from '../models/IMakeAndModel';
+import { ITrailerRegistration } from '../models/ITrailerRegistration';
+import { ITestType } from '../models/ITestType';
+import { ITestResult } from '../models/ITestResult';
+import { IWeightDetails } from '../models/IWeightDetails';
+import { IRoadworthinessCertificateData } from '../models/IRoadworthinessCertificateData';
+import { ICertificatePayload } from '../models/ICertificatePayload';
+import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
+import { IInvokeConfig } from '../models/IInvokeConfig';
+import { IMOTConfig } from '../models/IMOTConfig';
 import {
   ADR_TEST,
   AVAILABLE_WELSH,
@@ -179,7 +176,7 @@ class CertificateGenerationService {
   public async shouldTranslateTestResult(testResult: any): Promise<boolean> {
     let shouldTranslateTestResult = false;
     try {
-      const featureFlags: IFeatureFlags = await getProfile();
+      const featureFlags = await getProfile();
       console.log('Using feature flags ', featureFlags);
 
       if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
@@ -194,10 +191,10 @@ class CertificateGenerationService {
 
   /**
    * Method to check if Welsh translation is enabled.
-   * @param featureFlags IFeatureFlags interface
+   * @param featureFlags FeatureFlags interface
    * @returns boolean
    */
-  public isGlobalWelshFlagEnabled(featureFlags: IFeatureFlags): boolean {
+  public isGlobalWelshFlagEnabled(featureFlags: FeatureFlags): boolean {
     if (!featureFlags.welshTranslation.enabled) {
       console.warn('Unable to translate any test results: global Welsh flag disabled.');
       return false;
@@ -207,11 +204,11 @@ class CertificateGenerationService {
 
   /**
    * Method to check if Welsh translation is enabled for the given test type.
-   * @param featureFlags IFeatureFlags interface
+   * @param featureFlags FeatureFlags interface
    * @param testResult string of result, PASS/PRS/FAIL
    * @returns boolean
    */
-  public isTestResultFlagEnabled(testResult: string, featureFlags: IFeatureFlags): boolean {
+  public isTestResultFlagEnabled(testResult: string, featureFlags: FeatureFlags): boolean {
     let shouldTranslate: boolean = false;
     switch (testResult as TEST_RESULTS) {
       case TEST_RESULTS.PRS:

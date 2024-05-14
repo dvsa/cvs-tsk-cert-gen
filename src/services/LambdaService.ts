@@ -3,7 +3,7 @@ import {
   InvocationRequest, InvocationResponse, LambdaClient, InvokeCommand,
 } from '@aws-sdk/client-lambda';
 import AWSXRay from 'aws-xray-sdk';
-import { IInvokeConfig } from '../models';
+import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
 import { HTTPError } from '../models/HTTPError';
 import { ERRORS } from '../models/Enums';

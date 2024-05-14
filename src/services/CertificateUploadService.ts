@@ -1,7 +1,7 @@
 import { Inject, Service } from 'typedi';
 import { PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { S3BucketService } from './S3BucketService';
-import { IGeneratedCertificateResponse } from '../models';
+import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
 
 /**
  * Service class for uploading certificates to S3

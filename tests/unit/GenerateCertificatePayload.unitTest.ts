@@ -8,6 +8,7 @@ import * as path from 'path';
 import { Container } from 'typedi';
 import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
+import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
@@ -24,7 +25,8 @@ import docGenIva30 from '../resources/doc-gen-payload-iva30.json';
 import docGenMsva30 from '../resources/doc-gen-payload-msva30.json';
 
 const sandbox = sinon.createSandbox();
-import { ITestResult, ICertificatePayload, IFeatureFlags } from '../../src/models';
+import { ITestResult } from '../../src/models/ITestResult';
+import { ICertificatePayload } from '../../src/models/ICertificatePayload';
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import techRecordsRwtHgv from '../resources/tech-records-response-rwt-hgv.json';
 import techRecordsRwtHgvSearch from '../resources/tech-records-response-rwt-hgv-search.json';
@@ -58,7 +60,7 @@ describe('cert-gen', () => {
   });
 
   beforeEach(() => {
-    const featureFlags: IFeatureFlags = {
+    const featureFlags: FeatureFlags = {
       welshTranslation: {
         enabled: false,
         translatePassTestResult: false,

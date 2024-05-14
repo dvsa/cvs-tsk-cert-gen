@@ -5,6 +5,7 @@ const mockGetProfile = jest.fn();
 
 import Container from 'typedi';
 import sinon from 'sinon';
+import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { CertificateUploadService } from '../../src/services/CertificateUploadService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
@@ -14,7 +15,6 @@ import queueEventFail from '../resources/queue-event-fail.json';
 import queueEventCancelled from '../resources/queue-event-cancelled.json';
 
 const sandbox = sinon.createSandbox();
-import { IFeatureFlags } from '../../src/models';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
@@ -41,7 +41,7 @@ describe('cert-gen', () => {
   });
 
   beforeEach(() => {
-    const featureFlags: IFeatureFlags = {
+    const featureFlags: FeatureFlags = {
       welshTranslation: {
         enabled: false,
         translatePassTestResult: false,

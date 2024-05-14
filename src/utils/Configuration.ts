@@ -1,7 +1,9 @@
 // @ts-ignore
 import * as yml from 'node-yaml';
 import { GetSecretValueCommandInput, GetSecretValueCommandOutput, SecretsManager } from '@aws-sdk/client-secrets-manager';
-import { IInvokeConfig, IMOTConfig, IS3Config } from '../models';
+import { IS3Config } from '../models/IS3Config';
+import { IInvokeConfig } from '../models/IInvokeConfig';
+import { IMOTConfig } from '../models/IMOTConfig';
 import { ERRORS } from '../models/Enums';
 import { ISecret } from '../models/ISecret';
 

@@ -5,7 +5,7 @@ import {
   DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client,
 } from '@aws-sdk/client-s3';
 import { Configuration } from '../utils/Configuration';
-import { IS3Config } from '../models';
+import { IS3Config } from '../models/IS3Config';
 
 /**
  * Service class for communicating with Simple Storage Service

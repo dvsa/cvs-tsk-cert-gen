@@ -4,7 +4,7 @@ import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Configuration } from '../../src/utils/Configuration';
-import { IInvokeConfig } from '../../src/models';
+import { IInvokeConfig } from '../../src/models/IInvokeConfig';
 
 interface IMockFunctions {
   functionName: string;
