@@ -1,3 +1,4 @@
+import { Service } from 'typedi';
 import { ServiceException } from '@smithy/smithy-client';
 import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
 import * as fs from 'fs';
@@ -13,6 +14,7 @@ interface IMockFunctions {
 /**
  * Service for mocking the LambdaService
  */
+@Service()
 class LambdaMockService {
   private static responses: IMockFunctions[] = [];
 

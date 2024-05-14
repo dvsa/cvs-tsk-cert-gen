@@ -1,9 +1,9 @@
+import { Inject, Service, Container } from 'typedi';
 import {
   Callback, Context, Handler, SQSEvent, SQSRecord,
 } from 'aws-lambda';
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { validate as uuidValidate } from 'uuid';
-import { Injector } from '../models/injector/Injector';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
@@ -25,8 +25,8 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
     throw new Error('Event is empty');
   }
 
-  const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(CertificateGenerationService);
-  const certificateUploadService: CertificateUploadService = Injector.resolve<CertificateUploadService>(CertificateUploadService);
+  const certificateGenerationService = Container.get(CertificateGenerationService);
+  const certificateUploadService = Container.get(CertificateUploadService);
   const certificateUploadPromises: Array<Promise<CertGenReturn>> = [];
 
   event.Records.forEach((record: SQSRecord) => {

@@ -1,11 +1,13 @@
+import 'reflect-metadata';
+
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { Container } from 'typedi';
 import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
-import { Injector } from '../../src/models/injector/Injector';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
@@ -18,6 +20,8 @@ import techRecordsRwt from '../resources/tech-records-response-rwt.json';
 const sandbox = sinon.createSandbox();
 import { IFeatureFlags } from '../../src/models';
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
+import { S3BucketService } from '../../src/services/S3BucketService';
+import { LambdaService } from '../../src/services/LambdaService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -28,10 +32,10 @@ describe('cert-gen', () => {
     expect(true).toBe(true);
   });
 
-  const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(
-    CertificateGenerationService,
-    [S3BucketMockService, LambdaMockService],
-  );
+  Container.set(S3BucketService, new S3BucketMockService());
+  Container.set(LambdaService, new LambdaMockService());
+
+  const certificateGenerationService = Container.get(CertificateGenerationService);
 
   beforeAll(() => {
     jest.setTimeout(10000);
@@ -70,9 +74,7 @@ describe('cert-gen', () => {
         ),
       );
       const testResult: any = JSON.parse(event.Records[0].body);
-      const certificateUploadService: CertificateUploadService = Injector.resolve<CertificateUploadService>(CertificateUploadService, [
-        S3BucketMockService,
-      ]);
+      const certificateUploadService = Container.get(CertificateUploadService);
 
       context('when uploading a certificate', () => {
         context('and the S3 bucket exists and is accesible', () => {

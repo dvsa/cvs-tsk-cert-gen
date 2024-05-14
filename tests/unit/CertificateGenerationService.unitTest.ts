@@ -1,6 +1,9 @@
+import 'reflect-metadata';
+
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
 
+import Container from 'typedi';
 import sinon from 'sinon';
 import { LambdaClient } from '@aws-sdk/client-lambda';
 import { cloneDeep } from 'lodash';
@@ -32,13 +35,20 @@ import { HTTPError } from '../../src/models/HTTPError';
 import queueEventPRS from '../resources/queue-event-prs.json';
 import queueEventPass from '../resources/queue-event-pass.json';
 import queueEventFail from '../resources/queue-event-fail.json';
+import { S3BucketService } from '../../src/services/S3BucketService';
+import { S3BucketMockService } from '../models/S3BucketMockService';
+import { LambdaMockService } from '../models/LambdaMockService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
 }));
 
 describe('Certificate Generation Service', () => {
+  Container.set(S3BucketService, S3BucketMockService);
+  Container.set(LambdaService, LambdaMockService);
+
   const sandbox = sinon.createSandbox();
+
   afterEach(() => {
     sandbox.restore();
   });

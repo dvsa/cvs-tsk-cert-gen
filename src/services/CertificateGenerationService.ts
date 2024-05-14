@@ -1,3 +1,4 @@
+import { Inject, Service } from 'typedi';
 import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
 import moment from 'moment';
 import { getProfile } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
@@ -35,7 +36,6 @@ import {
 } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
-import { Service } from '../models/injector/ServiceDecorator';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
@@ -56,7 +56,7 @@ class CertificateGenerationService {
 
   private readonly lambdaClient: LambdaService;
 
-  constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
+  constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;

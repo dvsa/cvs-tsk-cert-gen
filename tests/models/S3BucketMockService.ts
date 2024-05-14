@@ -1,3 +1,4 @@
+import { Service } from 'typedi';
 import { GetObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { sdkStreamMixin } from '@smithy/util-stream';
 import { Readable } from 'stream';
@@ -12,6 +13,7 @@ interface IBucket {
 /**
  * Service for mocking the S3BucketService
  */
+@Service()
 class S3BucketMockService {
   public static buckets: IBucket[] = [];
 

@@ -1,11 +1,13 @@
+import 'reflect-metadata';
+
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { Container } from 'typedi';
 import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
-import { Injector } from '../../src/models/injector/Injector';
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
@@ -29,6 +31,8 @@ import techRecordsRwtHgvSearch from '../resources/tech-records-response-rwt-hgv-
 import techRecordsPsv from '../resources/tech-records-response-PSV.json';
 import techRecordsSearchPsv from '../resources/tech-records-response-search-PSV.json';
 import { CERTIFICATE_DATA } from '../../src/models/Enums';
+import { S3BucketService } from '../../src/services/S3BucketService';
+import { LambdaService } from '../../src/services/LambdaService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -38,17 +42,21 @@ describe('cert-gen', () => {
   it('should pass', () => {
     expect(true).toBe(true);
   });
-  const certificateGenerationService: CertificateGenerationService = Injector.resolve<CertificateGenerationService>(
-    CertificateGenerationService,
-    [S3BucketMockService, LambdaMockService],
-  );
+
+  Container.set(S3BucketService, new S3BucketMockService());
+  Container.set(LambdaService, new LambdaMockService());
+
+  const certificateGenerationService = Container.get(CertificateGenerationService);
+
   beforeAll(() => {
     jest.setTimeout(10000);
   });
+
   afterAll(() => {
     sandbox.restore();
     jest.setTimeout(5000);
   });
+
   beforeEach(() => {
     const featureFlags: IFeatureFlags = {
       welshTranslation: {
@@ -61,9 +69,11 @@ describe('cert-gen', () => {
 
     mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
   });
+
   afterEach(() => {
     sandbox.restore();
   });
+
   context('CertificateGenerationService', () => {
     LambdaMockService.populateFunctions();
 

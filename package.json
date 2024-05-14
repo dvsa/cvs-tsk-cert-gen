@@ -66,6 +66,7 @@
     "node-yaml": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "ts-node-register": "^1.0.0",
+    "typedi": "^0.10.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

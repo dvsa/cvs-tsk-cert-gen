@@ -1,9 +1,9 @@
+import { Inject, Service } from 'typedi';
 import { Readable } from 'stream';
 import AWSXRay from 'aws-xray-sdk';
 import {
   DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client,
 } from '@aws-sdk/client-s3';
-import { Service } from '../models/injector/ServiceDecorator';
 import { Configuration } from '../utils/Configuration';
 import { IS3Config } from '../models';
 
@@ -14,7 +14,7 @@ import { IS3Config } from '../models';
 class S3BucketService {
   public readonly s3Client: S3Client;
 
-  constructor(s3Client: S3Client) {
+  constructor(@Inject() s3Client: S3Client) {
     const config: IS3Config = Configuration.getInstance().getS3Config();
     this.s3Client = AWSXRay.captureAWSv3Client(new S3Client({ ...s3Client, ...config }));
   }
