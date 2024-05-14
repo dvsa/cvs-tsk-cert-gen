@@ -9,13 +9,15 @@ import { CertificateUploadService } from '../../src/services/CertificateUploadSe
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { CertGenReturn, certGen } from '../../src/functions/certGen';
+import queueEventPass from '../resources/queue-event-pass.json';
 import queueEventFail from '../resources/queue-event-fail.json';
-import cancelledEvent from '../resources/queue-event-cancelled.json';
+import queueEventCancelled from '../resources/queue-event-cancelled.json';
 
 const sandbox = sinon.createSandbox();
 import { IFeatureFlags } from '../../src/models';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
+import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -115,19 +117,47 @@ describe('cert-gen', () => {
       });
     });
 
-    context('and the event is valid', () => {
+    context('when a valid test result is read from the queue', () => {
       it('should cancel an existing record', async () => {
         const uploadMock = jest.fn();
+        const uploadResult = {
+          result: true,
+        };
+
+        uploadMock.mockResolvedValue(uploadResult);
+
         Container.set(CertificateUploadService, { removeCertificate: uploadMock });
 
-        const result = await certGen(cancelledEvent, undefined as any, undefined as any);
+        const result = await certGen(queueEventCancelled, undefined as any, undefined as any);
 
         expect(result).toHaveLength(1);
-        cancelledEvent.Records.forEach((record: any) => {
+        expect(result[0]).toEqual(uploadResult);
+        queueEventCancelled.Records.forEach((record: any) => {
           const expected = JSON.parse(record.body);
           expect(uploadMock).toHaveBeenCalledWith(expected);
         });
       });
+    });
+
+    it('should throw an error when the remove fails', async () => {
+      const err = {
+        result: false,
+        message: 'invalid removal',
+      };
+
+      Container.set(CertificateUploadService, {
+        removeCertificate: jest.fn().mockRejectedValue(err),
+      });
+
+      const logSpy = jest.spyOn(console, 'error');
+
+      try {
+        await certGen(queueEventCancelled, undefined as any, undefined as any);
+      } catch (e) {
+        expect(e).toBe(err);
+      }
+
+      expect(logSpy).toHaveBeenCalledWith(err);
     });
   });
 });
