@@ -23,11 +23,9 @@ import {
   CERTIFICATE_DATA,
   ERRORS,
   HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-  IVA30_TEST,
   IVA_30,
   LOCATION_ENGLISH,
   LOCATION_WELSH,
-  MSVA30_TEST,
   TEST_RESULTS,
   VEHICLE_TYPES,
 } from '../models/Enums';
@@ -112,7 +110,7 @@ class CertificateGenerationService {
       vehicleTestRes = 'rwt';
     } else if (this.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = 'adr_pass';
-    } else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+    } else if (this.testService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
       vehicleTestRes = 'iva_fail';
     } else if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
       vehicleTestRes = 'msva_fail';
@@ -447,7 +445,7 @@ class CertificateGenerationService {
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
     } else if (
       testResult.testTypes.testResult === TEST_RESULTS.FAIL
-      && this.isIvaTest(testResult.testTypes.testTypeId)
+      && this.testService.isIvaTest(testResult.testTypes.testTypeId)
     ) {
       const ivaData = await this.generateCertificateData(
         testResult,
@@ -1410,14 +1408,6 @@ class CertificateGenerationService {
    * @param testTypeId - the test type ID on the test result
    */
   public isBasicIvaTest = (testTypeId: string): boolean => BASIC_IVA_TEST.IDS.includes(testTypeId);
-
-  /**
-   * Returns true if testType is iva and false if not
-   * @param testTypeId - test type id which is being tested
-   */
-  public isIvaTest(testTypeId: string): boolean {
-    return IVA30_TEST.IDS.includes(testTypeId);
-  }
 
   // #region Private Static Functions
 
