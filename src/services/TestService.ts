@@ -1,4 +1,5 @@
 import {
+  ADR_TEST,
   BASIC_IVA_TEST,
   MSVA30_TEST,
   IVA30_TEST,
@@ -23,4 +24,9 @@ export class TestService {
    */
   public isBasicIvaTest = (testTypeId: string): boolean => BASIC_IVA_TEST.IDS.includes(testTypeId);
 
+  /**
+   * Returns true if testType is adr and false if not
+   * @param testType - testType which is tested
+   */
+  public isTestTypeAdr = (testType: any): boolean => ADR_TEST.IDS.includes(testType.testTypeId);
 }

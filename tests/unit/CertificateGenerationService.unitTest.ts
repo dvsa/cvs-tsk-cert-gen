@@ -1392,8 +1392,6 @@ describe('Certificate Generation Service', () => {
       });
     });
   });
-
-
 });
 
 const AWSResolve = (payload: any) => ({

@@ -17,7 +17,6 @@ import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateRe
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { IMOTConfig } from '../models/IMOTConfig';
 import {
-  ADR_TEST,
   AVAILABLE_WELSH,
   CERTIFICATE_DATA,
   ERRORS,
@@ -107,7 +106,7 @@ class CertificateGenerationService {
     ) {
       // CVSB-7677 is road-worthiness test
       vehicleTestRes = 'rwt';
-    } else if (this.isTestTypeAdr(testResult.testTypes)) {
+    } else if (this.testService.isTestTypeAdr(testResult.testTypes)) {
       vehicleTestRes = 'adr_pass';
     } else if (this.testService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
       vehicleTestRes = 'iva_fail';
@@ -435,7 +434,7 @@ class CertificateGenerationService {
       payload.RWT_DATA = { ...rwtData };
     } else if (
       testResult.testTypes.testResult === TEST_RESULTS.PASS
-      && this.isTestTypeAdr(testResult.testTypes)
+      && this.testService.isTestTypeAdr(testResult.testTypes)
     ) {
       const adrData = await this.generateCertificateData(
         testResult,
@@ -1392,14 +1391,6 @@ class CertificateGenerationService {
       console.error(`Error flattening defects: ${e}`);
     }
     return flatDefects;
-  }
-
-  /**
-   * Returns true if testType is adr and false if not
-   * @param testType - testType which is tested
-   */
-  public isTestTypeAdr(testType: any): boolean {
-    return ADR_TEST.IDS.includes(testType.testTypeId);
   }
 
   // #region Private Static Functions
