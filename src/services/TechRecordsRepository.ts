@@ -5,6 +5,7 @@ import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { VEHICLE_TYPES } from '../models/Enums';
 
 @Service()
 export class TechRecordsRepository {
@@ -76,6 +77,23 @@ export class TechRecordsRepository {
       console.log(JSON.stringify(e));
       return undefined;
     }
+  };
+
+  /**
+   * Method for getting make and model based on the vehicle from a test-result
+   * @param testResult - the testResult for which the tech record search is done for
+   */
+  public getVehicleMakeAndModel = async (testResult: any) => {
+    const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
+    // Return bodyMake and bodyModel values for PSVs
+    return techRecord?.techRecord_vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.PSV ? {
+      Make: (techRecord as TechRecordType<'psv'>).techRecord_chassisMake,
+      Model: (techRecord as TechRecordType<'psv'>).techRecord_chassisModel,
+    } : {
+      Make: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_make,
+      Model: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_model,
+    };
   };
 
   public processGetCurrentProvisionalRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {

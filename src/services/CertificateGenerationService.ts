@@ -389,7 +389,7 @@ class CertificateGenerationService {
         testResult.testTypes.testTypeId,
       )
     ) {
-      makeAndModel = await this.getVehicleMakeAndModel(testResult);
+      makeAndModel = await this.techRecordsRepository.getVehicleMakeAndModel(testResult);
     }
 
     let payload: ICertificatePayload = {
@@ -839,23 +839,6 @@ class CertificateGenerationService {
         throw error;
       });
   }
-
-  /**
-   * Method for getting make and model based on the vehicle from a test-result
-   * @param testResult - the testResult for which the tech record search is done for
-   */
-  public getVehicleMakeAndModel = async (testResult: any) => {
-    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    const techRecord = await this.techRecordsRepository.processGetCurrentProvisionalRecords(searchRes);
-    // Return bodyMake and bodyModel values for PSVs
-    return techRecord?.techRecord_vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.PSV ? {
-      Make: (techRecord as TechRecordType<'psv'>).techRecord_chassisMake,
-      Model: (techRecord as TechRecordType<'psv'>).techRecord_chassisModel,
-    } : {
-      Make: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_make,
-      Model: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_model,
-    };
-  };
 
   /**
    * To fetch trailer registration
