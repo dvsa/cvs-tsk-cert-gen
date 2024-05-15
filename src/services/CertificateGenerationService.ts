@@ -38,6 +38,7 @@ import { IDefectParent } from '../models/IDefectParent';
 import { IItem } from '../models/IItem';
 import { IDefectChild } from '../models/IDefectChild';
 import { TestService } from './TestService';
+import { TechRecordsRepository } from './TechRecordsRepository';
 
 /**
  * Service class for Certificate Generation
@@ -52,10 +53,13 @@ class CertificateGenerationService {
 
   private readonly testService: TestService = new TestService();
 
-  constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService) {
+  private readonly techRecordsRepository: TechRecordsRepository;
+
+  constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
+    this.techRecordsRepository = techRecordsRepository;
   }
 
   /**
@@ -559,7 +563,7 @@ class CertificateGenerationService {
    * @param testResult - testResult from which the VIN is used to search a tech-record
    */
   public getAdrDetails = async (testResult: any) => {
-    const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
     return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
   };
 
@@ -769,7 +773,7 @@ class CertificateGenerationService {
    * @param testResult
    */
   public async getWeightDetails(testResult: any) {
-    const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
     const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
     if (techRecord) {
       const weightDetails: IWeightDetails = {
@@ -891,7 +895,7 @@ class CertificateGenerationService {
    * @param testResult - the testResult for which the tech record search is done for
    */
   public getVehicleMakeAndModel = async (testResult: any) => {
-    const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
     const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
     // Return bodyMake and bodyModel values for PSVs
     return techRecord?.techRecord_vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.PSV ? {
@@ -901,35 +905,6 @@ class CertificateGenerationService {
       Make: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_make,
       Model: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_model,
     };
-  };
-
-  /**
-   * Used to return a subset of technical record information.
-   * @param searchIdentifier
-   */
-  public callSearchTechRecords = async (searchIdentifier: string) => {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: InvocationRequest = {
-      FunctionName: config.functions.techRecordsSearch.name,
-      InvocationType: 'RequestResponse',
-      LogType: 'Tail',
-      Payload: toUint8Array(JSON.stringify({
-        httpMethod: 'GET',
-        path: `/v3/technical-records/search/${searchIdentifier}?searchCriteria=systemNumber`,
-        pathParameters: {
-          searchIdentifier,
-        },
-      })),
-    };
-    try {
-      const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
-      const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
-      return JSON.parse(res.body);
-    } catch (e) {
-      console.log('Error searching technical records');
-      console.log(JSON.stringify(e));
-      return undefined;
-    }
   };
 
   /**

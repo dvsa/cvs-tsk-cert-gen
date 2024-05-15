@@ -22,6 +22,7 @@ const sandbox = sinon.createSandbox();
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
+import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -35,9 +36,14 @@ describe('cert-gen', () => {
   Container.set(S3BucketService, new S3BucketMockService());
   Container.set(LambdaService, new LambdaMockService());
 
+  const techRecordsRepository = Container.get(TechRecordsRepository);
+  const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
+  Container.set(TechRecordsRepository, techRecordsRepository);
+
   const certificateGenerationService = Container.get(CertificateGenerationService);
 
   beforeAll(() => {
+    LambdaMockService.populateFunctions();
     jest.setTimeout(10000);
   });
 
@@ -61,11 +67,10 @@ describe('cert-gen', () => {
 
   afterEach(() => {
     sandbox.restore();
+    searchTechRecordsSpy.mockReset();
   });
 
   context('CertificateUploadService', () => {
-    LambdaMockService.populateFunctions();
-
     context('when a valid event is received', () => {
       const event: any = JSON.parse(
         fs.readFileSync(
@@ -79,11 +84,9 @@ describe('cert-gen', () => {
       context('when uploading a certificate', () => {
         context('and the S3 bucket exists and is accesible', () => {
           it('should successfully upload the certificate', async () => {
-            const getTechRecordSearchStub = sandbox
-              .stub(certificateGenerationService, 'callSearchTechRecords')
-              .resolves(techRecordsRwtSearch);
-
+            searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+
             const getTechRecordStub = sandbox
               .stub(certificateGenerationService, 'callGetTechRecords')
               .resolves((techRecordResponseRwtMock) as any);
@@ -91,6 +94,7 @@ describe('cert-gen', () => {
             const generatedCertificateResponse: IGeneratedCertificateResponse = await certificateGenerationService.generateCertificate(
               testResult,
             );
+
             S3BucketMockService.buckets.push({
               bucketName: `cvs-cert-${process.env.BUCKET}`,
               files: [],
@@ -103,7 +107,6 @@ describe('cert-gen', () => {
                   `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`,
                 );
                 getTechRecordStub.restore();
-                getTechRecordSearchStub.restore();
                 S3BucketMockService.buckets.pop();
               });
           });
@@ -111,25 +114,25 @@ describe('cert-gen', () => {
 
         context('and the S3 bucket does not exist or is not accesible', () => {
           it('should throw an error', async () => {
-            const getTechRecordSearchStub = sandbox
-              .stub(certificateGenerationService, 'callSearchTechRecords')
-              .resolves(techRecordsRwtSearch);
+            searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
             const getTechRecordStub = sandbox
               .stub(certificateGenerationService, 'callGetTechRecords')
               .resolves((techRecordResponseRwtMock) as any);
 
-            const generatedCertificateResponse: IGeneratedCertificateResponse = await certificateGenerationService.generateCertificate(
-              testResult,
-            );
+            const certificateMock = {
+              fileName: 'certificate-filename.pdf',
+              certificateOrder: testResult.order,
+            } as IGeneratedCertificateResponse;
+
             expect.assertions(1);
+
             return certificateUploadService
-              .uploadCertificate(generatedCertificateResponse)
+              .uploadCertificate(certificateMock)
               .catch((error: any) => {
                 expect(error).toBeInstanceOf(Error);
                 getTechRecordStub.restore();
-                getTechRecordSearchStub.restore();
               });
           });
         });

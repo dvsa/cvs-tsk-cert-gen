@@ -5,9 +5,9 @@ const mockGetProfile = jest.fn();
 
 import Container from 'typedi';
 import sinon from 'sinon';
-import { LambdaClient } from '@aws-sdk/client-lambda';
 import { cloneDeep } from 'lodash';
 import Axios from 'axios';
+import { toUint8Array } from '@smithy/util-utf8';
 import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
 import techRecordResp from '../resources/tech-records-response.json';
 import testResultsResp from '../resources/test-results-response.json';
@@ -37,32 +37,36 @@ import queueEventFail from '../resources/queue-event-fail.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
+import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
 }));
 
 describe('Certificate Generation Service', () => {
-  Container.set(S3BucketService, S3BucketMockService);
-  Container.set(LambdaService, LambdaMockService);
+  Container.set(S3BucketService, new S3BucketMockService());
+
+  const lambdaService = new LambdaMockService();
+  const invokeSpy = jest.spyOn(lambdaService, 'invoke');
+  Container.set(LambdaService, lambdaService);
+
+  const techRecordsRepository = Container.get(TechRecordsRepository);
+  const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
+  Container.set(TechRecordsRepository, techRecordsRepository);
 
   const sandbox = sinon.createSandbox();
 
   afterEach(() => {
     sandbox.restore();
+    searchTechRecordsSpy.mockReset();
+    invokeSpy.mockReset();
   });
 
   describe('getVehicleMakeAndModel function', () => {
     context('when given a systemNumber with matching record', () => {
       it('should return the record & only invoke the LambdaService once', async () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, 'callSearchTechRecords')
-          .resolves(techRecordsRwtSearch);
+        const certGenSvc = Container.get(CertificateGenerationService);
+        searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
         const getTechRecordStub = sandbox
@@ -77,7 +81,6 @@ describe('Certificate Generation Service', () => {
         );
         expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
         getTechRecordStub.restore();
-        getTechRecordSearchStub.restore();
       });
     });
 
@@ -85,15 +88,8 @@ describe('Certificate Generation Service', () => {
       'when given a systemNumber  with no matching record and a vin with matching record',
       () => {
         it('should return the record & invoke the LambdaService twice', async () => {
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
-
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, 'callSearchTechRecords')
-            .resolves(techRecordsRwtSearch);
+          const certGenSvc = Container.get(CertificateGenerationService);
+          searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
           const getTechRecordStub = sandbox
@@ -109,7 +105,6 @@ describe('Certificate Generation Service', () => {
           );
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
           getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
         });
       },
     );
@@ -118,20 +113,12 @@ describe('Certificate Generation Service', () => {
       'when given a vin with no matching record but a matching partialVin',
       () => {
         it('should return the record & invoke the LambdaService twice', async () => {
-          const LambdaStub = sandbox
-            .stub(LambdaService.prototype, 'invoke')
-            .onFirstCall()
-            .resolves(AWSReject('no'))
-            .onSecondCall()
-            .resolves(AWSResolve(JSON.stringify(techRecordResp)));
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, 'callSearchTechRecords')
-            .resolves(techRecordsRwtSearch);
+          invokeSpy
+            .mockResolvedValueOnce(AWSReject('no'))
+            .mockResolvedValueOnce(AWSResolve(JSON.stringify(techRecordResp)));
+
+          const certGenSvc = Container.get(CertificateGenerationService);
+          searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
           const getTechRecordStub = sandbox
@@ -145,11 +132,8 @@ describe('Certificate Generation Service', () => {
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
             testResultMock,
           );
-          expect(LambdaStub.calledOnce).toBeFalsy();
-          // expect(LambdaStub.calledTwice).toBeTruthy();
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
           getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
         });
       },
     );
@@ -158,23 +142,13 @@ describe('Certificate Generation Service', () => {
       'when given a vin and partialVin with no matching record but a matching VRM',
       () => {
         it('should return the record & invoke the LambdaService three times', async () => {
-          const LambdaStub = sandbox
-            .stub(LambdaService.prototype, 'invoke')
-            .onFirstCall()
-            .resolves(AWSReject('no'))
-            .onSecondCall()
-            .resolves(AWSReject('no'))
-            .onThirdCall()
-            .resolves(AWSResolve(JSON.stringify(techRecordResp)));
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, 'callSearchTechRecords')
-            .resolves(techRecordsRwtSearch);
+          invokeSpy
+            .mockResolvedValueOnce(AWSReject('no'))
+            .mockResolvedValueOnce(AWSReject('no'))
+            .mockResolvedValueOnce(AWSResolve(JSON.stringify(techRecordResp)));
 
+          const certGenSvc = Container.get(CertificateGenerationService);
+          searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
           const getTechRecordStub = sandbox
             .stub(certGenSvc, 'callGetTechRecords')
@@ -188,11 +162,10 @@ describe('Certificate Generation Service', () => {
           const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
             testResultMock,
           );
-          expect(LambdaStub.calledOnce).toBeFalsy();
-          expect(LambdaStub.calledTwice).toBeFalsy();
+          expect(invokeSpy).not.toHaveBeenCalledTimes(1);
+          expect(invokeSpy).not.toHaveBeenCalledTimes(2);
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
           getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
         });
       },
     );
@@ -201,14 +174,8 @@ describe('Certificate Generation Service', () => {
       'when given a vin, partialVin and VRM with no matching record but a matching TrailerID',
       () => {
         it('should return the record & invoke the LambdaService four times', async () => {
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, 'callSearchTechRecords')
-            .resolves(techRecordsRwtSearch);
+          const certGenSvc = Container.get(CertificateGenerationService);
+          searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
           const getTechRecordStub = sandbox
@@ -226,24 +193,16 @@ describe('Certificate Generation Service', () => {
           );
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
           getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
         });
       },
     );
 
     context('when given a vehicle details with no matching records', () => {
       it('should call Tech Records Lambda 4 times and then throw an error', async () => {
-        const LambdaStub = sandbox
-          .stub(LambdaService.prototype, 'invoke')
-          .resolves(AWSReject('no'));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, 'callSearchTechRecords')
-          .resolves(techRecordsRwtSearch);
+        invokeSpy
+          .mockResolvedValue(AWSReject('no'));
+        const certGenSvc = Container.get(CertificateGenerationService);
+        searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
         const getTechRecordStub = sandbox
@@ -259,13 +218,12 @@ describe('Certificate Generation Service', () => {
         try {
           await certGenSvc.getVehicleMakeAndModel(testResultMock);
         } catch (e) {
-          expect(LambdaStub.callCount).toBe(4);
+          expect(invokeSpy).toBeCalledTimes(4);
           expect(e).toBeInstanceOf(Error);
           expect((e as Error).message).toBe(
             'Unable to retrieve unique Tech Record for Test Result',
           );
           getTechRecordStub.restore();
-          getTechRecordSearchStub.restore();
         }
       });
     });
@@ -274,17 +232,10 @@ describe('Certificate Generation Service', () => {
       'when given a vehicle details with missing vehicle detail fields and no match',
       () => {
         it('should call Tech Records Lambda matching number (2) times and then throw an error', async () => {
-          const LambdaStub = sandbox
-            .stub(LambdaService.prototype, 'invoke')
-            .resolves(AWSReject('no'));
-          // @ts-ignore
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, 'callSearchTechRecords')
-            .resolves(techRecordsRwtSearch);
+          invokeSpy
+            .mockResolvedValue(AWSReject('no'));
+          const certGenSvc = Container.get(CertificateGenerationService);
+          searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
           const getTechRecordStub = sandbox
@@ -298,13 +249,12 @@ describe('Certificate Generation Service', () => {
           try {
             await certGenSvc.getVehicleMakeAndModel(testResultMock);
           } catch (e) {
-            expect(LambdaStub.callCount).toBe(2);
+            expect(invokeSpy).toBeCalledTimes(2);
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
               'Unable to retrieve unique Tech Record for Test Result',
             );
             getTechRecordStub.restore();
-            getTechRecordSearchStub.restore();
           }
         });
       },
@@ -312,14 +262,8 @@ describe('Certificate Generation Service', () => {
 
     context('when lookup returns a PSV tech record', () => {
       it('should return make and model from chassis details', async () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, 'callSearchTechRecords')
-          .resolves(techRecordsSearchPsv);
+        const certGenSvc = Container.get(CertificateGenerationService);
+        searchTechRecordsSpy.mockResolvedValue(techRecordsSearchPsv);
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
         const getTechRecordStub = sandbox
@@ -335,20 +279,14 @@ describe('Certificate Generation Service', () => {
         expect(makeAndModel.Make).toBe('AEC');
         expect(makeAndModel.Model).toBe('RELIANCE');
         getTechRecordStub.restore();
-        getTechRecordSearchStub.restore();
       });
     });
 
     context('when lookup returns a non-PSV tech record', () => {
       it('should return make and model from not-chassis details', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          // @ts-ignore
-          null,
-          new LambdaService(new LambdaClient()),
-        );
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, 'callSearchTechRecords')
-          .resolves(techRecordsRwtHgvSearch);
+        const certGenSvc = Container.get(CertificateGenerationService);
+        searchTechRecordsSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
         const getTechRecordStub = sandbox
           .stub(certGenSvc, 'callGetTechRecords')
           .resolves((techRecordsRwtHgv) as any);
@@ -362,7 +300,6 @@ describe('Certificate Generation Service', () => {
         expect(makeAndModel.Make).toBe('Isuzu');
         expect(makeAndModel.Model).toBe('FM');
         getTechRecordStub.restore();
-        getTechRecordSearchStub.restore();
       });
     });
   });
@@ -370,38 +307,30 @@ describe('Certificate Generation Service', () => {
   describe('getOdometerHistory function', () => {
     context('when given a systemNumber with only failed test results', () => {
       it('should return an empty odometer history list', async () => {
-        const LambdaStub = sandbox
-          .stub(LambdaService.prototype, 'invoke')
-          .resolves(AWSResolve(JSON.stringify(testResultsRespFail)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        invokeSpy
+          .mockResolvedValueOnce(AWSResolve(JSON.stringify(testResultsRespFail)));
+
+        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
         const odometerHistory = await certGenSvc.getOdometerHistory(
           systemNumberMock,
         );
-        expect(LambdaStub.calledOnce).toBeTruthy();
+
+        expect(invokeSpy).toBeCalledTimes(1);
         expect(odometerHistory).toEqual({ OdometerHistoryList: [] });
       });
     });
 
     context('when given a systemNumber which returns more than 3 pass or prs', () => {
       it('should return an odometer history no greater than 3', async () => {
-        const LambdaStub = sandbox
-          .stub(LambdaService.prototype, 'invoke')
-          .resolves(AWSResolve(JSON.stringify(testResultsResp)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        invokeSpy
+          .mockResolvedValue(AWSResolve(JSON.stringify(testResultsResp)));
+        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
         const odometerHistory = await certGenSvc.getOdometerHistory(
           systemNumberMock,
         );
-        expect(LambdaStub.calledOnce).toBeTruthy();
+        expect(invokeSpy).toBeCalledTimes(1);
         expect(odometerHistory).toEqual({
           OdometerHistoryList: [
             {
@@ -426,19 +355,14 @@ describe('Certificate Generation Service', () => {
 
     context('when given a systemNumber which returns tests which include those that are not Annual With Certificate', () => {
       it('should omiting results that are not Annual With Certificate', async () => {
-        const LambdaStub = sandbox
-          .stub(LambdaService.prototype, 'invoke')
-          .resolves(AWSResolve(JSON.stringify(testResultsRespNoCert)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        invokeSpy
+          .mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespNoCert)));
+        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
         const odometerHistory = await certGenSvc.getOdometerHistory(
           systemNumberMock,
         );
-        expect(LambdaStub.calledOnce).toBeTruthy();
+        expect(invokeSpy).toBeCalledTimes(1);
         expect(odometerHistory).toEqual({
           OdometerHistoryList: [
             {
@@ -463,19 +387,14 @@ describe('Certificate Generation Service', () => {
 
     context('when given a systemNumber which returns a test result which was fail then prs', () => {
       it('should return an odometer history which includes test result', async () => {
-        const LambdaStub = sandbox
-          .stub(LambdaService.prototype, 'invoke')
-          .resolves(AWSResolve(JSON.stringify(testResultsRespPrs)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        invokeSpy
+          .mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespPrs)));
+        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
         const odometerHistory = await certGenSvc.getOdometerHistory(
           systemNumberMock,
         );
-        expect(LambdaStub.calledOnce).toBeTruthy();
+        expect(invokeSpy).toBeCalledTimes(1);
         expect(odometerHistory).toEqual({
           OdometerHistoryList: [
             {
@@ -490,19 +409,14 @@ describe('Certificate Generation Service', () => {
 
     context('when given a systemNumber which returns a test result which has no test types array', () => {
       it('should omit the result from the odometer history', async () => {
-        const LambdaStub = sandbox
-          .stub(LambdaService.prototype, 'invoke')
-          .resolves(AWSResolve(JSON.stringify(testResultsRespEmpty)));
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        invokeSpy
+          .mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespEmpty)));
+        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
         const odometerHistory = await certGenSvc.getOdometerHistory(
           systemNumberMock,
         );
-        expect(LambdaStub.calledOnce).toBeTruthy();
+        expect(invokeSpy).toBeCalledTimes(1);
         expect(odometerHistory).toEqual({
           OdometerHistoryList: [
             {
@@ -529,11 +443,7 @@ describe('Certificate Generation Service', () => {
   describe('welsh defect function', () => {
     context('test formatDefectWelsh method', () => {
       it('should return welsh string for hgv vehicle type when there are shared defect refs', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
@@ -549,11 +459,7 @@ describe('Certificate Generation Service', () => {
         );
       });
       it('should return welsh string for trl vehicle type when there are shared defect refs', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
@@ -569,11 +475,7 @@ describe('Certificate Generation Service', () => {
         );
       });
       it('should return welsh string for psv vehicle type when there are shared defect refs', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
@@ -589,11 +491,7 @@ describe('Certificate Generation Service', () => {
         );
       });
       it('should return welsh string including location numbers if populated', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
@@ -612,11 +510,7 @@ describe('Certificate Generation Service', () => {
         );
       });
       it('should return null if filteredFlatDefect array is empty', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const filterFlatDefectsStub = sandbox
           .stub(certGenSvc, 'filterFlatDefects').returns(null);
@@ -637,11 +531,7 @@ describe('Certificate Generation Service', () => {
 
     context('test convertLocationWelsh method', () => {
       it('should return the translated location value', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const welshLocation1 = certGenSvc.convertLocationWelsh(
           LOCATION_ENGLISH.FRONT,
         );
@@ -685,11 +575,7 @@ describe('Certificate Generation Service', () => {
 
     context('test filterFlatDefects method', () => {
       it('should return a filtered flat defect for hgv', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const flatDefect = flatDefectsMock[0];
         const filterFlatDefect = certGenSvc.filterFlatDefects(
           flatDefectsMock,
@@ -698,11 +584,7 @@ describe('Certificate Generation Service', () => {
         expect(filterFlatDefect).toEqual(flatDefect);
       });
       it('should return a filtered flat defect for trl', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const flatDefect = flatDefectsMock[0];
         const filterFlatDefect = certGenSvc.filterFlatDefects(
           flatDefectsMock,
@@ -711,11 +593,7 @@ describe('Certificate Generation Service', () => {
         expect(filterFlatDefect).toEqual(flatDefect);
       });
       it('should return a filtered flat defect for psv', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const flatDefect = flatDefectsMock[1];
         const filterFlatDefect = certGenSvc.filterFlatDefects(
           flatDefectsMock,
@@ -724,11 +602,7 @@ describe('Certificate Generation Service', () => {
         expect(filterFlatDefect).toEqual(flatDefect);
       });
       it('should return null if array is empty', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const filterFlatDefect = certGenSvc.filterFlatDefects(
           [],
           'hgv',
@@ -739,20 +613,13 @@ describe('Certificate Generation Service', () => {
 
     context('test flattenDefectsFromApi method', () => {
       it('should return the defects in a flat array', () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
         expect(flattenedArray).toEqual(flatDefectsMock);
         expect(flattenedArray).toHaveLength(7);
       });
       it('should log any exceptions flattening defects', () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const logSpy = jest.spyOn(console, 'error');
 
         const defectsMockForError = cloneDeep(defectsMock);
@@ -774,10 +641,7 @@ describe('Certificate Generation Service', () => {
   describe('welsh address function', () => {
     context('test getThisTestStation method', () => {
       it('should return a postcode if pNumber exists in the list of test stations', () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const testStation = testStationsMock[0];
         const postCode = certGenSvc.getThisTestStation(
           testStationsMock,
@@ -787,11 +651,7 @@ describe('Certificate Generation Service', () => {
       });
       it('should return a null and message if pNumber does not exists in the list of test stations', () => {
         const logSpy = jest.spyOn(console, 'log');
-
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const postCode = certGenSvc.getThisTestStation(
           testStationsMock,
           '445567',
@@ -804,11 +664,7 @@ describe('Certificate Generation Service', () => {
       });
       it('should return a null and message if the list of test stations is empty', () => {
         const logSpy = jest.spyOn(console, 'log');
-
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const postCode = certGenSvc.getThisTestStation([], 'P50742');
         expect(postCode).toBeNull();
         expect(logSpy).toHaveBeenCalledWith('Test stations data is empty');
@@ -818,18 +674,16 @@ describe('Certificate Generation Service', () => {
 
     context('test getTestStation method', () => {
       it('should return an array of test stations if invoke is successful', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const mockStations = testStationsMock;
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: JSON.stringify(mockStations) })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const testStations = await certGenSvc.getTestStations();
 
@@ -838,17 +692,14 @@ describe('Certificate Generation Service', () => {
       });
       it('should invoke test stations up to 3 times if there is an issue', async () => {
         const logSpy = jest.spyOn(console, 'error');
+        const certGenSvc = Container.get(CertificateGenerationService);
 
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
-
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: '' }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: '' })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const testStations = await certGenSvc.getTestStations();
 
@@ -859,16 +710,14 @@ describe('Certificate Generation Service', () => {
         jest.clearAllMocks();
       });
       it('should return an empty array if test stations invoke is unsuccessful', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: '' }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: '' })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const testStations = await certGenSvc.getTestStations();
 
@@ -876,18 +725,16 @@ describe('Certificate Generation Service', () => {
         jest.clearAllMocks();
       });
       it('should throw error if issue when parsing test stations', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const mockStations: ITestStation[] = [];
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: JSON.stringify(mockStations) })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const defects = await certGenSvc.getTestStations()
           .catch((e) => {
@@ -900,18 +747,16 @@ describe('Certificate Generation Service', () => {
 
     context('test getDefectTranslations method', () => {
       it('should return an array of defects if invoke is successful', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const mockDefects = defectsMock;
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: JSON.stringify(mockDefects) })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const defects = await certGenSvc.getDefectTranslations();
 
@@ -920,17 +765,14 @@ describe('Certificate Generation Service', () => {
       });
       it('should invoke defects up to 3 times if there is an issue', async () => {
         const logSpy = jest.spyOn(console, 'error');
+        const certGenSvc = Container.get(CertificateGenerationService);
 
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
-
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: '' }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: '' })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const defects = await certGenSvc.getDefectTranslations();
 
@@ -941,16 +783,14 @@ describe('Certificate Generation Service', () => {
         jest.clearAllMocks();
       });
       it('should return an empty array if defects invoke is unsuccessful', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: '' }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: '' })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const defects = await certGenSvc.getDefectTranslations();
 
@@ -958,18 +798,16 @@ describe('Certificate Generation Service', () => {
         jest.clearAllMocks();
       });
       it('should throw error if issue when parsing defects', async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const mockDefects: IDefectParent[] = [];
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
-          FunctionError: undefined,
-          StatusCode: 200,
-        });
+        invokeSpy
+          .mockResolvedValue({
+            Payload: toUint8Array(JSON.stringify({ body: JSON.stringify(mockDefects) })),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
         const defects = await certGenSvc.getDefectTranslations()
           .catch((e) => {
@@ -979,13 +817,11 @@ describe('Certificate Generation Service', () => {
         jest.clearAllMocks();
       });
     });
+
     describe('Welsh feature flags', () => {
       let certGenSvc: CertificateGenerationService;
       beforeEach(() => {
-        certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-        );
+        certGenSvc = Container.get(CertificateGenerationService);
       });
       afterEach(() => {
         jest.resetAllMocks();
@@ -1252,13 +1088,11 @@ describe('Certificate Generation Service', () => {
         });
       });
     });
+
     context('test postcode lookup method', () => {
       context('when the SECRET_KEY environment variable does not exist', () => {
         it('should log the the errors', async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
+          const certGenSvc = Container.get(CertificateGenerationService);
 
           const logSpy = jest.spyOn(console, 'log');
 
@@ -1271,16 +1105,15 @@ describe('Certificate Generation Service', () => {
           logSpy.mockClear();
         });
       });
+
       context('when the SECRET_KEY environment variable does exist', () => {
         const mockSecretResponse = {
           url: 'mockUrl',
           key: 'mockKey',
         };
+
         it('should log correctly if isWelshAddress was true', async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
+          const certGenSvc = Container.get(CertificateGenerationService);
 
           const logSpy = jest.spyOn(console, 'log');
 
@@ -1300,11 +1133,9 @@ describe('Certificate Generation Service', () => {
           logSpy.mockClear();
           jest.resetAllMocks();
         });
+
         it('should log correctly if isWelshAddress was false', async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
+          const certGenSvc = Container.get(CertificateGenerationService);
 
           const logSpy = jest.spyOn(console, 'log');
 
@@ -1325,11 +1156,9 @@ describe('Certificate Generation Service', () => {
           logSpy.mockClear();
           jest.resetAllMocks();
         });
+
         it('should return false if error is thrown due to invalid type in response from api call', async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
+          const certGenSvc = Container.get(CertificateGenerationService);
 
           const logSpy = jest.spyOn(console, 'log');
 
@@ -1352,12 +1181,9 @@ describe('Certificate Generation Service', () => {
           logSpy.mockClear();
           jest.resetAllMocks();
         });
-        it('should return false if axios client is null', async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
 
+        it('should return false if axios client is null', async () => {
+          const certGenSvc = Container.get(CertificateGenerationService);
           const logSpy = jest.spyOn(console, 'log');
 
           Axios.create = jest.fn().mockReturnValueOnce(null);
@@ -1371,12 +1197,9 @@ describe('Certificate Generation Service', () => {
           logSpy.mockClear();
           jest.resetAllMocks();
         });
-        it('should return false if an error occurs in axios client', async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient()),
-          );
 
+        it('should return false if an error occurs in axios client', async () => {
+          const certGenSvc = Container.get(CertificateGenerationService);
           const logSpy = jest.spyOn(console, 'error');
 
           const mockError = new Error('some random error');

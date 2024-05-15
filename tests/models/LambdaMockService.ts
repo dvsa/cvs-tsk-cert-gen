@@ -1,10 +1,11 @@
 import { Service } from 'typedi';
 import { ServiceException } from '@smithy/smithy-client';
-import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
+import { InvocationRequest, InvocationResponse, LambdaClient } from '@aws-sdk/client-lambda';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Configuration } from '../../src/utils/Configuration';
 import { IInvokeConfig } from '../../src/models/IInvokeConfig';
+import { LambdaService } from '../../src/services/LambdaService';
 
 interface IMockFunctions {
   functionName: string;
@@ -15,8 +16,12 @@ interface IMockFunctions {
  * Service for mocking the LambdaService
  */
 @Service()
-class LambdaMockService {
+class LambdaMockService extends LambdaService {
   private static responses: IMockFunctions[] = [];
+
+  constructor(lambdaClient: LambdaClient = {} as LambdaClient) {
+    super(lambdaClient);
+  }
 
   /**
    * Populates the mock function responses
@@ -69,34 +74,6 @@ class LambdaMockService {
     };
 
     return response;
-  }
-
-  /**
-   * Validates the invocation response
-   * @param response - the invocation response
-   */
-  public validateInvocationResponse(
-    response: InvocationResponse,
-  ): Promise<any> {
-    if (
-      !response.Payload
-      || response.Payload as unknown as string === ''
-      || (response.StatusCode && response.StatusCode >= 400)
-    ) {
-      throw new Error(
-        `Lambda invocation returned error: ${response.StatusCode} with empty payload.`,
-      );
-    }
-
-    const payload: any = JSON.parse(response.Payload as unknown as string);
-
-    if (!payload.body) {
-      throw new Error(
-        `Lambda invocation returned bad data: ${JSON.stringify(payload)}.`,
-      );
-    }
-
-    return payload;
   }
 }
 
