@@ -564,57 +564,7 @@ class CertificateGenerationService {
    */
   public getAdrDetails = async (testResult: any) => {
     const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
-  };
-
-  public processGetCurrentProvisionalRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(searchResult: ISearchResult[]): Promise<TechRecordType<T> | undefined> => {
-    if (searchResult) {
-      const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
-
-      if (processRecordsRes.currentCount !== 0) {
-        return this.techRecordsRepository.callGetTechRecords(
-          processRecordsRes.currentRecords[0].systemNumber,
-          processRecordsRes.currentRecords[0].createdTimestamp,
-        );
-      }
-
-      if (processRecordsRes.provisionalCount === 1) {
-        return this.techRecordsRepository.callGetTechRecords(
-          processRecordsRes.provisionalRecords[0].systemNumber,
-          processRecordsRes.provisionalRecords[0].createdTimestamp,
-        );
-      }
-
-      return this.techRecordsRepository.callGetTechRecords(
-        processRecordsRes.provisionalRecords[1].systemNumber,
-        processRecordsRes.provisionalRecords[1].createdTimestamp,
-      );
-    }
-
-    return Promise.reject(new Error('Tech record Search returned nothing.'));
-  };
-
-  /**
-   * helper function is used to process records and count provisional and current records
-   * @param records
-   */
-  public groupRecordsByStatusCode = (records: ISearchResult[]): { currentRecords: ISearchResult[]; provisionalRecords: ISearchResult[]; currentCount: number; provisionalCount: number; } => {
-    const currentRecords: ISearchResult[] = [];
-    const provisionalRecords: ISearchResult[] = [];
-    records.forEach((record) => {
-      if (record.techRecord_statusCode === 'current') {
-        currentRecords.push(record);
-      } else if (record.techRecord_statusCode === 'provisional') {
-        provisionalRecords.push(record);
-      }
-    });
-
-    return {
-      currentRecords,
-      provisionalRecords,
-      currentCount: currentRecords.length,
-      provisionalCount: provisionalRecords.length,
-    };
+    return await this.techRecordsRepository.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
   };
 
   private generateMsvaCertificateData(testResult: ITestResult) {
@@ -774,7 +724,7 @@ class CertificateGenerationService {
    */
   public async getWeightDetails(testResult: any) {
     const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
+    const techRecord = await this.techRecordsRepository.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
     if (techRecord) {
       const weightDetails: IWeightDetails = {
         dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
@@ -896,7 +846,7 @@ class CertificateGenerationService {
    */
   public getVehicleMakeAndModel = async (testResult: any) => {
     const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
+    const techRecord = await this.techRecordsRepository.processGetCurrentProvisionalRecords(searchRes);
     // Return bodyMake and bodyModel values for PSVs
     return techRecord?.techRecord_vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.PSV ? {
       Make: (techRecord as TechRecordType<'psv'>).techRecord_chassisMake,
