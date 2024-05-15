@@ -28,7 +28,7 @@ import {
   VEHICLE_TYPES,
 } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
-import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { TechRecordType } from '../models/Types';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
@@ -39,6 +39,7 @@ import { IItem } from '../models/IItem';
 import { IDefectChild } from '../models/IDefectChild';
 import { TestService } from './TestService';
 import { TechRecordsRepository } from './TechRecordsRepository';
+import { TestStationRepository } from './TestStationRepository';
 
 /**
  * Service class for Certificate Generation
@@ -55,11 +56,14 @@ class CertificateGenerationService {
 
   private readonly techRecordsRepository: TechRecordsRepository;
 
-  constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository) {
+  private readonly testStationRepository: TestStationRepository;
+
+  constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() testStationRepository: TestStationRepository) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
     this.techRecordsRepository = techRecordsRepository;
+    this.testStationRepository = testStationRepository;
   }
 
   /**
@@ -239,51 +243,9 @@ class CertificateGenerationService {
    * @returns Promise<boolean> true if the test station is Welsh, false otherwise
    */
   public async isTestStationWelsh(testStationPNumber: string): Promise<boolean> {
-    const testStations = await this.getTestStations();
+    const testStations = await this.testStationRepository.getTestStations();
     const testStationPostcode = this.getThisTestStation(testStations, testStationPNumber);
     return testStationPostcode ? this.lookupPostcode(testStationPostcode) : false;
-  }
-
-  /**
-   * Method to retrieve Test Station details from API
-   * @returns list of test stations
-   */
-  public async getTestStations(): Promise<ITestStation[]> {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: InvocationRequest = {
-      FunctionName: config.functions.testStations.name,
-      InvocationType: 'RequestResponse',
-      LogType: 'Tail',
-      Payload: toUint8Array(JSON.stringify({
-        httpMethod: 'GET',
-        path: '/test-stations/',
-      })),
-    };
-
-    let testStations: ITestStation[] = [];
-    let retries = 0;
-
-    while (retries < 3) {
-      try {
-        // eslint-disable-next-line
-        const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-        const payload: any = this.lambdaClient.validateInvocationResponse(response);
-        const testStationsParsed = JSON.parse(payload.body);
-
-        if (!testStationsParsed || testStationsParsed.length === 0) {
-          throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
-        }
-
-        testStations = testStationsParsed;
-
-        return testStations;
-      } catch (error) {
-        retries++;
-        // eslint-disable-next-line
-        console.error(`There was an error retrieving the test stations on attempt ${retries}: ${error}`);
-      }
-    }
-    return testStations;
   }
 
   /**
