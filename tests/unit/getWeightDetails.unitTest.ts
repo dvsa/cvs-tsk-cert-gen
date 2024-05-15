@@ -23,6 +23,7 @@ describe('cert-gen', () => {
 
   const techRecordsRepository = Container.get(TechRecordsRepository);
   const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
+  const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
   Container.set(TechRecordsRepository, techRecordsRepository);
 
   const certificateGenerationService = Container.get(CertificateGenerationService);
@@ -30,6 +31,7 @@ describe('cert-gen', () => {
   afterEach(() => {
     sandbox.restore();
     searchTechRecordsSpy.mockReset();
+    callGetTechRecordSpy.mockReset();
   });
 
   context('CertificateGenerationService', () => {
@@ -54,16 +56,13 @@ describe('cert-gen', () => {
               searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
               const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-              const getTechRecordStub = sandbox
-                .stub(certificateGenerationService, 'callGetTechRecords')
-                .resolves((techRecordResponseRwtMock) as any);
+              callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
               // expect.assertions(1);
               await certificateGenerationService
                 .getWeightDetails(testResult)
                 .then((weightDetails) => {
                   expect(weightDetails).toEqual(expectedWeightDetails);
-                  getTechRecordStub.restore();
                 });
             });
           });
@@ -87,16 +86,13 @@ describe('cert-gen', () => {
               searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
               const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-              const getTechRecordStub = sandbox
-                .stub(certificateGenerationService, 'callGetTechRecords')
-                .resolves((techRecordResponseRwtMock) as any);
+              callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
               // expect.assertions(1);
               await certificateGenerationService
                 .getWeightDetails(testResult)
                 .then((weightDetails) => {
                   expect(weightDetails).toEqual(expectedWeightDetails);
-                  getTechRecordStub.restore();
                 });
             });
           });
@@ -115,10 +111,7 @@ describe('cert-gen', () => {
               const techRecordResponseRwtMock = undefined;
 
               searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
-
-              const getTechRecordStub = sandbox
-                .stub(certificateGenerationService, 'callGetTechRecords')
-                .resolves(techRecordResponseRwtMock);
+              callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
               // expect.assertions(1);
               const expectedError = new HTTPError(
@@ -129,7 +122,6 @@ describe('cert-gen', () => {
                 .getWeightDetails(testResult)
                 .catch((err) => {
                   expect(err).toEqual(expectedError);
-                  getTechRecordStub.restore();
                 });
             });
           });
@@ -152,9 +144,7 @@ describe('cert-gen', () => {
               it('should throw error', async () => {
                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                 techRecordResponseRwtMock.techRecord_axles = [];
-                const getTechRecordStub = sandbox
-                  .stub(certificateGenerationService, 'callGetTechRecords')
-                  .resolves((techRecordResponseRwtMock) as any);
+                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                 searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -167,7 +157,6 @@ describe('cert-gen', () => {
                   .getWeightDetails(testResult)
                   .catch((err) => {
                     expect(err).toEqual(expectedError);
-                    getTechRecordStub.restore();
                   });
               });
             },

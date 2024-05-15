@@ -38,6 +38,7 @@ describe('cert-gen', () => {
 
   const techRecordsRepository = Container.get(TechRecordsRepository);
   const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
+  const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
   Container.set(TechRecordsRepository, techRecordsRepository);
 
   const certificateGenerationService = Container.get(CertificateGenerationService);
@@ -68,6 +69,7 @@ describe('cert-gen', () => {
   afterEach(() => {
     sandbox.restore();
     searchTechRecordsSpy.mockReset();
+    callGetTechRecordSpy.mockReset();
   });
 
   context('CertificateUploadService', () => {
@@ -87,9 +89,7 @@ describe('cert-gen', () => {
             searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
 
-            const getTechRecordStub = sandbox
-              .stub(certificateGenerationService, 'callGetTechRecords')
-              .resolves((techRecordResponseRwtMock) as any);
+            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
             const generatedCertificateResponse: IGeneratedCertificateResponse = await certificateGenerationService.generateCertificate(
               testResult,
@@ -106,7 +106,6 @@ describe('cert-gen', () => {
                 expect(response.Key).toBe(
                   `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`,
                 );
-                getTechRecordStub.restore();
                 S3BucketMockService.buckets.pop();
               });
           });
@@ -117,9 +116,7 @@ describe('cert-gen', () => {
             searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-            const getTechRecordStub = sandbox
-              .stub(certificateGenerationService, 'callGetTechRecords')
-              .resolves((techRecordResponseRwtMock) as any);
+            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
             const certificateMock = {
               fileName: 'certificate-filename.pdf',
@@ -132,7 +129,6 @@ describe('cert-gen', () => {
               .uploadCertificate(certificateMock)
               .catch((error: any) => {
                 expect(error).toBeInstanceOf(Error);
-                getTechRecordStub.restore();
               });
           });
         });

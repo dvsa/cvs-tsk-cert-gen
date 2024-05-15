@@ -52,6 +52,7 @@ describe('Certificate Generation Service', () => {
 
   const techRecordsRepository = Container.get(TechRecordsRepository);
   const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
+  const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
   Container.set(TechRecordsRepository, techRecordsRepository);
 
   const sandbox = sinon.createSandbox();
@@ -59,6 +60,7 @@ describe('Certificate Generation Service', () => {
   afterEach(() => {
     sandbox.restore();
     searchTechRecordsSpy.mockReset();
+    callGetTechRecordSpy.mockReset();
     invokeSpy.mockReset();
   });
 
@@ -69,9 +71,7 @@ describe('Certificate Generation Service', () => {
         searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-        const getTechRecordStub = sandbox
-          .stub(certGenSvc, 'callGetTechRecords')
-          .resolves((techRecordResponseRwtMock) as any);
+        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
         const testResultMock = {
           systemNumber: '12345678',
@@ -80,7 +80,6 @@ describe('Certificate Generation Service', () => {
           testResultMock,
         );
         expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
-        getTechRecordStub.restore();
       });
     });
 
@@ -92,9 +91,7 @@ describe('Certificate Generation Service', () => {
           searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-            .stub(certGenSvc, 'callGetTechRecords')
-            .resolves((techRecordResponseRwtMock) as any);
+          callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
           const testResultMock = {
             systemNumber: '134567889',
@@ -104,7 +101,6 @@ describe('Certificate Generation Service', () => {
             testResultMock,
           );
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
-          getTechRecordStub.restore();
         });
       },
     );
@@ -121,9 +117,7 @@ describe('Certificate Generation Service', () => {
           searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-            .stub(certGenSvc, 'callGetTechRecords')
-            .resolves((techRecordResponseRwtMock) as any);
+          callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
           const testResultMock = {
             vin: 'abc123',
@@ -133,7 +127,6 @@ describe('Certificate Generation Service', () => {
             testResultMock,
           );
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
-          getTechRecordStub.restore();
         });
       },
     );
@@ -150,9 +143,7 @@ describe('Certificate Generation Service', () => {
           const certGenSvc = Container.get(CertificateGenerationService);
           searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-            .stub(certGenSvc, 'callGetTechRecords')
-            .resolves((techRecordResponseRwtMock) as any);
+          callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
           const testResultMock = {
             vin: 'abc123',
@@ -165,7 +156,6 @@ describe('Certificate Generation Service', () => {
           expect(invokeSpy).not.toHaveBeenCalledTimes(1);
           expect(invokeSpy).not.toHaveBeenCalledTimes(2);
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
-          getTechRecordStub.restore();
         });
       },
     );
@@ -178,9 +168,7 @@ describe('Certificate Generation Service', () => {
           searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-            .stub(certGenSvc, 'callGetTechRecords')
-            .resolves((techRecordResponseRwtMock) as any);
+          callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
           const testResultMock = {
             vin: 'abc123',
@@ -192,7 +180,6 @@ describe('Certificate Generation Service', () => {
             testResultMock,
           );
           expect(makeAndModel).toEqual({ Make: 'STANLEY', Model: 'AUTOTRL' });
-          getTechRecordStub.restore();
         });
       },
     );
@@ -205,9 +192,7 @@ describe('Certificate Generation Service', () => {
         searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-        const getTechRecordStub = sandbox
-          .stub(certGenSvc, 'callGetTechRecords')
-          .resolves((techRecordResponseRwtMock) as any);
+        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
         const testResultMock = {
           vin: 'abc123',
@@ -223,7 +208,6 @@ describe('Certificate Generation Service', () => {
           expect((e as Error).message).toBe(
             'Unable to retrieve unique Tech Record for Test Result',
           );
-          getTechRecordStub.restore();
         }
       });
     });
@@ -238,9 +222,7 @@ describe('Certificate Generation Service', () => {
           searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-          const getTechRecordStub = sandbox
-            .stub(certGenSvc, 'callGetTechRecords')
-            .resolves((techRecordResponseRwtMock) as any);
+          callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
           const testResultMock = {
             vin: 'abc123',
@@ -254,7 +236,6 @@ describe('Certificate Generation Service', () => {
             expect((e as Error).message).toBe(
               'Unable to retrieve unique Tech Record for Test Result',
             );
-            getTechRecordStub.restore();
           }
         });
       },
@@ -265,10 +246,7 @@ describe('Certificate Generation Service', () => {
         const certGenSvc = Container.get(CertificateGenerationService);
         searchTechRecordsSpy.mockResolvedValue(techRecordsSearchPsv);
 
-        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-        const getTechRecordStub = sandbox
-          .stub(certGenSvc, 'callGetTechRecords')
-          .resolves((techRecordsPsv) as any);
+        callGetTechRecordSpy.mockResolvedValue(techRecordsPsv as any);
 
         const testResultMock = {
           systemNumber: '12345678',
@@ -278,7 +256,6 @@ describe('Certificate Generation Service', () => {
         );
         expect(makeAndModel.Make).toBe('AEC');
         expect(makeAndModel.Model).toBe('RELIANCE');
-        getTechRecordStub.restore();
       });
     });
 
@@ -287,9 +264,7 @@ describe('Certificate Generation Service', () => {
         const certGenSvc = Container.get(CertificateGenerationService);
         searchTechRecordsSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
-        const getTechRecordStub = sandbox
-          .stub(certGenSvc, 'callGetTechRecords')
-          .resolves((techRecordsRwtHgv) as any);
+        callGetTechRecordSpy.mockResolvedValue(techRecordsRwtHgv as any);
 
         const testResultMock = {
           systemNumber: '12345678',
@@ -299,7 +274,6 @@ describe('Certificate Generation Service', () => {
         );
         expect(makeAndModel.Make).toBe('Isuzu');
         expect(makeAndModel.Model).toBe('FM');
-        getTechRecordStub.restore();
       });
     });
   });
