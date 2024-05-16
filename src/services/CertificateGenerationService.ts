@@ -109,9 +109,7 @@ class CertificateGenerationService {
     };
 
     let vehicleTestRes: string;
-    if (
-      CertificateGenerationService.isRoadworthinessTestType(testType.testTypeId)
-    ) {
+    if (this.testService.isRoadworthinessTestType(testType.testTypeId)) {
       // CVSB-7677 is road-worthiness test
       vehicleTestRes = 'rwt';
     } else if (this.testService.isTestTypeAdr(testResult.testTypes)) {
@@ -347,7 +345,7 @@ class CertificateGenerationService {
 
     let makeAndModel: any = null;
     if (
-      !CertificateGenerationService.isRoadworthinessTestType(
+      !this.testService.isRoadworthinessTestType(
         testResult.testTypes.testTypeId,
       )
     ) {
@@ -389,9 +387,7 @@ class CertificateGenerationService {
       }
     }
 
-    if (
-      CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)
-    ) {
+    if (this.testService.isHgvTrlRoadworthinessCertificate(testResult)) {
       // CVSB-7677 for roadworthiness test for hgv or trl.
       const rwtData = await this.generateCertificateData(
         testResult,
@@ -1234,27 +1230,6 @@ class CertificateGenerationService {
 
   // #region Private Static Functions
 
-  /**
-   * Returns true if testType is roadworthiness test for HGV or TRL and false if not
-   * @param testTypeId - testType which is tested
-   */
-  private static isRoadworthinessTestType(testTypeId: string): boolean {
-    return HGV_TRL_ROADWORTHINESS_TEST_TYPES.IDS.includes(testTypeId);
-  }
-
-  /**
-   * Returns true if provided testResult is HGV or TRL Roadworthiness test otherwise false
-   * @param testResult - testResult of the vehicle
-   */
-  private static isHgvTrlRoadworthinessCertificate(testResult: any): boolean {
-    return (
-      (testResult.vehicleType === VEHICLE_TYPES.HGV
-        || testResult.vehicleType === VEHICLE_TYPES.TRL)
-      && CertificateGenerationService.isRoadworthinessTestType(
-        testResult.testTypes.testTypeId,
-      )
-    );
-  }
   // #endregion
 }
 

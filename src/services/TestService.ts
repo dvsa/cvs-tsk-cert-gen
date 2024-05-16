@@ -3,6 +3,8 @@ import {
   BASIC_IVA_TEST,
   MSVA30_TEST,
   IVA30_TEST,
+  HGV_TRL_ROADWORTHINESS_TEST_TYPES,
+  VEHICLE_TYPES,
 } from '../models/Enums';
 
 export class TestService {
@@ -29,4 +31,24 @@ export class TestService {
    * @param testType - testType which is tested
    */
   public isTestTypeAdr = (testType: any): boolean => ADR_TEST.IDS.includes(testType.testTypeId);
+
+  /**
+   * Returns true if testType is roadworthiness test for HGV or TRL and false if not
+   * @param testTypeId - testType which is tested
+   */
+  public isRoadworthinessTestType(testTypeId: string): boolean {
+    return HGV_TRL_ROADWORTHINESS_TEST_TYPES.IDS.includes(testTypeId);
+  }
+
+  /**
+   * Returns true if provided testResult is HGV or TRL Roadworthiness test otherwise false
+   * @param testResult - testResult of the vehicle
+   */
+  public isHgvTrlRoadworthinessCertificate(testResult: any): boolean {
+    return (
+      (testResult.vehicleType === VEHICLE_TYPES.HGV
+        || testResult.vehicleType === VEHICLE_TYPES.TRL)
+      && this.isRoadworthinessTestType(testResult.testTypes.testTypeId)
+    );
+  }
 }
