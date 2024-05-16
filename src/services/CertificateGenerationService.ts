@@ -76,9 +76,6 @@ class CertificateGenerationService {
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult, shouldTranslateTestResult)
     );
-
-    console.log(`payload inside cert gen service: ${payload}`);
-
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
       psv_pass_bilingual: config.documentNames.vtp20_bilingual,

@@ -41,7 +41,7 @@ const certGen: Handler = async (
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
-    console.log(`parsed test result is ${JSON.stringify(testResult)}`);
+    console.log(`parsed test result is ${testResult.testResultId} with the system number ${testResult.systemNumber}`);
     if (testResult.testStatus === "cancelled") {
       const s3DeletePromise =
         certificateUploadService.removeCertificate(testResult);
