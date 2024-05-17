@@ -20,6 +20,7 @@ import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
+import { TestResultRepository } from '../../src/services/TestResultRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -37,6 +38,10 @@ describe('Certificate Generation Service', () => {
   const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
   Container.set(TechRecordsRepository, techRecordsRepository);
 
+  const testResultRepository = Container.get(TestResultRepository);
+  // const getOdometerSpy = jest.spyOn(testResultRepository, 'getOdometerHistory');
+  // Container.set(TestResultRepository, testResultRepository);
+
   const sandbox = sinon.createSandbox();
 
   afterEach(() => {
@@ -52,9 +57,8 @@ describe('Certificate Generation Service', () => {
         invokeSpy
           .mockResolvedValueOnce(AWSResolve(JSON.stringify(testResultsRespFail)));
 
-        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
-        const odometerHistory = await certGenSvc.getOdometerHistory(
+        const odometerHistory = await testResultRepository.getOdometerHistory(
           systemNumberMock,
         );
 
@@ -67,9 +71,8 @@ describe('Certificate Generation Service', () => {
       it('should return an odometer history no greater than 3', async () => {
         invokeSpy
           .mockResolvedValue(AWSResolve(JSON.stringify(testResultsResp)));
-        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
-        const odometerHistory = await certGenSvc.getOdometerHistory(
+        const odometerHistory = await testResultRepository.getOdometerHistory(
           systemNumberMock,
         );
         expect(invokeSpy).toBeCalledTimes(1);
@@ -99,9 +102,8 @@ describe('Certificate Generation Service', () => {
       it('should omiting results that are not Annual With Certificate', async () => {
         invokeSpy
           .mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespNoCert)));
-        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
-        const odometerHistory = await certGenSvc.getOdometerHistory(
+        const odometerHistory = await testResultRepository.getOdometerHistory(
           systemNumberMock,
         );
         expect(invokeSpy).toBeCalledTimes(1);
@@ -131,9 +133,8 @@ describe('Certificate Generation Service', () => {
       it('should return an odometer history which includes test result', async () => {
         invokeSpy
           .mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespPrs)));
-        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
-        const odometerHistory = await certGenSvc.getOdometerHistory(
+        const odometerHistory = await testResultRepository.getOdometerHistory(
           systemNumberMock,
         );
         expect(invokeSpy).toBeCalledTimes(1);
@@ -153,9 +154,8 @@ describe('Certificate Generation Service', () => {
       it('should omit the result from the odometer history', async () => {
         invokeSpy
           .mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespEmpty)));
-        const certGenSvc = Container.get(CertificateGenerationService);
         const systemNumberMock = '12345678';
-        const odometerHistory = await certGenSvc.getOdometerHistory(
+        const odometerHistory = await testResultRepository.getOdometerHistory(
           systemNumberMock,
         );
         expect(invokeSpy).toBeCalledTimes(1);

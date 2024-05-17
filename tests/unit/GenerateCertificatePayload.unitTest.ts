@@ -38,6 +38,7 @@ import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
 import { TrailerRepository } from '../../src/services/TrailerRepository';
+import { TestResultRepository } from '../../src/services/TestResultRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -59,6 +60,10 @@ describe('cert-gen', () => {
   const trailerRepository = Container.get(TrailerRepository);
   const getTrailerRegistrationStub = jest.spyOn(trailerRepository, 'getTrailerRegistrationObject');
   Container.set(TrailerRepository, trailerRepository);
+
+  const testResultRepository = Container.get(TestResultRepository);
+  const getOdometerSpy = jest.spyOn(testResultRepository, 'getOdometerHistory');
+  Container.set(TestResultRepository, testResultRepository);
 
   const certificateGenerationService = Container.get(CertificateGenerationService);
 
@@ -89,6 +94,7 @@ describe('cert-gen', () => {
     searchTechRecordsSpy.mockClear();
     callGetTechRecordSpy.mockClear();
     getTrailerRegistrationStub.mockClear();
+    getOdometerSpy.mockClear();
   });
 
   context('CertificateGenerationService', () => {
@@ -334,18 +340,12 @@ describe('cert-gen', () => {
 
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
 
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -1546,17 +1546,12 @@ describe('cert-gen', () => {
 
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -4250,17 +4245,12 @@ describe('cert-gen', () => {
 
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -4516,17 +4506,12 @@ describe('cert-gen', () => {
             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -4805,17 +4790,12 @@ describe('cert-gen', () => {
             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -5087,18 +5067,13 @@ describe('cert-gen', () => {
             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -5308,17 +5283,12 @@ describe('cert-gen', () => {
 
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -5670,17 +5640,12 @@ describe('cert-gen', () => {
 
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
@@ -5904,17 +5869,12 @@ describe('cert-gen', () => {
 
             // Make the functions return undefined
             // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-            const getOdometerHistoryStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getOdometerHistory',
-              )
-              .resolves(undefined);
+            getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
             return certificateGenerationService
               .generatePayload(testResult)
               .then((payload: any) => {
                 expect(payload).toEqual(expectedResult);
-                getOdometerHistoryStub.restore();
               });
           });
         });
