@@ -119,4 +119,13 @@ export class TechRecordsService {
       'No vehicle found for Roadworthiness test certificate!',
     );
   }
+
+  /**
+   * Retrieves the adrDetails from a techRecord searched by vin
+   * @param testResult - testResult from which the VIN is used to search a tech-record
+   */
+  public getAdrDetails = async (testResult: any) => {
+    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
+    return await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
+  };
 }

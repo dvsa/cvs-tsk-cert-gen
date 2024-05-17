@@ -123,7 +123,7 @@ export class CertificatePayloadGenerator {
   }
 
   private async generateAdrCertificateData(testResult: ITestResult) {
-    const adrDetails: TechRecordType<any> = await this.getAdrDetails(testResult);
+    const adrDetails: TechRecordType<any> = await this.techRecordsService.getAdrDetails(testResult);
     const docGenPayloadAdr = {
       ChasisNumber: testResult.vin,
       RegistrationNumber: testResult.vrm,
@@ -415,13 +415,4 @@ export class CertificatePayloadGenerator {
     );
     return filteredWelshDefectsOnVehicleType[0];
   }
-
-  /**
-   * Retrieves the adrDetails from a techRecord searched by vin
-   * @param testResult - testResult from which the VIN is used to search a tech-record
-   */
-  public getAdrDetails = async (testResult: any) => {
-    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    return await this.techRecordsService.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
-  };
 }
