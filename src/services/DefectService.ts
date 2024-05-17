@@ -87,4 +87,53 @@ export class DefectService {
     }
     return flatDefects;
   }
+
+  /**
+   * Returns a formatted string containing data about a given defect
+   * @param defect - defect for which to generate the formatted string
+   */
+  public formatDefect(defect: any) {
+    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+
+    let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
+
+    if (defect.deficiencyText) {
+      defectString += ` ${defect.deficiencyText}`;
+    }
+
+    if (defect.additionalInformation.location) {
+      Object.keys(defect.additionalInformation.location).forEach(
+        (location: string, index: number, array: string[]) => {
+          if (defect.additionalInformation.location[location]) {
+            switch (location) {
+              case 'rowNumber':
+                defectString += ` Rows: ${defect.additionalInformation.location.rowNumber}.`;
+                break;
+              case 'seatNumber':
+                defectString += ` Seats: ${defect.additionalInformation.location.seatNumber}.`;
+                break;
+              case 'axleNumber':
+                defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
+                break;
+              default:
+                defectString += ` ${toUpperFirstLetter(
+                  defect.additionalInformation.location[location],
+                )}`;
+                break;
+            }
+          }
+
+          if (index === array.length - 1) {
+            defectString += '.';
+          }
+        },
+      );
+    }
+
+    if (defect.additionalInformation.notes) {
+      defectString += ` ${defect.additionalInformation.notes}`;
+    }
+
+    return defectString;
+  }
 }

@@ -195,7 +195,7 @@ export class CertificatePayloadGenerator {
     if (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.FAIL) {
       defectRWTList = [];
       testResult.testTypes.defects.forEach((defect: any) => {
-        defectRWTList.push(this.formatDefect(defect));
+        defectRWTList.push(this.defectService.formatDefect(defect));
       });
     } else {
       defectRWTList = undefined;
@@ -219,55 +219,6 @@ export class CertificatePayloadGenerator {
       IsTrailer: testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL,
     };
     return resultPass;
-  }
-
-  /**
-   * Returns a formatted string containing data about a given defect
-   * @param defect - defect for which to generate the formatted string
-   */
-  private formatDefect(defect: any) {
-    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
-
-    let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
-
-    if (defect.deficiencyText) {
-      defectString += ` ${defect.deficiencyText}`;
-    }
-
-    if (defect.additionalInformation.location) {
-      Object.keys(defect.additionalInformation.location).forEach(
-        (location: string, index: number, array: string[]) => {
-          if (defect.additionalInformation.location[location]) {
-            switch (location) {
-              case 'rowNumber':
-                defectString += ` Rows: ${defect.additionalInformation.location.rowNumber}.`;
-                break;
-              case 'seatNumber':
-                defectString += ` Seats: ${defect.additionalInformation.location.seatNumber}.`;
-                break;
-              case 'axleNumber':
-                defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
-                break;
-              default:
-                defectString += ` ${toUpperFirstLetter(
-                  defect.additionalInformation.location[location],
-                )}`;
-                break;
-            }
-          }
-
-          if (index === array.length - 1) {
-            defectString += '.';
-          }
-        },
-      );
-    }
-
-    if (defect.additionalInformation.notes) {
-      defectString += ` ${defect.additionalInformation.notes}`;
-    }
-
-    return defectString;
   }
 
   /**
@@ -384,12 +335,12 @@ export class CertificatePayloadGenerator {
             (testTypes.testResult === TEST_RESULTS.PRS || defect.prs)
             && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA
           ) {
-            defects.PRSDefects.push(this.formatDefect(defect));
+            defects.PRSDefects.push(this.defectService.formatDefect(defect));
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             }
           } else if (testTypes.testResult === 'fail') {
-            defects.DangerousDefects.push(this.formatDefect(defect));
+            defects.DangerousDefects.push(this.defectService.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.DangerousDefectsWelsh.push(
@@ -403,12 +354,12 @@ export class CertificatePayloadGenerator {
             (testTypes.testResult === TEST_RESULTS.PRS || defect.prs)
             && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA
           ) {
-            defects.PRSDefects.push(this.formatDefect(defect));
+            defects.PRSDefects.push(this.defectService.formatDefect(defect));
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             }
           } else if (testTypes.testResult === 'fail') {
-            defects.MajorDefects.push(this.formatDefect(defect));
+            defects.MajorDefects.push(this.defectService.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
             if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.MajorDefectsWelsh.push(
@@ -418,7 +369,7 @@ export class CertificatePayloadGenerator {
           }
           break;
         case 'minor':
-          defects.MinorDefects.push(this.formatDefect(defect));
+          defects.MinorDefects.push(this.defectService.formatDefect(defect));
           if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
@@ -426,9 +377,9 @@ export class CertificatePayloadGenerator {
           }
           break;
         case 'advisory':
-          defects.AdvisoryDefects.push(this.formatDefect(defect));
+          defects.AdvisoryDefects.push(this.defectService.formatDefect(defect));
           if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-            defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
+            defects.AdvisoryDefectsWelsh.push(this.defectService.formatDefect(defect));
           }
           break;
         default:
