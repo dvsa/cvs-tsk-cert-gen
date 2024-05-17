@@ -23,6 +23,7 @@ import { IWeightDetails } from '../models/IWeightDetails';
 import { TechRecordsService } from './TechRecordsService';
 import { DefectService } from './DefectService';
 import { DefectRepository } from './DefectRepository';
+import { TranslationService } from './TranslationService';
 
 @Service()
 export class CertificatePayloadGenerator {
@@ -40,13 +41,16 @@ export class CertificatePayloadGenerator {
 
   private readonly defectRepository: DefectRepository;
 
-  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService, @Inject() defectService: DefectService, @Inject() defectRepository: DefectRepository) {
+  private readonly translationService: TranslationService;
+
+  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService, @Inject() defectService: DefectService, @Inject() defectRepository: DefectRepository, @Inject() translationService: TranslationService) {
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
     this.techRecordsRepository = techRecordsRepository;
     this.techRecordsService = techRecordsService;
     this.defectService = defectService;
     this.defectRepository = defectRepository;
+    this.translationService = translationService;
   }
 
   /**
@@ -395,7 +399,7 @@ export class CertificatePayloadGenerator {
         Object.keys(defect.additionalInformation.location).forEach(
           (location: string, index: number, array: string[]) => {
             if (defect.additionalInformation.location[location]) {
-              const welshLocation = this.convertLocationWelsh(
+              const welshLocation = this.translationService.convertLocationWelsh(
                 defect.additionalInformation.location[location],
               );
 
@@ -430,35 +434,6 @@ export class CertificatePayloadGenerator {
     }
     console.log('ERROR: Unable to find a filtered defect');
     return null;
-  }
-
-  /**
-   * Returns welsh version of location
-   * @param locationToTranslate
-   */
-  public convertLocationWelsh(locationToTranslate: string) {
-    switch (locationToTranslate as LOCATION_ENGLISH) {
-      case LOCATION_ENGLISH.FRONT:
-        return LOCATION_WELSH.FRONT;
-      case LOCATION_ENGLISH.REAR:
-        return LOCATION_WELSH.REAR;
-      case LOCATION_ENGLISH.UPPER:
-        return LOCATION_WELSH.UPPER;
-      case LOCATION_ENGLISH.LOWER:
-        return LOCATION_WELSH.LOWER;
-      case LOCATION_ENGLISH.NEARSIDE:
-        return LOCATION_WELSH.NEARSIDE;
-      case LOCATION_ENGLISH.OFFSIDE:
-        return LOCATION_WELSH.OFFSIDE;
-      case LOCATION_ENGLISH.CENTRE:
-        return LOCATION_WELSH.CENTRE;
-      case LOCATION_ENGLISH.INNER:
-        return LOCATION_WELSH.INNER;
-      case LOCATION_ENGLISH.OUTER:
-        return LOCATION_WELSH.OUTER;
-      default:
-        return locationToTranslate;
-    }
   }
 
   /**
