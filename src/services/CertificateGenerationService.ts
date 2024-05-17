@@ -430,7 +430,7 @@ class CertificateGenerationService {
       const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
         ? undefined
         : await this.testResultRepository.getOdometerHistory(systemNumber);
-      const TrnObj = this.isValidForTrn(vehicleType, makeAndModel)
+      const TrnObj = this.testService.isValidForTrn(vehicleType, makeAndModel)
         ? await this.trailerRepository.getTrailerRegistrationObject(
           testResult.vin,
           makeAndModel.Make,
@@ -467,19 +467,6 @@ class CertificateGenerationService {
     payload = JSON.parse(JSON.stringify(payload));
 
     return payload;
-  }
-
-  /**
-   * To check if the testResult is valid for fetching Trn.
-   * @param vehicleType the vehicle type
-   * @param makeAndModel object containing Make and Model
-   * @returns returns if the condition is satisfied else false
-   */
-  public isValidForTrn(
-    vehicleType: string,
-    makeAndModel: IMakeAndModel,
-  ): boolean {
-    return makeAndModel && vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL;
   }
 }
 

@@ -6,6 +6,7 @@ import {
   HGV_TRL_ROADWORTHINESS_TEST_TYPES,
   VEHICLE_TYPES,
 } from '../models/Enums';
+import { IMakeAndModel } from '../models/IMakeAndModel';
 
 export class TestService {
   /**
@@ -50,5 +51,18 @@ export class TestService {
         || testResult.vehicleType === VEHICLE_TYPES.TRL)
       && this.isRoadworthinessTestType(testResult.testTypes.testTypeId)
     );
+  }
+
+  /**
+   * To check if the testResult is valid for fetching Trn.
+   * @param vehicleType the vehicle type
+   * @param makeAndModel object containing Make and Model
+   * @returns returns if the condition is satisfied else false
+   */
+  public isValidForTrn(
+    vehicleType: string,
+    makeAndModel: IMakeAndModel,
+  ): boolean {
+    return makeAndModel && vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL;
   }
 }
