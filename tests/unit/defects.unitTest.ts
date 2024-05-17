@@ -17,6 +17,8 @@ context('Defects', () => {
     const certGenSvc = Container.get(CertificatePayloadGenerator);
     const sandbox = sinon.createSandbox();
 
+    const defectService = Container.get(DefectService);
+
     afterEach(() => {
       sandbox.restore();
     });
@@ -87,7 +89,7 @@ context('Defects', () => {
 
       it('should return null if filteredFlatDefect array is empty', () => {
         const filterFlatDefectsStub = sandbox
-          .stub(certGenSvc, 'filterFlatDefects').returns(null);
+          .stub(defectService, 'filterFlatDefects').returns(null);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
@@ -106,7 +108,7 @@ context('Defects', () => {
     context('test filterFlatDefects method', () => {
       it('should return a filtered flat defect for hgv', () => {
         const flatDefect = flatDefectsMock[0];
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           flatDefectsMock,
           'hgv',
         );
@@ -115,7 +117,7 @@ context('Defects', () => {
 
       it('should return a filtered flat defect for trl', () => {
         const flatDefect = flatDefectsMock[0];
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           flatDefectsMock,
           'trl',
         );
@@ -124,7 +126,7 @@ context('Defects', () => {
 
       it('should return a filtered flat defect for psv', () => {
         const flatDefect = flatDefectsMock[1];
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           flatDefectsMock,
           'psv',
         );
@@ -132,7 +134,7 @@ context('Defects', () => {
       });
 
       it('should return null if array is empty', () => {
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           [],
           'hgv',
         );
@@ -141,8 +143,6 @@ context('Defects', () => {
     });
 
     context('test flattenDefectsFromApi method', () => {
-      const defectService = Container.get(DefectService);
-
       it('should return the defects in a flat array', () => {
         const flattenedArray = defectService.flattenDefectsFromApi(defectsMock);
         expect(flattenedArray).toEqual(flatDefectsMock);

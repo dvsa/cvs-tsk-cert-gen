@@ -343,7 +343,7 @@ export class CertificatePayloadGenerator {
       (x: IFlatDefect) => defect.deficiencyRef === x.ref,
     );
 
-    const filteredFlatDefect: IFlatDefect | null = this.filterFlatDefects(
+    const filteredFlatDefect: IFlatDefect | null = this.defectService.filterFlatDefects(
       filteredFlatDefects,
       vehicleType,
     );
@@ -394,25 +394,5 @@ export class CertificatePayloadGenerator {
     }
     console.log('ERROR: Unable to find a filtered defect');
     return null;
-  }
-
-  /**
-   * Returns filtered welsh defects
-   * @param filteredFlatDefects - the array of flattened defects
-   * @param vehicleType - the vehicle type from the test result
-   */
-  public filterFlatDefects(
-    filteredFlatDefects: IFlatDefect[],
-    vehicleType: string,
-  ): IFlatDefect | null {
-    if (filteredFlatDefects.length === 0) {
-      return null;
-    } if (filteredFlatDefects.length === 1) {
-      return filteredFlatDefects[0];
-    }
-    const filteredWelshDefectsOnVehicleType = filteredFlatDefects.filter(
-      (flatDefect: IFlatDefect) => flatDefect.forVehicleType!.includes(vehicleType),
-    );
-    return filteredWelshDefectsOnVehicleType[0];
   }
 }
