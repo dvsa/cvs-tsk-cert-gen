@@ -182,7 +182,7 @@ export class CertificatePayloadGenerator {
       type: testResult.vehicleType,
       testerName: testResult.testerName,
       date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
-      retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+      retestDate: this.defectService.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
       station: testResult.testStationName,
       additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
       requiredStandards: testResult.testTypes.requiredStandards,
@@ -202,7 +202,7 @@ export class CertificatePayloadGenerator {
       bodyType: testResult.bodyType?.description,
       date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
       testerName: testResult.testerName,
-      reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+      reapplicationDate: this.defectService.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
       station: testResult.testStationName,
       additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
       requiredStandards: testResult.testTypes.requiredStandards,
@@ -628,15 +628,6 @@ export class CertificatePayloadGenerator {
     );
     return filteredWelshDefectsOnVehicleType[0];
   }
-
-  /**
-   * Calculates the retest date for an IVA or MSVA test
-   * @param testTypeStartTimestamp - the test start timestamp of the test
-   */
-  public calculateVehicleApprovalRetestDate = (testTypeStartTimestamp: string): string => moment(testTypeStartTimestamp)
-    .add(6, 'months')
-    .subtract(1, 'day')
-    .format('DD/MM/YYYY');
 
   /**
    * Retrieves the adrDetails from a techRecord searched by vin
