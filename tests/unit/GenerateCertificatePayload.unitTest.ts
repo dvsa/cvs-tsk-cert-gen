@@ -37,6 +37,7 @@ import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
+import { TrailerRepository } from '../../src/services/TrailerRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -54,6 +55,10 @@ describe('cert-gen', () => {
   const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
   const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
   Container.set(TechRecordsRepository, techRecordsRepository);
+
+  const trailerRepository = Container.get(TrailerRepository);
+  const getTrailerRegistrationStub = jest.spyOn(trailerRepository, 'getTrailerRegistrationObject');
+  Container.set(TrailerRepository, trailerRepository);
 
   const certificateGenerationService = Container.get(CertificateGenerationService);
 
@@ -81,8 +86,9 @@ describe('cert-gen', () => {
 
   afterEach(() => {
     sandbox.restore();
-    searchTechRecordsSpy.mockReset();
-    callGetTechRecordSpy.mockReset();
+    searchTechRecordsSpy.mockClear();
+    callGetTechRecordSpy.mockClear();
+    getTrailerRegistrationStub.mockClear();
   });
 
   context('CertificateGenerationService', () => {
@@ -5441,12 +5447,7 @@ describe('cert-gen', () => {
               files: ['1.base64'],
             });
 
-            const getTrailerRegistrationStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getTrailerRegistrationObject',
-              )
-              .resolves({ Trn: undefined, IsTrailer: true });
+            getTrailerRegistrationStub.mockResolvedValueOnce({ Trn: undefined, IsTrailer: true } as any);
 
             searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -5459,7 +5460,6 @@ describe('cert-gen', () => {
                 expect(payload).toEqual(expectedResult);
                 // Remove the signature
                 S3BucketMockService.buckets.pop();
-                getTrailerRegistrationStub.restore();
               });
           });
         },
@@ -5507,12 +5507,7 @@ describe('cert-gen', () => {
               files: ['1.base64'],
             });
 
-            const getTrailerRegistrationStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getTrailerRegistrationObject',
-              )
-              .rejects({ statusCode: 500, body: 'an error occured' });
+            getTrailerRegistrationStub.mockRejectedValueOnce({ statusCode: 500, body: 'an error occured' } as any);
 
             searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -5525,7 +5520,6 @@ describe('cert-gen', () => {
                 expect(err.statusCode).toBe(500);
                 // Remove the signature
                 S3BucketMockService.buckets.pop();
-                getTrailerRegistrationStub.restore();
               });
           });
         },
@@ -6058,12 +6052,8 @@ describe('cert-gen', () => {
                 ImageData: null,
               },
             };
-            const getTrailerRegistrationStub = sandbox
-              .stub(
-                CertificateGenerationService.prototype,
-                'getTrailerRegistrationObject',
-              )
-              .resolves({ Trn: undefined, IsTrailer: true });
+
+            getTrailerRegistrationStub.mockResolvedValueOnce({ Trn: undefined, IsTrailer: true });
 
             searchTechRecordsSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -6076,7 +6066,6 @@ describe('cert-gen', () => {
                 expect(payload).toEqual(expectedResult);
                 // Remove the signature
                 S3BucketMockService.buckets.pop();
-                getTrailerRegistrationStub.restore();
               });
           });
         },

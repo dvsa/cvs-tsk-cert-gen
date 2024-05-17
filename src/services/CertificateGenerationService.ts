@@ -6,7 +6,6 @@ import { toUint8Array } from '@smithy/util-utf8';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
 import { IMakeAndModel } from '../models/IMakeAndModel';
-import { ITrailerRegistration } from '../models/ITrailerRegistration';
 import { ITestType } from '../models/ITestType';
 import { ICertificatePayload } from '../models/ICertificatePayload';
 import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
@@ -27,6 +26,7 @@ import { TestService } from './TestService';
 import { TechRecordsRepository } from './TechRecordsRepository';
 import { TestStationRepository } from './TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
+import { TrailerRepository } from './TrailerRepository';
 
 /**
  * Service class for Certificate Generation
@@ -47,13 +47,23 @@ class CertificateGenerationService {
 
   private readonly certificatePayloadGenerator: CertificatePayloadGenerator;
 
-  constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() testStationRepository: TestStationRepository, @Inject() certificatePayloadGenerator: CertificatePayloadGenerator) {
+  private readonly trailerRepository: TrailerRepository;
+
+  constructor(
+  @Inject() s3Client: S3BucketService,
+    @Inject() lambdaClient: LambdaService,
+    @Inject() techRecordsRepository: TechRecordsRepository,
+    @Inject() testStationRepository: TestStationRepository,
+    @Inject() certificatePayloadGenerator: CertificatePayloadGenerator,
+    @Inject() trailerRepository: TrailerRepository,
+  ) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
     this.techRecordsRepository = techRecordsRepository;
     this.testStationRepository = testStationRepository;
     this.certificatePayloadGenerator = certificatePayloadGenerator;
+    this.trailerRepository = trailerRepository;
   }
 
   /**
@@ -416,7 +426,7 @@ class CertificateGenerationService {
         ? undefined
         : await this.getOdometerHistory(systemNumber);
       const TrnObj = this.isValidForTrn(vehicleType, makeAndModel)
-        ? await this.getTrailerRegistrationObject(
+        ? await this.trailerRepository.getTrailerRegistrationObject(
           testResult.vin,
           makeAndModel.Make,
         )
@@ -537,61 +547,6 @@ class CertificateGenerationService {
   }
 
   /**
-   * To fetch trailer registration
-   * @param vin The vin of the trailer
-   * @param make The make of the trailer
-   * @returns A payload containing the TRN of the trailer and a boolean.
-   */
-  public async getTrailerRegistrationObject(vin: string, make: string) {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: InvocationRequest = {
-      FunctionName: config.functions.trailerRegistration.name,
-      InvocationType: 'RequestResponse',
-      LogType: 'Tail',
-      Payload: toUint8Array(JSON.stringify({
-        httpMethod: 'GET',
-        path: `/v1/trailers/${vin}`,
-        pathParameters: {
-          proxy: '/v1/trailers',
-        },
-        queryStringParameters: {
-          make,
-        },
-      })),
-    };
-    const response = await this.lambdaClient.invoke(invokeParams);
-    try {
-      if (!response.Payload || Buffer.from(response.Payload).toString() === '') {
-        throw new HTTPError(
-          500,
-          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`,
-        );
-      }
-      const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
-      if (payload.statusCode === 404) {
-        console.debug(`vinOrChassisWithMake not found ${vin + make}`);
-        return { Trn: undefined, IsTrailer: true };
-      }
-      if (payload.statusCode >= 400) {
-        throw new HTTPError(
-          500,
-          `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`,
-        );
-      }
-      const trailerRegistration = JSON.parse(
-        payload.body,
-      ) as ITrailerRegistration;
-      return { Trn: trailerRegistration.trn, IsTrailer: true };
-    } catch (err) {
-      console.error(
-        `Error on fetching vinOrChassisWithMake ${vin + make}`,
-        err,
-      );
-      throw err;
-    }
-  }
-
-  /**
    * To check if the testResult is valid for fetching Trn.
    * @param vehicleType the vehicle type
    * @param makeAndModel object containing Make and Model
@@ -603,10 +558,6 @@ class CertificateGenerationService {
   ): boolean {
     return makeAndModel && vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL;
   }
-
-  // #region Private Static Functions
-
-  // #endregion
 }
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };
