@@ -160,7 +160,7 @@ export class CertificatePayloadGenerator {
   }
 
   private async generateRwtCertificateData(testResult: ITestResult, testType: any) {
-    const weightDetails = await this.getWeightDetails(testResult);
+    const weightDetails = await this.techRecordsService.getWeightDetails(testResult);
     let defectRWTList: any;
     if (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.FAIL) {
       defectRWTList = [];
@@ -189,46 +189,6 @@ export class CertificatePayloadGenerator {
       IsTrailer: testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL,
     };
     return resultPass;
-  }
-
-  /**
-   * Retrieves the vehicle weight details for Roadworthisness certificates
-   * @param testResult
-   */
-  public async getWeightDetails(testResult: any) {
-    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    const techRecord = await this.techRecordsService.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
-    if (techRecord) {
-      const weightDetails: IWeightDetails = {
-        dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
-        weight2: 0,
-      };
-      if (testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.HGV) {
-        weightDetails.weight2 = (techRecord as TechRecordType<'hgv'>).techRecord_trainDesignWeight ?? 0;
-      } else if (
-        (techRecord.techRecord_noOfAxles ?? -1) > 0
-      ) {
-        const initialValue: number = 0;
-        weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
-          (
-            accumulator: number,
-            currentValue: { weights_designWeight: number },
-          ) => accumulator + currentValue.weights_designWeight,
-          initialValue,
-        );
-      } else {
-        throw new HTTPError(
-          500,
-          'No axle weights for Roadworthiness test certificates!',
-        );
-      }
-      return weightDetails;
-    }
-    console.log('No techRecord found for weight details');
-    throw new HTTPError(
-      500,
-      'No vehicle found for Roadworthiness test certificate!',
-    );
   }
 
   private async generatePassOrFailCertificateData(testResult: ITestResult, type: CERTIFICATE_DATA, flattenedDefects: IFlatDefect[], isWelsh: boolean, testType: any) {

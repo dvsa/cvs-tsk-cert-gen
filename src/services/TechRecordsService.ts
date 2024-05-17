@@ -2,6 +2,8 @@ import { Service } from 'typedi';
 import { TechRecordsRepository } from './TechRecordsRepository';
 import { VEHICLE_TYPES } from '../models/Enums';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { IWeightDetails } from '../models/IWeightDetails';
+import { HTTPError } from '../models/HTTPError';
 
 @Service()
 export class TechRecordsService {
@@ -77,4 +79,44 @@ export class TechRecordsService {
       provisionalCount: provisionalRecords.length,
     };
   };
+
+  /**
+   * Retrieves the vehicle weight details for Roadworthisness certificates
+   * @param testResult
+   */
+  public async getWeightDetails(testResult: any) {
+    const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
+    const techRecord = await this.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
+    if (techRecord) {
+      const weightDetails: IWeightDetails = {
+        dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
+        weight2: 0,
+      };
+      if (testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.HGV) {
+        weightDetails.weight2 = (techRecord as TechRecordType<'hgv'>).techRecord_trainDesignWeight ?? 0;
+      } else if (
+        (techRecord.techRecord_noOfAxles ?? -1) > 0
+      ) {
+        const initialValue: number = 0;
+        weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
+          (
+            accumulator: number,
+            currentValue: { weights_designWeight: number },
+          ) => accumulator + currentValue.weights_designWeight,
+          initialValue,
+        );
+      } else {
+        throw new HTTPError(
+          500,
+          'No axle weights for Roadworthiness test certificates!',
+        );
+      }
+      return weightDetails;
+    }
+    console.log('No techRecord found for weight details');
+    throw new HTTPError(
+      500,
+      'No vehicle found for Roadworthiness test certificate!',
+    );
+  }
 }
