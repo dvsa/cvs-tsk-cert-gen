@@ -13,6 +13,7 @@ import flatDefectsMock from '../resources/flattened-defects.json';
 import { LOCATION_ENGLISH, LOCATION_WELSH } from '../../src/models/Enums';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { LambdaService } from '../../src/services/LambdaService';
+import { DefectService } from '../../src/services/DefectService';
 
 context('Defects', () => {
   describe('welsh defect function', () => {
@@ -187,8 +188,10 @@ context('Defects', () => {
     });
 
     context('test flattenDefectsFromApi method', () => {
+      const defectService = Container.get(DefectService);
+
       it('should return the defects in a flat array', () => {
-        const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
+        const flattenedArray = defectService.flattenDefectsFromApi(defectsMock);
         expect(flattenedArray).toEqual(flatDefectsMock);
         expect(flattenedArray).toHaveLength(7);
       });
@@ -201,7 +204,7 @@ context('Defects', () => {
           throw new Error('Some random error');
         });
 
-        const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMockForError);
+        const flattenedArray = defectService.flattenDefectsFromApi(defectsMockForError);
         expect(logSpy).toHaveBeenCalledWith(
           'Error flattening defects: Error: Some random error',
         );

@@ -39,6 +39,7 @@ import { TechRecordsRepository } from '../../src/services/TechRecordsRepository'
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
 import { TrailerRepository } from '../../src/services/TrailerRepository';
 import { TestResultRepository } from '../../src/services/TestResultRepository';
+import { DefectService } from '../../src/services/DefectService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -1402,12 +1403,14 @@ describe('cert-gen', () => {
             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
             const payloadGenerator = Container.get(CertificatePayloadGenerator);
+            const defectService = Container.get(DefectService);
 
             const defectSpy = jest.spyOn(payloadGenerator, 'getDefectTranslations');
-            const flattenSpy = jest.spyOn(payloadGenerator, 'flattenDefectsFromApi');
+            const flattenSpy = jest.spyOn(defectService, 'flattenDefectsFromApi');
 
             Container.set(CertificatePayloadGenerator, payloadGenerator);
 
+            expect.assertions(3);
             return certificateGenerationService
               .generatePayload(psvTestResultWithMinorDefect)
               .then((payload: any) => {

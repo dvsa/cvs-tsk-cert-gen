@@ -56,7 +56,7 @@ export class CertificatePayloadGenerator {
     let flattenedDefects: IFlatDefect[] = [];
     if (isWelsh) {
       defectListFromApi = await this.getDefectTranslations();
-      flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
+      flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
     }
     const testType: any = testResult.testTypes;
     switch (type) {
@@ -112,64 +112,6 @@ export class CertificatePayloadGenerator {
       }
     }
     return defects;
-  }
-
-  /**
-   * Returns a flattened array of every deficiency that only includes the key/value pairs required for certificate generation
-   * @param defects - the array of defects from the api
-   */
-  public flattenDefectsFromApi(defects: IDefectParent[]): IFlatDefect[] {
-    const flatDefects: IFlatDefect[] = [];
-    try {
-      // go through each defect in un-flattened array
-      defects.forEach((defect: IDefectParent) => {
-        const {
-          imNumber, imDescription, imDescriptionWelsh, items,
-        } = defect;
-        if (defect.items !== undefined && defect.items.length !== 0) {
-          // go through each item of defect
-          items.forEach((item: IItem) => {
-            const {
-              itemNumber,
-              itemDescription,
-              itemDescriptionWelsh,
-              deficiencies,
-            } = item;
-            if (
-              item.deficiencies !== undefined
-              && item.deficiencies.length !== 0
-            ) {
-              // go through each deficiency and push to flatDefects array
-              deficiencies.forEach((deficiency: IDefectChild) => {
-                const {
-                  ref,
-                  deficiencyText,
-                  deficiencyTextWelsh,
-                  forVehicleType,
-                } = deficiency;
-                const lowLevelDeficiency: IFlatDefect = {
-                  imNumber,
-                  imDescription,
-                  imDescriptionWelsh,
-                  itemNumber,
-                  itemDescription,
-                  itemDescriptionWelsh,
-                  ref,
-                  deficiencyText,
-                  deficiencyTextWelsh,
-                  forVehicleType,
-                };
-                flatDefects.push(lowLevelDeficiency);
-              });
-            }
-          });
-        }
-      });
-    } catch (e) {
-      // eslint-disable-next-line
-      console.error(`Error flattening defects: ${e}`);
-    }
-    return flatDefects;
   }
 
   private generateMsvaCertificateData(testResult: ITestResult) {
