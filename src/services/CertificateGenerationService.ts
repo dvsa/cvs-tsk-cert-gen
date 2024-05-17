@@ -23,7 +23,7 @@ import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
 import { ITestStation } from '../models/ITestStations';
 import { TestService } from './TestService';
-import { TechRecordsRepository } from './TechRecordsRepository';
+import { TechRecordsService } from './TechRecordsService';
 import { TestStationRepository } from './TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TrailerRepository } from './TrailerRepository';
@@ -42,7 +42,7 @@ class CertificateGenerationService {
 
   private readonly testService: TestService = new TestService();
 
-  private readonly techRecordsRepository: TechRecordsRepository;
+  private readonly techRecordsService: TechRecordsService;
 
   private readonly testStationRepository: TestStationRepository;
 
@@ -55,7 +55,7 @@ class CertificateGenerationService {
   constructor(
   @Inject() s3Client: S3BucketService,
     @Inject() lambdaClient: LambdaService,
-    @Inject() techRecordsRepository: TechRecordsRepository,
+    @Inject() techRecordsService: TechRecordsService,
     @Inject() testStationRepository: TestStationRepository,
     @Inject() certificatePayloadGenerator: CertificatePayloadGenerator,
     @Inject() trailerRepository: TrailerRepository,
@@ -64,7 +64,7 @@ class CertificateGenerationService {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
-    this.techRecordsRepository = techRecordsRepository;
+    this.techRecordsService = techRecordsService;
     this.testStationRepository = testStationRepository;
     this.certificatePayloadGenerator = certificatePayloadGenerator;
     this.trailerRepository = trailerRepository;
@@ -354,7 +354,7 @@ class CertificateGenerationService {
         testResult.testTypes.testTypeId,
       )
     ) {
-      makeAndModel = await this.techRecordsRepository.getVehicleMakeAndModel(testResult);
+      makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
     }
 
     let payload: ICertificatePayload = {

@@ -16,6 +16,7 @@ import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
+import { TechRecordsService } from '../../src/services/TechRecordsService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -29,6 +30,8 @@ describe('Certificate Generation Service', () => {
     const techRecordsRepository = Container.get(TechRecordsRepository);
     const searchTechRecordsSpy = jest.spyOn(techRecordsRepository, 'callSearchTechRecords');
     const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
+
+    const techRecordsService = Container.get(TechRecordsService);
 
     afterEach(() => {
       searchTechRecordsSpy.mockReset();
@@ -45,7 +48,7 @@ describe('Certificate Generation Service', () => {
           systemNumber: '12345678',
         };
 
-        const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
           testResultMock,
         );
 
@@ -64,7 +67,7 @@ describe('Certificate Generation Service', () => {
           vin: 'abc123',
         };
 
-        const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
           testResultMock,
         );
 
@@ -84,7 +87,7 @@ describe('Certificate Generation Service', () => {
           partialVin: 'abc123',
         };
 
-        const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
           testResultMock,
         );
 
@@ -107,7 +110,7 @@ describe('Certificate Generation Service', () => {
             vrm: 'testvrm',
           };
 
-          const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+          const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
             testResultMock,
           );
 
@@ -130,7 +133,7 @@ describe('Certificate Generation Service', () => {
           trailerId: 'testTrailerId',
         };
 
-        const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
           testResultMock,
         );
 
@@ -152,7 +155,7 @@ describe('Certificate Generation Service', () => {
           trailerId: 'testTrailerId',
         };
         try {
-          await techRecordsRepository.getVehicleMakeAndModel(testResultMock);
+          await techRecordsService.getVehicleMakeAndModel(testResultMock);
         } catch (e) {
           expect(e).toBeInstanceOf(Error);
           expect((e as Error).message).toBe(
@@ -177,7 +180,7 @@ describe('Certificate Generation Service', () => {
           };
 
           try {
-            await techRecordsRepository.getVehicleMakeAndModel(testResultMock);
+            await techRecordsService.getVehicleMakeAndModel(testResultMock);
           } catch (e) {
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
@@ -197,7 +200,7 @@ describe('Certificate Generation Service', () => {
           systemNumber: '12345678',
         };
 
-        const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
           testResultMock,
         );
 
@@ -215,7 +218,7 @@ describe('Certificate Generation Service', () => {
           systemNumber: '12345678',
         };
 
-        const makeAndModel = await techRecordsRepository.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordsService.getVehicleMakeAndModel(
           testResultMock,
         );
 

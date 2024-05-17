@@ -20,6 +20,7 @@ import { TestService } from './TestService';
 import { ICustomDefect } from '../models/ICustomDefect';
 import { TechRecordsRepository } from './TechRecordsRepository';
 import { IWeightDetails } from '../models/IWeightDetails';
+import { TechRecordsService } from './TechRecordsService';
 
 @Service()
 export class CertificatePayloadGenerator {
@@ -31,10 +32,13 @@ export class CertificatePayloadGenerator {
 
   private readonly techRecordsRepository: TechRecordsRepository;
 
-  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository) {
+  private readonly techRecordsService: TechRecordsService;
+
+  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService) {
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
     this.techRecordsRepository = techRecordsRepository;
+    this.techRecordsService = techRecordsService;
   }
 
   /**
@@ -326,7 +330,7 @@ export class CertificatePayloadGenerator {
    */
   public async getWeightDetails(testResult: any) {
     const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    const techRecord = await this.techRecordsRepository.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
+    const techRecord = await this.techRecordsService.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'psv' | 'trl'>;
     if (techRecord) {
       const weightDetails: IWeightDetails = {
         dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
@@ -648,6 +652,6 @@ export class CertificatePayloadGenerator {
    */
   public getAdrDetails = async (testResult: any) => {
     const searchRes = await this.techRecordsRepository.callSearchTechRecords(testResult.systemNumber);
-    return await this.techRecordsRepository.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
+    return await this.techRecordsService.processGetCurrentProvisionalRecords(searchRes) as TechRecordType<'hgv' | 'trl'>;
   };
 }
