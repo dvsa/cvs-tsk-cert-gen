@@ -40,6 +40,7 @@ import { CertificatePayloadGenerator } from '../../src/services/CertificatePaylo
 import { TrailerRepository } from '../../src/services/TrailerRepository';
 import { TestResultRepository } from '../../src/services/TestResultRepository';
 import { DefectService } from '../../src/services/DefectService';
+import { DefectRepository } from '../../src/services/DefectRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
@@ -1404,8 +1405,9 @@ describe('cert-gen', () => {
 
             const payloadGenerator = Container.get(CertificatePayloadGenerator);
             const defectService = Container.get(DefectService);
+            const defectRepository = Container.get(DefectRepository);
 
-            const defectSpy = jest.spyOn(payloadGenerator, 'getDefectTranslations');
+            const defectSpy = jest.spyOn(defectRepository, 'getDefectTranslations');
             const flattenSpy = jest.spyOn(defectService, 'flattenDefectsFromApi');
 
             Container.set(CertificatePayloadGenerator, payloadGenerator);

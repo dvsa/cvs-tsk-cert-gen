@@ -22,6 +22,7 @@ import { TechRecordsRepository } from './TechRecordsRepository';
 import { IWeightDetails } from '../models/IWeightDetails';
 import { TechRecordsService } from './TechRecordsService';
 import { DefectService } from './DefectService';
+import { DefectRepository } from './DefectRepository';
 
 @Service()
 export class CertificatePayloadGenerator {
@@ -37,12 +38,15 @@ export class CertificatePayloadGenerator {
 
   private readonly defectService: DefectService;
 
-  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService, @Inject() defectService: DefectService) {
+  private readonly defectRepository: DefectRepository;
+
+  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService, @Inject() defectService: DefectService, @Inject() defectRepository: DefectRepository) {
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
     this.techRecordsRepository = techRecordsRepository;
     this.techRecordsService = techRecordsService;
     this.defectService = defectService;
+    this.defectRepository = defectRepository;
   }
 
   /**
@@ -55,7 +59,7 @@ export class CertificatePayloadGenerator {
     let defectListFromApi: IDefectParent[] = [];
     let flattenedDefects: IFlatDefect[] = [];
     if (isWelsh) {
-      defectListFromApi = await this.getDefectTranslations();
+      defectListFromApi = await this.defectRepository.getDefectTranslations();
       flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
     }
     const testType: any = testResult.testTypes;
@@ -74,44 +78,6 @@ export class CertificatePayloadGenerator {
       default:
         throw Error(`Certificate data request not found (${type as string})`);
     }
-  }
-
-  /**
-   * Method used to retrieve the Welsh translations for the certificates
-   * @returns a list of defects
-   */
-  public async getDefectTranslations(): Promise<IDefectParent[]> {
-    const config: IInvokeConfig = this.config.getInvokeConfig();
-    const invokeParams: InvocationRequest = {
-      FunctionName: config.functions.defects.name,
-      InvocationType: 'RequestResponse',
-      LogType: 'Tail',
-      Payload: toUint8Array(JSON.stringify({
-        httpMethod: 'GET',
-        path: '/defects/',
-      })),
-    };
-    let defects: IDefectParent[] = [];
-    let retries = 0;
-    while (retries < 3) {
-      try {
-        // eslint-disable-next-line
-        const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-        const payload: any = this.lambdaClient.validateInvocationResponse(response);
-        const defectsParsed = JSON.parse(payload.body);
-
-        if (!defectsParsed || defectsParsed.length === 0) {
-          throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
-        }
-        defects = defectsParsed;
-        return defects;
-      } catch (error) {
-        retries++;
-        // eslint-disable-next-line
-        console.error(`There was an error retrieving the welsh defect translations on attempt ${retries}: ${error}`);
-      }
-    }
-    return defects;
   }
 
   private generateMsvaCertificateData(testResult: ITestResult) {
