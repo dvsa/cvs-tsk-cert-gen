@@ -21,6 +21,7 @@ import { ICustomDefect } from '../models/ICustomDefect';
 import { TechRecordsRepository } from './TechRecordsRepository';
 import { IWeightDetails } from '../models/IWeightDetails';
 import { TechRecordsService } from './TechRecordsService';
+import { DefectService } from './DefectService';
 
 @Service()
 export class CertificatePayloadGenerator {
@@ -34,11 +35,14 @@ export class CertificatePayloadGenerator {
 
   private readonly techRecordsService: TechRecordsService;
 
-  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService) {
+  private readonly defectService: DefectService;
+
+  constructor(@Inject() lambdaClient: LambdaService, @Inject() techRecordsRepository: TechRecordsRepository, @Inject() techRecordsService: TechRecordsService, @Inject() defectService: DefectService) {
     this.config = Configuration.getInstance();
     this.lambdaClient = lambdaClient;
     this.techRecordsRepository = techRecordsRepository;
     this.techRecordsService = techRecordsService;
+    this.defectService = defectService;
   }
 
   /**
@@ -180,7 +184,7 @@ export class CertificatePayloadGenerator {
       date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
       retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
       station: testResult.testStationName,
-      additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
+      additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
       requiredStandards: testResult.testTypes.requiredStandards,
     };
     return msvaFailDetailsForDocGen;
@@ -200,7 +204,7 @@ export class CertificatePayloadGenerator {
       testerName: testResult.testerName,
       reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
       station: testResult.testStationName,
-      additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
+      additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
       requiredStandards: testResult.testTypes.requiredStandards,
     };
     return ivaFailDetailsForDocGen;
@@ -633,18 +637,6 @@ export class CertificatePayloadGenerator {
     .add(6, 'months')
     .subtract(1, 'day')
     .format('DD/MM/YYYY');
-
-  /**
-   * Formats the additional defects for IVA and MSVA test based on whether custom defects is populated
-   * @param customDefects - the custom defects for the test
-   */
-  public formatVehicleApprovalAdditionalDefects = (customDefects: ICustomDefect[] | undefined): ICustomDefect[] | undefined => {
-    const defaultCustomDefect: ICustomDefect = {
-      defectName: IVA_30.EMPTY_CUSTOM_DEFECTS,
-      defectNotes: '',
-    };
-    return (customDefects && customDefects.length > 0) ? customDefects : [defaultCustomDefect];
-  };
 
   /**
    * Retrieves the adrDetails from a techRecord searched by vin
