@@ -123,7 +123,7 @@ class CertificateGenerationService {
       vehicleTestRes = 'iva_fail';
     } else if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
       vehicleTestRes = 'msva_fail';
-    } else if (this.certificatePayloadGenerator.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
+    } else if (this.testService.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
       vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}_bilingual`;
     } else {
       vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}`;

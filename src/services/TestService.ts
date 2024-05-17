@@ -5,6 +5,7 @@ import {
   IVA30_TEST,
   HGV_TRL_ROADWORTHINESS_TEST_TYPES,
   VEHICLE_TYPES,
+  AVAILABLE_WELSH,
 } from '../models/Enums';
 import { IMakeAndModel } from '../models/IMakeAndModel';
 
@@ -65,4 +66,11 @@ export class TestService {
   ): boolean {
     return makeAndModel && vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL;
   }
+
+  /**
+   * Check that the test result and vehicle type are a valid combination and bilingual certificate is available
+   * @param vehicleType - the vehicle type from the test result
+   * @param testResult - the result of the test
+   */
+  public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
 }

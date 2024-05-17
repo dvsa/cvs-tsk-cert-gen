@@ -336,13 +336,13 @@ export class CertificatePayloadGenerator {
             && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA
           ) {
             defects.PRSDefects.push(this.defectService.formatDefect(defect));
-            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             }
           } else if (testTypes.testResult === 'fail') {
             defects.DangerousDefects.push(this.defectService.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
-            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.DangerousDefectsWelsh.push(
                 this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
               );
@@ -355,13 +355,13 @@ export class CertificatePayloadGenerator {
             && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA
           ) {
             defects.PRSDefects.push(this.defectService.formatDefect(defect));
-            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
             }
           } else if (testTypes.testResult === 'fail') {
             defects.MajorDefects.push(this.defectService.formatDefect(defect));
             // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
-            if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
               defects.MajorDefectsWelsh.push(
                 this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
               );
@@ -370,7 +370,7 @@ export class CertificatePayloadGenerator {
           break;
         case 'minor':
           defects.MinorDefects.push(this.defectService.formatDefect(defect));
-          if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+          if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.MinorDefectsWelsh.push(
               this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
             );
@@ -378,7 +378,7 @@ export class CertificatePayloadGenerator {
           break;
         case 'advisory':
           defects.AdvisoryDefects.push(this.defectService.formatDefect(defect));
-          if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+          if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
             defects.AdvisoryDefectsWelsh.push(this.defectService.formatDefect(defect));
           }
           break;
@@ -395,13 +395,6 @@ export class CertificatePayloadGenerator {
     console.log(JSON.stringify(defects));
     return defects;
   }
-
-  /**
-   * Check that the test result and vehicle type are a valid combination and bilingual certificate is available
-   * @param vehicleType - the vehicle type from the test result
-   * @param testResult - the result of the test
-   */
-  public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
 
   /**
    * Returns a formatted welsh string containing data about a given defect
