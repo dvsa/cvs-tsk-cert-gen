@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { Container } from 'typedi';
 import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
-import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import queueEventPass from '../resources/queue-event-pass.json';
@@ -14,6 +13,7 @@ import { HTTPError } from '../../src/models/HTTPError';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
+import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
 
 const sandbox = sinon.createSandbox();
 
@@ -26,7 +26,7 @@ describe('cert-gen', () => {
   const callGetTechRecordSpy = jest.spyOn(techRecordsRepository, 'callGetTechRecords');
   Container.set(TechRecordsRepository, techRecordsRepository);
 
-  const certificateGenerationService = Container.get(CertificateGenerationService);
+  const certificateGenerationService = Container.get(CertificatePayloadGenerator);
 
   afterEach(() => {
     sandbox.restore();
