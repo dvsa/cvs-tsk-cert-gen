@@ -25,7 +25,7 @@ import { TechRecordsService } from './TechRecordsService';
 import { TestStationRepository } from './TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TrailerRepository } from '../repositories/TrailerRepository';
-import { TestResultRepository } from './TestResultRepository';
+import { TestResultRepository } from '../repositories/TestResultRepository';
 
 /**
  * Service class for Certificate Generation

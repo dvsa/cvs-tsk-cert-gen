@@ -38,7 +38,7 @@ import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
 import { TrailerRepository } from '../../src/repositories/TrailerRepository';
-import { TestResultRepository } from '../../src/services/TestResultRepository';
+import { TestResultRepository } from '../../src/repositories/TestResultRepository';
 import { DefectService } from '../../src/services/DefectService';
 import { DefectRepository } from '../../src/services/DefectRepository';
 
