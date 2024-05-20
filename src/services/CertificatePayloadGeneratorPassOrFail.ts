@@ -9,7 +9,7 @@ import {
 } from '../models/Enums';
 import { DefectService } from './DefectService';
 import { TestService } from './TestService';
-import { DefectRepository } from './DefectRepository';
+import { DefectRepository } from '../repositories/DefectRepository';
 import { IDefectParent } from '../models/IDefectParent';
 import { IFlatDefect } from '../models/IFlatDefect';
 import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';

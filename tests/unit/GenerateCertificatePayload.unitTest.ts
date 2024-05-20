@@ -40,7 +40,7 @@ import { CertificatePayloadGenerator } from '../../src/services/CertificatePaylo
 import { TrailerRepository } from '../../src/repositories/TrailerRepository';
 import { TestResultRepository } from '../../src/repositories/TestResultRepository';
 import { DefectService } from '../../src/services/DefectService';
-import { DefectRepository } from '../../src/services/DefectRepository';
+import { DefectRepository } from '../../src/repositories/DefectRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,

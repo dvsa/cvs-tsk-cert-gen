@@ -6,7 +6,7 @@ import { IInvokeConfig } from '../models/IInvokeConfig';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 import { Configuration } from '../utils/Configuration';
-import { LambdaService } from './LambdaService';
+import { LambdaService } from '../services/LambdaService';
 
 @Service()
 export class DefectRepository {
