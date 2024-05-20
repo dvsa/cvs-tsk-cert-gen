@@ -12,7 +12,6 @@ import { TestService } from './TestService';
 import { DefectRepository } from './DefectRepository';
 import { IDefectParent } from '../models/IDefectParent';
 import { IFlatDefect } from '../models/IFlatDefect';
-import { TranslationService } from './TranslationService';
 import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';
 
 @Service()
@@ -23,17 +22,14 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
 
   private readonly testService: TestService;
 
-  private readonly translationService: TranslationService;
-
   protected type: CERTIFICATE_DATA = undefined as unknown as CERTIFICATE_DATA;
 
   protected isWelsh: boolean = false;
 
-  constructor(@Inject() defectService: DefectService, @Inject() defectRepository: DefectRepository, @Inject() testService: TestService, @Inject() translationService: TranslationService) {
+  constructor(@Inject() defectService: DefectService, @Inject() defectRepository: DefectRepository, @Inject() testService: TestService) {
     this.defectService = defectService;
     this.defectRepository = defectRepository;
     this.testService = testService;
-    this.translationService = translationService;
   }
 
   public initialise(type: CERTIFICATE_DATA, isWelsh: boolean) {
@@ -102,7 +98,7 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
    * @param flattenedDefects - the list of flattened defects after being retrieved from the defect service
    * @param isWelsh - determines whether the atf in which the test result was conducted resides in Wales
    */
-  private generateDefects(testTypes: any, type: string, vehicleType: string, flattenedDefects: IFlatDefect[], isWelsh: boolean = false) {
+  private generateDefects(testTypes: any, type: CERTIFICATE_DATA, vehicleType: string, flattenedDefects: IFlatDefect[], isWelsh: boolean = false) {
     const rawDefects: any = testTypes.defects;
     const defects: any = {
       DangerousDefects: [],
@@ -120,52 +116,16 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
     rawDefects.forEach((defect: any) => {
       switch (defect.deficiencyCategory.toLowerCase()) {
         case 'dangerous':
-          if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs)
-            && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA) {
-            defects.PRSDefects.push(this.defectService.formatDefect(defect));
-            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-              defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
-            }
-          } else if (testTypes.testResult === 'fail') {
-            defects.DangerousDefects.push(this.defectService.formatDefect(defect));
-            // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
-            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-              defects.DangerousDefectsWelsh.push(
-                this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
-              );
-            }
-          }
+          this.generateDangerousDefects(testTypes, defect, type, defects, vehicleType, isWelsh, flattenedDefects);
           break;
         case 'major':
-          if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs)
-            && type as CERTIFICATE_DATA === CERTIFICATE_DATA.FAIL_DATA) {
-            defects.PRSDefects.push(this.defectService.formatDefect(defect));
-            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-              defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
-            }
-          } else if (testTypes.testResult === 'fail') {
-            defects.MajorDefects.push(this.defectService.formatDefect(defect));
-            // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
-            if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-              defects.MajorDefectsWelsh.push(
-                this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
-              );
-            }
-          }
+          this.generateMajorDefects(testTypes, defect, type, defects, vehicleType, isWelsh, flattenedDefects);
           break;
         case 'minor':
-          defects.MinorDefects.push(this.defectService.formatDefect(defect));
-          if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-            defects.MinorDefectsWelsh.push(
-              this.formatDefectWelsh(defect, vehicleType, flattenedDefects),
-            );
-          }
+          this.generateMinorDefects(defects, defect, vehicleType, testTypes, isWelsh, flattenedDefects);
           break;
         case 'advisory':
-          defects.AdvisoryDefects.push(this.defectService.formatDefect(defect));
-          if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
-            defects.AdvisoryDefectsWelsh.push(this.defectService.formatDefect(defect));
-          }
+          this.generateAdvisoryDefects(defects, defect, vehicleType, testTypes, isWelsh);
           break;
         default:
           break;
@@ -181,73 +141,47 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
     return defects;
   }
 
-  /**
-   * Returns a formatted welsh string containing data about a given defect
-   * @param defect - the defect for which to generate the formatted welsh string
-   * @param vehicleType - the vehicle type from the test result
-   * @param flattenedDefects - the list of flattened defects
-   */
-  public formatDefectWelsh(
-    defect: any,
-    vehicleType: any,
-    flattenedDefects: IFlatDefect[],
-  ) {
-    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
-
-    const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter(
-      (x: IFlatDefect) => defect.deficiencyRef === x.ref,
-    );
-
-    const filteredFlatDefect: IFlatDefect | null = this.defectService.filterFlatDefects(
-      filteredFlatDefects,
-      vehicleType,
-    );
-
-    if (filteredFlatDefect !== null) {
-      let defectString = `${defect.deficiencyRef} ${filteredFlatDefect.itemDescriptionWelsh}`;
-
-      if (defect.deficiencyText) {
-        defectString += ` ${filteredFlatDefect.deficiencyTextWelsh}`;
+  private generateDangerousDefects(testTypes: any, defect: any, type: CERTIFICATE_DATA, defects: any, vehicleType: string, isWelsh: boolean, flattenedDefects: IFlatDefect[]) {
+    if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+      defects.PRSDefects.push(this.defectService.formatDefect(defect));
+      if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+        defects.PRSDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
       }
-
-      if (defect.additionalInformation.location) {
-        Object.keys(defect.additionalInformation.location).forEach(
-          (location: string, index: number, array: string[]) => {
-            if (defect.additionalInformation.location[location]) {
-              const welshLocation = this.translationService.convertLocationWelsh(
-                defect.additionalInformation.location[location],
-              );
-
-              switch (location) {
-                case 'rowNumber':
-                  defectString += ` ${LOCATION_WELSH.ROW_NUMBER}: ${defect.additionalInformation.location.rowNumber}.`;
-                  break;
-                case 'seatNumber':
-                  defectString += ` ${LOCATION_WELSH.SEAT_NUMBER}: ${defect.additionalInformation.location.seatNumber}.`;
-                  break;
-                case 'axleNumber':
-                  defectString += ` ${LOCATION_WELSH.AXLE_NUMBER}: ${defect.additionalInformation.location.axleNumber}.`;
-                  break;
-                default:
-                  defectString += ` ${toUpperFirstLetter(welshLocation)}`;
-                  break;
-              }
-            }
-
-            if (index === array.length - 1) {
-              defectString += '.';
-            }
-          },
-        );
+    } else if (testTypes.testResult === 'fail') {
+      defects.DangerousDefects.push(this.defectService.formatDefect(defect));
+      // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
+      if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+        defects.DangerousDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
       }
-
-      if (defect.additionalInformation.notes) {
-        defectString += ` ${defect.additionalInformation.notes}`;
-      }
-      console.log(`Welsh Defect String Generated: ${defectString}`);
-      return defectString;
     }
-    console.log('ERROR: Unable to find a filtered defect');
-    return null;
+  }
+
+  private generateMajorDefects(testTypes: any, defect: any, type: CERTIFICATE_DATA, defects: any, vehicleType: string, isWelsh: boolean, flattenedDefects: IFlatDefect[]) {
+    if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+      defects.PRSDefects.push(this.defectService.formatDefect(defect));
+      if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+        defects.PRSDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+      }
+    } else if (testTypes.testResult === 'fail') {
+      defects.MajorDefects.push(this.defectService.formatDefect(defect));
+      // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
+      if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+        defects.MajorDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+      }
+    }
+  }
+
+  private generateMinorDefects(defects: any, defect: any, vehicleType: string, testTypes: any, isWelsh: boolean, flattenedDefects: IFlatDefect[]) {
+    defects.MinorDefects.push(this.defectService.formatDefect(defect));
+    if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+      defects.MinorDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+    }
+  }
+
+  private generateAdvisoryDefects(defects: any, defect: any, vehicleType: string, testTypes: any, isWelsh: boolean) {
+    defects.AdvisoryDefects.push(this.defectService.formatDefect(defect));
+    if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+      defects.AdvisoryDefectsWelsh.push(this.defectService.formatDefect(defect));
+    }
   }
 }

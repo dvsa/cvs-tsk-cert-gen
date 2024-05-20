@@ -5,8 +5,6 @@ import { getProfile, FeatureFlags } from '@dvsa/cvs-microservice-common/feature-
 import { toUint8Array } from '@smithy/util-utf8';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
-import { IMakeAndModel } from '../models/IMakeAndModel';
-import { ITestType } from '../models/ITestType';
 import { ICertificatePayload } from '../models/ICertificatePayload';
 import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
 import { IInvokeConfig } from '../models/IInvokeConfig';
