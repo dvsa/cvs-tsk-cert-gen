@@ -1,8 +1,8 @@
 import { Inject, Service } from 'typedi';
-import { ITestResult } from '../models/ITestResult';
-import { TechRecordType } from '../models/Types';
-import { TechRecordsService } from './TechRecordsService';
-import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';
+import { ITestResult } from '../../models/ITestResult';
+import { TechRecordType } from '../../models/Types';
+import { TechRecordsService } from '../TechRecordsService';
+import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
 
 @Service()
 export class CertificatePayloadGeneratorAdr implements ICertificatePayloadGenerator {
