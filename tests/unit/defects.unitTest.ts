@@ -10,6 +10,7 @@ import flatDefectsMock from '../resources/flattened-defects.json';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { DefectService } from '../../src/services/DefectService';
+import { CertificatePayloadGeneratorPassOrFail } from '../../src/services/CertificatePayloadGeneratorPassOrFail';
 
 context('Defects', () => {
   describe('welsh defect function', () => {
@@ -18,6 +19,8 @@ context('Defects', () => {
     const sandbox = sinon.createSandbox();
 
     const defectService = Container.get(DefectService);
+
+    const passOrFailCertificatePayloadGenerator = Container.get(CertificatePayloadGeneratorPassOrFail);
 
     afterEach(() => {
       sandbox.restore();
@@ -28,7 +31,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = passOrFailCertificatePayloadGenerator.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           'hgv',
           flatDefectsMock,
@@ -43,7 +46,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = passOrFailCertificatePayloadGenerator.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           'trl',
           flatDefectsMock,
@@ -58,7 +61,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = passOrFailCertificatePayloadGenerator.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           'psv',
           flatDefectsMock,
@@ -76,7 +79,7 @@ context('Defects', () => {
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { seatNumber: 2 });
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { axleNumber: 3 });
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = passOrFailCertificatePayloadGenerator.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           'hgv',
           flatDefectsMock,
@@ -94,7 +97,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = passOrFailCertificatePayloadGenerator.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           'hgv',
           [],

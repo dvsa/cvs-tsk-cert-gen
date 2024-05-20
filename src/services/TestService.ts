@@ -1,3 +1,4 @@
+import { Service } from 'typedi';
 import {
   ADR_TEST,
   BASIC_IVA_TEST,
@@ -9,6 +10,7 @@ import {
 } from '../models/Enums';
 import { IMakeAndModel } from '../models/IMakeAndModel';
 
+@Service()
 export class TestService {
   /**
    * Returns true if testType is msva and false if not
