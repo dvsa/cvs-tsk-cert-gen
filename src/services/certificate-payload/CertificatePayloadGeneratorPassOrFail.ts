@@ -1,18 +1,18 @@
 import { Inject, Service } from 'typedi';
 import moment from 'moment';
-import { ITestResult } from '../models/ITestResult';
+import { ITestResult } from '../../models/ITestResult';
 import {
   CERTIFICATE_DATA,
   LOCATION_WELSH,
   TEST_RESULTS,
   VEHICLE_TYPES,
-} from '../models/Enums';
-import { DefectService } from './DefectService';
-import { TestService } from './TestService';
-import { DefectRepository } from '../repositories/DefectRepository';
-import { IDefectParent } from '../models/IDefectParent';
-import { IFlatDefect } from '../models/IFlatDefect';
-import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';
+} from '../../models/Enums';
+import { DefectService } from '../DefectService';
+import { TestService } from '../TestService';
+import { DefectRepository } from '../../repositories/DefectRepository';
+import { IDefectParent } from '../../models/IDefectParent';
+import { IFlatDefect } from '../../models/IFlatDefect';
+import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
 
 @Service()
 export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloadGenerator {
