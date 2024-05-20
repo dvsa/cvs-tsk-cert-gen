@@ -24,7 +24,7 @@ import { TestService } from './TestService';
 import { TechRecordsService } from './TechRecordsService';
 import { TestStationRepository } from './TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
-import { TrailerRepository } from './TrailerRepository';
+import { TrailerRepository } from '../repositories/TrailerRepository';
 import { TestResultRepository } from './TestResultRepository';
 
 /**
