@@ -1,8 +1,8 @@
 import { Inject, Service } from 'typedi';
 import moment from 'moment';
-import { ITestResult } from '../models/ITestResult';
-import { DefectService } from './DefectService';
-import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';
+import { ITestResult } from '../../models/ITestResult';
+import { DefectService } from '../DefectService';
+import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
 
 @Service()
 export class CertificatePayloadGeneratorMsva implements ICertificatePayloadGenerator {

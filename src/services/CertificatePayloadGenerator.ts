@@ -5,7 +5,7 @@ import { CertificatePayloadGeneratorIva } from './CertificatePayloadGeneratorIva
 import { CertificatePayloadGeneratorAdr } from './CertificatePayloadGeneratorAdr';
 import { CertificatePayloadGeneratorRwt } from './CertificatePayloadGeneratorRwt';
 import { CertificatePayloadGeneratorPassOrFail } from './CertificatePayloadGeneratorPassOrFail';
-import { CertificatePayloadGeneratorMsva } from './CertificatePayloadGeneratorMsva';
+import { CertificatePayloadGeneratorMsva } from './certificate-payload/CertificatePayloadGeneratorMsva';
 
 // This is a facade
 @Service()
