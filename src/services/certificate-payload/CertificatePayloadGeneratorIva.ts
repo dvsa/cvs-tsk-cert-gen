@@ -1,10 +1,10 @@
 import { Inject, Service } from 'typedi';
 import moment from 'moment';
-import { ITestResult } from '../models/ITestResult';
-import { DefectService } from './DefectService';
-import { IVA_30 } from '../models/Enums';
-import { TestService } from './TestService';
-import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';
+import { ITestResult } from '../../models/ITestResult';
+import { DefectService } from '../DefectService';
+import { IVA_30 } from '../../models/Enums';
+import { TestService } from '../TestService';
+import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
 
 @Service()
 export class CertificatePayloadGeneratorIva implements ICertificatePayloadGenerator {
