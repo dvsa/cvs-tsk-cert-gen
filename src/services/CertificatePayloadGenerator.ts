@@ -3,7 +3,7 @@ import { CERTIFICATE_DATA } from '../models/Enums';
 import { ITestResult } from '../models/ITestResult';
 import { CertificatePayloadGeneratorIva } from './certificate-payload/CertificatePayloadGeneratorIva';
 import { CertificatePayloadGeneratorAdr } from './CertificatePayloadGeneratorAdr';
-import { CertificatePayloadGeneratorRwt } from './CertificatePayloadGeneratorRwt';
+import { CertificatePayloadGeneratorRwt } from './certificate-payload/CertificatePayloadGeneratorRwt';
 import { CertificatePayloadGeneratorPassOrFail } from './CertificatePayloadGeneratorPassOrFail';
 import { CertificatePayloadGeneratorMsva } from './certificate-payload/CertificatePayloadGeneratorMsva';
 
