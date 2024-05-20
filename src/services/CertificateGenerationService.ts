@@ -22,7 +22,7 @@ import { S3BucketService } from './S3BucketService';
 import { ITestStation } from '../models/ITestStations';
 import { TestService } from './TestService';
 import { TechRecordsService } from './TechRecordsService';
-import { TestStationRepository } from './TestStationRepository';
+import { TestStationRepository } from '../repositories/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TrailerRepository } from '../repositories/TrailerRepository';
 import { TestResultRepository } from '../repositories/TestResultRepository';

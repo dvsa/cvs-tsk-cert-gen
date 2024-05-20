@@ -5,7 +5,7 @@ import { ITestStation } from '../models/ITestStations';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { HTTPError } from '../models/HTTPError';
 import { ERRORS } from '../models/Enums';
-import { LambdaService } from './LambdaService';
+import { LambdaService } from '../services/LambdaService';
 import { Configuration } from '../utils/Configuration';
 
 @Service()

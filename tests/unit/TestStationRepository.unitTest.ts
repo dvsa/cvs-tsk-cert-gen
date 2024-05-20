@@ -9,7 +9,7 @@ import { HTTPError } from '../../src/models/HTTPError';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { TestStationRepository } from '../../src/services/TestStationRepository';
+import { TestStationRepository } from '../../src/repositories/TestStationRepository';
 
 describe('Certificate Generation Service', () => {
   Container.set(S3BucketService, new S3BucketMockService());
