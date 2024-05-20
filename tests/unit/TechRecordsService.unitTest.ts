@@ -12,7 +12,7 @@ import { IWeightDetails } from '../../src/models/IWeightDetails';
 import { HTTPError } from '../../src/models/HTTPError';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
-import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
+import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
 import { TechRecordsService } from '../../src/services/TechRecordsService';
 
 const sandbox = sinon.createSandbox();

@@ -22,7 +22,7 @@ const sandbox = sinon.createSandbox();
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
-import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
+import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,

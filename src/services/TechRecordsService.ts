@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { TechRecordsRepository } from './TechRecordsRepository';
+import { TechRecordsRepository } from '../repositories/TechRecordsRepository';
 import { VEHICLE_TYPES } from '../models/Enums';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
 import { IWeightDetails } from '../models/IWeightDetails';

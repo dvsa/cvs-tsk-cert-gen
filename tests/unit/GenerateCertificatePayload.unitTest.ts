@@ -35,7 +35,7 @@ import techRecordsSearchPsv from '../resources/tech-records-response-search-PSV.
 import { CERTIFICATE_DATA } from '../../src/models/Enums';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
-import { TechRecordsRepository } from '../../src/services/TechRecordsRepository';
+import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
 import { TrailerRepository } from '../../src/repositories/TrailerRepository';
 import { TestResultRepository } from '../../src/services/TestResultRepository';

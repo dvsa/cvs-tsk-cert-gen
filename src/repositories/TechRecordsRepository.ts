@@ -3,7 +3,7 @@ import { toUint8Array } from '@smithy/util-utf8';
 import { InvocationRequest } from '@aws-sdk/client-lambda';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
-import { LambdaService } from './LambdaService';
+import { LambdaService } from '../services/LambdaService';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
 import { VEHICLE_TYPES } from '../models/Enums';
 
