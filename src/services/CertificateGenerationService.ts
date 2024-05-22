@@ -78,18 +78,14 @@ class CertificateGenerationService {
    * Generates MOT certificate for a given test result
    * @param testResult - source test result for certificate generation
    */
-  public async generateCertificate(
-    testResult: any,
-  ): Promise<IGeneratedCertificateResponse> {
+  public async generateCertificate(testResult: any): Promise<IGeneratedCertificateResponse> {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
 
     const shouldTranslateTestResult = await this.translationService.shouldTranslateTestResult(testResult) && await this.isTestStationWelsh(testResult.testStationPNumber);
 
-    const payload: string = JSON.stringify(
-      await this.generatePayload(testResult, shouldTranslateTestResult),
-    );
+    const payload = JSON.stringify(await this.generatePayload(testResult, shouldTranslateTestResult));
 
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
@@ -146,6 +142,7 @@ class CertificateGenerationService {
         body: payload,
       })),
     };
+
     return this.lambdaClient
       .invoke(invokeParams)
       .then(
@@ -160,9 +157,7 @@ class CertificateGenerationService {
                 : testResult.vrm,
             testTypeName: testResult.testTypes.testTypeName,
             testTypeResult: testResult.testTypes.testResult,
-            dateOfIssue: moment(
-              testResult.testTypes.testTypeStartTimestamp,
-            ).format('D MMMM YYYY'),
+            dateOfIssue: moment(testResult.testTypes.testTypeStartTimestamp).format('D MMMM YYYY'),
             certificateType: certificateTypes[vehicleTestRes].split('.')[0],
             fileFormat: 'pdf',
             fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
@@ -335,54 +330,33 @@ class CertificateGenerationService {
 
     if (this.testService.isHgvTrlRoadworthinessCertificate(testResult)) {
       // CVSB-7677 for roadworthiness test for hgv or trl.
-      const rwtData = await this.certificatePayloadGenerator.generateCertificateData(
-        testResult,
-        CERTIFICATE_DATA.RWT_DATA,
-      );
+      const rwtData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.RWT_DATA);
       payload.RWT_DATA = { ...rwtData };
-    } else if (
-      testResult.testTypes.testResult === TEST_RESULTS.PASS
-      && this.testService.isTestTypeAdr(testResult.testTypes)
-    ) {
-      const adrData = await this.certificatePayloadGenerator.generateCertificateData(
-        testResult,
-        CERTIFICATE_DATA.ADR_DATA,
-      );
+    } else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.testService.isTestTypeAdr(testResult.testTypes)) {
+      const adrData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
       payload.ADR_DATA = { ...adrData, ...makeAndModel };
-    } else if (
-      testResult.testTypes.testResult === TEST_RESULTS.FAIL
-      && this.testService.isIvaTest(testResult.testTypes.testTypeId)
-    ) {
-      const ivaData = await this.certificatePayloadGenerator.generateCertificateData(
-        testResult,
-        CERTIFICATE_DATA.IVA_DATA,
-      );
+    } else if (testResult.testTypes.testResult === TEST_RESULTS.FAIL && this.testService.isIvaTest(testResult.testTypes.testTypeId)) {
+      const ivaData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.IVA_DATA);
       payload.IVA_DATA = { ...ivaData };
-    } else if (
-      testResult.testTypes.testResult === TEST_RESULTS.FAIL
-      && this.testService.isMsvaTest(testResult.testTypes.testTypeId)
-    ) {
-      const msvaData = await this.certificatePayloadGenerator.generateCertificateData(
-        testResult,
-        CERTIFICATE_DATA.MSVA_DATA,
-      );
+    } else if (testResult.testTypes.testResult === TEST_RESULTS.FAIL && this.testService.isMsvaTest(testResult.testTypes.testTypeId)) {
+      const msvaData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.MSVA_DATA);
       payload.MSVA_DATA = { ...msvaData };
     } else {
       const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
         ? undefined
         : await this.testResultRepository.getOdometerHistory(systemNumber);
+
       const TrnObj = this.testService.isValidForTrn(vehicleType, makeAndModel)
-        ? await this.trailerRepository.getTrailerRegistrationObject(
-          testResult.vin,
-          makeAndModel.Make,
-        )
+        ? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make)
         : undefined;
+
       if (testTypes.testResult !== TEST_RESULTS.FAIL) {
         const passData = await this.certificatePayloadGenerator.generateCertificateData(
           testResult,
           CERTIFICATE_DATA.PASS_DATA,
           isWelsh,
         );
+
         payload.DATA = {
           ...passData,
           ...makeAndModel,
@@ -390,12 +364,14 @@ class CertificateGenerationService {
           ...TrnObj,
         };
       }
+
       if (testTypes.testResult !== TEST_RESULTS.PASS) {
         const failData = await this.certificatePayloadGenerator.generateCertificateData(
           testResult,
           CERTIFICATE_DATA.FAIL_DATA,
           isWelsh,
         );
+
         payload.FAIL_DATA = {
           ...failData,
           ...makeAndModel,
@@ -404,6 +380,7 @@ class CertificateGenerationService {
         };
       }
     }
+
     // Purge undefined values
     payload = JSON.parse(JSON.stringify(payload));
 
