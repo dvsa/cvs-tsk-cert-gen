@@ -1,11 +1,9 @@
-import { IInvokeConfig } from "../models";
-import { Configuration } from "../utils/Configuration";
-import { InvocationRequest, InvocationResponse, LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { Service } from "../models/injector/ServiceDecorator";
-import { HTTPError } from "../models/HTTPError";
-import { ERRORS } from "../models/Enums";
-
-import AWSXRay from "aws-xray-sdk";
+import { Inject, Service } from 'typedi';
+import {
+  InvocationRequest, InvocationResponse, LambdaClient, InvokeCommand,
+} from '@aws-sdk/client-lambda';
+import { HTTPError } from '../models/HTTPError';
+import { ERRORS } from '../models/Enums';
 
 /**
  * Service class for invoking external lambda functions
@@ -14,9 +12,8 @@ import AWSXRay from "aws-xray-sdk";
 class LambdaService {
   public readonly lambdaClient: LambdaClient;
 
-  constructor(lambdaClient: LambdaClient) {
-    const config: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
-    this.lambdaClient = AWSXRay.captureAWSv3Client(new LambdaClient({ ...lambdaClient, ...config.params }));
+  constructor(@Inject() lambdaClient: LambdaClient) {
+    this.lambdaClient = lambdaClient;
   }
 
   /**
@@ -24,13 +21,9 @@ class LambdaService {
    * @param params - InvocationRequest params
    */
   public async invoke(
-    params: InvocationRequest
+    params: InvocationRequest,
   ): Promise<InvocationResponse> {
-    try {
-      return await this.lambdaClient.send(new InvokeCommand(params));
-    } catch (err) {
-      throw err;
-    }
+    return this.lambdaClient.send(new InvokeCommand(params));
   }
 
   /**
@@ -38,16 +31,16 @@ class LambdaService {
    * @param response - the invocation response
    */
   public validateInvocationResponse(
-    response: InvocationResponse
+    response: InvocationResponse,
   ): Promise<any> {
     if (
-      !response.Payload ||
-      Buffer.from(response.Payload).toString() === "" ||
-      (response.StatusCode && response.StatusCode >= 400)
+      !response.Payload
+      || Buffer.from(response.Payload).toString() === ''
+      || (response.StatusCode && response.StatusCode >= 400)
     ) {
       throw new HTTPError(
         500,
-        `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`
+        `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`,
       );
     }
 
@@ -56,14 +49,14 @@ class LambdaService {
     if (payload.statusCode >= 400) {
       throw new HTTPError(
         500,
-        `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`
+        `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`,
       );
     }
 
     if (!payload.body) {
       throw new HTTPError(
         400,
-        `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
+        `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`,
       );
     }
 

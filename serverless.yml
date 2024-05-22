@@ -14,19 +14,24 @@ provider:
             - "xray:PutTelemetryRecords"
           Resource:
             - "*"
+  timeout: 600
 
 plugins:
   - serverless-plugin-typescript
+  - serverless-offline-sqs
   - serverless-offline
   - serverless-plugin-tracing
 
 functions:
   main:
+    tracing: false
     handler: src/handler.handler
     events:
       - sqs:
-          arn: arn:aws:sqs:region:XXXXXX:cert-gen-q
-          batchSize: 10
+          arn:
+            Fn::GetAtt: [CertGen, Arn]
+          batchSize: 1
+          enabled: true
 
 resources:
   Resources:
@@ -39,6 +44,54 @@ resources:
       Properties:
         BucketName: cvs-signature
 
+    CertGen:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: "cert-gen-q"
+
+    FeatureFlagApplication:
+      Type: AWS::AppConfig::Application
+      Properties:
+        Name: "cvs-app-config"
+        Description: "Example serverless feature flag demo."
+        Tags:
+          - Key: App
+            Value: "FeatureFlagApplication"
+          # - Key: Stage
+          #   Value: "${self:provider.stage}"
+    # the application environment
+    FeatureFlagEnvironment:
+      Type: AWS::AppConfig::Environment
+      Properties:
+        ApplicationId: !Ref FeatureFlagApplication
+        Name: "develop"
+        Description: "Feature Flag Environment"
+        Tags:
+          - Key: App
+            Value: "cvs-app-config"
+          # - Key: Stage
+          #   Value: "${self:provider.stage}"
+    # configuration profile
+    FeatureFlagAppConfigProfile:
+      Type: AWS::AppConfig::ConfigurationProfile
+      Properties:
+        ApplicationId: !Ref FeatureFlagApplication
+        Name: "vtx-profile"
+        LocationUri: "hosted"
+    # configuration
+    FeatureFlagConfigurationVersion:
+      Type: AWS::AppConfig::HostedConfigurationVersion
+      Properties:
+        ApplicationId: !Ref FeatureFlagApplication
+        ConfigurationProfileId: !Ref FeatureFlagAppConfigProfile
+        Description: "Feature Flag Application Config"
+        Content: !Sub |
+          {
+              "featureEnabled": true
+          }
+        ContentType: "application/json"
+        LatestVersionNumber: 1
+
 custom:
   s3:
     host: s3
@@ -46,3 +99,11 @@ custom:
     directory: /tmp
   serverless-offline:
     port: 3011
+  serverless-offline-sqs:
+    autoCreate: true
+    apiVersion: 2012-11-05
+    endpoint: http://0.0.0.0:9324
+    region: us-east-1 # Keep it as per your config
+    accessKeyId: root # this could be anything
+    secretAccessKey: root # this could be anything
+    skipCacheInvalidation: false

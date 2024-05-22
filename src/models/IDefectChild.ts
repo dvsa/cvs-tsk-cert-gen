@@ -1,6 +1,6 @@
 export interface IDefectChild {
-    ref?: string;
-    deficiencyText?: string;
-    deficiencyTextWelsh?: string;
-    forVehicleType?: string[];
+  ref?: string;
+  deficiencyText?: string;
+  deficiencyTextWelsh?: string;
+  forVehicleType?: string[];
 }

@@ -1,21 +1,25 @@
 // @ts-ignore
-import * as yml from "node-yaml";
-import { IInvokeConfig, IMOTConfig, IS3Config } from "../models";
-import { ERRORS } from "../models/Enums";
-import { GetSecretValueCommandInput, GetSecretValueCommandOutput, SecretsManager } from "@aws-sdk/client-secrets-manager";
-import { ISecret } from "../models/ISecret";
+import * as yml from 'node-yaml';
+import { GetSecretValueCommandInput, GetSecretValueCommandOutput, SecretsManager } from '@aws-sdk/client-secrets-manager';
+import { IS3Config } from '../models/IS3Config';
+import { IInvokeConfig } from '../models/IInvokeConfig';
+import { IMOTConfig } from '../models/IMOTConfig';
+import { ERRORS } from '../models/Enums';
+import { ISecret } from '../models/ISecret';
 
 /**
  * Configuration class for retrieving project config
  */
 class Configuration {
   private static instance: Configuration;
+
   private readonly config: any;
+
   private readonly secretsClient: SecretsManager;
 
   private constructor(configPath: string) {
     this.secretsClient = new SecretsManager({
-      region: "eu-west-1"
+      region: 'eu-west-1',
     });
     const config = yml.readSync(configPath);
 
@@ -28,13 +32,13 @@ class Configuration {
       matches.forEach((match: string) => {
         envRegex.lastIndex = 0;
         const captureGroups: RegExpExecArray = envRegex.exec(
-          match
+          match,
         ) as RegExpExecArray;
 
         // Insert the environment variable if available. If not, insert placeholder. If no placeholder, leave it as is.
         stringifiedConfig = stringifiedConfig.replace(
           match,
-          process.env[captureGroups[1]] || captureGroups[2] || captureGroups[1]
+          process.env[captureGroups[1]] || captureGroups[2] || captureGroups[1],
         );
       });
     }
@@ -48,7 +52,7 @@ class Configuration {
    */
   public static getInstance(): Configuration {
     if (!this.instance) {
-      this.instance = new Configuration("../config/config.yml");
+      this.instance = new Configuration('../config/config.yml');
     }
 
     return Configuration.instance;
@@ -69,15 +73,14 @@ class Configuration {
   public getInvokeConfig(): IInvokeConfig {
     if (!this.config.invoke) {
       throw new Error(
-        "Lambda Invoke config is not defined in the config file."
+        'Lambda Invoke config is not defined in the config file.',
       );
     }
 
     // Not defining BRANCH will default to local
-    const env: string =
-      !process.env.BRANCH || process.env.BRANCH === "local"
-        ? "local"
-        : "remote";
+    const env: string = !process.env.BRANCH || process.env.BRANCH === 'local'
+      ? 'local'
+      : 'remote';
 
     return this.config.invoke[env];
   }
@@ -88,14 +91,13 @@ class Configuration {
    */
   public getS3Config(): IS3Config {
     if (!this.config.s3) {
-      throw new Error("DynamoDB config is not defined in the config file.");
+      throw new Error('DynamoDB config is not defined in the config file.');
     }
 
     // Not defining BRANCH will default to local
-    const env: string =
-      !process.env.BRANCH || process.env.BRANCH === "local"
-        ? "local"
-        : "remote";
+    const env: string = !process.env.BRANCH || process.env.BRANCH === 'local'
+      ? 'local'
+      : 'remote';
 
     return this.config.s3[env];
   }
@@ -106,7 +108,7 @@ class Configuration {
    */
   public getMOTConfig(): IMOTConfig {
     if (!this.config.mot) {
-      throw new Error("The MOT config is not defined in the config file.");
+      throw new Error('The MOT config is not defined in the config file.');
     }
 
     return this.config.mot;
@@ -117,7 +119,7 @@ class Configuration {
    * @returns string secret name
    */
   public getWelshSecretKey() {
-    if (!process.env.BRANCH || process.env.BRANCH === "local") {
+    if (!process.env.BRANCH || process.env.BRANCH === 'local') {
       if (!this.config.welsh.secret_key) {
         throw new Error(ERRORS.SECRET_ENV_VAR_NOT_EXIST);
       } else {
@@ -146,10 +148,9 @@ class Configuration {
 
       if (secretResponse.SecretString) {
         return JSON.parse(secretResponse.SecretString);
-      } else {
-        console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
-        return null;
       }
+      console.log(ERRORS.SECRET_DETAILS_NOT_FOUND);
+      return null;
     } catch (error) {
       console.log(error);
       return null;
