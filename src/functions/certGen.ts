@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import { Container } from 'typedi';
 import {
   Callback, Context, Handler, SQSEvent, SQSRecord,
@@ -19,6 +21,7 @@ export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
  * @param context - λ Context
  * @param callback - callback function
  */
+
 const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<CertGenReturn[]> => {
   if (!event?.Records?.length) {
     console.error('ERROR: event is not defined.');
@@ -31,6 +34,7 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
+
     if (testResult.testStatus === TEST_RESULTS.CANCELLED) {
       const s3DeletePromise = certificateUploadService.removeCertificate(testResult);
       certificateUploadPromises.push(s3DeletePromise);

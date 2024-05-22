@@ -3,5 +3,9 @@
     "revealOn": "run",
     "revealWithFocus": "test-results",
     "clearOnRun": "none"
+  },
+  "testing.openTesting": "neverOpen",
+  "search.exclude": {
+    "**/node_modules": false
   }
 }

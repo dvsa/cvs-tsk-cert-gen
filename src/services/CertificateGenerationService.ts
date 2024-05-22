@@ -1,7 +1,7 @@
 import { Inject, Service } from 'typedi';
 import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
 import moment from 'moment';
-import { getProfile, FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
+import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
@@ -26,6 +26,7 @@ import { TestStationRepository } from '../repositories/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TrailerRepository } from '../repositories/TrailerRepository';
 import { TestResultRepository } from '../repositories/TestResultRepository';
+import { TranslationService } from './TranslationService';
 
 /**
  * Service class for Certificate Generation
@@ -50,6 +51,8 @@ class CertificateGenerationService {
 
   private readonly testResultRepository: TestResultRepository;
 
+  private readonly translationService: TranslationService;
+
   constructor(
   @Inject() s3Client: S3BucketService,
     @Inject() lambdaClient: LambdaService,
@@ -58,6 +61,7 @@ class CertificateGenerationService {
     @Inject() certificatePayloadGenerator: CertificatePayloadGenerator,
     @Inject() trailerRepository: TrailerRepository,
     @Inject() testResultRepository: TestResultRepository,
+    @Inject() translationService: TranslationService,
   ) {
     this.s3Client = s3Client;
     this.config = Configuration.getInstance();
@@ -67,6 +71,7 @@ class CertificateGenerationService {
     this.certificatePayloadGenerator = certificatePayloadGenerator;
     this.trailerRepository = trailerRepository;
     this.testResultRepository = testResultRepository;
+    this.translationService = translationService;
   }
 
   /**
@@ -80,7 +85,7 @@ class CertificateGenerationService {
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
 
-    const shouldTranslateTestResult = await this.shouldTranslateTestResult(testResult);
+    const shouldTranslateTestResult = await this.translationService.shouldTranslateTestResult(testResult) && await this.isTestStationWelsh(testResult.testStationPNumber);
 
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult, shouldTranslateTestResult),
@@ -174,68 +179,6 @@ class CertificateGenerationService {
         console.log(error);
         throw error;
       });
-  }
-
-  /**
-   * Handler method for retrieving feature flags and checking if test station is in Wales
-   * @param testResult
-   * @returns Promise<boolean>
-   */
-  public async shouldTranslateTestResult(testResult: any): Promise<boolean> {
-    let shouldTranslateTestResult = false;
-    try {
-      const featureFlags = await getProfile();
-      console.log('Using feature flags ', featureFlags);
-
-      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
-        shouldTranslateTestResult = await this.isTestStationWelsh(testResult.testStationPNumber);
-      }
-    } catch (e) {
-      // eslint-disable-next-line
-      console.error(`Failed to retrieve feature flags`, e);
-    }
-    return shouldTranslateTestResult;
-  }
-
-  /**
-   * Method to check if Welsh translation is enabled.
-   * @param featureFlags FeatureFlags interface
-   * @returns boolean
-   */
-  public isGlobalWelshFlagEnabled(featureFlags: FeatureFlags): boolean {
-    if (!featureFlags.welshTranslation.enabled) {
-      console.warn('Unable to translate any test results: global Welsh flag disabled.');
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Method to check if Welsh translation is enabled for the given test type.
-   * @param featureFlags FeatureFlags interface
-   * @param testResult string of result, PASS/PRS/FAIL
-   * @returns boolean
-   */
-  public isTestResultFlagEnabled(testResult: string, featureFlags: FeatureFlags): boolean {
-    let shouldTranslate: boolean = false;
-    switch (testResult as TEST_RESULTS) {
-      case TEST_RESULTS.PRS:
-        shouldTranslate = featureFlags.welshTranslation.translatePrsTestResult ?? false;
-        break;
-      case TEST_RESULTS.PASS:
-        shouldTranslate = featureFlags.welshTranslation.translatePassTestResult ?? false;
-        break;
-      case TEST_RESULTS.FAIL:
-        shouldTranslate = featureFlags.welshTranslation.translateFailTestResult ?? false;
-        break;
-      default:
-        console.warn('Translation not available for this test result type.');
-        return shouldTranslate;
-    }
-    if (!shouldTranslate) {
-      console.warn(`Unable to translate for test result: ${testResult} flag disabled`);
-    }
-    return shouldTranslate;
   }
 
   /**

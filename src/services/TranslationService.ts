@@ -1,5 +1,6 @@
 import { Service } from 'typedi';
-import { LOCATION_ENGLISH, LOCATION_WELSH } from '../models/Enums';
+import { getProfile, FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
+import { LOCATION_ENGLISH, LOCATION_WELSH, TEST_RESULTS } from '../models/Enums';
 
 @Service()
 export class TranslationService {
@@ -30,5 +31,66 @@ export class TranslationService {
       default:
         return locationToTranslate;
     }
+  }
+
+  /**
+   * Handler method for retrieving feature flags and checking if test station is in Wales
+   * @param testResult
+   * @returns Promise<boolean>
+   */
+  public async shouldTranslateTestResult(testResult: any): Promise<boolean> {
+    try {
+      const featureFlags = await getProfile();
+      console.log('Using feature flags ', featureFlags);
+
+      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
+        return true;
+      }
+    } catch (e) {
+      // eslint-disable-next-line
+      console.error(`Failed to retrieve feature flags`, e);
+    }
+    return false;
+  }
+
+  /**
+   * Method to check if Welsh translation is enabled.
+   * @param featureFlags FeatureFlags interface
+   * @returns boolean
+   */
+  public isGlobalWelshFlagEnabled(featureFlags: FeatureFlags): boolean {
+    if (!featureFlags.welshTranslation.enabled) {
+      console.warn('Unable to translate any test results: global Welsh flag disabled.');
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Method to check if Welsh translation is enabled for the given test type.
+   * @param featureFlags FeatureFlags interface
+   * @param testResult string of result, PASS/PRS/FAIL
+   * @returns boolean
+   */
+  public isTestResultFlagEnabled(testResult: TEST_RESULTS, featureFlags: FeatureFlags): boolean {
+    let shouldTranslate: boolean = false;
+    switch (testResult) {
+      case TEST_RESULTS.PRS:
+        shouldTranslate = featureFlags.welshTranslation.translatePrsTestResult ?? false;
+        break;
+      case TEST_RESULTS.PASS:
+        shouldTranslate = featureFlags.welshTranslation.translatePassTestResult ?? false;
+        break;
+      case TEST_RESULTS.FAIL:
+        shouldTranslate = featureFlags.welshTranslation.translateFailTestResult ?? false;
+        break;
+      default:
+        console.warn('Translation not available for this test result type.');
+        return shouldTranslate;
+    }
+    if (!shouldTranslate) {
+      console.warn(`Unable to translate for test result: ${testResult} flag disabled`);
+    }
+    return shouldTranslate;
   }
 }
