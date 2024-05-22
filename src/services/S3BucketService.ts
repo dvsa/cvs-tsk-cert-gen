@@ -49,9 +49,9 @@ class S3BucketService {
    * @param bucketName - the bucket from which to download
    * @param fileName - the name of the file
    */
-  public download(
-    bucketName: string,
-    fileName: string
+  public async download(
+      bucketName: string,
+      fileName: string
   ): Promise<GetObjectCommandOutput> {
     const command = new GetObjectCommand({
       Bucket: bucketName,
@@ -59,7 +59,11 @@ class S3BucketService {
     });
 
     try {
-      return this.s3Client.send(command);
+      console.log("command: ", command);
+
+      let res = await this.s3Client.send(command);
+      console.log(res);
+      return res;
     } catch (err) {
       throw err;
     }
