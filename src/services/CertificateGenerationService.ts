@@ -294,8 +294,8 @@ class CertificateGenerationService {
       return this.s3Client
       .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
       .then((result: GetObjectOutput) => {
-          console.log(`signature result: ${result.Body}`);
-          console.log('retunring result body to string/////');
+          console.log(`signature result: ${result.Body!.toString()}`);
+          console.log('retunring result body to string.....');
           return result.Body!.toString();
       })
       .catch((error: ServiceException) => {
@@ -328,7 +328,7 @@ class CertificateGenerationService {
       testResult.createdById ?? testResult.testerStaffId
     );
 
-    console.log("signature response: ", signature);
+    console.log(`signature response: ${JSON.stringify(signature)}`);
 
     let makeAndModel: any = null;
     if (
