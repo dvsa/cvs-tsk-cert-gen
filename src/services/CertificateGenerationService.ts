@@ -291,18 +291,18 @@ class CertificateGenerationService {
    */
   public async getSignature(staffId: string): Promise<string | null> {
       console.log("staffId: ", staffId);
-      return this.s3Client
+      return await this.s3Client
       .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
       .then((result: GetObjectOutput) => {
           console.log(`signature result: ${result.Body!.toString()}`);
-          console.log('retunring result body to string.....');
+          console.log("retunring result body to string.....");
           return result.Body!.toString();
       })
       .catch((error: ServiceException) => {
         console.error(
           `Unable to fetch signature for staff id ${staffId}. ${error.message}`
         );
-          console.log("returning null....");
+        console.log("returning null....");
         return null;
       });
   }
