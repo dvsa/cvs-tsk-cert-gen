@@ -135,6 +135,15 @@ class CertificateGenerationService {
         body: payload,
       })),
     };
+    console.log(JSON.stringify({
+      httpMethod: "POST",
+      pathParameters: {
+        documentName: certificateTypes[vehicleTestRes],
+        documentDirectory: config.documentDir,
+      },
+      json: true,
+      body: payload,
+    }));
     console.log("invoke paramas; ", invokeParams);
     return this.lambdaClient
       .invoke(invokeParams)
