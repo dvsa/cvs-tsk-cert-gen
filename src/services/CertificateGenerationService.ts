@@ -328,7 +328,7 @@ class CertificateGenerationService {
       testResult.createdById ?? testResult.testerStaffId
     );
 
-    console.log(`signature response: ${JSON.stringify(signature)}`);
+    console.log(signature);
 
     let makeAndModel: any = null;
     if (
@@ -352,6 +352,8 @@ class CertificateGenerationService {
         ImageData: signature,
       },
     };
+    console.log('payload completed: ');
+    console.log(payload);
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
 
