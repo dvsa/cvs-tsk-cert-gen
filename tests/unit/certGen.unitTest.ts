@@ -9,7 +9,7 @@ import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profil
 import { CertificateUploadService } from '../../src/services/CertificateUploadService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { CertGenReturn, certGen } from '../../src/functions/certGen';
+import { certGen } from '../../src/functions/certGen';
 import queueEventPass from '../resources/queue-event-pass.json';
 import queueEventFail from '../resources/queue-event-fail.json';
 import queueEventCancelled from '../resources/queue-event-cancelled.json';
@@ -30,6 +30,11 @@ describe('cert-gen', () => {
 
   Container.set(S3BucketService, new S3BucketMockService());
   Container.set(LambdaService, new LambdaMockService());
+
+  const uploadService = Container.get(CertificateUploadService);
+  const removeCertificateMock = jest.fn();
+  uploadService.removeCertificate = removeCertificateMock;
+  Container.set(CertificateUploadService, uploadService);
 
   beforeAll(() => {
     jest.setTimeout(10000);
@@ -55,17 +60,20 @@ describe('cert-gen', () => {
 
   afterEach(() => {
     sandbox.restore();
+    removeCertificateMock.mockReset();
   });
 
   context('CertGen function', () => {
     context('when a failing test result is read from the queue', () => {
       const event: any = { ...queueEventFail };
+      // const errorLog = jest.fn();
+      // jest.spyOn(console, 'error').mockImplementation(errorLog);
+
       context('and the testResultId is malformed', () => {
         it('should thrown an error', async () => {
           expect.assertions(1);
           try {
             await certGen(event, undefined as any, () => {
-
             });
           } catch (err) {
             expect((err as Error).message).toBe('Bad Test Record: 1');
@@ -119,14 +127,11 @@ describe('cert-gen', () => {
 
     context('when a valid test result is read from the queue', () => {
       it('should cancel an existing record', async () => {
-        const uploadMock = jest.fn();
         const uploadResult = {
           result: true,
         };
 
-        uploadMock.mockResolvedValue(uploadResult);
-
-        Container.set(CertificateUploadService, { removeCertificate: uploadMock });
+        removeCertificateMock.mockResolvedValueOnce(uploadResult);
 
         const result = await certGen(queueEventCancelled, undefined as any, undefined as any);
 
@@ -134,7 +139,7 @@ describe('cert-gen', () => {
         expect(result[0]).toEqual(uploadResult);
         queueEventCancelled.Records.forEach((record: any) => {
           const expected = JSON.parse(record.body);
-          expect(uploadMock).toHaveBeenCalledWith(expected);
+          expect(removeCertificateMock).toHaveBeenCalledWith(expected);
         });
       });
     });
@@ -145,9 +150,7 @@ describe('cert-gen', () => {
         message: 'invalid removal',
       };
 
-      Container.set(CertificateUploadService, {
-        removeCertificate: jest.fn().mockRejectedValue(err),
-      });
+      removeCertificateMock.mockRejectedValueOnce(err);
 
       const logSpy = jest.spyOn(console, 'error');
 

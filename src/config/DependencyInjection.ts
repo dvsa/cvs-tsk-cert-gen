@@ -9,11 +9,11 @@ import { TranslationServiceFake } from '../../tests/models/TranslationServiceFak
 
 @Service()
 export class DependencyInjection {
-  public static register(lambdaClient: LambdaClient = new LambdaClient(), s3Client: S3Client = new S3Client()) {
+  public static register() {
     const config: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
 
-    Container.set(LambdaClient, AWSXRay.captureAWSv3Client(new LambdaClient({ ...lambdaClient, ...config.params })));
-    Container.set(S3Client, AWSXRay.captureAWSv3Client(new S3Client({ ...s3Client, ...config })));
+    Container.set(LambdaClient, AWSXRay.captureAWSv3Client(new LambdaClient(config.params)));
+    Container.set(S3Client, AWSXRay.captureAWSv3Client(new S3Client(config)));
 
     const isOffline = (process.env.IS_OFFLINE ?? false) as boolean;
     if (isOffline) {
