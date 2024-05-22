@@ -45,7 +45,7 @@ export class CertificatePayloadGeneratorAdr implements ICertificatePayloadGenera
       Notes: testResult.testTypes.additionalNotesRecorded,
       TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
     };
-    console.log('CHECK HERE DOCGENPAYLOAD -> ', docGenPayloadAdr);
+
     return docGenPayloadAdr;
   }
 }

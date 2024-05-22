@@ -137,7 +137,7 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
         Object.assign(defects, { [k]: undefined });
       }
     });
-    console.log(JSON.stringify(defects));
+
     return defects;
   }
 

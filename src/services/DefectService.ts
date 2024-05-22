@@ -227,7 +227,7 @@ export class DefectService {
       if (defect.additionalInformation.notes) {
         defectString += ` ${defect.additionalInformation.notes}`;
       }
-      console.log(`Welsh Defect String Generated: ${defectString}`);
+
       return defectString;
     }
     console.log('ERROR: Unable to find a filtered defect');
