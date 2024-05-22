@@ -1,7 +1,6 @@
 import { Inject, Service } from 'typedi';
 import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
 import moment from 'moment';
-import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';

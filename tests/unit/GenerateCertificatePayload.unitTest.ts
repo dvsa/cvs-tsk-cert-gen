@@ -9,10 +9,7 @@ import { Container } from 'typedi';
 import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
 import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
-import {
-  CertificateGenerationService,
-  IGeneratedCertificateResponse,
-} from '../../src/services/CertificateGenerationService';
+import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import queueEventPass from '../resources/queue-event-pass.json';
@@ -32,7 +29,6 @@ import techRecordsRwtHgv from '../resources/tech-records-response-rwt-hgv.json';
 import techRecordsRwtHgvSearch from '../resources/tech-records-response-rwt-hgv-search.json';
 import techRecordsPsv from '../resources/tech-records-response-PSV.json';
 import techRecordsSearchPsv from '../resources/tech-records-response-search-PSV.json';
-import { CERTIFICATE_DATA } from '../../src/models/Enums';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';

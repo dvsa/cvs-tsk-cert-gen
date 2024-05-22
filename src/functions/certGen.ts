@@ -2,9 +2,8 @@ import 'reflect-metadata';
 
 import { Container } from 'typedi';
 import {
-  Callback, Context, Handler, SQSBatchItemFailure, SQSEvent, SQSRecord,
+  Callback, Context, Handler, SQSEvent, SQSRecord,
 } from 'aws-lambda';
-import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { CertGenReturn, CertificateRequestProcessor } from './CertificateRequestProcessor';
 
 /**

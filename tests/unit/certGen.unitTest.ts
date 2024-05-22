@@ -10,14 +10,12 @@ import { CertificateUploadService } from '../../src/services/CertificateUploadSe
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { certGen } from '../../src/functions/certGen';
-import queueEventPass from '../resources/queue-event-pass.json';
 import queueEventFail from '../resources/queue-event-fail.json';
 import queueEventCancelled from '../resources/queue-event-cancelled.json';
 
 const sandbox = sinon.createSandbox();
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
-import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,

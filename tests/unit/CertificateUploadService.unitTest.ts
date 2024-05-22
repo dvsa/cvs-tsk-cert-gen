@@ -17,12 +17,12 @@ import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { CertificateUploadService } from '../../src/services/CertificateUploadService';
 import techRecordsRwt from '../resources/tech-records-response-rwt.json';
-
-const sandbox = sinon.createSandbox();
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
+
+const sandbox = sinon.createSandbox();
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,
