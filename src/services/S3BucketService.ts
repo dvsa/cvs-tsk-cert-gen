@@ -1,9 +1,9 @@
-import { Service } from "../models/injector/ServiceDecorator";
-import { Readable } from "stream";
-import { Configuration } from "../utils/Configuration";
-import { IS3Config } from "../models";
+import {Service} from "../models/injector/ServiceDecorator";
+import {Readable} from "stream";
+import {Configuration} from "../utils/Configuration";
+import {IS3Config} from "../models";
 import AWSXRay from "aws-xray-sdk";
-import { DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
+import {DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client} from "@aws-sdk/client-s3";
 
 /**
  * Service class for communicating with Simple Storage Service
@@ -59,11 +59,7 @@ class S3BucketService {
     });
 
     try {
-      console.log("command: ", command);
-
-      let res = await this.s3Client.send(command);
-      console.log(res);
-      return res;
+      return await this.s3Client.send(command);
     } catch (err) {
       throw err;
     }
