@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { GetObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
+import { DeleteObjectCommandOutput, GetObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { sdkStreamMixin } from '@smithy/util-stream';
 import { Readable } from 'stream';
 import * as fs from 'fs';
@@ -47,9 +47,27 @@ class S3BucketMockService {
       throw error;
     }
 
+    bucket.files.push(fileName);
+
     const response: any = {
       Bucket: bucketName,
       Key: `${process.env.BRANCH}/${fileName}`,
+    };
+
+    return response;
+  }
+
+  public delete(bucketName: string, fileName: string): Promise<DeleteObjectCommandOutput> {
+    const bucket: IBucket | undefined = S3BucketMockService.buckets.find(
+      (currentBucket: IBucket) => currentBucket.bucketName === bucketName,
+    );
+
+    if (bucket) {
+      bucket.files = bucket?.files.filter((file: string) => file !== fileName) ?? new Array<string>();
+    }
+
+    const response: any = {
+      result: true,
     };
 
     return response;
