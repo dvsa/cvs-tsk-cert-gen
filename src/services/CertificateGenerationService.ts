@@ -135,6 +135,7 @@ class CertificateGenerationService {
         body: payload,
       })),
     };
+    console.log("invoke paramas; ", invokeParams);
     return this.lambdaClient
       .invoke(invokeParams)
       .then(
