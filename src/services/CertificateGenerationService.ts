@@ -292,11 +292,14 @@ class CertificateGenerationService {
   public async getSignature(staffId: string): Promise<string | null> {
       console.log("staffId: ", staffId);
       return await this.s3Client
-      .download(`cvs-signature-${process.env.BUCKET}`, `${process.env.BRANCH}/${staffId}.base64`)
+      .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
       .then((result: GetObjectOutput) => {
-          console.log(`signature result: ${result.Body!.toString()}`);
-          console.log("retunring result body to string.....");
-          return result.Body!.toString();
+        console.log(result);
+        console.log(`signature result: ${result.Body!.toString()}`);
+        console.log(result.Body);
+        console.log(result.Body?.toString());
+        console.log("retunring result body to string.....");
+        return result.Body!.toString();
       })
       .catch((error: ServiceException) => {
         console.error(
@@ -328,6 +331,7 @@ class CertificateGenerationService {
       testResult.createdById ?? testResult.testerStaffId
     );
 
+    console.log("logging signature: ", signature);
     console.log(signature);
 
     let makeAndModel: any = null;
@@ -352,7 +356,7 @@ class CertificateGenerationService {
         ImageData: signature,
       },
     };
-    console.log('payload completed: ');
+    console.log("payload completed: ");
     console.log(payload);
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
