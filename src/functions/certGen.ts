@@ -1,12 +1,12 @@
+import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
+import { ERRORS } from "../models/Enums";
 import { Injector } from "../models/injector/Injector";
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
 } from "../services/CertificateGenerationService";
 import { CertificateUploadService } from "../services/CertificateUploadService";
-import { ERRORS } from "../models/Enums";
-import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 
 type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
@@ -41,6 +41,7 @@ const certGen: Handler = async (
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
+    console.log(`parsed test result is ${testResult.testResultId} with the system number ${testResult.systemNumber}`);
     if (testResult.testStatus === "cancelled") {
       const s3DeletePromise =
         certificateUploadService.removeCertificate(testResult);

@@ -1,7 +1,7 @@
+import { PutObjectCommandOutput } from "@aws-sdk/client-s3";
+import { IGeneratedCertificateResponse } from "../models";
 import { Service } from "../models/injector/ServiceDecorator";
 import { S3BucketService } from "./S3BucketService";
-import { IGeneratedCertificateResponse } from "../models";
-import { PutObjectCommandOutput } from "@aws-sdk/client-s3";
 
 /**
  * Service class for uploading certificates to S3
@@ -40,6 +40,8 @@ class CertificateUploadService {
       "email": payload.email,
       "should-email-certificate": shouldEmailCertificate,
     };
+
+    console.log(`metadata in s3 upload: ${JSON.stringify(metadata)}`);
 
     return this.s3BucketService.upload(
       `cvs-cert-${process.env.BUCKET}`,
