@@ -3,6 +3,7 @@ import { ITestResult } from '../../models/ITestResult';
 import { TechRecordType } from '../../models/Types';
 import { TechRecordsService } from '../TechRecordsService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
 export class CertificatePayloadGeneratorAdr implements ICertificatePayloadGenerator {
@@ -12,8 +13,10 @@ export class CertificatePayloadGeneratorAdr implements ICertificatePayloadGenera
     this.techRecordsService = techRecordsService;
   }
 
-  public async generate(testResult: ITestResult): Promise<any> {
+  public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
     const adrDetails: TechRecordType<any> = await this.techRecordsService.getAdrDetails(testResult);
+    const makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
+
     const docGenPayloadAdr = {
       ChasisNumber: testResult.vin,
       RegistrationNumber: testResult.vrm,
@@ -46,6 +49,11 @@ export class CertificatePayloadGeneratorAdr implements ICertificatePayloadGenera
       TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
     };
 
-    return docGenPayloadAdr;
+    return {
+      ADR_DATA: {
+        ...docGenPayloadAdr,
+        ...makeAndModel,
+      }
+    } as ICertificatePayload;
   }
 }

@@ -264,6 +264,30 @@ class CertificateGenerationService {
       });
   }
 
+  private getTestType(testResult: any): CERTIFICATE_DATA {
+    if (this.testService.isHgvTrlRoadworthinessCertificate(testResult)) {
+      return CERTIFICATE_DATA.RWT_DATA;
+    }
+
+    if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.testService.isTestTypeAdr(testResult.testTypes)) {
+      return CERTIFICATE_DATA.ADR_DATA;
+    }
+
+    if (testResult.testTypes.testResult === TEST_RESULTS.FAIL && this.testService.isIvaTest(testResult.testTypes.testTypeId)) {
+      return CERTIFICATE_DATA.IVA_DATA;
+    }
+
+    if (testResult.testTypes.testResult === TEST_RESULTS.FAIL && this.testService.isMsvaTest(testResult.testTypes.testTypeId)) {
+      return CERTIFICATE_DATA.MSVA_DATA;
+    }
+
+    if (testResult.testTypes.testResult !== TEST_RESULTS.PASS) {
+      return CERTIFICATE_DATA.FAIL_DATA;
+    }
+
+    return CERTIFICATE_DATA.PASS_DATA;
+  }
+
   /**
    * Generates the payload for the MOT certificate generation service
    * @param testResult - source test result for certificate generation
@@ -283,32 +307,15 @@ class CertificateGenerationService {
       testResult.createdById ?? testResult.testerStaffId,
     );
 
-    let makeAndModel: any = null;
-    if (
-      !this.testService.isRoadworthinessTestType(
-        testResult.testTypes.testTypeId,
-      )
-    ) {
-      makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
-    }
+    const { testTypes, testHistory } = testResult;
+    const testType = this.getTestType(testResult);
+    const response = await this.certificatePayloadGenerator.generateCertificateData(testResult, testType, isWelsh);
 
-    let payload: ICertificatePayload = {
-      Watermark: process.env.BRANCH === 'prod' ? '' : 'NOT VALID',
-      DATA: undefined,
-      FAIL_DATA: undefined,
-      RWT_DATA: undefined,
-      ADR_DATA: undefined,
-      IVA_DATA: undefined,
-      MSVA_DATA: undefined,
-      Signature: {
-        ImageType: 'png',
-        ImageData: signature,
-      },
+    response.Watermark = process.env.BRANCH === 'prod' ? '' : 'NOT VALID';
+    response.Signature = {
+      ImageType: 'png',
+      ImageData: signature,
     };
-
-    const {
-      testTypes, vehicleType, systemNumber, testHistory,
-    } = testResult;
 
     if (testHistory) {
       // eslint-disable-next-line
@@ -316,7 +323,7 @@ class CertificateGenerationService {
         // eslint-disable-next-line
         for (const testType of history.testTypes) {
           if (testType.testCode === testTypes.testCode) {
-            payload.Reissue = {
+            response.Reissue = {
               Reason: 'Replacement',
               Issuer: testResult.createdByName,
               Date: moment(testResult.createdAt).format('DD.MM.YYYY'),
@@ -327,63 +334,7 @@ class CertificateGenerationService {
       }
     }
 
-    if (this.testService.isHgvTrlRoadworthinessCertificate(testResult)) {
-      // CVSB-7677 for roadworthiness test for hgv or trl.
-      const rwtData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.RWT_DATA);
-      payload.RWT_DATA = { ...rwtData };
-    } else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.testService.isTestTypeAdr(testResult.testTypes)) {
-      const adrData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
-      payload.ADR_DATA = { ...adrData, ...makeAndModel };
-    } else if (testResult.testTypes.testResult === TEST_RESULTS.FAIL && this.testService.isIvaTest(testResult.testTypes.testTypeId)) {
-      const ivaData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.IVA_DATA);
-      payload.IVA_DATA = { ...ivaData };
-    } else if (testResult.testTypes.testResult === TEST_RESULTS.FAIL && this.testService.isMsvaTest(testResult.testTypes.testTypeId)) {
-      const msvaData = await this.certificatePayloadGenerator.generateCertificateData(testResult, CERTIFICATE_DATA.MSVA_DATA);
-      payload.MSVA_DATA = { ...msvaData };
-    } else {
-      const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
-        ? undefined
-        : await this.testResultRepository.getOdometerHistory(systemNumber);
-
-      const TrnObj = this.testService.isValidForTrn(vehicleType, makeAndModel)
-        ? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make)
-        : undefined;
-
-      if (testTypes.testResult !== TEST_RESULTS.FAIL) {
-        const passData = await this.certificatePayloadGenerator.generateCertificateData(
-          testResult,
-          CERTIFICATE_DATA.PASS_DATA,
-          isWelsh,
-        );
-
-        payload.DATA = {
-          ...passData,
-          ...makeAndModel,
-          ...odometerHistory,
-          ...TrnObj,
-        };
-      }
-
-      if (testTypes.testResult !== TEST_RESULTS.PASS) {
-        const failData = await this.certificatePayloadGenerator.generateCertificateData(
-          testResult,
-          CERTIFICATE_DATA.FAIL_DATA,
-          isWelsh,
-        );
-
-        payload.FAIL_DATA = {
-          ...failData,
-          ...makeAndModel,
-          ...odometerHistory,
-          ...TrnObj,
-        };
-      }
-    }
-
-    // Purge undefined values
-    payload = JSON.parse(JSON.stringify(payload));
-
-    return payload;
+    return JSON.parse(JSON.stringify(response));
   }
 }
 

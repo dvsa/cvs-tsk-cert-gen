@@ -1,8 +1,4 @@
 import 'reflect-metadata';
-
-/* eslint-disable import/first */
-const mockGetProfile = jest.fn();
-
 import Container from 'typedi';
 import { LambdaService } from '../../src/services/LambdaService';
 import { CERTIFICATE_DATA } from '../../src/models/Enums';
@@ -12,168 +8,178 @@ import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
-
-jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
-  getProfile: mockGetProfile,
-}));
+import { TestResultRepository } from '../../src/repositories/TestResultRepository';
+import { TechRecordsService } from '../../src/services/TechRecordsService';
 
 describe('Certificate Generation Service', () => {
   Container.set(S3BucketService, new S3BucketMockService());
 
   const lambdaService = new LambdaMockService();
+  LambdaMockService.populateFunctions();
   const invokeSpy = jest.spyOn(lambdaService, 'invoke');
   Container.set(LambdaService, lambdaService);
 
+  const techRecordsService = Container.get(TechRecordsService);
+  const getVehicleMakeAndModelMock = jest.spyOn(techRecordsService, 'getVehicleMakeAndModel');
+  Container.set(TechRecordsService, techRecordsService);
+
+  const testResultRepository = Container.get(TestResultRepository);
+  const getOdometerSpy = jest.spyOn(testResultRepository, 'getOdometerHistory');
+  Container.set(TestResultRepository, testResultRepository);
+
   afterEach(() => {
     invokeSpy.mockReset();
+    getVehicleMakeAndModelMock.mockClear();
   });
 
   const payloadGenerator = Container.get(CertificatePayloadGenerator);
+
   context('when a failing test result is read from the queue', () => {
     const event: any = { ...queueEventFailPRS };
     const testResult: any = JSON.parse(event.Records[0].body);
 
     context('and certificate Data is generated', () => {
-      context(
-        'and test-result contains a Dagerous Defect with Major defect rectified',
-        () => {
-          it('should return Certificate Data with PRSDefects list in Fail data', async () => {
-            const expectedResult: any = {
-              TestNumber: 'W01A00310',
-              TestStationPNumber: '09-4129632',
-              TestStationName: 'Abshire-Kub',
-              CurrentOdometer: {
-                value: 12312,
-                unit: 'kilometres',
-              },
-              IssuersName: 'CVS Dev1',
-              DateOfTheTest: '26.02.2019',
-              CountryOfRegistrationCode: 'gb',
-              VehicleEuClassification: 'M1',
-              RawVIN: 'XMGDE02FS0H012345',
-              RawVRM: 'BQ91YHQ',
-              EarliestDateOfTheNextTest: '26.12.2019',
-              ExpiryDate: '25.02.2020',
-              SeatBeltTested: 'Yes',
-              SeatBeltPreviousCheckDate: '26.02.2019',
-              SeatBeltNumber: 2,
-              DangerousDefects: [
-                '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
-              ],
-              MajorDefects: undefined,
-              MinorDefects: [
-                '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
-              ],
-              AdvisoryDefects: [
-                '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
-              ],
-              PRSDefects: ['1.1.a A registration plate: missing. Front.'],
-            };
+      context('and test-result contains a Dagerous Defect with Major defect rectified', () => {
+        it('should return Certificate Data with PRSDefects list in Fail data', async () => {
+          const expectedResult: any = {
+            TestNumber: 'W01A00310',
+            TestStationPNumber: '09-4129632',
+            TestStationName: 'Abshire-Kub',
+            CurrentOdometer: {
+              value: 12312,
+              unit: 'kilometres',
+            },
+            IssuersName: 'CVS Dev1',
+            DateOfTheTest: '26.02.2019',
+            CountryOfRegistrationCode: 'gb',
+            VehicleEuClassification: 'M1',
+            RawVIN: 'XMGDE02FS0H012345',
+            RawVRM: 'BQ91YHQ',
+            EarliestDateOfTheNextTest: '26.12.2019',
+            ExpiryDate: '25.02.2020',
+            SeatBeltTested: 'Yes',
+            SeatBeltPreviousCheckDate: '26.02.2019',
+            SeatBeltNumber: 2,
+            DangerousDefects: [
+              '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
+            ],
+            MajorDefects: undefined,
+            MinorDefects: [
+              '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
+            ],
+            AdvisoryDefects: [
+              '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
+            ],
+            PRSDefects: ['1.1.a A registration plate: missing. Front.'],
+          };
 
-            return payloadGenerator
-              .generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA)
-              .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
-              });
-          });
-        },
-      );
+          getVehicleMakeAndModelMock.mockResolvedValue(undefined as any);
+          getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
+          return payloadGenerator
+            .generateCertificateData(testResult, CERTIFICATE_DATA.FAIL_DATA)
+            .then((payload: any) => {
+              expect(payload.FAIL_DATA).toEqual(expectedResult);
+            });
+        });
+      });
     });
 
     const testResult2: any = JSON.parse(event.Records[1].body);
     context('and certificate Data is generated', () => {
-      context(
-        'and test-result contains a Major Defect with Dangerous defect rectified',
-        () => {
-          it('should return Certificate Data with PRSDefects list in Fail Data', async () => {
-            const expectedResult: any = {
-              TestNumber: 'W01A00310',
-              TestStationPNumber: '09-4129632',
-              TestStationName: 'Abshire-Kub',
-              CurrentOdometer: {
-                value: 12312,
-                unit: 'kilometres',
-              },
-              IssuersName: 'CVS Dev1',
-              DateOfTheTest: '26.02.2019',
-              CountryOfRegistrationCode: 'gb',
-              VehicleEuClassification: 'M1',
-              RawVIN: 'XMGDE02FS0H012345',
-              RawVRM: 'BQ91YHQ',
-              EarliestDateOfTheNextTest: '26.12.2019',
-              ExpiryDate: '25.02.2020',
-              SeatBeltTested: 'Yes',
-              SeatBeltPreviousCheckDate: '26.02.2019',
-              SeatBeltNumber: 2,
-              DangerousDefects: undefined,
-              MajorDefects: ['1.1.a A registration plate: missing. Front.'],
-              MinorDefects: [
-                '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
-              ],
-              AdvisoryDefects: [
-                '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
-              ],
-              PRSDefects: [
-                '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
-              ],
-            };
+      context('and test-result contains a Major Defect with Dangerous defect rectified', () => {
+        it('should return Certificate Data with PRSDefects list in Fail Data', async () => {
+          const expectedResult: any = {
+            TestNumber: 'W01A00310',
+            TestStationPNumber: '09-4129632',
+            TestStationName: 'Abshire-Kub',
+            CurrentOdometer: {
+              value: 12312,
+              unit: 'kilometres',
+            },
+            IssuersName: 'CVS Dev1',
+            DateOfTheTest: '26.02.2019',
+            CountryOfRegistrationCode: 'gb',
+            VehicleEuClassification: 'M1',
+            RawVIN: 'XMGDE02FS0H012345',
+            RawVRM: 'BQ91YHQ',
+            EarliestDateOfTheNextTest: '26.12.2019',
+            ExpiryDate: '25.02.2020',
+            SeatBeltTested: 'Yes',
+            SeatBeltPreviousCheckDate: '26.02.2019',
+            SeatBeltNumber: 2,
+            DangerousDefects: undefined,
+            MajorDefects: ['1.1.a A registration plate: missing. Front.'],
+            MinorDefects: [
+              '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
+            ],
+            AdvisoryDefects: [
+              '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
+            ],
+            PRSDefects: [
+              '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
+            ],
+          };
 
-            return payloadGenerator
-              .generateCertificateData(testResult2, CERTIFICATE_DATA.FAIL_DATA)
-              .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
-              });
-          });
-        },
-      );
+          getVehicleMakeAndModelMock.mockResolvedValue(undefined as any);
+          getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
+          return payloadGenerator
+            .generateCertificateData(testResult2, CERTIFICATE_DATA.FAIL_DATA)
+            .then((payload: any) => {
+              expect(payload.FAIL_DATA).toEqual(expectedResult);
+            });
+        });
+      });
     });
 
     const testResult3: any = JSON.parse(event.Records[2].body);
-    context('and certificate Data is generated', () => {
-      context(
-        'and test-result contains a Major and Dagerous Defect with no Major or Dagerous defect rectified',
-        () => {
-          it('should return Certificate Data with 0 PRSDefects list in Fail Data', async () => {
-            const expectedResult: any = {
-              TestNumber: 'W01A00310',
-              TestStationPNumber: '09-4129632',
-              TestStationName: 'Abshire-Kub',
-              CurrentOdometer: {
-                value: 12312,
-                unit: 'kilometres',
-              },
-              IssuersName: 'CVS Dev1',
-              DateOfTheTest: '26.02.2019',
-              CountryOfRegistrationCode: 'gb',
-              VehicleEuClassification: 'M1',
-              RawVIN: 'XMGDE02FS0H012345',
-              RawVRM: 'BQ91YHQ',
-              EarliestDateOfTheNextTest: '26.12.2019',
-              ExpiryDate: '25.02.2020',
-              SeatBeltTested: 'Yes',
-              SeatBeltPreviousCheckDate: '26.02.2019',
-              SeatBeltNumber: 2,
-              DangerousDefects: [
-                '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
-              ],
-              MajorDefects: ['1.1.a A registration plate: missing. Front.'],
-              MinorDefects: [
-                '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
-              ],
-              AdvisoryDefects: [
-                '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
-              ],
-              PRSDefects: undefined,
-            };
 
-            return payloadGenerator
-              .generateCertificateData(testResult3, CERTIFICATE_DATA.FAIL_DATA)
-              .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
-              });
-          });
-        },
-      );
+    context('and certificate Data is generated', () => {
+      context('and test-result contains a Major and Dagerous Defect with no Major or Dagerous defect rectified', () => {
+        it('should return Certificate Data with 0 PRSDefects list in Fail Data', async () => {
+          const expectedResult: any = {
+            TestNumber: 'W01A00310',
+            TestStationPNumber: '09-4129632',
+            TestStationName: 'Abshire-Kub',
+            CurrentOdometer: {
+              value: 12312,
+              unit: 'kilometres',
+            },
+            IssuersName: 'CVS Dev1',
+            DateOfTheTest: '26.02.2019',
+            CountryOfRegistrationCode: 'gb',
+            VehicleEuClassification: 'M1',
+            RawVIN: 'XMGDE02FS0H012345',
+            RawVRM: 'BQ91YHQ',
+            EarliestDateOfTheNextTest: '26.12.2019',
+            ExpiryDate: '25.02.2020',
+            SeatBeltTested: 'Yes',
+            SeatBeltPreviousCheckDate: '26.02.2019',
+            SeatBeltNumber: 2,
+            DangerousDefects: [
+              '54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd',
+            ],
+            MajorDefects: ['1.1.a A registration plate: missing. Front.'],
+            MinorDefects: [
+              '54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.',
+            ],
+            AdvisoryDefects: [
+              '5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc',
+            ],
+            PRSDefects: undefined,
+          };
+
+          getVehicleMakeAndModelMock.mockResolvedValue(undefined as any);
+          getOdometerSpy.mockResolvedValueOnce(undefined as any);
+
+          return payloadGenerator
+            .generateCertificateData(testResult3, CERTIFICATE_DATA.FAIL_DATA)
+            .then((payload: any) => {
+              expect(payload.FAIL_DATA).toEqual(expectedResult);
+            });
+        });
+      });
     });
   });
 
@@ -226,7 +232,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult1, CERTIFICATE_DATA.IVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.IVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -290,7 +296,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult2, CERTIFICATE_DATA.IVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.IVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -339,7 +345,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult3, CERTIFICATE_DATA.IVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.IVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -389,7 +395,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult4, CERTIFICATE_DATA.IVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.IVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -440,7 +446,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult5, CERTIFICATE_DATA.IVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.IVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -486,7 +492,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult6, CERTIFICATE_DATA.MSVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.MSVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -543,7 +549,7 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult7, CERTIFICATE_DATA.MSVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.MSVA_DATA).toEqual(expectedResult);
               });
           });
         },
@@ -589,18 +595,11 @@ describe('Certificate Generation Service', () => {
             return payloadGenerator
               .generateCertificateData(testResult8, CERTIFICATE_DATA.MSVA_DATA)
               .then((payload: any) => {
-                expect(payload).toEqual(expectedResult);
+                expect(payload.MSVA_DATA).toEqual(expectedResult);
               });
           });
         },
       );
     });
   });
-});
-
-const AWSResolve = (payload: any) => ({
-  $response: { HttpStatusCode: 200, payload },
-  $metadata: {},
-  StatusCode: 200,
-  Payload: payload,
 });

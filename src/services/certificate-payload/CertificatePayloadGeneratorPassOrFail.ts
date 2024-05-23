@@ -3,7 +3,6 @@ import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import {
   CERTIFICATE_DATA,
-  LOCATION_WELSH,
   TEST_RESULTS,
   VEHICLE_TYPES,
 } from '../../models/Enums';
@@ -13,12 +12,22 @@ import { DefectRepository } from '../../repositories/DefectRepository';
 import { IDefectParent } from '../../models/IDefectParent';
 import { IFlatDefect } from '../../models/IFlatDefect';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayload } from '../../models/ICertificatePayload';
+import { TestResultRepository } from '../../repositories/TestResultRepository';
+import { TechRecordsService } from '../TechRecordsService';
+import { TrailerRepository } from '../../repositories/TrailerRepository';
 
 @Service()
 export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloadGenerator {
   private readonly defectService: DefectService;
 
+  private readonly testResultRepository: TestResultRepository;
+
   private readonly defectRepository: DefectRepository;
+
+  private readonly techRecordsService: TechRecordsService;
+
+  private readonly trailerRepository: TrailerRepository;
 
   private readonly testService: TestService;
 
@@ -26,9 +35,12 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
 
   protected isWelsh: boolean = false;
 
-  constructor(@Inject() defectService: DefectService, @Inject() defectRepository: DefectRepository, @Inject() testService: TestService) {
+  constructor(@Inject() defectService: DefectService, @Inject() testResultRepository: TestResultRepository, @Inject() defectRepository: DefectRepository, @Inject() techRecordsService: TechRecordsService, @Inject() trailerRepository: TrailerRepository, @Inject() testService: TestService) {
     this.defectService = defectService;
+    this.testResultRepository = testResultRepository;
     this.defectRepository = defectRepository;
+    this.techRecordsService = techRecordsService;
+    this.trailerRepository = trailerRepository;
     this.testService = testService;
   }
 
@@ -37,7 +49,50 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
     this.isWelsh = isWelsh;
   }
 
-  public async generate(testResult: ITestResult): Promise<any> {
+  public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+    let defectListFromApi: IDefectParent[] = [];
+    let flattenedDefects: IFlatDefect[] = [];
+    if (this.isWelsh) {
+      defectListFromApi = await this.defectRepository.getDefectTranslations();
+      flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
+    }
+
+    const { testTypes, vehicleType, systemNumber } = testResult as any;
+
+    const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
+      ? undefined
+      : await this.testResultRepository.getOdometerHistory(systemNumber);
+
+    const makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
+
+    const TrnObj = this.testService.isValidForTrn(vehicleType, makeAndModel as any)
+      ? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make as any)
+      : undefined;
+
+    const result = {} as ICertificatePayload;
+
+    if (testTypes.testResult !== TEST_RESULTS.FAIL) {
+      result.DATA = {
+        ...(await this.getPayloadData(testResult, CERTIFICATE_DATA.PASS_DATA)),
+        ...makeAndModel,
+        ...odometerHistory,
+        ...TrnObj,
+      };
+    }
+
+    if (testTypes.testResult !== TEST_RESULTS.PASS) {
+      result.FAIL_DATA = {
+        ...(await this.getPayloadData(testResult, CERTIFICATE_DATA.FAIL_DATA)),
+        ...makeAndModel,
+        ...odometerHistory,
+        ...TrnObj,
+      };
+    }
+
+    return result;
+  }
+
+  private async getPayloadData(testResult: ITestResult, type: CERTIFICATE_DATA): Promise<any> {
     const testType: any = testResult.testTypes;
 
     let defectListFromApi: IDefectParent[] = [];
@@ -47,7 +102,7 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
       flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
     }
 
-    const defects: any = await this.generateDefects(testResult.testTypes, this.type, testResult.vehicleType, flattenedDefects, this.isWelsh);
+    const defects: any = await this.generateDefects(testResult.testTypes, type, testResult.vehicleType, flattenedDefects, this.isWelsh);
 
     return {
       TestNumber: testType.testNumber,
@@ -58,9 +113,7 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
         unit: testResult.odometerReadingUnits,
       },
       IssuersName: testResult.testerName,
-      DateOfTheTest: moment(testResult.testEndTimestamp).format(
-        'DD.MM.YYYY',
-      ),
+      DateOfTheTest: moment(testResult.testEndTimestamp).format('DD.MM.YYYY'),
       CountryOfRegistrationCode: testResult.countryOfRegistration,
       VehicleEuClassification: testResult.euVehicleCategory.toUpperCase(),
       RawVIN: testResult.vin,
@@ -81,9 +134,7 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
         : moment(testType.testAnniversaryDate).format('DD.MM.YYYY'),
       SeatBeltTested: testType.seatbeltInstallationCheckDate ? 'Yes' : 'No',
       SeatBeltPreviousCheckDate: testType.lastSeatbeltInstallationCheckDate
-        ? moment(testType.lastSeatbeltInstallationCheckDate).format(
-          'DD.MM.YYYY',
-        )
+        ? moment(testType.lastSeatbeltInstallationCheckDate).format('DD.MM.YYYY')
         : '\u00A0',
       SeatBeltNumber: testType.numberOfSeatbeltsFitted,
       ...defects,

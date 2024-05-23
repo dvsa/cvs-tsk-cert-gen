@@ -41,61 +41,54 @@ export class TestResultRepository {
 
     return this.lambdaClient
       .invoke(invokeParams)
-      .then(
-        (
-          response: InvocationResponse,
-        ) => {
-          const payload: any = this.lambdaClient.validateInvocationResponse(response);
-          // TODO: convert to correct type
-          const testResults: any[] = JSON.parse(payload.body);
+      .then((response: InvocationResponse) => {
+        const payload: any = this.lambdaClient.validateInvocationResponse(response);
+        // TODO: convert to correct type
+        const testResults: any[] = JSON.parse(payload.body);
 
-          if (!testResults || testResults.length === 0) {
-            throw new HTTPError(
-              400,
-              `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`,
-            );
+        if (!testResults || testResults.length === 0) {
+          throw new HTTPError(
+            400,
+            `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`,
+          );
+        }
+
+        // Sort results by testEndTimestamp
+        testResults.sort((first: any, second: any): number => {
+          if (moment(first.testEndTimestamp).isBefore(second.testEndTimestamp)) {
+            return 1;
           }
-          // Sort results by testEndTimestamp
-          testResults.sort((first: any, second: any): number => {
-            if (
-              moment(first.testEndTimestamp).isBefore(second.testEndTimestamp)
-            ) {
-              return 1;
-            }
 
-            if (
-              moment(first.testEndTimestamp).isAfter(second.testEndTimestamp)
-            ) {
-              return -1;
-            }
+          if (moment(first.testEndTimestamp).isAfter(second.testEndTimestamp)) {
+            return -1;
+          }
 
-            return 0;
-          });
+          return 0;
+        });
 
-          // Remove the first result as it should be the current one.
-          testResults.shift();
+        // Remove the first result as it should be the current one.
+        testResults.shift();
 
-          // Set the array to only submitted tests (exclude cancelled)
-          const submittedTests = testResults.filter((testResult) => testResult.testStatus === 'submitted');
+        // Set the array to only submitted tests (exclude cancelled)
+        const submittedTests = testResults.filter((testResult) => testResult.testStatus === 'submitted');
 
-          const filteredTestResults = submittedTests
-            .filter(({ testTypes }) => testTypes?.some(
-              (testType: ITestType) => testType.testTypeClassification
-                  === 'Annual With Certificate'
-                  && (testType.testResult === 'pass'
-                    || testType.testResult === 'prs'),
-            ))
-            .slice(0, 3); // Only last three entries are used for the history.
+        const filteredTestResults = submittedTests
+          .filter(({ testTypes }) => testTypes?.some(
+            (testType: ITestType) => testType.testTypeClassification
+                === 'Annual With Certificate'
+                && (testType.testResult === 'pass'
+                  || testType.testResult === 'prs'),
+          ))
+          .slice(0, 3); // Only last three entries are used for the history.
 
-          return {
-            OdometerHistoryList: filteredTestResults.map((testResult) => ({
-              value: testResult.odometerReading,
-              unit: testResult.odometerReadingUnits,
-              date: moment(testResult.testEndTimestamp).format('DD.MM.YYYY'),
-            })),
-          };
-        },
-      )
+        return {
+          OdometerHistoryList: filteredTestResults.map((testResult) => ({
+            value: testResult.odometerReading,
+            unit: testResult.odometerReadingUnits,
+            date: moment(testResult.testEndTimestamp).format('DD.MM.YYYY'),
+          })),
+        };
+      })
       .catch((error: ServiceException | Error) => {
         console.log(error);
         throw error;

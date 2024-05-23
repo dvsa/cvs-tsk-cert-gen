@@ -6,6 +6,7 @@ import { CertificatePayloadGeneratorAdr } from './certificate-payload/Certificat
 import { CertificatePayloadGeneratorRwt } from './certificate-payload/CertificatePayloadGeneratorRwt';
 import { CertificatePayloadGeneratorPassOrFail } from './certificate-payload/CertificatePayloadGeneratorPassOrFail';
 import { CertificatePayloadGeneratorMsva } from './certificate-payload/CertificatePayloadGeneratorMsva';
+import { ICertificatePayload } from '../models/ICertificatePayload';
 
 // This is a facade
 @Service()
@@ -34,7 +35,7 @@ export class CertificatePayloadGenerator {
    * @param type - the certificate type
    * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
    */
-  public async generateCertificateData(testResult: ITestResult, type: CERTIFICATE_DATA, isWelsh: boolean = false) {
+  public async generateCertificateData(testResult: ITestResult, type: CERTIFICATE_DATA, isWelsh: boolean = false): Promise<ICertificatePayload> {
     switch (type) {
       case CERTIFICATE_DATA.PASS_DATA:
       case CERTIFICATE_DATA.FAIL_DATA:

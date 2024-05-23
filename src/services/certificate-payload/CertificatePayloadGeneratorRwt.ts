@@ -6,6 +6,7 @@ import { TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { IRoadworthinessCertificateData } from '../../models/IRoadworthinessCertificateData';
 import { DefectService } from '../DefectService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
 export class CertificatePayloadGeneratorRwt implements ICertificatePayloadGenerator {
@@ -18,8 +19,9 @@ export class CertificatePayloadGeneratorRwt implements ICertificatePayloadGenera
     this.techRecordsService = techRecordsService;
   }
 
-  public async generate(testResult: ITestResult): Promise<any> {
+  public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
     const weightDetails = await this.techRecordsService.getWeightDetails(testResult);
+
     let defectRWTList: any;
     if (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.FAIL) {
       defectRWTList = [];
@@ -40,15 +42,16 @@ export class CertificatePayloadGeneratorRwt implements ICertificatePayloadGenera
         : testResult.vrm,
       Vin: testResult.vin,
       IssuersName: testResult.testerName,
-      DateOfInspection: moment(testType.testTypeStartTimestamp).format(
-        'DD.MM.YYYY',
-      ),
+      DateOfInspection: moment(testType.testTypeStartTimestamp).format('DD.MM.YYYY'),
       TestStationPNumber: testResult.testStationPNumber,
       DocumentNumber: testType.certificateNumber,
       Date: moment(testType.testTypeStartTimestamp).format('DD.MM.YYYY'),
       Defects: defectRWTList,
       IsTrailer: testResult.vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL,
     };
-    return resultPass;
+
+    return {
+      RWT_DATA: resultPass
+    } as ICertificatePayload;
   }
 }

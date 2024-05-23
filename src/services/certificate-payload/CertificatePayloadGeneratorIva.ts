@@ -5,6 +5,7 @@ import { DefectService } from '../DefectService';
 import { IVA_30 } from '../../models/Enums';
 import { TestService } from '../TestService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
 export class CertificatePayloadGeneratorIva implements ICertificatePayloadGenerator {
@@ -17,7 +18,7 @@ export class CertificatePayloadGeneratorIva implements ICertificatePayloadGenera
     this.testService = testService;
   }
 
-  public generate(testResult: ITestResult): any {
+  public generate(testResult: ITestResult): ICertificatePayload {
     const ivaFailDetailsForDocGen = {
       vin: testResult.vin,
       serialNumber: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
@@ -34,6 +35,9 @@ export class CertificatePayloadGeneratorIva implements ICertificatePayloadGenera
       additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
       requiredStandards: testResult.testTypes.requiredStandards,
     };
-    return ivaFailDetailsForDocGen;
+
+    return {
+      IVA_DATA: ivaFailDetailsForDocGen
+    } as ICertificatePayload;
   }
 }

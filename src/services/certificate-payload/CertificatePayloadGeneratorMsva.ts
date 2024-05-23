@@ -3,6 +3,7 @@ import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { DefectService } from '../DefectService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
 export class CertificatePayloadGeneratorMsva implements ICertificatePayloadGenerator {
@@ -12,7 +13,7 @@ export class CertificatePayloadGeneratorMsva implements ICertificatePayloadGener
     this.defectService = defectService;
   }
 
-  public generate(testResult: ITestResult): any {
+  public generate(testResult: ITestResult): ICertificatePayload {
     const msvaFailDetailsForDocGen = {
       vin: testResult.vin,
       serialNumber: testResult.vrm,
@@ -27,6 +28,9 @@ export class CertificatePayloadGeneratorMsva implements ICertificatePayloadGener
       additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
       requiredStandards: testResult.testTypes.requiredStandards,
     };
-    return msvaFailDetailsForDocGen;
+
+    return {
+      MSVA_DATA: msvaFailDetailsForDocGen
+    } as ICertificatePayload;
   }
 }
