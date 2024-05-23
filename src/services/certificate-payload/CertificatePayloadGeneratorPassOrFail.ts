@@ -1,11 +1,7 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
-import {
-  CERTIFICATE_DATA,
-  TEST_RESULTS,
-  VEHICLE_TYPES,
-} from '../../models/Enums';
+import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { DefectService } from '../DefectService';
 import { TestService } from '../TestService';
 import { DefectRepository } from '../../repositories/DefectRepository';
@@ -19,29 +15,11 @@ import { TrailerRepository } from '../../repositories/TrailerRepository';
 
 @Service()
 export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloadGenerator {
-  private readonly defectService: DefectService;
-
-  private readonly testResultRepository: TestResultRepository;
-
-  private readonly defectRepository: DefectRepository;
-
-  private readonly techRecordsService: TechRecordsService;
-
-  private readonly trailerRepository: TrailerRepository;
-
-  private readonly testService: TestService;
-
   protected type: CERTIFICATE_DATA = undefined as unknown as CERTIFICATE_DATA;
 
   protected isWelsh: boolean = false;
 
-  constructor(@Inject() defectService: DefectService, @Inject() testResultRepository: TestResultRepository, @Inject() defectRepository: DefectRepository, @Inject() techRecordsService: TechRecordsService, @Inject() trailerRepository: TrailerRepository, @Inject() testService: TestService) {
-    this.defectService = defectService;
-    this.testResultRepository = testResultRepository;
-    this.defectRepository = defectRepository;
-    this.techRecordsService = techRecordsService;
-    this.trailerRepository = trailerRepository;
-    this.testService = testService;
+  constructor(private defectService: DefectService, private testResultRepository: TestResultRepository, private defectRepository: DefectRepository, private techRecordsService: TechRecordsService, private trailerRepository: TrailerRepository, private testService: TestService) {
   }
 
   public initialise(type: CERTIFICATE_DATA, isWelsh: boolean) {

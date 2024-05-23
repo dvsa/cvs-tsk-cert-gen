@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { toUint8Array } from '@smithy/util-utf8';
 import { InvocationRequest } from '@aws-sdk/client-lambda';
 import { IInvokeConfig } from '../models/IInvokeConfig';
@@ -8,13 +8,9 @@ import { TechRecordGet, TechRecordType } from '../models/Types';
 
 @Service()
 export class TechRecordsRepository {
-  private readonly config: Configuration;
+  private readonly config: Configuration = Configuration.getInstance();
 
-  private readonly lambdaClient: LambdaService;
-
-  constructor(@Inject() lambdaClient: LambdaService) {
-    this.config = Configuration.getInstance();
-    this.lambdaClient = lambdaClient;
+  constructor(private lambdaClient: LambdaService) {
   }
 
   /**

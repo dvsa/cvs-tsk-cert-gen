@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { Readable } from 'stream';
 import {
   DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client,
@@ -9,10 +9,7 @@ import {
  */
 @Service()
 class S3BucketService {
-  public readonly s3Client: S3Client;
-
-  constructor(@Inject() s3Client: S3Client) {
-    this.s3Client = s3Client;
+  constructor(private s3Client: S3Client) {
   }
 
   /**

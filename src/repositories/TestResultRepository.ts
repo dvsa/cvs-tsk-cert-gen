@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sdk/client-lambda';
 import moment from 'moment';
 import { toUint8Array } from '@smithy/util-utf8';
@@ -11,13 +11,9 @@ import { LambdaService } from '../services/LambdaService';
 
 @Service()
 export class TestResultRepository {
-  private readonly config: Configuration;
+  private readonly config: Configuration = Configuration.getInstance();
 
-  private readonly lambdaClient: LambdaService;
-
-  constructor(@Inject() lambdaClient: LambdaService) {
-    this.config = Configuration.getInstance();
-    this.lambdaClient = lambdaClient;
+  constructor(private lambdaClient: LambdaService) {
   }
 
   /**

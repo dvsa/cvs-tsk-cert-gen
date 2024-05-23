@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { DefectService } from '../DefectService';
@@ -7,10 +7,7 @@ import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
 export class CertificatePayloadGeneratorMsva implements ICertificatePayloadGenerator {
-  private readonly defectService: DefectService;
-
-  constructor(@Inject() defectService: DefectService) {
-    this.defectService = defectService;
+  constructor(private defectService: DefectService) {
   }
 
   public generate(testResult: ITestResult): ICertificatePayload {

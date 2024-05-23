@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import moment from 'moment';
 import { ICustomDefect } from '../models/ICustomDefect';
 import { IVA_30, LOCATION_WELSH } from '../models/Enums';
@@ -10,10 +10,7 @@ import { TranslationService } from './TranslationService';
 
 @Service()
 export class DefectService {
-  private readonly translationService: TranslationService;
-
-  constructor(@Inject() translationService: TranslationService) {
-    this.translationService = translationService;
+  constructor(private translationService: TranslationService) {
   }
 
   /**

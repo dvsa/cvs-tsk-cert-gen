@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { toUint8Array } from '@smithy/util-utf8';
 import { InvocationRequest } from '@aws-sdk/client-lambda';
 import { ITrailerRegistration } from '../models/ITrailerRegistration';
@@ -10,13 +10,9 @@ import { LambdaService } from '../services/LambdaService';
 
 @Service()
 export class TrailerRepository {
-  private readonly config: Configuration;
+  private readonly config: Configuration = Configuration.getInstance();
 
-  private readonly lambdaClient: LambdaService;
-
-  constructor(@Inject() lambdaClient: LambdaService) {
-    this.config = Configuration.getInstance();
-    this.lambdaClient = lambdaClient;
+  constructor(private lambdaClient: LambdaService) {
   }
 
   /**

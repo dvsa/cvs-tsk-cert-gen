@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { CERTIFICATE_DATA } from '../models/Enums';
 import { ITestResult } from '../models/ITestResult';
 import { CertificatePayloadGeneratorIva } from './certificate-payload/CertificatePayloadGeneratorIva';
@@ -11,22 +11,7 @@ import { ICertificatePayload } from '../models/ICertificatePayload';
 // This is a facade
 @Service()
 export class CertificatePayloadGenerator {
-  private readonly passOrFailGenerator: CertificatePayloadGeneratorPassOrFail;
-
-  private readonly rwtGenerator: CertificatePayloadGeneratorRwt;
-
-  private readonly adrGenerator: CertificatePayloadGeneratorAdr;
-
-  private readonly ivaGenerator: CertificatePayloadGeneratorIva;
-
-  private readonly msvaGenerator: CertificatePayloadGeneratorMsva;
-
-  constructor(@Inject() passOrFailGenerator: CertificatePayloadGeneratorPassOrFail, @Inject() rwtGenerator: CertificatePayloadGeneratorRwt, @Inject() adrGenerator: CertificatePayloadGeneratorAdr, @Inject() ivaGenerator: CertificatePayloadGeneratorIva, @Inject() msvaGenerator: CertificatePayloadGeneratorMsva) {
-    this.passOrFailGenerator = passOrFailGenerator;
-    this.rwtGenerator = rwtGenerator;
-    this.adrGenerator = adrGenerator;
-    this.ivaGenerator = ivaGenerator;
-    this.msvaGenerator = msvaGenerator;
+  constructor(private passOrFailGenerator: CertificatePayloadGeneratorPassOrFail, private rwtGenerator: CertificatePayloadGeneratorRwt, private adrGenerator: CertificatePayloadGeneratorAdr, private ivaGenerator: CertificatePayloadGeneratorIva, private msvaGenerator: CertificatePayloadGeneratorMsva) {
   }
 
   /**

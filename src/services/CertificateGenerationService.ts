@@ -1,18 +1,14 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
 import moment from 'moment';
 import { toUint8Array } from '@smithy/util-utf8';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
-import { ICertificatePayload } from '../models/ICertificatePayload';
 import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { IMOTConfig } from '../models/IMOTConfig';
 import {
-  CERTIFICATE_DATA,
-  ERRORS,
-  TEST_RESULTS,
-  VEHICLE_TYPES,
+  CERTIFICATE_DATA, ERRORS, TEST_RESULTS, VEHICLE_TYPES,
 } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 import { Configuration } from '../utils/Configuration';
@@ -20,11 +16,8 @@ import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
 import { ITestStation } from '../models/ITestStations';
 import { TestService } from './TestService';
-import { TechRecordsService } from './TechRecordsService';
 import { TestStationRepository } from '../repositories/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
-import { TrailerRepository } from '../repositories/TrailerRepository';
-import { TestResultRepository } from '../repositories/TestResultRepository';
 import { TranslationService } from './TranslationService';
 
 /**
@@ -32,45 +25,16 @@ import { TranslationService } from './TranslationService';
  */
 @Service()
 class CertificateGenerationService {
-  private readonly s3Client: S3BucketService;
-
-  private readonly config: Configuration;
-
-  private readonly lambdaClient: LambdaService;
-
-  private readonly testService: TestService = new TestService();
-
-  private readonly techRecordsService: TechRecordsService;
-
-  private readonly testStationRepository: TestStationRepository;
-
-  private readonly certificatePayloadGenerator: CertificatePayloadGenerator;
-
-  private readonly trailerRepository: TrailerRepository;
-
-  private readonly testResultRepository: TestResultRepository;
-
-  private readonly translationService: TranslationService;
+  private readonly config: Configuration = Configuration.getInstance();
 
   constructor(
-  @Inject() s3Client: S3BucketService,
-    @Inject() lambdaClient: LambdaService,
-    @Inject() techRecordsService: TechRecordsService,
-    @Inject() testStationRepository: TestStationRepository,
-    @Inject() certificatePayloadGenerator: CertificatePayloadGenerator,
-    @Inject() trailerRepository: TrailerRepository,
-    @Inject() testResultRepository: TestResultRepository,
-    @Inject() translationService: TranslationService,
+    private s3Client: S3BucketService,
+    private lambdaClient: LambdaService,
+    private testStationRepository: TestStationRepository,
+    private certificatePayloadGenerator: CertificatePayloadGenerator,
+    private translationService: TranslationService,
+    private testService: TestService,
   ) {
-    this.s3Client = s3Client;
-    this.config = Configuration.getInstance();
-    this.lambdaClient = lambdaClient;
-    this.techRecordsService = techRecordsService;
-    this.testStationRepository = testStationRepository;
-    this.certificatePayloadGenerator = certificatePayloadGenerator;
-    this.trailerRepository = trailerRepository;
-    this.testResultRepository = testResultRepository;
-    this.translationService = translationService;
   }
 
   /**

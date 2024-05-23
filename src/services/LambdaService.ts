@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import {
   InvocationRequest, InvocationResponse, LambdaClient, InvokeCommand,
 } from '@aws-sdk/client-lambda';
@@ -10,10 +10,7 @@ import { ERRORS } from '../models/Enums';
  */
 @Service()
 class LambdaService {
-  public readonly lambdaClient: LambdaClient;
-
-  constructor(@Inject() lambdaClient: LambdaClient) {
-    this.lambdaClient = lambdaClient;
+  constructor(private lambdaClient: LambdaClient) {
   }
 
   /**

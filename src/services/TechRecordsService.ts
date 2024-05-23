@@ -7,10 +7,7 @@ import { HTTPError } from '../models/HTTPError';
 
 @Service()
 export class TechRecordsService {
-  private readonly techRecordsRepository: TechRecordsRepository;
-
-  constructor(techRecordsRepository: TechRecordsRepository) {
-    this.techRecordsRepository = techRecordsRepository;
+  constructor(private techRecordsRepository: TechRecordsRepository) {
   }
 
   /**

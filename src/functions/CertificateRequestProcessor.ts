@@ -1,10 +1,7 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { validate as uuidValidate } from 'uuid';
-import {
-  CertificateGenerationService,
-  IGeneratedCertificateResponse,
-} from '../services/CertificateGenerationService';
+import { CertificateGenerationService, IGeneratedCertificateResponse } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
 import { ERRORS, TEST_RESULTS } from '../models/Enums';
 
@@ -12,13 +9,7 @@ export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
 @Service()
 export class CertificateRequestProcessor {
-  private readonly certificateGenerationService: CertificateGenerationService;
-
-  private readonly certificateUploadService: CertificateUploadService;
-
-  constructor(@Inject() certificateGenerationService: CertificateGenerationService, @Inject() certificateUploadService: CertificateUploadService) {
-    this.certificateGenerationService = certificateGenerationService;
-    this.certificateUploadService = certificateUploadService;
+  constructor(private certificateGenerationService: CertificateGenerationService, private certificateUploadService: CertificateUploadService) {
   }
 
   public async process(testResult: any): Promise<CertGenReturn> {

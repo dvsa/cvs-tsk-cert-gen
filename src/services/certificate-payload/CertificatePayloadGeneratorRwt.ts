@@ -1,4 +1,4 @@
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { TechRecordsService } from '../TechRecordsService';
@@ -10,13 +10,7 @@ import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
 export class CertificatePayloadGeneratorRwt implements ICertificatePayloadGenerator {
-  private readonly defectService: DefectService;
-
-  private readonly techRecordsService: TechRecordsService;
-
-  constructor(@Inject() defectService: DefectService, @Inject() techRecordsService: TechRecordsService) {
-    this.defectService = defectService;
-    this.techRecordsService = techRecordsService;
+  constructor(private defectService: DefectService, private techRecordsService: TechRecordsService) {
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
