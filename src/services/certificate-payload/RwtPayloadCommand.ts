@@ -5,26 +5,32 @@ import { TechRecordsService } from '../TechRecordsService';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { IRoadworthinessCertificateData } from '../../models/IRoadworthinessCertificateData';
 import { DefectService } from '../DefectService';
-import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
-export class CertificatePayloadGeneratorRwt implements ICertificatePayloadGenerator {
+export class RwtPayloadCommand implements ICertificatePayloadCommand {
+  private type?: CERTIFICATE_DATA;
+
   constructor(private defectService: DefectService, private techRecordsService: TechRecordsService) {
   }
 
+  private certificateIsAnRwt = (): boolean => this.type === CERTIFICATE_DATA.RWT_DATA;
+
   initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
+    this.type = type;
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+    if (!this.certificateIsAnRwt()) {
+      return {} as ICertificatePayload;
+    }
+
     const weightDetails = await this.techRecordsService.getWeightDetails(testResult);
 
     let defectRWTList: any;
     if (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.FAIL) {
-      defectRWTList = [];
-      testResult.testTypes.defects.forEach((defect: any) => {
-        defectRWTList.push(this.defectService.formatDefect(defect));
-      });
+      defectRWTList = testResult.testTypes.defects.map((defect: any) => this.defectService.formatDefect(defect));
     } else {
       defectRWTList = undefined;
     }

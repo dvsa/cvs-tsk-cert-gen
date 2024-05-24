@@ -7,14 +7,14 @@ import { TestService } from '../TestService';
 import { DefectRepository } from '../../repositories/DefectRepository';
 import { IDefectParent } from '../../models/IDefectParent';
 import { IFlatDefect } from '../../models/IFlatDefect';
-import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { TestResultRepository } from '../../repositories/TestResultRepository';
 import { TechRecordsService } from '../TechRecordsService';
 import { TrailerRepository } from '../../repositories/TrailerRepository';
 
 @Service()
-export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloadGenerator {
+export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
   protected type: CERTIFICATE_DATA = undefined as unknown as CERTIFICATE_DATA;
 
   protected isWelsh: boolean = false;
@@ -22,14 +22,21 @@ export class CertificatePayloadGeneratorPassOrFail implements ICertificatePayloa
   constructor(private defectService: DefectService, private testResultRepository: TestResultRepository, private defectRepository: DefectRepository, private techRecordsService: TechRecordsService, private trailerRepository: TrailerRepository, private testService: TestService) {
   }
 
+  private certificateIsAnPassOrFail = (): boolean => this.type === CERTIFICATE_DATA.PASS_DATA || this.type === CERTIFICATE_DATA.FAIL_DATA;
+
   public initialise(type: CERTIFICATE_DATA, isWelsh: boolean) {
     this.type = type;
     this.isWelsh = isWelsh;
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+    if (!this.certificateIsAnPassOrFail()) {
+      return {} as ICertificatePayload;
+    }
+
     let defectListFromApi: IDefectParent[] = [];
     let flattenedDefects: IFlatDefect[] = [];
+
     if (this.isWelsh) {
       defectListFromApi = await this.defectRepository.getDefectTranslations();
       flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);

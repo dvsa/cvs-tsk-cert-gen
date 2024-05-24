@@ -1,11 +1,11 @@
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { ITestResult } from '../../models/ITestResult';
-import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 
 @Service()
-export class WatermarkCommand implements ICertificatePayloadGenerator {
+export class WatermarkCommand implements ICertificatePayloadCommand {
   initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
   }
 

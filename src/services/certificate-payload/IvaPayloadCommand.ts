@@ -4,18 +4,27 @@ import { ITestResult } from '../../models/ITestResult';
 import { DefectService } from '../DefectService';
 import { CERTIFICATE_DATA, IVA_30 } from '../../models/Enums';
 import { TestService } from '../TestService';
-import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 
 @Service()
-export class CertificatePayloadGeneratorIva implements ICertificatePayloadGenerator {
+export class IvaPayloadCommand implements ICertificatePayloadCommand {
+  private type?: CERTIFICATE_DATA;
+
   constructor(private defectService: DefectService, private testService: TestService) {
   }
 
+  private certificateIsAnIva = (): boolean => this.type === CERTIFICATE_DATA.IVA_DATA;
+
   initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
+    this.type = type;
   }
 
   public generate(testResult: ITestResult): ICertificatePayload {
+    if (!this.certificateIsAnIva()) {
+      return {} as ICertificatePayload;
+    }
+
     const ivaFailDetailsForDocGen = {
       vin: testResult.vin,
       serialNumber: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,

@@ -4,11 +4,11 @@ import { ITestResult } from '../../models/ITestResult';
 import { S3BucketService } from '../S3BucketService';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import { ServiceException } from '@aws-sdk/client-lambda';
-import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 
 @Service()
-export class SignatureCommand implements ICertificatePayloadGenerator {
+export class SignatureCommand implements ICertificatePayloadCommand {
   constructor(private s3Client: S3BucketService) {
     this.s3Client = s3Client;
   }

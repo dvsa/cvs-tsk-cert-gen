@@ -2,19 +2,28 @@ import { Service } from 'typedi';
 import { ITestResult } from '../../models/ITestResult';
 import { TechRecordType } from '../../models/Types';
 import { TechRecordsService } from '../TechRecordsService';
-import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 
 @Service()
-export class CertificatePayloadGeneratorAdr implements ICertificatePayloadGenerator {
+export class AdrPayloadCommand implements ICertificatePayloadCommand {
+  private type?: CERTIFICATE_DATA;
+
   constructor(private techRecordsService: TechRecordsService) {
   }
 
-  initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
+  private certificateIsAnAdr = (): boolean => this.type === CERTIFICATE_DATA.ADR_DATA;
+
+  public initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
+    this.type = type;
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+    if (!this.certificateIsAnAdr()) {
+      return {} as ICertificatePayload;
+    }
+
     const adrDetails: TechRecordType<any> = await this.techRecordsService.getAdrDetails(testResult);
     const makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
 

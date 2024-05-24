@@ -1,27 +1,40 @@
 import { Service } from 'typedi';
 import { CERTIFICATE_DATA } from '../models/Enums';
 import { ITestResult } from '../models/ITestResult';
-import { CertificatePayloadGeneratorIva } from './certificate-payload/CertificatePayloadGeneratorIva';
-import { CertificatePayloadGeneratorAdr } from './certificate-payload/CertificatePayloadGeneratorAdr';
-import { CertificatePayloadGeneratorRwt } from './certificate-payload/CertificatePayloadGeneratorRwt';
-import { CertificatePayloadGeneratorPassOrFail } from './certificate-payload/CertificatePayloadGeneratorPassOrFail';
-import { CertificatePayloadGeneratorMsva } from './certificate-payload/CertificatePayloadGeneratorMsva';
+import { IvaPayloadCommand } from './certificate-payload/IvaPayloadCommand';
+import { AdrPayloadCommand } from './certificate-payload/AdrPayloadCommand';
+import { RwtPayloadCommand } from './certificate-payload/RwtPayloadCommand';
+import { PassOrFailPayloadCommand } from './certificate-payload/PassOrFailPayloadCommand';
+import { MsvaPayloadCommand } from './certificate-payload/MsvaPayloadCommand';
 import { ICertificatePayload } from '../models/ICertificatePayload';
-import { ICertificatePayloadGenerator } from './ICertificatePayloadGenerator';
+import { ICertificatePayloadCommand } from './ICertificatePayloadCommand';
 import { SignatureCommand } from './certificate-payload/SignatureCommand';
 import { WatermarkCommand } from './certificate-payload/WatermarkCommand';
+import { TestHistoryCommand } from './certificate-payload/TestHistoryCommand';
 
-// This is a facade
 @Service()
-export class CertificatePayloadGenerator implements ICertificatePayloadGenerator {
-  private commands: ICertificatePayloadGenerator[] = [];
+export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
+  private commands: ICertificatePayloadCommand[] = [
+    this.passOrFailGenerator,
+    this.rwtGenerator,
+    this.adrGenerator,
+    this.ivaGenerator,
+    this.msvaGenerator,
+    this.signatureCommand,
+    this.watermarkCommand,
+    this.testHistoryCommand,
+  ];
 
+  /**
+   * Creates a new instance of the certificate payload generator. Generates a payload
+   * that can be used for generating a certificate.
+   */
   constructor(
-    private passOrFailGenerator: CertificatePayloadGeneratorPassOrFail,
-    private rwtGenerator: CertificatePayloadGeneratorRwt,
-    private adrGenerator: CertificatePayloadGeneratorAdr,
-    private ivaGenerator: CertificatePayloadGeneratorIva,
-    private msvaGenerator: CertificatePayloadGeneratorMsva,
+    private passOrFailGenerator: PassOrFailPayloadCommand,
+    private rwtGenerator: RwtPayloadCommand,
+    private adrGenerator: AdrPayloadCommand,
+    private ivaGenerator: IvaPayloadCommand,
+    private msvaGenerator: MsvaPayloadCommand,
     private signatureCommand: SignatureCommand,
     private watermarkCommand: WatermarkCommand,
     private testHistoryCommand: TestHistoryCommand,
@@ -45,32 +58,6 @@ export class CertificatePayloadGenerator implements ICertificatePayloadGenerator
    * @param isWelsh True if a Welsh certificate should also be generated.
    */
   initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
-    this.commands = [];
-
-    switch (type) {
-      case CERTIFICATE_DATA.PASS_DATA:
-      case CERTIFICATE_DATA.FAIL_DATA:
-        this.commands.push(this.passOrFailGenerator);
-        break;
-      case CERTIFICATE_DATA.RWT_DATA:
-        this.commands.push(this.rwtGenerator);
-        break;
-      case CERTIFICATE_DATA.ADR_DATA:
-        this.commands.push(this.adrGenerator);
-        break;
-      case CERTIFICATE_DATA.IVA_DATA:
-        this.commands.push(this.ivaGenerator);
-        break;
-      case CERTIFICATE_DATA.MSVA_DATA:
-        this.commands.push(this.msvaGenerator);
-        break;
-      default:
-        throw Error(`Certificate data request not found (${type as string})`);
-    }
-
-    this.commands.push(this.signatureCommand);
-    this.commands.push(this.watermarkCommand);
-
     this.commands.forEach((cmd) => cmd.initialise(type, isWelsh));
   }
 
