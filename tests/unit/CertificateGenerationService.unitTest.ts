@@ -24,14 +24,11 @@ import defectsMock from "../../tests/resources/defects_mock.json";
 import flatDefectsMock from "../../tests/resources/flattened-defects.json";
 import testStationsMock from "../../tests/resources/testStationsMock.json";
 import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
-import { Configuration } from "../../src/utils/Configuration";
-import { ITestStation } from "../../src/models/ITestStations";
 import { IDefectParent } from "../../src/models/IDefectParent";
 import { HTTPError } from "../../src/models/HTTPError";
 import queueEventPRS from "../resources/queue-event-prs.json";
 import queueEventPass from "../resources/queue-event-pass.json";
 import queueEventFail from "../resources/queue-event-fail.json";
-import Axios from "axios";
 
 jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -771,68 +768,23 @@ describe("Certificate Generation Service", () => {
   });
 
   describe("welsh address function", () => {
-    context("test getThisTestStation method", () => {
-      it("should return a postcode if pNumber exists in the list of test stations", () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
-        const testStation = testStationsMock[0];
-        const postCode = certGenSvc.getThisTestStation(
-          testStationsMock,
-          "P11223"
-        );
-        expect(postCode).toEqual(testStation.testStationPostcode);
-      });
-      it("should return a null and message if pNumber does not exists in the list of test stations", () => {
-        const logSpy = jest.spyOn(console, "log");
-
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
-        const postCode = certGenSvc.getThisTestStation(
-          testStationsMock,
-          "445567"
-        );
-        expect(postCode).toBeNull();
-        expect(logSpy).toHaveBeenCalledWith(
-          "Test station details could not be found for 445567"
-        );
-        logSpy.mockClear();
-      });
-      it("should return a null and message if the list of test stations is empty", () => {
-        const logSpy = jest.spyOn(console, "log");
-
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
-        const postCode = certGenSvc.getThisTestStation([], "P50742");
-        expect(postCode).toBeNull();
-        expect(logSpy).toHaveBeenCalledWith("Test stations data is empty");
-        logSpy.mockClear();
-      });
-    });
-
+    const mockStations = testStationsMock;
     context("test getTestStation method", () => {
-      it("should return an array of test stations if invoke is successful", async () => {
+      it("should return a test station object if invoke is successful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
           new LambdaService(new LambdaClient())
         );
-
-        const mockStations = testStationsMock;
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
+          Payload: JSON.stringify({ body: JSON.stringify(mockStations[0]) }),
           FunctionError: undefined,
           StatusCode: 200,
         });
 
-        const testStations = await certGenSvc.getTestStations();
+        const testStation = await certGenSvc.getTestStation("somePNumber");
 
-        expect(testStations).toEqual(mockStations);
+        expect(testStation).toEqual(mockStations[0]);
         jest.clearAllMocks();
       });
       it("should invoke test stations up to 3 times if there is an issue", async () => {
@@ -849,15 +801,15 @@ describe("Certificate Generation Service", () => {
           StatusCode: 200,
         });
 
-        const testStations = await certGenSvc.getTestStations();
+        const testStation = await certGenSvc.getTestStation("somePNumber");
 
-        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the test stations on attempt 3: Error");
+        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the test station on attempt 3: Error");
         expect(logSpy).toHaveBeenCalledTimes(3);
-        expect(testStations).not.toBeNull();
+        expect(testStation).not.toBeNull();
         logSpy.mockClear();
         jest.clearAllMocks();
       });
-      it("should return an empty array if test stations invoke is unsuccessful", async () => {
+      it("should return an empty object if test stations invoke is unsuccessful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
           new LambdaService(new LambdaClient())
@@ -869,30 +821,28 @@ describe("Certificate Generation Service", () => {
           StatusCode: 200,
         });
 
-        const testStations = await certGenSvc.getTestStations();
+        const testStation = await certGenSvc.getTestStation("somePNumber");
 
-        expect(testStations).toEqual([]);
+        expect(testStation).toEqual({});
         jest.clearAllMocks();
       });
-      it("should throw error if issue when parsing test stations", async () => {
+      it("should throw error if issue when parsing test station", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
           new LambdaService(new LambdaClient())
         );
 
-        const mockStations: ITestStation[] = [];
-
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: JSON.stringify(mockStations) }),
+          Payload: JSON.stringify({ body: `No resources match the search criteria.`}),
           FunctionError: undefined,
           StatusCode: 200,
         });
 
-        const defects = await certGenSvc.getTestStations()
+        const testStation = await certGenSvc.getTestStation("somePNumber")
           .catch((e) => {
             expect(e).toBeInstanceOf(HTTPError);
           });
-        expect(defects).toEqual(mockStations);
+        expect(testStation).toEqual({});
         jest.clearAllMocks();
       });
     });
@@ -1222,9 +1172,14 @@ describe("Certificate Generation Service", () => {
 
           it("should identify the test requires translation", async () => {
 
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(mockStations[0]) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
 
             const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
-            expect(isWelsh).toBeFalsy();
+            expect(isWelsh).toBeTruthy();
             jest.resetAllMocks();
           });
         });
@@ -1232,10 +1187,17 @@ describe("Certificate Generation Service", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
 
+          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            Payload: JSON.stringify({ body: JSON.stringify(mockStations[2]) }),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
+
           it("should identify that the test does not require translation", async () => {
 
             const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
             expect(isWelsh).toBeFalsy();
+            jest.resetAllMocks();
           });
         });
         context("with an invalid Welsh test station P number", () => {
@@ -1243,154 +1205,66 @@ describe("Certificate Generation Service", () => {
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "Nonsense_P_Number";
 
-          it("should identify no test stations exist with that P number and log relevant message", async () => {
+          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            Payload: JSON.stringify({ body: `No resources match the search criteria.`}),
+            FunctionError: undefined,
+            StatusCode: 404,
+          });
 
-            const logSpy = jest.spyOn(console, "log");
+          it("should identify no test station exists with that P number and log relevant message", async () => {
+
+            const logSpy = jest.spyOn(console, "error");
 
             const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
             expect(isWelsh).toBeFalsy();
-            expect(logSpy).toHaveBeenCalledWith(`Test stations data is empty`);
+            expect(logSpy).toHaveBeenCalledWith(`Failed to retrieve test station details for Nonsense_P_Number`);
             logSpy.mockClear();
+            jest.resetAllMocks();
           });
         });
-      });
-    });
-    context("test postcode lookup method", () => {
-      context("when the SECRET_KEY environment variable does not exist", () => {
-        it("should log the the errors", async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient())
-          );
+        context("with a test station that does not have country populated", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "Nonsense_P_Number";
 
-          const logSpy = jest.spyOn(console, "log");
+          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            Payload: JSON.stringify({ body: JSON.stringify(mockStations[4]) }),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
-          Configuration.prototype.getWelshSecretKey = jest.fn().mockReturnValue(null);
+          it("should identify no test stations exist with that P number and log relevant message", async () => {
 
-          await certGenSvc.lookupPostcode("some_postcode");
-          expect(logSpy.mock.calls[0][0]).toBe("Secret details not found.");
-          expect(logSpy.mock.calls[1][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for some_postcode is false");
+            const logSpy = jest.spyOn(console, "error");
 
-          logSpy.mockClear();
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Failed to retrieve test station details for Nonsense_P_Number`);
+            logSpy.mockClear();
+            jest.resetAllMocks();
+          });
         });
-      });
-      context("when the SECRET_KEY environment variable does exist", () => {
-        const mockSecretResponse = {
-          url: "mockUrl",
-          key: "mockKey"
-        };
-        it("should log correctly if isWelshAddress was true", async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient())
-          );
+        context("with a response object that has testStation undefined", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "P11223";
 
-          const logSpy = jest.spyOn(console, "log");
+          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            Payload: JSON.stringify({ body: JSON.stringify(undefined) }),
+            FunctionError: undefined,
+            StatusCode: 200,
+          });
 
-          Axios.create = jest.fn().mockReturnValueOnce(({
-            get: jest.fn().mockResolvedValueOnce({
-              data: {
-                isWelshAddress: true
-              }
-            })
-          }));
-          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
+          it("should identify test station undefined and log relevant message", async () => {
 
-          const response = await certGenSvc.lookupPostcode("welsh_postcode");
-          expect(logSpy.mock.calls[0][0]).toBe("Return value for isWelsh for welsh_postcode is true");
-          expect(response).toBeTruthy();
+            const logSpy = jest.spyOn(console, "error");
 
-          logSpy.mockClear();
-          jest.resetAllMocks();
-        });
-        it("should log correctly if isWelshAddress was false", async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient())
-          );
-
-          const logSpy = jest.spyOn(console, "log");
-
-          Axios.create = jest.fn().mockReturnValueOnce(({
-            get: jest.fn().mockResolvedValueOnce({
-              data: {
-                isWelshAddress: false
-              }
-            })
-          }));
-
-          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
-
-          const response = await certGenSvc.lookupPostcode("non_welsh_postcode");
-          expect(logSpy.mock.calls[0][0]).toBe("Return value for isWelsh for non_welsh_postcode is false");
-          expect(response).toBeFalsy();
-
-          logSpy.mockClear();
-          jest.resetAllMocks();
-        });
-        it("should return false if error is thrown due to invalid type in response from api call", async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient())
-          );
-
-          const logSpy = jest.spyOn(console, "log");
-
-          Axios.create = jest.fn().mockReturnValueOnce(({
-            get: jest.fn().mockResolvedValueOnce({
-              data: {
-                someRandomKey: true
-              }
-            })
-          }));
-
-          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
-
-          const response = await certGenSvc.lookupPostcode("welsh_postcode")
-            .catch((e) => {
-              expect(e).toBeInstanceOf(HTTPError);
-            });
-          expect(response).toBeFalsy();
-
-          logSpy.mockClear();
-          jest.resetAllMocks();
-        });
-        it("should return false if axios client is null", async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient())
-          );
-
-          const logSpy = jest.spyOn(console, "log");
-
-          Axios.create = jest.fn().mockReturnValueOnce(null);
-
-          Configuration.prototype.getSecret = jest.fn().mockReturnValue(mockSecretResponse);
-
-          const response = await certGenSvc.lookupPostcode("welsh_postcode");
-          expect(logSpy.mock.calls[0][0]).toBe("SMC Postcode lookup details not found. Return value for isWelsh for welsh_postcode is false");
-          expect(response).toBeFalsy();
-
-          logSpy.mockClear();
-          jest.resetAllMocks();
-        });
-        it("should return false if an error occurs in axios client", async () => {
-          const certGenSvc = new CertificateGenerationService(
-            null as any,
-            new LambdaService(new LambdaClient())
-          );
-
-          const logSpy = jest.spyOn(console, "error");
-
-          const mockError = new Error("some random error");
-          Configuration.prototype.getSecret = jest.fn().mockRejectedValue(mockError);
-
-          const response = await certGenSvc.lookupPostcode("welsh_postcode");
-          expect(logSpy.mock.calls[0][0]).toBe("Error generating Axios Instance: Error: some random error");
-          expect(response).toBeFalsy();
-
-          logSpy.mockClear();
-          jest.resetAllMocks();
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Failed to retrieve test station details for P11223`);
+            logSpy.mockClear();
+            jest.resetAllMocks();
+          });
         });
       });
     });

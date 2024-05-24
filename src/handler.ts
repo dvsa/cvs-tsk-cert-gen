@@ -1,21 +1,16 @@
-import { PutSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { certGen } from "./functions/certGen";
 
 const isOffline: boolean =
   !process.env.BRANCH || process.env.BRANCH === "local";
 
+let credentials = {};
+
 if (isOffline) {
-  const SMC = new SecretsManagerClient({});
-
-  const command = new PutSecretValueCommand({
-    SecretId: "secretid1",
-    SecretString: JSON.stringify({
-      accessKeyId: "accessKey1",
-      secretAccessKey: "verySecretKey1"
-    }),
-  });
-
-  SMC.send(command)
+  credentials = {
+    accessKeyId: "accessKey1",
+    secretAccessKey: "verySecretKey1",
+  };
 }
 
+export { credentials };
 export { certGen as handler };
