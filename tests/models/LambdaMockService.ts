@@ -50,12 +50,11 @@ class LambdaMockService extends LambdaService {
    * @param params - InvocationRequest params
    */
   // eslint-disable-next-line
-  public async invoke(
-    params: InvocationRequest,
-  ): Promise<InvocationResponse> {
+  public async invoke(params: InvocationRequest): Promise<InvocationResponse> {
     const mockFunction: IMockFunctions | undefined = LambdaMockService.responses.find(
       (item: IMockFunctions) => item.functionName === params.FunctionName,
     );
+
     if (!mockFunction) {
       const error: ServiceException = {
         $metadata: { httpStatusCode: 415 },
@@ -66,8 +65,8 @@ class LambdaMockService extends LambdaService {
       };
       throw error;
     }
-    const payload: any = mockFunction.response;
 
+    const payload: any = mockFunction.response;
     const response: InvocationResponse = {
       StatusCode: 200,
       Payload: payload,

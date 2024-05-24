@@ -17,9 +17,7 @@ class LambdaService {
    * Invokes a lambda function based on the given parameters
    * @param params - InvocationRequest params
    */
-  public async invoke(
-    params: InvocationRequest,
-  ): Promise<InvocationResponse> {
+  public async invoke(params: InvocationRequest): Promise<InvocationResponse> {
     return this.lambdaClient.send(new InvokeCommand(params));
   }
 
@@ -27,34 +25,23 @@ class LambdaService {
    * Validates the invocation response
    * @param response - the invocation response
    */
-  public validateInvocationResponse(
-    response: InvocationResponse,
-  ): Promise<any> {
+  public validateInvocationResponse(response: InvocationResponse): Promise<any> {
     if (
       !response.Payload
       || Buffer.from(response.Payload).toString() === ''
       || (response.StatusCode && response.StatusCode >= 400)
     ) {
-      throw new HTTPError(
-        500,
-        `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`,
-      );
+      throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`);
     }
 
     const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
 
     if (payload.statusCode >= 400) {
-      throw new HTTPError(
-        500,
-        `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`,
-      );
+      throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`);
     }
 
     if (!payload.body) {
-      throw new HTTPError(
-        400,
-        `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`,
-      );
+      throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
     }
 
     return payload;

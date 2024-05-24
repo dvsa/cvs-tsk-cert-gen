@@ -273,6 +273,7 @@ class CertificateGenerationService {
 
     const { testTypes, testHistory } = testResult;
     const testType = this.getTestType(testResult);
+
     const response = await this.certificatePayloadGenerator.generateCertificateData(testResult, testType, isWelsh);
 
     response.Watermark = process.env.BRANCH === 'prod' ? '' : 'NOT VALID';
