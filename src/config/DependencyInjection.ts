@@ -2,6 +2,7 @@ import { Container, Service } from 'typedi';
 import { LambdaClient } from '@aws-sdk/client-lambda';
 import * as AWSXRay from 'aws-xray-sdk';
 import { S3Client } from '@aws-sdk/client-s3';
+import { StandardRetryStrategy } from '@smithy/util-retry';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
 import { TranslationService } from '../services/TranslationService';
@@ -10,10 +11,21 @@ import { TranslationServiceFake } from '../../tests/models/TranslationServiceFak
 @Service()
 export class DependencyInjection {
   public static register() {
-    const config: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
+    const configInstance = Configuration.getInstance();
+    const config = configInstance.getConfig();
+    const invokeCconfig: IInvokeConfig = configInstance.getInvokeConfig();
 
-    Container.set(LambdaClient, AWSXRay.captureAWSv3Client(new LambdaClient(config.params)));
-    Container.set(S3Client, AWSXRay.captureAWSv3Client(new S3Client(config)));
+    const retryStrategy = new StandardRetryStrategy(config.network.retryAttempts);
+
+    Container.set(LambdaClient, AWSXRay.captureAWSv3Client(new LambdaClient({
+      ...invokeCconfig.params,
+      retryStrategy,
+    })));
+
+    Container.set(S3Client, AWSXRay.captureAWSv3Client(new S3Client({
+      ...invokeCconfig,
+      retryStrategy,
+    })));
 
     const isOffline = (process.env.IS_OFFLINE ?? false) as boolean;
     if (isOffline) {

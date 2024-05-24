@@ -40,10 +40,6 @@ class LambdaService {
       throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`);
     }
 
-    if (!payload.body) {
-      throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
-    }
-
     return payload;
   }
 }

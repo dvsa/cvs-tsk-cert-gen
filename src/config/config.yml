@@ -40,6 +40,8 @@ invoke:
         name: test-stations-${BRANCH}
       defects:
         name: defects-${BRANCH}
+network:
+  retryAttempts: 3
 version:
   trailerRegistration: v1
 s3:

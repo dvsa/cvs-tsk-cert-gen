@@ -60,6 +60,7 @@
     "@dvsa/cvs-microservice-common": "^0.9.8",
     "@dvsa/cvs-type-definitions": "^2.1.11",
     "@smithy/types": "^2.12.0",
+    "@smithy/util-retry": "^3.0.0",
     "@smithy/util-utf8": "^2.3.0",
     "aws-lambda": "^1.0.5",
     "aws-xray-sdk": "^3.6.0",
