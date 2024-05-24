@@ -4,10 +4,14 @@ import { ITestResult } from '../../models/ITestResult';
 import { DefectService } from '../DefectService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
+import { CERTIFICATE_DATA } from '../../models/Enums';
 
 @Service()
 export class CertificatePayloadGeneratorMsva implements ICertificatePayloadGenerator {
   constructor(private defectService: DefectService) {
+  }
+
+  initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
   }
 
   public generate(testResult: ITestResult): ICertificatePayload {

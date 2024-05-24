@@ -2,7 +2,7 @@ import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { DefectService } from '../DefectService';
-import { IVA_30 } from '../../models/Enums';
+import { CERTIFICATE_DATA, IVA_30 } from '../../models/Enums';
 import { TestService } from '../TestService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
@@ -10,6 +10,9 @@ import { ICertificatePayload } from '../../models/ICertificatePayload';
 @Service()
 export class CertificatePayloadGeneratorIva implements ICertificatePayloadGenerator {
   constructor(private defectService: DefectService, private testService: TestService) {
+  }
+
+  initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
   }
 
   public generate(testResult: ITestResult): ICertificatePayload {

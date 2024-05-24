@@ -211,23 +211,6 @@ class CertificateGenerationService {
     return false;
   }
 
-  /**
-   * Retrieves a signature from the cvs-signature S3 bucket
-   * @param staffId - staff ID of the signature you want to retrieve
-   * @returns the signature as a base64 encoded string
-   */
-  public async getSignature(staffId: string): Promise<string | null> {
-    return this.s3Client
-      .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-      .then((result: GetObjectCommandOutput) => result.Body!.transformToString())
-      .catch((error: ServiceException) => {
-        console.error(
-          `Unable to fetch signature for staff id ${staffId}. ${error.message}`,
-        );
-        return null;
-      });
-  }
-
   private getTestType(testResult: any): CERTIFICATE_DATA {
     if (this.testService.isHgvTrlRoadworthinessCertificate(testResult)) {
       return CERTIFICATE_DATA.RWT_DATA;
@@ -267,20 +250,10 @@ class CertificateGenerationService {
       testResult.testerName = name;
     }
 
-    const signature: string | null = await this.getSignature(
-      testResult.createdById ?? testResult.testerStaffId,
-    );
-
     const { testTypes, testHistory } = testResult;
     const testType = this.getTestType(testResult);
 
     const response = await this.certificatePayloadGenerator.generateCertificateData(testResult, testType, isWelsh);
-
-    response.Watermark = process.env.BRANCH === 'prod' ? '' : 'NOT VALID';
-    response.Signature = {
-      ImageType: 'png',
-      ImageData: signature,
-    };
 
     if (testHistory) {
       // eslint-disable-next-line

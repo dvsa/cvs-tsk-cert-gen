@@ -2,7 +2,7 @@ import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { TechRecordsService } from '../TechRecordsService';
-import { TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
+import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { IRoadworthinessCertificateData } from '../../models/IRoadworthinessCertificateData';
 import { DefectService } from '../DefectService';
 import { ICertificatePayloadGenerator } from '../ICertificatePayloadGenerator';
@@ -11,6 +11,9 @@ import { ICertificatePayload } from '../../models/ICertificatePayload';
 @Service()
 export class CertificatePayloadGeneratorRwt implements ICertificatePayloadGenerator {
   constructor(private defectService: DefectService, private techRecordsService: TechRecordsService) {
+  }
+
+  initialise(type: CERTIFICATE_DATA, isWelsh: boolean = false) {
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
