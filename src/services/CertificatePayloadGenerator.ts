@@ -24,6 +24,7 @@ export class CertificatePayloadGenerator implements ICertificatePayloadGenerator
     private msvaGenerator: CertificatePayloadGeneratorMsva,
     private signatureCommand: SignatureCommand,
     private watermarkCommand: WatermarkCommand,
+    private testHistoryCommand: TestHistoryCommand,
   ) {
   }
 

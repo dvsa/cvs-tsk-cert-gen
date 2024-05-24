@@ -255,23 +255,6 @@ class CertificateGenerationService {
 
     const response = await this.certificatePayloadGenerator.generateCertificateData(testResult, testType, isWelsh);
 
-    if (testHistory) {
-      // eslint-disable-next-line
-      for (const history of testHistory) {
-        // eslint-disable-next-line
-        for (const testType of history.testTypes) {
-          if (testType.testCode === testTypes.testCode) {
-            response.Reissue = {
-              Reason: 'Replacement',
-              Issuer: testResult.createdByName,
-              Date: moment(testResult.createdAt).format('DD.MM.YYYY'),
-            };
-            break;
-          }
-        }
-      }
-    }
-
     return JSON.parse(JSON.stringify(response));
   }
 }
