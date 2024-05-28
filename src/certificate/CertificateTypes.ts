@@ -6,7 +6,7 @@ import { Configuration } from '../utils/Configuration';
 export class CertificateTypes {
   private readonly config: Configuration = Configuration.getInstance();
 
-  public getCertificateType(type: string): any {
+  public getCertificateType(type: string): string {
     const config: IMOTConfig = this.config.getMOTConfig();
 
     const certTypes = {

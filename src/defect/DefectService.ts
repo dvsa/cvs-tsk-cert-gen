@@ -104,7 +104,7 @@ export class DefectService {
    * @param defect - defect for which to generate the formatted string
    */
   public formatDefect(defect: IDefect): string {
-    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+    const toUpperFirstLetter = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
     let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
 
@@ -128,7 +128,7 @@ export class DefectService {
                 defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
                 break;
               default:
-                defectString += ` ${toUpperFirstLetter(defect.additionalInformation.location[keyTyped])}`;
+                defectString += ` ${toUpperFirstLetter(defect.additionalInformation.location[keyTyped] as string)}`;
                 break;
             }
           }
@@ -158,9 +158,11 @@ export class DefectService {
     } if (filteredFlatDefects.length === 1) {
       return filteredFlatDefects[0];
     }
+
     const filteredWelshDefectsOnVehicleType = filteredFlatDefects.filter(
       (flatDefect: IFlatDefect) => flatDefect.forVehicleType!.includes(vehicleType),
     );
+
     return filteredWelshDefectsOnVehicleType[0];
   }
 
@@ -170,17 +172,11 @@ export class DefectService {
    * @param vehicleType - the vehicle type from the test result
    * @param flattenedDefects - the list of flattened defects
    */
-  public formatDefectWelsh(defect: any, vehicleType: any, flattenedDefects: IFlatDefect[]): string | null {
-    const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+  public formatDefectWelsh(defect: IDefect, vehicleType: any, flattenedDefects: IFlatDefect[]): string | null {
+    const toUpperFirstLetter = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
-    const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter(
-      (x: IFlatDefect) => defect.deficiencyRef === x.ref,
-    );
-
-    const filteredFlatDefect: IFlatDefect | null = this.filterFlatDefects(
-      filteredFlatDefects,
-      vehicleType,
-    );
+    const filteredFlatDefects = flattenedDefects.filter((x) => defect.deficiencyRef === x.ref);
+    const filteredFlatDefect = this.filterFlatDefects(filteredFlatDefects, vehicleType);
 
     if (filteredFlatDefect !== null) {
       let defectString = `${defect.deficiencyRef} ${filteredFlatDefect.itemDescriptionWelsh}`;
@@ -192,9 +188,10 @@ export class DefectService {
       if (defect.additionalInformation.location) {
         Object.keys(defect.additionalInformation.location).forEach(
           (location: string, index: number, array: string[]) => {
-            if (defect.additionalInformation.location[location]) {
+            const keyTyped = location as keyof typeof defect.additionalInformation.location;
+            if (defect.additionalInformation.location[keyTyped]) {
               const welshLocation = this.translationService.convertLocationWelsh(
-                defect.additionalInformation.location[location],
+                defect.additionalInformation.location[keyTyped] as LOCATION_ENGLISH,
               );
 
               switch (location) {
@@ -281,4 +278,3 @@ export class DefectService {
     }
   }
 }
-

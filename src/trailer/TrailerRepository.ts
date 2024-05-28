@@ -48,7 +48,7 @@ export class TrailerRepository {
         throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`);
       }
 
-      const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
+      const payload = JSON.parse(Buffer.from(response.Payload).toString());
       if (payload.statusCode === 404) {
         console.debug(`vinOrChassisWithMake not found ${vin + make}`);
         return { Trn: undefined, IsTrailer: true };

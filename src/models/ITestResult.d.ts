@@ -46,6 +46,7 @@ export interface IBaseTestResult {
 
 export interface ITestResult extends IBaseTestResult {
   testTypes: ITestType;
+  createdById?: string;
 }
 
 export interface ITestResultActual extends IBaseTestResult {

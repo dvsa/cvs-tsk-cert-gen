@@ -1,5 +1,6 @@
 import { Service } from 'typedi';
 import { TranslationService } from '../../src/services/TranslationService';
+import { ITestResult } from '../../src/models/ITestResult';
 
 /**
  * Fake for feature flags
@@ -7,7 +8,7 @@ import { TranslationService } from '../../src/services/TranslationService';
 
 @Service()
 export class TranslationServiceFake extends TranslationService {
-  public shouldTranslateTestResult(testResult: any): Promise<boolean> {
+  public shouldTranslateTestResult(testResult: ITestResult): Promise<boolean> {
     return Promise.resolve(true);
   }
 }

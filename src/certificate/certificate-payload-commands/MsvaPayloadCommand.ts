@@ -19,9 +19,9 @@ export class MsvaPayloadCommand implements ICertificatePayloadCommand {
     this.type = type;
   }
 
-  public generate(testResult: ITestResult): ICertificatePayload {
+  public generate(testResult: ITestResult): Promise<ICertificatePayload> {
     if (!this.certificateIsAnMsva()) {
-      return {} as ICertificatePayload;
+      return Promise.resolve({} as ICertificatePayload);
     }
 
     const msvaFailDetailsForDocGen = {
@@ -39,8 +39,8 @@ export class MsvaPayloadCommand implements ICertificatePayloadCommand {
       requiredStandards: testResult.testTypes.requiredStandards,
     };
 
-    return {
+    return Promise.resolve({
       MSVA_DATA: msvaFailDetailsForDocGen
-    } as ICertificatePayload;
+    } as ICertificatePayload);
   }
 }

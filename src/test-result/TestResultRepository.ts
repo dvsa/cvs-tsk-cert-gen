@@ -50,7 +50,7 @@ export class TestResultRepository {
       }
 
       // Sort results by testEndTimestamp
-      testResults.sort((first: any, second: any): number => {
+      testResults.sort((first, second): number => {
         if (moment(first.testEndTimestamp).isBefore(second.testEndTimestamp)) {
           return 1;
         }

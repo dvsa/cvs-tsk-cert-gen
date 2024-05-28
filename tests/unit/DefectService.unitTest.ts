@@ -9,6 +9,7 @@ import flatDefectsMock from '../resources/flattened-defects.json';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { DefectService } from '../../src/defect/DefectService';
+import { IDefect } from '../../src/models/IDefect';
 
 context('Defects', () => {
   describe('welsh defect function', () => {
@@ -26,7 +27,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         const format = defectService.formatDefectWelsh(
-          testResultWithDefect.testTypes[0].defects[0],
+          testResultWithDefect.testTypes[0].defects[0] as unknown as IDefect,
           'hgv',
           flatDefectsMock,
         );
@@ -40,7 +41,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         const format = defectService.formatDefectWelsh(
-          testResultWithDefect.testTypes[0].defects[0],
+          testResultWithDefect.testTypes[0].defects[0] as unknown as IDefect,
           'trl',
           flatDefectsMock,
         );
@@ -54,7 +55,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         const format = defectService.formatDefectWelsh(
-          testResultWithDefect.testTypes[0].defects[0],
+          testResultWithDefect.testTypes[0].defects[0] as unknown as IDefect,
           'psv',
           flatDefectsMock,
         );
@@ -71,7 +72,7 @@ context('Defects', () => {
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { seatNumber: 2 });
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { axleNumber: 3 });
         const format = defectService.formatDefectWelsh(
-          testResultWithDefect.testTypes[0].defects[0],
+          testResultWithDefect.testTypes[0].defects[0] as unknown as IDefect,
           'hgv',
           flatDefectsMock,
         );
@@ -88,7 +89,7 @@ context('Defects', () => {
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         const format = defectService.formatDefectWelsh(
-          testResultWithDefect.testTypes[0].defects[0],
+          testResultWithDefect.testTypes[0].defects[0] as unknown as IDefect,
           'hgv',
           [],
         );

@@ -19,7 +19,7 @@ export class SignatureCommand implements ICertificatePayloadCommand {
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
     const result = {} as ICertificatePayload;
 
-    const signature = await this.getSignature((testResult as any).createdById ?? testResult.testerStaffId);
+    const signature = await this.getSignature(testResult.createdById ?? testResult.testerStaffId);
 
     result.Signature = {
       ImageType: 'png',
@@ -35,12 +35,13 @@ export class SignatureCommand implements ICertificatePayloadCommand {
    * @returns the signature as a base64 encoded string
    */
   private async getSignature(staffId: string): Promise<string | null> {
-    return this.s3Client
-      .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-      .then((result: GetObjectCommandOutput) => result.Body!.transformToString())
-      .catch((error: ServiceException) => {
-        console.error(`Unable to fetch signature for staff id ${staffId}. ${error.message}`);
-        return null;
-      });
+    try {
+      const response = await this.s3Client.download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`);
+      return await response.Body!.transformToString();
+    } catch (e) {
+      const error = e as ServiceException;
+      console.error(`Unable to fetch signature for staff id ${staffId}. ${error.message}`);
+      return null;
+    }
   }
 }

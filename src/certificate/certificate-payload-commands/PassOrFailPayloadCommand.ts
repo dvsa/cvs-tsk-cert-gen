@@ -2,11 +2,8 @@ import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
-import { DefectService } from '../../defect/DefectService';
 import { TestService } from '../../test-result/TestService';
 import { DefectRepository } from '../../defect/DefectRepository';
-import { IDefectParent } from '../../models/IDefectParent';
-import { IFlatDefect } from '../../models/IFlatDefect';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { TestResultRepository } from '../../test-result/TestResultRepository';
@@ -17,16 +14,13 @@ import { TrailerRepository } from '../../trailer/TrailerRepository';
 export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
   protected type?: CERTIFICATE_DATA;
 
-  protected isWelsh: boolean = false;
-
-  constructor(private defectService: DefectService, private testResultRepository: TestResultRepository, private defectRepository: DefectRepository, private techRecordsService: TechRecordsService, private trailerRepository: TrailerRepository, private testService: TestService) {
+  constructor(private testResultRepository: TestResultRepository, private defectRepository: DefectRepository, private techRecordsService: TechRecordsService, private trailerRepository: TrailerRepository, private testService: TestService) {
   }
 
   private certificateIsAnPassOrFail = (): boolean => this.type === CERTIFICATE_DATA.PASS_DATA || this.type === CERTIFICATE_DATA.FAIL_DATA;
 
   public initialise(type: CERTIFICATE_DATA, isWelsh: boolean) {
     this.type = type;
-    this.isWelsh = isWelsh;
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
@@ -34,15 +28,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
       return {} as ICertificatePayload;
     }
 
-    let defectListFromApi: IDefectParent[] = [];
-    let flattenedDefects: IFlatDefect[] = [];
-
-    if (this.isWelsh) {
-      defectListFromApi = await this.defectRepository.getDefectTranslations();
-      flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
-    }
-
-    const { testTypes, vehicleType, systemNumber } = testResult as any;
+    const { testTypes, vehicleType, systemNumber } = testResult;
 
     const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
       ? undefined
@@ -50,7 +36,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
 
     const makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
 
-    const TrnObj = this.testService.isValidForTrn(vehicleType, makeAndModel as any)
+    const trnRegistration = this.testService.isValidForTrn(vehicleType, makeAndModel as any)
       ? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make as any)
       : undefined;
 
@@ -61,7 +47,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
         ...(await this.getPayloadData(testResult, CERTIFICATE_DATA.PASS_DATA)),
         ...makeAndModel,
         ...odometerHistory,
-        ...TrnObj,
+        ...trnRegistration,
       };
     }
 
@@ -70,7 +56,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
         ...(await this.getPayloadData(testResult, CERTIFICATE_DATA.FAIL_DATA)),
         ...makeAndModel,
         ...odometerHistory,
-        ...TrnObj,
+        ...trnRegistration,
       };
     }
 
@@ -78,14 +64,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
   }
 
   private async getPayloadData(testResult: ITestResult, type: CERTIFICATE_DATA): Promise<any> {
-    const testType: any = testResult.testTypes;
-
-    let defectListFromApi: IDefectParent[] = [];
-    let flattenedDefects: IFlatDefect[] = [];
-    if (this.isWelsh) {
-      defectListFromApi = await this.defectRepository.getDefectTranslations();
-      flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
-    }
+    const testType = testResult.testTypes;
 
     return {
       TestNumber: testType.testNumber,

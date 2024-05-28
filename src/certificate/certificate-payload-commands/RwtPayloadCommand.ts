@@ -28,14 +28,14 @@ export class RwtPayloadCommand implements ICertificatePayloadCommand {
 
     const weightDetails = await this.techRecordsService.getWeightDetails(testResult);
 
-    let defectRWTList: any;
+    let defectRWTList: string[] | undefined;
     if (testResult.testTypes.testResult as TEST_RESULTS === TEST_RESULTS.FAIL) {
-      defectRWTList = testResult.testTypes.defects.map((defect: any) => this.defectService.formatDefect(defect));
+      defectRWTList = testResult.testTypes.defects.map((defect) => this.defectService.formatDefect(defect));
     } else {
       defectRWTList = undefined;
     }
 
-    const testType: any = testResult.testTypes;
+    const testType = testResult.testTypes;
 
     const resultPass: IRoadworthinessCertificateData = {
       Dgvw: weightDetails.dgvw,

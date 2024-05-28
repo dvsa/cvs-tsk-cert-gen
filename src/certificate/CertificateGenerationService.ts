@@ -19,6 +19,7 @@ import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TranslationService } from '../services/TranslationService';
 import { ITestResult } from '../models/ITestResult';
 import { CertificateTypes } from './CertificateTypes';
+import { ITestType } from '../models/ITestType';
 
 /**
  * Service class for Certificate Generation
@@ -96,7 +97,7 @@ class CertificateGenerationService {
     }
   }
 
-  private getVehicleTestRes(testType: any, testResult: ITestResult, shouldTranslateTestResult: boolean): string {
+  private getVehicleTestRes(testType: ITestType, testResult: ITestResult, shouldTranslateTestResult: boolean): string {
     if (this.testService.isRoadworthinessTestType(testType.testTypeId)) {
       // CVSB-7677 is road-worthiness test
       return 'rwt';
@@ -190,7 +191,7 @@ class CertificateGenerationService {
     return false;
   }
 
-  private getTestType(testResult: any): CERTIFICATE_DATA {
+  private getTestType(testResult: ITestResult): CERTIFICATE_DATA {
     if (this.testService.isHgvTrlRoadworthinessCertificate(testResult)) {
       return CERTIFICATE_DATA.RWT_DATA;
     }
@@ -219,7 +220,7 @@ class CertificateGenerationService {
    * @param testResult - source test result for certificate generation
    * @param isWelsh - the boolean value whether the atf where test was conducted resides in Wales
    */
-  public async generatePayload(testResult: any, isWelsh: boolean = false) {
+  public async generatePayload(testResult: ITestResult, isWelsh: boolean = false) {
     let name = testResult.testerName;
 
     const nameArrayList: string[] = name.split(',');
