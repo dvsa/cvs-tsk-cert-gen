@@ -1,10 +1,12 @@
 import { Service } from 'typedi';
+import merge from 'lodash.merge';
 import { CERTIFICATE_DATA } from '../models/Enums';
 import { ITestResult } from '../models/ITestResult';
 import { IvaPayloadCommand } from './certificate-payload-commands/IvaPayloadCommand';
 import { AdrPayloadCommand } from './certificate-payload-commands/AdrPayloadCommand';
 import { RwtPayloadCommand } from './certificate-payload-commands/RwtPayloadCommand';
 import { PassOrFailPayloadCommand } from './certificate-payload-commands/PassOrFailPayloadCommand';
+import { DefectsPayloadCommand } from './certificate-payload-commands/DefectsPayloadCommand';
 import { MsvaPayloadCommand } from './certificate-payload-commands/MsvaPayloadCommand';
 import { ICertificatePayload } from '../models/ICertificatePayload';
 import { ICertificatePayloadCommand } from './ICertificatePayloadCommand';
@@ -23,6 +25,7 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
     this.signatureCommand,
     this.watermarkCommand,
     this.testHistoryCommand,
+    this.defectsCommand,
   ];
 
   /**
@@ -38,6 +41,7 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
     private signatureCommand: SignatureCommand,
     private watermarkCommand: WatermarkCommand,
     private testHistoryCommand: TestHistoryCommand,
+    private defectsCommand: DefectsPayloadCommand,
   ) {
   }
 
@@ -68,12 +72,12 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
    */
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
     // Map over all the commands and get their certificate data.
-    const payloads = await Promise
+    const results = await Promise
       .all(this.commands
         .map((cmd) => cmd
           .generate(testResult)));
 
     // Flatten all the certificate data into our result payload.
-    return payloads.reduce((acc, obj) => ({ ...acc, ...obj }), {});
+    return Promise.resolve(merge({} as ICertificatePayload, ...results));
   }
 }
