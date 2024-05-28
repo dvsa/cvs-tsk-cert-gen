@@ -15,7 +15,7 @@ import { TrailerRepository } from '../../repositories/TrailerRepository';
 
 @Service()
 export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
-  protected type: CERTIFICATE_DATA = undefined as unknown as CERTIFICATE_DATA;
+  protected type?: CERTIFICATE_DATA;
 
   protected isWelsh: boolean = false;
 
@@ -180,11 +180,13 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
   private generateDangerousDefects(testTypes: any, defect: any, type: CERTIFICATE_DATA, defects: any, vehicleType: string, isWelsh: boolean, flattenedDefects: IFlatDefect[]) {
     if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
       defects.PRSDefects.push(this.defectService.formatDefect(defect));
+
       if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
         defects.PRSDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
       }
-    } else if (testTypes.testResult === 'fail') {
+    } else if (testTypes.testResult === TEST_RESULTS.FAIL) {
       defects.DangerousDefects.push(this.defectService.formatDefect(defect));
+
       // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
       if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
         defects.DangerousDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
@@ -195,11 +197,13 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
   private generateMajorDefects(testTypes: any, defect: any, type: CERTIFICATE_DATA, defects: any, vehicleType: string, isWelsh: boolean, flattenedDefects: IFlatDefect[]) {
     if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
       defects.PRSDefects.push(this.defectService.formatDefect(defect));
+
       if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
         defects.PRSDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
       }
-    } else if (testTypes.testResult === 'fail') {
+    } else if (testTypes.testResult === TEST_RESULTS.FAIL) {
       defects.MajorDefects.push(this.defectService.formatDefect(defect));
+
       // If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
       if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
         defects.MajorDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
@@ -209,6 +213,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
 
   private generateMinorDefects(defects: any, defect: any, vehicleType: string, testTypes: any, isWelsh: boolean, flattenedDefects: IFlatDefect[]) {
     defects.MinorDefects.push(this.defectService.formatDefect(defect));
+
     if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
       defects.MinorDefectsWelsh.push(this.defectService.formatDefectWelsh(defect, vehicleType, flattenedDefects));
     }
@@ -216,6 +221,7 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
 
   private generateAdvisoryDefects(defects: any, defect: any, vehicleType: string, testTypes: any, isWelsh: boolean) {
     defects.AdvisoryDefects.push(this.defectService.formatDefect(defect));
+
     if (this.testService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
       defects.AdvisoryDefectsWelsh.push(this.defectService.formatDefect(defect));
     }
