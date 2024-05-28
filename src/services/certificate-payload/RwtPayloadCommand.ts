@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
-import { TechRecordsService } from '../TechRecordsService';
+import { TechRecordsService } from '../../tech-record/TechRecordsService';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { IRoadworthinessCertificateData } from '../../models/IRoadworthinessCertificateData';
 import { DefectService } from '../../defect/DefectService';

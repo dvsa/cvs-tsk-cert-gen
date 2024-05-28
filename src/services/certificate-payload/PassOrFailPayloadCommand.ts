@@ -10,7 +10,7 @@ import { IFlatDefect } from '../../models/IFlatDefect';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { TestResultRepository } from '../../repositories/TestResultRepository';
-import { TechRecordsService } from '../TechRecordsService';
+import { TechRecordsService } from '../../tech-record/TechRecordsService';
 import { TrailerRepository } from '../../repositories/TrailerRepository';
 
 @Service()

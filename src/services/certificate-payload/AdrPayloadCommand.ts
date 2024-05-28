@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import { ITestResult } from '../../models/ITestResult';
 import { TechRecordType } from '../../models/Types';
-import { TechRecordsService } from '../TechRecordsService';
+import { TechRecordsService } from '../../tech-record/TechRecordsService';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { CERTIFICATE_DATA } from '../../models/Enums';

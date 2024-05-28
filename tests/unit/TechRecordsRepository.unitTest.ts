@@ -15,8 +15,8 @@ import techRecordsSearchPsv from '../resources/tech-records-response-search-PSV.
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
-import { TechRecordsService } from '../../src/services/TechRecordsService';
+import { TechRecordsRepository } from '../../src/tech-record/TechRecordsRepository';
+import { TechRecordsService } from '../../src/tech-record/TechRecordsService';
 import { ITestResult } from '../../src/models/ITestResult';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({

@@ -20,7 +20,7 @@ import techRecordsRwt from '../resources/tech-records-response-rwt.json';
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
-import { TechRecordsRepository } from '../../src/repositories/TechRecordsRepository';
+import { TechRecordsRepository } from '../../src/tech-record/TechRecordsRepository';
 
 const sandbox = sinon.createSandbox();
 
