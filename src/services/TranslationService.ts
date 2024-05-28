@@ -44,7 +44,7 @@ export class TranslationService {
       const featureFlags = await getProfile();
       console.log('Using feature flags ', featureFlags);
 
-      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult as TEST_RESULTS, featureFlags)) {
+      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
         return true;
       }
     } catch (e) {

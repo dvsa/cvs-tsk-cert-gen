@@ -2,6 +2,7 @@ import { ICustomDefect } from './ICustomDefect';
 import { IRequiredStandard } from './IRequiredStandard';
 import { IVehicleClass } from './IVehicleClass';
 import { IDefect } from './IDefect';
+import { TEST_RESULTS } from './Enums';
 
 export interface ITestType {
   createdAt: string;
@@ -22,7 +23,7 @@ export interface ITestType {
   numberOfSeatbeltsFitted: number;
   lastSeatbeltInstallationCheckDate: string;
   seatbeltInstallationCheckDate: boolean;
-  testResult: string;
+  testResult: TEST_RESULTS;
   prohibitionIssued: boolean;
   reasonForAbandoning: string;
   additionalNotesRecorded: string;

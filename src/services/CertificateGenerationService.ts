@@ -106,11 +106,11 @@ class CertificateGenerationService {
       return 'adr_pass';
     }
 
-    if (this.testService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+    if (this.testService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === TEST_RESULTS.FAIL) {
       return 'iva_fail';
     }
 
-    if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+    if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === TEST_RESULTS.FAIL) {
       return 'msva_fail';
     }
 

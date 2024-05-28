@@ -3,7 +3,7 @@ import { InvocationRequest } from '@aws-sdk/client-lambda';
 import moment from 'moment';
 import { toUint8Array } from '@smithy/util-utf8';
 import { ITestType } from '../models/ITestType';
-import { ERRORS, TEST_RESULT_STATUS } from '../models/Enums';
+import { ERRORS, TEST_RESULTS, TEST_RESULT_STATUS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
@@ -72,8 +72,8 @@ export class TestResultRepository {
         .filter(({ testTypes }) => testTypes?.some(
           (testType: ITestType) => testType.testTypeClassification
               === 'Annual With Certificate'
-              && (testType.testResult === 'pass'
-                || testType.testResult === 'prs'),
+              && (testType.testResult === TEST_RESULTS.PASS
+                || testType.testResult === TEST_RESULTS.PRS),
         ))
         .slice(0, 3); // Only last three entries are used for the history.
 
