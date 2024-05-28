@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import mockIvaTestResult from '../resources/test-result-with-iva-defect.json';
 import { TestService } from '../../src/services/TestService';
 

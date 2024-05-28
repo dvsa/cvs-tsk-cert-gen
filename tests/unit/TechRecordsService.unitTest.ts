@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
 import sinon from 'sinon';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import queueEventPass from '../resources/queue-event-pass.json';

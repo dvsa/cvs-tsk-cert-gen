@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Container } from 'typedi';
 import sinon from 'sinon';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { CertificateGenerationService } from '../../src/services/CertificateGenerationService';
 import { S3BucketMockService } from '../models/S3BucketMockService';

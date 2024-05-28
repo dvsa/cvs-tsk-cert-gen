@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import Container from 'typedi';
 import sinon from 'sinon';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import mockTestResult from '../resources/test-result-with-defect.json';
 import defectsMock from '../resources/defects_mock.json';
 import flatDefectsMock from '../resources/flattened-defects.json';

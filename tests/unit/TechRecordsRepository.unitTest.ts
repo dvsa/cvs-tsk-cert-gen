@@ -4,7 +4,7 @@ import 'reflect-metadata';
 const mockGetProfile = jest.fn();
 
 import Container from 'typedi';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import { LambdaService } from '../../src/services/LambdaService';
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import techRecordsRwt from '../resources/tech-records-response-rwt.json';
