@@ -1,22 +1,19 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from "@aws-sdk/client-lambda";
-import { GetObjectOutput } from "@aws-sdk/client-s3";
-import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
-import { toUint8Array } from "@smithy/util-utf8";
 import moment from "moment";
-import axiosClient from "../client/AxiosClient";
+import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
 import {
   ICertificatePayload,
   ICustomDefect,
-  IFeatureFlags,
   IGeneratedCertificateResponse,
   IInvokeConfig,
-  IMOTConfig,
   IMakeAndModel,
+  IMOTConfig,
   IRoadworthinessCertificateData,
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IWeightDetails
+  IWeightDetails,
+  IFeatureFlags
 } from "../models";
 import {
   ADR_TEST,
@@ -34,16 +31,18 @@ import {
   VEHICLE_TYPES
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
-import { IDefectChild } from "../models/IDefectChild";
-import { IDefectParent } from "../models/IDefectParent";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IItem } from "../models/IItem";
-import { ITestStation } from "../models/ITestStations";
 import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
 import { Service } from "../models/injector/ServiceDecorator";
 import { Configuration } from "../utils/Configuration";
 import { LambdaService } from "./LambdaService";
 import { S3BucketService } from "./S3BucketService";
+import { ITestStation } from "../models/ITestStations";
+import { IFlatDefect } from "../models/IFlatDefect";
+import { IDefectParent } from "../models/IDefectParent";
+import { IItem } from "../models/IItem";
+import { IDefectChild } from "../models/IDefectChild";
+import { toUint8Array } from "@smithy/util-utf8";
+import { GetObjectOutput } from "@aws-sdk/client-s3";
 
 /**
  * Service class for Certificate Generation
@@ -76,6 +75,7 @@ class CertificateGenerationService {
     const payload: string = JSON.stringify(
       await this.generatePayload(testResult, shouldTranslateTestResult)
     );
+
     const certificateTypes: any = {
       psv_pass: config.documentNames.vtp20,
       psv_pass_bilingual: config.documentNames.vtp20_bilingual,
@@ -235,19 +235,26 @@ class CertificateGenerationService {
   /**
    * Determines if a test station is located in Wales
    * @param testStationPNumber The test station's P-number.
-   * @returns Promise<boolean> true if the test station is Welsh, false otherwise
+   * @returns Promise<boolean> true if the test station country is set to Wales, false otherwise
    */
   public async isTestStationWelsh(testStationPNumber: string): Promise<boolean> {
-    const testStations = await this.getTestStations();
-    const testStationPostcode = this.getThisTestStation(testStations, testStationPNumber);
-    return testStationPostcode ? await this.lookupPostcode(testStationPostcode) : false;
+    const testStation = await this.getTestStation(testStationPNumber);
+
+    if (!testStation.testStationPNumber) {
+        console.error(`Failed to retrieve test station details for ${testStationPNumber}`);
+        return false;
+    }
+
+    const isWelshCountry = testStation.testStationCountry === `Wales`;
+    console.log(`Test station country for ${testStationPNumber} is set to ${testStation.testStationCountry}`);
+    return isWelshCountry;
   }
 
   /**
    * Method to retrieve Test Station details from API
-   * @returns list of test stations
+   * @returns a test station object
    */
-  public async getTestStations(): Promise<ITestStation[]> {
+  public async getTestStation(testStationPNumber: string): Promise<ITestStation> {
     const config: IInvokeConfig = this.config.getInvokeConfig();
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.testStations.name,
@@ -255,93 +262,26 @@ class CertificateGenerationService {
       LogType: "Tail",
       Payload: toUint8Array(JSON.stringify({
         httpMethod: "GET",
-        path: `/test-stations/`,
+        path: `/test-stations/${testStationPNumber}`,
       })),
     };
-    let testStations: ITestStation[] = [];
+    let testStation: ITestStation = {} as ITestStation;
     let retries = 0;
 
     while (retries < 3) {
       try {
         const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
         const payload: any = this.lambdaClient.validateInvocationResponse(response);
-        const testStationsParsed = JSON.parse(payload.body);
 
-        if (!testStationsParsed || testStationsParsed.length === 0) {
-          throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`
-          );
-        }
-        testStations = testStationsParsed;
-        return testStations;
+        testStation = JSON.parse(payload.body);
+
+        return testStation;
       } catch (error) {
         retries++;
-        console.error(`There was an error retrieving the test stations on attempt ${retries}: ${error}`);
+        console.error(`There was an error retrieving the test station on attempt ${retries}: ${error}`);
       }
     }
-    return testStations;
-  }
-
-  /**
-   * Find the details of the test station used on the test result
-   * @param testStations list of all test stations
-   * @param testStationPNumber pNumber from the test result
-   * @returns string postcode of the pNumber test station
-   */
-  public getThisTestStation(
-    testStations: ITestStation[],
-    testStationPNumber: string
-  ) {
-    if (!testStations || testStations.length === 0) {
-      console.log(`Test stations data is empty`);
-      return null;
-    }
-
-    // find the specific test station by the PNumber used on the test result
-    const thisTestStation = testStations.filter((x) => {
-      return x.testStationPNumber === testStationPNumber;
-    });
-
-    if (thisTestStation && thisTestStation.length > 0) {
-      return thisTestStation[0].testStationPostcode;
-    } else {
-      console.log(
-        `Test station details could not be found for ${testStationPNumber}`
-      );
-      return null;
-    }
-  }
-
-  /** Call SMC postcode lookup with test station postcode
-   * @param postcode
-   * @returns boolean true if Welsh
-   */
-  public async lookupPostcode(postcode: string): Promise<boolean> {
-    const axiosInstance = await axiosClient(7000);
-
-    if (axiosInstance) {
-      let isWelsh: boolean = false;
-      let retries = 0;
-      while (retries < 3) {
-        try {
-          const addressResponse = await axiosInstance.get("/" + postcode);
-
-          if (typeof addressResponse.data.isWelshAddress !== "boolean") {
-            throw new HTTPError(400, `${ERRORS.ADDRESS_BOOLEAN_DOES_NOT_EXIST} ${JSON.stringify(addressResponse)}.`);
-          }
-          isWelsh = addressResponse.data.isWelshAddress;
-          console.log(`Return value for isWelsh for ${postcode} is ${isWelsh}`);
-          return isWelsh;
-        } catch (error) {
-          retries++;
-          console.log(`Error looking up postcode ${postcode} on attempt ${retries}`);
-          console.log(error);
-        }
-      }
-      return false;
-    } else {
-      console.log(`SMC Postcode lookup details not found. Return value for isWelsh for ${postcode} is false`);
-      return false;
-    }
+    return testStation;
   }
 
   /**
