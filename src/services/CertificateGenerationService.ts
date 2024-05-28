@@ -18,6 +18,7 @@ import { TestStationRepository } from '../test-station/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TranslationService } from './TranslationService';
 import { ITestResult } from '../models/ITestResult';
+import { CertificateTypes } from './CertificateTypes';
 
 /**
  * Service class for Certificate Generation
@@ -32,6 +33,7 @@ class CertificateGenerationService {
     private certificatePayloadGenerator: CertificatePayloadGenerator,
     private translationService: TranslationService,
     private testService: TestService,
+    private certificateTypes: CertificateTypes,
   ) {
   }
 
@@ -42,38 +44,14 @@ class CertificateGenerationService {
   public async generateCertificate(testResult: ITestResult): Promise<IGeneratedCertificateResponse> {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
-    const testType: any = testResult.testTypes;
+    const testType = testResult.testTypes;
 
     const shouldTranslateTestResult = await this.translationService.shouldTranslateTestResult(testResult) && await this.isTestStationWelsh(testResult.testStationPNumber);
 
     const payload = JSON.stringify(await this.generatePayload(testResult, shouldTranslateTestResult));
 
-    const certificateTypes: any = {
-      psv_pass: config.documentNames.vtp20,
-      psv_pass_bilingual: config.documentNames.vtp20_bilingual,
-      psv_fail: config.documentNames.vtp30,
-      psv_fail_bilingual: config.documentNames.vtp30_bilingual,
-      psv_prs: config.documentNames.psv_prs,
-      psv_prs_bilingual: config.documentNames.psv_prs_bilingual,
-      hgv_pass: config.documentNames.vtg5,
-      hgv_pass_bilingual: config.documentNames.vtg5_bilingual,
-      hgv_fail: config.documentNames.vtg30,
-      hgv_fail_bilingual: config.documentNames.vtg30_bilingual,
-      hgv_prs: config.documentNames.hgv_prs,
-      hgv_prs_bilingual: config.documentNames.hgv_prs_bilingual,
-      trl_pass: config.documentNames.vtg5a,
-      trl_pass_bilingual: config.documentNames.vtg5a_bilingual,
-      trl_fail: config.documentNames.vtg30,
-      trl_fail_bilingual: config.documentNames.vtg30_bilingual,
-      trl_prs: config.documentNames.trl_prs,
-      trl_prs_bilingual: config.documentNames.trl_prs_bilingual,
-      rwt: config.documentNames.rwt,
-      adr_pass: config.documentNames.adr_pass,
-      iva_fail: config.documentNames.iva_fail,
-      msva_fail: config.documentNames.msva_fail,
-    };
-
     const vehicleTestRes = this.getVehicleTestRes(testType, testResult, shouldTranslateTestResult);
+    const certificateType = this.certificateTypes.getCertificateType(vehicleTestRes);
 
     const invokeParams: InvocationRequest = {
       FunctionName: iConfig.functions.certGen.name,
@@ -82,7 +60,7 @@ class CertificateGenerationService {
       Payload: toUint8Array(JSON.stringify({
         httpMethod: 'POST',
         pathParameters: {
-          documentName: certificateTypes[vehicleTestRes],
+          documentName: certificateType,
           documentDirectory: config.documentDir,
         },
         json: true,
@@ -103,7 +81,7 @@ class CertificateGenerationService {
         testTypeName: testResult.testTypes.testTypeName,
         testTypeResult: testResult.testTypes.testResult,
         dateOfIssue: moment(testResult.testTypes.testTypeStartTimestamp).format('D MMMM YYYY'),
-        certificateType: certificateTypes[vehicleTestRes].split('.')[0],
+        certificateType: certificateType.split('.')[0],
         fileFormat: 'pdf',
         fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
         fileSize: responseBuffer.byteLength.toString(),
