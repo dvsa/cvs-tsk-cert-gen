@@ -24,8 +24,10 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
   }
 
   public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+    const result = {} as ICertificatePayload;
+
     if (!this.certificateIsAnPassOrFail()) {
-      return {} as ICertificatePayload;
+      return result;
     }
 
     const { testTypes, vehicleType, systemNumber } = testResult;
@@ -34,36 +36,26 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
       ? undefined
       : await this.testResultRepository.getOdometerHistory(systemNumber);
 
-    const makeAndModel = await this.techRecordsService.getVehicleMakeAndModel(testResult);
-
-    const trnRegistration = this.testService.isValidForTrn(vehicleType, makeAndModel as any)
-      ? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make as any)
-      : undefined;
-
-    const result = {} as ICertificatePayload;
+      const payload = await this.getPayloadData(testResult);
 
     if (testTypes.testResult !== TEST_RESULTS.FAIL) {
       result.DATA = {
-        ...(await this.getPayloadData(testResult, CERTIFICATE_DATA.PASS_DATA)),
-        ...makeAndModel,
+        ...payload,
         ...odometerHistory,
-        ...trnRegistration,
       };
     }
 
     if (testTypes.testResult !== TEST_RESULTS.PASS) {
       result.FAIL_DATA = {
-        ...(await this.getPayloadData(testResult, CERTIFICATE_DATA.FAIL_DATA)),
-        ...makeAndModel,
+        ...payload,
         ...odometerHistory,
-        ...trnRegistration,
       };
     }
 
     return result;
   }
 
-  private async getPayloadData(testResult: ITestResult, type: CERTIFICATE_DATA): Promise<any> {
+  private async getPayloadData(testResult: ITestResult): Promise<any> {
     const testType = testResult.testTypes;
 
     return {
