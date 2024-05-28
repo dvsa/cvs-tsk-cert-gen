@@ -1,6 +1,7 @@
 import { Service } from 'typedi';
 import { getProfile, FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
 import { LOCATION_ENGLISH, LOCATION_WELSH, TEST_RESULTS } from '../models/Enums';
+import { ITestResult } from '../models/ITestResult';
 
 @Service()
 export class TranslationService {
@@ -8,7 +9,7 @@ export class TranslationService {
    * Returns welsh version of location
    * @param locationToTranslate
    */
-  public convertLocationWelsh(locationToTranslate: LOCATION_ENGLISH) {
+  public convertLocationWelsh(locationToTranslate: LOCATION_ENGLISH): string {
     switch (locationToTranslate) {
       case LOCATION_ENGLISH.FRONT:
         return LOCATION_WELSH.FRONT;
@@ -38,12 +39,12 @@ export class TranslationService {
    * @param testResult
    * @returns Promise<boolean>
    */
-  public async shouldTranslateTestResult(testResult: any): Promise<boolean> {
+  public async shouldTranslateTestResult(testResult: ITestResult): Promise<boolean> {
     try {
       const featureFlags = await getProfile();
       console.log('Using feature flags ', featureFlags);
 
-      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
+      if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult as TEST_RESULTS, featureFlags)) {
         return true;
       }
     } catch (e) {

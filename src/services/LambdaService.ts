@@ -4,6 +4,7 @@ import {
 } from '@aws-sdk/client-lambda';
 import { HTTPError } from '../models/HTTPError';
 import { ERRORS } from '../models/Enums';
+import { IHttpResponse } from '../models/IHttpResponse';
 
 /**
  * Service class for invoking external lambda functions
@@ -25,7 +26,7 @@ class LambdaService {
    * Validates the invocation response
    * @param response - the invocation response
    */
-  public validateInvocationResponse(response: InvocationResponse): Promise<any> {
+  public validateInvocationResponse(response: InvocationResponse): IHttpResponse {
     if (
       !response.Payload
       || Buffer.from(response.Payload).toString() === ''
@@ -34,7 +35,7 @@ class LambdaService {
       throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`);
     }
 
-    const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
+    const payload: IHttpResponse = JSON.parse(Buffer.from(response.Payload).toString());
 
     if (payload.statusCode >= 400) {
       throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`);

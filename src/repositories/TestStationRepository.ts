@@ -29,8 +29,8 @@ export class TestStationRepository {
       })),
     };
 
-    const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-    const payload: any = this.lambdaClient.validateInvocationResponse(response);
+    const response = await this.lambdaClient.invoke(invokeParams);
+    const payload = this.lambdaClient.validateInvocationResponse(response);
     return JSON.parse(payload.body);
   }
 }

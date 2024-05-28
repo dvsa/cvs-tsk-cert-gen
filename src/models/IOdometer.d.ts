@@ -1,4 +1,9 @@
 export interface IOdometer {
-  value: string;
+  value: number;
   unit: string;
+  date: string;
+}
+
+export interface IOdometerHistory {
+  OdometerHistoryList: IOdometer[];
 }

@@ -4,7 +4,7 @@ import { InvocationRequest } from '@aws-sdk/client-lambda';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from '../services/LambdaService';
-import { TechRecordGet, TechRecordType } from '../models/Types';
+import { TechRecordGet, TechRecordType, ISearchResult } from '../models/Types';
 
 @Service()
 export class TechRecordsRepository {
@@ -20,6 +20,7 @@ export class TechRecordsRepository {
    */
   public callGetTechRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(systemNumber: string, createdTimestamp: string): Promise<TechRecordType<T> | undefined> => {
     const config: IInvokeConfig = this.config.getInvokeConfig();
+
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.techRecords.name,
       InvocationType: 'RequestResponse',
@@ -33,9 +34,11 @@ export class TechRecordsRepository {
         },
       })),
     };
+
     try {
       const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
-      const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
+      const res = this.lambdaClient.validateInvocationResponse(lambdaResponse);
+
       return JSON.parse(res.body);
     } catch (e) {
       console.log('Error in get technical record');
@@ -48,8 +51,9 @@ export class TechRecordsRepository {
    * Used to return a subset of technical record information.
    * @param searchIdentifier
    */
-  public callSearchTechRecords = async (searchIdentifier: string) => {
+  public callSearchTechRecords = async (searchIdentifier: string): Promise<ISearchResult[]> => {
     const config: IInvokeConfig = this.config.getInvokeConfig();
+
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.techRecordsSearch.name,
       InvocationType: 'RequestResponse',
@@ -65,12 +69,13 @@ export class TechRecordsRepository {
 
     try {
       const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
-      const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
+      const res = this.lambdaClient.validateInvocationResponse(lambdaResponse);
+
       return JSON.parse(res.body);
     } catch (e) {
       console.log('Error searching technical records');
       console.log(JSON.stringify(e));
-      return undefined;
+      return [];
     }
   };
 }

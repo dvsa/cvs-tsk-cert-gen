@@ -19,6 +19,7 @@ export class DefectRepository {
    */
   public async getDefectTranslations(): Promise<IDefectParent[]> {
     const config: IInvokeConfig = this.config.getInvokeConfig();
+
     const invokeParams: InvocationRequest = {
       FunctionName: config.functions.defects.name,
       InvocationType: 'RequestResponse',
@@ -29,8 +30,9 @@ export class DefectRepository {
       })),
     };
 
-    const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-    const payload: any = this.lambdaClient.validateInvocationResponse(response);
+    const response = await this.lambdaClient.invoke(invokeParams);
+    const payload = this.lambdaClient.validateInvocationResponse(response);
+
     return JSON.parse(payload.body);
   }
 }

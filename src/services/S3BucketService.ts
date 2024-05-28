@@ -40,10 +40,7 @@ class S3BucketService {
    * @param bucketName - the bucket from which to download
    * @param fileName - the name of the file
    */
-  public download(
-    bucketName: string,
-    fileName: string,
-  ): Promise<GetObjectCommandOutput> {
+  public download(bucketName: string, fileName: string): Promise<GetObjectCommandOutput> {
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: `${process.env.BRANCH}/${fileName}`,
@@ -57,10 +54,7 @@ class S3BucketService {
    * @param bucketName - the bucket from which to download
    * @param fileName - the name of the file
    */
-  public delete(
-    bucketName: string,
-    fileName: string,
-  ): Promise<DeleteObjectCommandOutput> {
+  public delete(bucketName: string, fileName: string): Promise<DeleteObjectCommandOutput> {
     const command = new DeleteObjectCommand({
       Bucket: bucketName,
       Key: `${process.env.BRANCH}/${fileName}`,

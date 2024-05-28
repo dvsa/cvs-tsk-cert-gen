@@ -1,3 +1,5 @@
+import { ICertificateOrder } from './ICertificateOrder';
+
 export interface IGeneratedCertificateResponse {
   fileName: string;
   vrm: string;
@@ -8,7 +10,7 @@ export interface IGeneratedCertificateResponse {
   fileFormat: string;
   fileSize: string;
   certificate: Buffer;
-  certificateOrder: { current: number; total: number; };
+  certificateOrder: ICertificateOrder;
   email: string;
   shouldEmailCertificate: string;
 }

@@ -1,8 +1,7 @@
 import { Service } from 'typedi';
-import { InvocationRequest, ServiceException, InvocationResponse } from '@aws-sdk/client-lambda';
+import { InvocationRequest } from '@aws-sdk/client-lambda';
 import moment from 'moment';
 import { toUint8Array } from '@smithy/util-utf8';
-import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import axiosClient from '../client/AxiosClient';
 import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
 import { IInvokeConfig } from '../models/IInvokeConfig';
@@ -13,12 +12,12 @@ import {
 import { HTTPError } from '../models/HTTPError';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
-import { S3BucketService } from './S3BucketService';
 import { ITestStation } from '../models/ITestStations';
 import { TestService } from './TestService';
 import { TestStationRepository } from '../repositories/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TranslationService } from './TranslationService';
+import { ITestResult } from '../models/ITestResult';
 
 /**
  * Service class for Certificate Generation
@@ -28,7 +27,6 @@ class CertificateGenerationService {
   private readonly config: Configuration = Configuration.getInstance();
 
   constructor(
-    private s3Client: S3BucketService,
     private lambdaClient: LambdaService,
     private testStationRepository: TestStationRepository,
     private certificatePayloadGenerator: CertificatePayloadGenerator,
@@ -41,7 +39,7 @@ class CertificateGenerationService {
    * Generates MOT certificate for a given test result
    * @param testResult - source test result for certificate generation
    */
-  public async generateCertificate(testResult: any): Promise<IGeneratedCertificateResponse> {
+  public async generateCertificate(testResult: ITestResult): Promise<IGeneratedCertificateResponse> {
     const config: IMOTConfig = this.config.getMOTConfig();
     const iConfig: IInvokeConfig = this.config.getInvokeConfig();
     const testType: any = testResult.testTypes;
@@ -75,21 +73,7 @@ class CertificateGenerationService {
       msva_fail: config.documentNames.msva_fail,
     };
 
-    let vehicleTestRes: string;
-    if (this.testService.isRoadworthinessTestType(testType.testTypeId)) {
-      // CVSB-7677 is road-worthiness test
-      vehicleTestRes = 'rwt';
-    } else if (this.testService.isTestTypeAdr(testResult.testTypes)) {
-      vehicleTestRes = 'adr_pass';
-    } else if (this.testService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
-      vehicleTestRes = 'iva_fail';
-    } else if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
-      vehicleTestRes = 'msva_fail';
-    } else if (this.testService.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
-      vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}_bilingual`;
-    } else {
-      vehicleTestRes = `${testResult.vehicleType}_${testType.testResult}`;
-    }
+    const vehicleTestRes = this.getVehicleTestRes(testType, testResult, shouldTranslateTestResult);
 
     const invokeParams: InvocationRequest = {
       FunctionName: iConfig.functions.certGen.name,
@@ -106,37 +90,57 @@ class CertificateGenerationService {
       })),
     };
 
-    return this.lambdaClient
-      .invoke(invokeParams)
-      .then(
-        async (response: InvocationResponse) => {
-          const documentPayload: any = await this.lambdaClient.validateInvocationResponse(response);
-          const resBody: string = documentPayload.body;
-          const responseBuffer: Buffer = Buffer.from(resBody, 'base64');
-          return {
-            vrm:
-              testResult.vehicleType === VEHICLE_TYPES.TRL
-                ? testResult.trailerId
-                : testResult.vrm,
-            testTypeName: testResult.testTypes.testTypeName,
-            testTypeResult: testResult.testTypes.testResult,
-            dateOfIssue: moment(testResult.testTypes.testTypeStartTimestamp).format('D MMMM YYYY'),
-            certificateType: certificateTypes[vehicleTestRes].split('.')[0],
-            fileFormat: 'pdf',
-            fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
-            fileSize: responseBuffer.byteLength.toString(),
-            certificate: responseBuffer,
-            certificateOrder: testResult.order,
-            email:
-              testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
-            shouldEmailCertificate: testResult.shouldEmailCertificate ?? 'true',
-          };
-        },
-      )
-      .catch((error: ServiceException | Error) => {
-        console.log(error);
-        throw error;
-      });
+    try {
+      const response = await this.lambdaClient.invoke(invokeParams);
+      const documentPayload = this.lambdaClient.validateInvocationResponse(response);
+      const responseBuffer: Buffer = Buffer.from(documentPayload.body, 'base64');
+
+      return {
+        vrm:
+          testResult.vehicleType === VEHICLE_TYPES.TRL
+            ? testResult.trailerId
+            : testResult.vrm,
+        testTypeName: testResult.testTypes.testTypeName,
+        testTypeResult: testResult.testTypes.testResult,
+        dateOfIssue: moment(testResult.testTypes.testTypeStartTimestamp).format('D MMMM YYYY'),
+        certificateType: certificateTypes[vehicleTestRes].split('.')[0],
+        fileFormat: 'pdf',
+        fileName: `${testResult.testTypes.testNumber}_${testResult.vin}.pdf`,
+        fileSize: responseBuffer.byteLength.toString(),
+        certificate: responseBuffer,
+        certificateOrder: testResult.order,
+        email: testResult.createdByEmailAddress ?? testResult.testerEmailAddress,
+        shouldEmailCertificate: testResult.shouldEmailCertificate ?? 'true',
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  private getVehicleTestRes(testType: any, testResult: ITestResult, shouldTranslateTestResult: boolean): string {
+    if (this.testService.isRoadworthinessTestType(testType.testTypeId)) {
+      // CVSB-7677 is road-worthiness test
+      return 'rwt';
+    }
+
+    if (this.testService.isTestTypeAdr(testResult.testTypes)) {
+      return 'adr_pass';
+    }
+
+    if (this.testService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+      return 'iva_fail';
+    }
+
+    if (this.testService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+      return 'msva_fail';
+    }
+
+    if (this.testService.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) && shouldTranslateTestResult) {
+      return `${testResult.vehicleType}_${testType.testResult}_bilingual`;
+    }
+
+    return `${testResult.vehicleType}_${testType.testResult}`;
   }
 
   /**
@@ -156,10 +160,7 @@ class CertificateGenerationService {
    * @param testStationPNumber pNumber from the test result
    * @returns string postcode of the pNumber test station
    */
-  public getThisTestStation(
-    testStations: ITestStation[],
-    testStationPNumber: string,
-  ) {
+  public getThisTestStation(testStations: ITestStation[], testStationPNumber: string) {
     if (!testStations || testStations.length === 0) {
       console.log('Test stations data is empty');
       return null;
@@ -250,9 +251,7 @@ class CertificateGenerationService {
       testResult.testerName = name;
     }
 
-    const { testTypes, testHistory } = testResult;
     const testType = this.getTestType(testResult);
-
     const response = await this.certificatePayloadGenerator.generateCertificateData(testResult, testType, isWelsh);
 
     return JSON.parse(JSON.stringify(response));

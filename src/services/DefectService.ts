@@ -7,6 +7,7 @@ import { IItem } from '../models/IItem';
 import { IDefectParent } from '../models/IDefectParent';
 import { IDefectChild } from '../models/IDefectChild';
 import { TranslationService } from './TranslationService';
+import { IDefect } from '../models/IDefect';
 
 @Service()
 export class DefectService {
@@ -40,12 +41,14 @@ export class DefectService {
    */
   public flattenDefectsFromApi(defects: IDefectParent[]): IFlatDefect[] {
     const flatDefects: IFlatDefect[] = [];
+
     try {
       // go through each defect in un-flattened array
       defects.forEach((defect: IDefectParent) => {
         const {
           imNumber, imDescription, imDescriptionWelsh, items,
         } = defect;
+
         if (defect.items !== undefined && defect.items.length !== 0) {
           // go through each item of defect
           items.forEach((item: IItem) => {
@@ -55,10 +58,8 @@ export class DefectService {
               itemDescriptionWelsh,
               deficiencies,
             } = item;
-            if (
-              item.deficiencies !== undefined
-              && item.deficiencies.length !== 0
-            ) {
+
+            if (item.deficiencies !== undefined && item.deficiencies.length !== 0) {
               // go through each deficiency and push to flatDefects array
               deficiencies.forEach((deficiency: IDefectChild) => {
                 const {
@@ -67,6 +68,7 @@ export class DefectService {
                   deficiencyTextWelsh,
                   forVehicleType,
                 } = deficiency;
+
                 const lowLevelDeficiency: IFlatDefect = {
                   imNumber,
                   imDescription,
@@ -79,6 +81,7 @@ export class DefectService {
                   deficiencyTextWelsh,
                   forVehicleType,
                 };
+
                 flatDefects.push(lowLevelDeficiency);
               });
             }
@@ -89,6 +92,7 @@ export class DefectService {
       // eslint-disable-next-line
       console.error(`Error flattening defects: ${e}`);
     }
+
     return flatDefects;
   }
 
@@ -96,7 +100,7 @@ export class DefectService {
    * Returns a formatted string containing data about a given defect
    * @param defect - defect for which to generate the formatted string
    */
-  public formatDefect(defect: any) {
+  public formatDefect(defect: IDefect): string {
     const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
     let defectString = `${defect.deficiencyRef} ${defect.itemDescription}`;
@@ -108,7 +112,8 @@ export class DefectService {
     if (defect.additionalInformation.location) {
       Object.keys(defect.additionalInformation.location).forEach(
         (location: string, index: number, array: string[]) => {
-          if (defect.additionalInformation.location[location]) {
+          const keyTyped = location as keyof typeof defect.additionalInformation.location;
+          if (defect.additionalInformation.location[keyTyped]) {
             switch (location) {
               case 'rowNumber':
                 defectString += ` Rows: ${defect.additionalInformation.location.rowNumber}.`;
@@ -120,9 +125,7 @@ export class DefectService {
                 defectString += ` Axles: ${defect.additionalInformation.location.axleNumber}.`;
                 break;
               default:
-                defectString += ` ${toUpperFirstLetter(
-                  defect.additionalInformation.location[location],
-                )}`;
+                defectString += ` ${toUpperFirstLetter(defect.additionalInformation.location[keyTyped])}`;
                 break;
             }
           }
@@ -146,10 +149,7 @@ export class DefectService {
    * @param filteredFlatDefects - the array of flattened defects
    * @param vehicleType - the vehicle type from the test result
    */
-  public filterFlatDefects(
-    filteredFlatDefects: IFlatDefect[],
-    vehicleType: string,
-  ): IFlatDefect | null {
+  public filterFlatDefects(filteredFlatDefects: IFlatDefect[], vehicleType: string): IFlatDefect | null {
     if (filteredFlatDefects.length === 0) {
       return null;
     } if (filteredFlatDefects.length === 1) {
@@ -167,11 +167,7 @@ export class DefectService {
    * @param vehicleType - the vehicle type from the test result
    * @param flattenedDefects - the list of flattened defects
    */
-  public formatDefectWelsh(
-    defect: any,
-    vehicleType: any,
-    flattenedDefects: IFlatDefect[],
-  ) {
+  public formatDefectWelsh(defect: any, vehicleType: any, flattenedDefects: IFlatDefect[]): string | null {
     const toUpperFirstLetter: any = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
     const filteredFlatDefects: IFlatDefect[] = flattenedDefects.filter(
@@ -227,6 +223,7 @@ export class DefectService {
 
       return defectString;
     }
+
     console.log('ERROR: Unable to find a filtered defect');
     return null;
   }

@@ -3,7 +3,8 @@ import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/clie
 import { validate as uuidValidate } from 'uuid';
 import { CertificateGenerationService, IGeneratedCertificateResponse } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
-import { ERRORS, TEST_RESULTS } from '../models/Enums';
+import { ERRORS, TEST_RESULT_STATUS } from '../models/Enums';
+import { ITestResult } from '../models/ITestResult';
 
 export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
@@ -12,8 +13,8 @@ export class CertificateRequestProcessor {
   constructor(private certificateGenerationService: CertificateGenerationService, private certificateUploadService: CertificateUploadService) {
   }
 
-  public async process(testResult: any): Promise<CertGenReturn> {
-    const isCancelled = testResult.testStatus === TEST_RESULTS.CANCELLED;
+  public async process(testResult: ITestResult): Promise<CertGenReturn> {
+    const isCancelled = testResult.testStatus === TEST_RESULT_STATUS.CANCELLED;
     if (isCancelled) {
       return this.remove(testResult);
     }
@@ -27,11 +28,11 @@ export class CertificateRequestProcessor {
     throw new Error(`Bad Test Record: ${testResult.testResultId}`);
   }
 
-  private async remove(testResult: any): Promise<DeleteObjectCommandOutput> {
+  private async remove(testResult: ITestResult): Promise<DeleteObjectCommandOutput> {
     return this.certificateUploadService.removeCertificate(testResult);
   }
 
-  private async create(testResult: any): Promise<PutObjectCommandOutput> {
+  private async create(testResult: ITestResult): Promise<PutObjectCommandOutput> {
     return this.certificateGenerationService
       .generateCertificate(testResult)
       .then((response: IGeneratedCertificateResponse) => this.certificateUploadService.uploadCertificate(response));

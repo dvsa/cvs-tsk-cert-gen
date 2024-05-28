@@ -1,8 +1,11 @@
 import { IBodyTypeModel } from './IBodyTypeModel';
 import { IVehicleClass } from './IVehicleClass';
 import { ITestType } from './ITestType';
+import { ICertificateOrder } from './ICertificateOrder';
+import { TEST_RESULT_STATUS, VEHICLE_TYPES } from './Enums';
 
-export interface ITestResult {
+export interface IBaseTestResult {
+  testResultId: string;
   vrm: string;
   trailerId: string;
   vin: string;
@@ -16,10 +19,10 @@ export interface ITestResult {
   testerEmailAddress: string;
   testStartTimestamp: string;
   testEndTimestamp: string;
-  testStatus: string;
+  testStatus: TEST_RESULT_STATUS;
   reasonForCancellation: string;
   vehicleClass: IVehicleClass;
-  vehicleType: string;
+  vehicleType: VEHICLE_TYPES;
   numberOfSeats: number;
   vehicleConfiguration: string;
   odometerReading: number;
@@ -35,5 +38,16 @@ export interface ITestResult {
   make?: string;
   model?: string;
   bodyType?: IBodyTypeModel;
+  order: ICertificateOrder
+  createdByEmailAddress: string;
+  shouldEmailCertificate: string;
+  systemNumber: string;
+}
+
+export interface ITestResult extends IBaseTestResult {
   testTypes: ITestType;
+}
+
+export interface ITestResultActual extends IBaseTestResult {
+  testTypes: ITestType[];
 }

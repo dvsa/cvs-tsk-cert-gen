@@ -9,6 +9,8 @@ import {
   AVAILABLE_WELSH,
 } from '../models/Enums';
 import { IMakeAndModel } from '../models/IMakeAndModel';
+import { ITestResult } from '../models/ITestResult';
+import { ITestType } from '../models/ITestType';
 
 @Service()
 export class TestService {
@@ -34,7 +36,7 @@ export class TestService {
    * Returns true if testType is adr and false if not
    * @param testType - testType which is tested
    */
-  public isTestTypeAdr = (testType: any): boolean => ADR_TEST.IDS.includes(testType.testTypeId);
+  public isTestTypeAdr = (testType: ITestType): boolean => ADR_TEST.IDS.includes(testType.testTypeId);
 
   /**
    * Returns true if testType is roadworthiness test for HGV or TRL and false if not
@@ -48,7 +50,7 @@ export class TestService {
    * Returns true if provided testResult is HGV or TRL Roadworthiness test otherwise false
    * @param testResult - testResult of the vehicle
    */
-  public isHgvTrlRoadworthinessCertificate(testResult: any): boolean {
+  public isHgvTrlRoadworthinessCertificate(testResult: ITestResult): boolean {
     return (
       (testResult.vehicleType === VEHICLE_TYPES.HGV
         || testResult.vehicleType === VEHICLE_TYPES.TRL)
@@ -62,10 +64,7 @@ export class TestService {
    * @param makeAndModel object containing Make and Model
    * @returns returns if the condition is satisfied else false
    */
-  public isValidForTrn(
-    vehicleType: string,
-    makeAndModel: IMakeAndModel,
-  ): boolean {
+  public isValidForTrn(vehicleType: string, makeAndModel: IMakeAndModel): boolean {
     return makeAndModel && vehicleType as VEHICLE_TYPES === VEHICLE_TYPES.TRL;
   }
 

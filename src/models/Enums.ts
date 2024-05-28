@@ -19,6 +19,10 @@ export enum TEST_RESULTS {
   PASS = 'pass',
   FAIL = 'fail',
   PRS = 'prs',
+}
+
+export enum TEST_RESULT_STATUS {
+  SUBMITTED = 'submitted',
   CANCELLED = 'cancelled',
 }
 
@@ -155,4 +159,9 @@ export const AVAILABLE_WELSH = {
     'trl_prs',
     'psv_prs',
   ],
+};
+
+export const TECH_RECORD_STATUS_CODE = {
+  PROVISIONAL: 'provisional',
+  CURRENT: 'current',
 };
