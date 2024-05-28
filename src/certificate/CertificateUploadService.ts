@@ -1,6 +1,6 @@
 import { Service } from 'typedi';
 import { PutObjectCommandOutput } from '@aws-sdk/client-s3';
-import { S3BucketService } from './S3BucketService';
+import { S3BucketService } from '../services/S3BucketService';
 import { IGeneratedCertificateResponse } from '../models/IGeneratedCertificateResponse';
 import { ITestResult } from '../models/ITestResult';
 

@@ -11,12 +11,12 @@ import {
 } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 import { Configuration } from '../utils/Configuration';
-import { LambdaService } from './LambdaService';
+import { LambdaService } from '../services/LambdaService';
 import { ITestStation } from '../models/ITestStations';
 import { TestService } from '../test-result/TestService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
-import { TranslationService } from './TranslationService';
+import { TranslationService } from '../services/TranslationService';
 import { ITestResult } from '../models/ITestResult';
 import { CertificateTypes } from './CertificateTypes';
 

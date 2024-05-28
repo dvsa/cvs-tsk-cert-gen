@@ -1,16 +1,16 @@
 import { Service } from 'typedi';
 import { CERTIFICATE_DATA } from '../models/Enums';
 import { ITestResult } from '../models/ITestResult';
-import { IvaPayloadCommand } from './certificate-payload/IvaPayloadCommand';
-import { AdrPayloadCommand } from './certificate-payload/AdrPayloadCommand';
-import { RwtPayloadCommand } from './certificate-payload/RwtPayloadCommand';
-import { PassOrFailPayloadCommand } from './certificate-payload/PassOrFailPayloadCommand';
-import { MsvaPayloadCommand } from './certificate-payload/MsvaPayloadCommand';
+import { IvaPayloadCommand } from './certificate-payload-commands/IvaPayloadCommand';
+import { AdrPayloadCommand } from './certificate-payload-commands/AdrPayloadCommand';
+import { RwtPayloadCommand } from './certificate-payload-commands/RwtPayloadCommand';
+import { PassOrFailPayloadCommand } from './certificate-payload-commands/PassOrFailPayloadCommand';
+import { MsvaPayloadCommand } from './certificate-payload-commands/MsvaPayloadCommand';
 import { ICertificatePayload } from '../models/ICertificatePayload';
 import { ICertificatePayloadCommand } from './ICertificatePayloadCommand';
-import { SignatureCommand } from './certificate-payload/SignatureCommand';
-import { WatermarkCommand } from './certificate-payload/WatermarkCommand';
-import { TestHistoryCommand } from './certificate-payload/TestHistoryCommand';
+import { SignatureCommand } from './certificate-payload-commands/SignatureCommand';
+import { WatermarkCommand } from './certificate-payload-commands/WatermarkCommand';
+import { TestHistoryCommand } from './certificate-payload-commands/TestHistoryCommand';
 
 @Service()
 export class CertificatePayloadGenerator implements ICertificatePayloadCommand {

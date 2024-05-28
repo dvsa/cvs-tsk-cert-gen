@@ -6,7 +6,7 @@ const mockGetProfile = jest.fn();
 import Container from 'typedi';
 import sinon from 'sinon';
 import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profiles/vtx';
-import { CertificateUploadService } from '../../src/services/CertificateUploadService';
+import { CertificateUploadService } from '../../src/certificate/CertificateUploadService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { certGen } from '../../src/functions/certGen';

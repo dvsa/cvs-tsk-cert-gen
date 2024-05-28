@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { ITestResult } from '../../models/ITestResult';
-import { S3BucketService } from '../S3BucketService';
+import { S3BucketService } from '../../services/S3BucketService';
 import { GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import { ServiceException } from '@aws-sdk/client-lambda';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';

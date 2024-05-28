@@ -12,10 +12,10 @@ import { FeatureFlags } from '@dvsa/cvs-microservice-common/feature-flags/profil
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
-} from '../../src/services/CertificateGenerationService';
+} from '../../src/certificate/CertificateGenerationService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { CertificateUploadService } from '../../src/services/CertificateUploadService';
+import { CertificateUploadService } from '../../src/certificate/CertificateUploadService';
 import techRecordsRwt from '../resources/tech-records-response-rwt.json';
 import techRecordsRwtSearch from '../resources/tech-records-response-rwt-search.json';
 import { S3BucketService } from '../../src/services/S3BucketService';

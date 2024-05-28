@@ -7,7 +7,7 @@ import queueEventFailPRS from '../resources/queue-event-fail-prs.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
+import { CertificatePayloadGenerator } from '../../src/certificate/CertificatePayloadGenerator';
 import { TestResultRepository } from '../../src/test-result/TestResultRepository';
 import { TechRecordsService } from '../../src/tech-record/TechRecordsService';
 

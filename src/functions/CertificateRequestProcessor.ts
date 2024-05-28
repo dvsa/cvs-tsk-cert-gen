@@ -1,8 +1,8 @@
 import { Service } from 'typedi';
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { validate as uuidValidate } from 'uuid';
-import { CertificateGenerationService, IGeneratedCertificateResponse } from '../services/CertificateGenerationService';
-import { CertificateUploadService } from '../services/CertificateUploadService';
+import { CertificateGenerationService, IGeneratedCertificateResponse } from '../certificate/CertificateGenerationService';
+import { CertificateUploadService } from '../certificate/CertificateUploadService';
 import { ERRORS, TEST_RESULT_STATUS } from '../models/Enums';
 import { ITestResult } from '../models/ITestResult';
 
