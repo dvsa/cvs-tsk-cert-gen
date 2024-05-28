@@ -4,7 +4,7 @@ import { ITestResult } from '../../models/ITestResult';
 import { TechRecordsService } from '../TechRecordsService';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { IRoadworthinessCertificateData } from '../../models/IRoadworthinessCertificateData';
-import { DefectService } from '../DefectService';
+import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 

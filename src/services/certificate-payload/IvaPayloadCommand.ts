@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
-import { DefectService } from '../DefectService';
+import { DefectService } from '../../defect/DefectService';
 import { CERTIFICATE_DATA, IVA_30 } from '../../models/Enums';
 import { TestService } from '../TestService';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';

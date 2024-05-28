@@ -35,8 +35,8 @@ import { TechRecordsRepository } from '../../src/repositories/TechRecordsReposit
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
 import { TrailerRepository } from '../../src/repositories/TrailerRepository';
 import { TestResultRepository } from '../../src/repositories/TestResultRepository';
-import { DefectService } from '../../src/services/DefectService';
-import { DefectRepository } from '../../src/repositories/DefectRepository';
+import { DefectService } from '../../src/defect/DefectService';
+import { DefectRepository } from '../../src/defect/DefectRepository';
 
 jest.mock('@dvsa/cvs-microservice-common/feature-flags/profiles/vtx', () => ({
   getProfile: mockGetProfile,

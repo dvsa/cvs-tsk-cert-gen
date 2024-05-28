@@ -6,7 +6,7 @@ import { IFlatDefect } from '../models/IFlatDefect';
 import { IItem } from '../models/IItem';
 import { IDefectParent } from '../models/IDefectParent';
 import { IDefectChild } from '../models/IDefectChild';
-import { TranslationService } from './TranslationService';
+import { TranslationService } from '../services/TranslationService';
 import { IDefect } from '../models/IDefect';
 
 @Service()

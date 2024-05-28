@@ -8,7 +8,7 @@ import defectsMock from '../resources/defects_mock.json';
 import flatDefectsMock from '../resources/flattened-defects.json';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { LambdaService } from '../../src/services/LambdaService';
-import { DefectService } from '../../src/services/DefectService';
+import { DefectService } from '../../src/defect/DefectService';
 
 context('Defects', () => {
   describe('welsh defect function', () => {
