@@ -10,7 +10,7 @@ import { LambdaService } from '../../src/services/LambdaService';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { TestResultRepository } from '../../src/repositories/TestResultRepository';
+import { TestResultRepository } from '../../src/test-result/TestResultRepository';
 
 describe('Certificate Generation Service', () => {
   Container.set(S3BucketService, new S3BucketMockService());

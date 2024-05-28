@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import cloneDeep from 'lodash.clonedeep';
 import mockIvaTestResult from '../resources/test-result-with-iva-defect.json';
-import { TestService } from '../../src/services/TestService';
+import { TestService } from '../../src/test-result/TestService';
 
 describe('iva 30 logic', () => {
   const testService = new TestService();

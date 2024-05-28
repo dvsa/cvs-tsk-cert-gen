@@ -13,7 +13,7 @@ import { HTTPError } from '../models/HTTPError';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { ITestStation } from '../models/ITestStations';
-import { TestService } from './TestService';
+import { TestService } from '../test-result/TestService';
 import { TestStationRepository } from '../repositories/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TranslationService } from './TranslationService';

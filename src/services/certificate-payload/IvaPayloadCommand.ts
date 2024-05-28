@@ -3,7 +3,7 @@ import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { DefectService } from '../../defect/DefectService';
 import { CERTIFICATE_DATA, IVA_30 } from '../../models/Enums';
-import { TestService } from '../TestService';
+import { TestService } from '../../test-result/TestService';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 

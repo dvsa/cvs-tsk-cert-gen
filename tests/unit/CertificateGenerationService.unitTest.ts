@@ -8,7 +8,7 @@ import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
-import { TestResultRepository } from '../../src/repositories/TestResultRepository';
+import { TestResultRepository } from '../../src/test-result/TestResultRepository';
 import { TechRecordsService } from '../../src/tech-record/TechRecordsService';
 
 describe('Certificate Generation Service', () => {

@@ -3,13 +3,13 @@ import moment from 'moment';
 import { ITestResult } from '../../models/ITestResult';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { DefectService } from '../../defect/DefectService';
-import { TestService } from '../TestService';
+import { TestService } from '../../test-result/TestService';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { IDefectParent } from '../../models/IDefectParent';
 import { IFlatDefect } from '../../models/IFlatDefect';
 import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
-import { TestResultRepository } from '../../repositories/TestResultRepository';
+import { TestResultRepository } from '../../test-result/TestResultRepository';
 import { TechRecordsService } from '../../tech-record/TechRecordsService';
 import { TrailerRepository } from '../../repositories/TrailerRepository';
 
