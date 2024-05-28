@@ -30,25 +30,19 @@ export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {
       return result;
     }
 
-    const { testTypes, vehicleType, systemNumber } = testResult;
+    const { testTypes } = testResult;
 
-    const odometerHistory = vehicleType === VEHICLE_TYPES.TRL
-      ? undefined
-      : await this.testResultRepository.getOdometerHistory(systemNumber);
-
-      const payload = await this.getPayloadData(testResult);
+    const payload = await this.getPayloadData(testResult);
 
     if (testTypes.testResult !== TEST_RESULTS.FAIL) {
       result.DATA = {
         ...payload,
-        ...odometerHistory,
       };
     }
 
     if (testTypes.testResult !== TEST_RESULTS.PASS) {
       result.FAIL_DATA = {
         ...payload,
-        ...odometerHistory,
       };
     }
 

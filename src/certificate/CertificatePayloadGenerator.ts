@@ -14,6 +14,7 @@ import { SignatureCommand } from './certificate-payload-commands/SignatureComman
 import { WatermarkCommand } from './certificate-payload-commands/WatermarkCommand';
 import { TestHistoryCommand } from './certificate-payload-commands/TestHistoryCommand';
 import { MakeAndModelCommand } from './certificate-payload-commands/MakeAndModelCommand';
+import { OdometerHistoryCommand } from './certificate-payload-commands/OdometerHistoryCommand';
 
 @Service()
 export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
@@ -28,6 +29,7 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
     this.testHistoryCommand,
     this.defectsCommand,
     this.makeAndModelCommand,
+    this.odometerHistoryCommand,
   ];
 
   /**
@@ -45,6 +47,7 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
     private testHistoryCommand: TestHistoryCommand,
     private defectsCommand: DefectsPayloadCommand,
     private makeAndModelCommand: MakeAndModelCommand,
+    private odometerHistoryCommand: OdometerHistoryCommand,
   ) {
   }
 
