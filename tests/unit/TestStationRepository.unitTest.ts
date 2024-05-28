@@ -7,7 +7,7 @@ import testStationsMock from '../resources/testStationsMock.json';
 import { S3BucketService } from '../../src/services/S3BucketService';
 import { S3BucketMockService } from '../models/S3BucketMockService';
 import { LambdaMockService } from '../models/LambdaMockService';
-import { TestStationRepository } from '../../src/repositories/TestStationRepository';
+import { TestStationRepository } from '../../src/test-station/TestStationRepository';
 
 describe('Certificate Generation Service', () => {
   Container.set(S3BucketService, new S3BucketMockService());

@@ -14,7 +14,7 @@ import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { ITestStation } from '../models/ITestStations';
 import { TestService } from '../test-result/TestService';
-import { TestStationRepository } from '../repositories/TestStationRepository';
+import { TestStationRepository } from '../test-station/TestStationRepository';
 import { CertificatePayloadGenerator } from './CertificatePayloadGenerator';
 import { TranslationService } from './TranslationService';
 import { ITestResult } from '../models/ITestResult';
