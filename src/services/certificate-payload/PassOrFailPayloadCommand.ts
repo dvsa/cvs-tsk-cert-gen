@@ -11,7 +11,7 @@ import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
 import { ICertificatePayload } from '../../models/ICertificatePayload';
 import { TestResultRepository } from '../../test-result/TestResultRepository';
 import { TechRecordsService } from '../../tech-record/TechRecordsService';
-import { TrailerRepository } from '../../repositories/TrailerRepository';
+import { TrailerRepository } from '../../trailer/TrailerRepository';
 
 @Service()
 export class PassOrFailPayloadCommand implements ICertificatePayloadCommand {

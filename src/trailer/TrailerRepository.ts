@@ -7,11 +7,7 @@ import { HTTPError } from '../models/HTTPError';
 import { IInvokeConfig } from '../models/IInvokeConfig';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from '../services/LambdaService';
-
-export interface IGetTrailerRegistrationResult {
-  Trn?: string;
-  IsTrailer: boolean;
-}
+import { IGetTrailerRegistrationResult } from './IGetTrailerRegistrationResult';
 
 @Service()
 export class TrailerRepository {

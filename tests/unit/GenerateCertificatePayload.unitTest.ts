@@ -33,7 +33,7 @@ import { S3BucketService } from '../../src/services/S3BucketService';
 import { LambdaService } from '../../src/services/LambdaService';
 import { TechRecordsRepository } from '../../src/tech-record/TechRecordsRepository';
 import { CertificatePayloadGenerator } from '../../src/services/CertificatePayloadGenerator';
-import { TrailerRepository } from '../../src/repositories/TrailerRepository';
+import { TrailerRepository } from '../../src/trailer/TrailerRepository';
 import { TestResultRepository } from '../../src/test-result/TestResultRepository';
 import { DefectService } from '../../src/defect/DefectService';
 import { DefectRepository } from '../../src/defect/DefectRepository';
