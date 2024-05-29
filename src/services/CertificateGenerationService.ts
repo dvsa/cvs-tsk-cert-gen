@@ -43,6 +43,7 @@ import { IItem } from "../models/IItem";
 import { IDefectChild } from "../models/IDefectChild";
 import { toUint8Array } from "@smithy/util-utf8";
 import { GetObjectOutput } from "@aws-sdk/client-s3";
+import {Readable} from "stream";
 
 /**
  * Service class for Certificate Generation
@@ -302,23 +303,28 @@ class CertificateGenerationService {
    * @returns the signature as a base64 encoded string
    */
   public async getSignature(staffId: string): Promise<string | null> {
-      console.log("staffId: ", staffId);
-      return await this.s3Client
-      .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-      .then((result: GetObjectOutput) => {
-        console.log(`signature result: ${result.Body!.toString()}`);
-        console.log(`signature result: ${result.Body!}`);
-        console.log(`signature result: ${result.Body}`);
-        console.log("retunring result body to string.....");
-        return result.Body!.toString();
-      })
-      .catch((error: ServiceException) => {
-        console.error(
-          `Unable to fetch signature for staff id ${staffId}. ${error.message}`
-        );
-        console.log("returning null....");
+    console.log("staffId: ", staffId);
+    try {
+      const result: GetObjectOutput = await this.s3Client
+          .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`);
+
+      if (result.Body instanceof Readable) {
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of result.Body) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        const signature = buffer.toString("utf-8");
+        console.log(`signature result: ${signature}`);
+        return signature;
+      } else {
+        console.log(`Unexpected body type: ${typeof result.Body}`);
         return null;
-      });
+      }
+    } catch (error) {
+      console.error(`Unable to fetch signature for staff id ${staffId}. ${(error as Error).message}`);
+      return null;
+    }
   }
 
   /**
