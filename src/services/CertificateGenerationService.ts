@@ -318,8 +318,17 @@ class CertificateGenerationService {
         console.log(`signature result: ${signature}`);
         return signature;
       } else {
-        console.log(`Unexpected body type: ${typeof result.Body}`);
-        return null;
+        return this.s3Client
+            .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
+            .then((result: GetObjectOutput) => {
+              return result.Body!.toString();
+            })
+            .catch((error: ServiceException) => {
+              console.error(
+                  `Unable to fetch signature for staff id ${staffId}. ${error.message}`
+              );
+              return null;
+            });
       }
     } catch (error) {
       console.error(`Unable to fetch signature for staff id ${staffId}. ${(error as Error).message}`);
