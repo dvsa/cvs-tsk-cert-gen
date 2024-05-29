@@ -304,10 +304,9 @@ class CertificateGenerationService {
       return await this.s3Client
       .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
       .then((result: GetObjectOutput) => {
-        console.log(result);
         console.log(`signature result: ${result.Body!.toString()}`);
-        console.log(result.Body);
-        console.log(result.Body?.toString());
+        console.log(`signature result: ${result.Body!}`);
+        console.log(`signature result: ${result.Body}`);
         console.log("retunring result body to string.....");
         return result.Body!.toString();
       })
@@ -342,7 +341,7 @@ class CertificateGenerationService {
     );
 
     console.log("logging signature: ", signature);
-    console.log(signature);
+    console.log(signature?.toString());
 
     let makeAndModel: any = null;
     if (
@@ -368,6 +367,9 @@ class CertificateGenerationService {
     };
     console.log("payload completed: ");
     console.log(payload);
+    console.log(payload.Signature);
+    console.log(payload.Signature.ImageType);
+    console.log(payload.Signature.ImageData);
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
 
