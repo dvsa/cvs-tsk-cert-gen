@@ -245,7 +245,7 @@ class CertificateGenerationService {
         return false;
     }
 
-    const isWelshCountry = testStation.testStationCountry === `Wales`;
+    const isWelshCountry = testStation.testStationCountry?.toString().toUpperCase() === `WALES`;
     console.log(`Test station country for ${testStationPNumber} is set to ${testStation.testStationCountry}`);
     return isWelshCountry;
   }
