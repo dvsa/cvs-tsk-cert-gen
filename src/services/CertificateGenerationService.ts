@@ -1,9 +1,10 @@
-import { InvocationRequest, InvocationResponse, ServiceException } from "@aws-sdk/client-lambda";
+import {InvocationRequest, InvocationResponse, ServiceException} from "@aws-sdk/client-lambda";
 import moment from "moment";
-import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
+import {getProfile} from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
 import {
   ICertificatePayload,
   ICustomDefect,
+  IFeatureFlags,
   IGeneratedCertificateResponse,
   IInvokeConfig,
   IMakeAndModel,
@@ -12,37 +13,22 @@ import {
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IWeightDetails,
-  IFeatureFlags
+  IWeightDetails
 } from "../models";
-import {
-  ADR_TEST,
-  AVAILABLE_WELSH,
-  BASIC_IVA_TEST,
-  CERTIFICATE_DATA,
-  ERRORS,
-  HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-  IVA30_TEST,
-  IVA_30,
-  LOCATION_ENGLISH,
-  LOCATION_WELSH,
-  MSVA30_TEST,
-  TEST_RESULTS,
-  VEHICLE_TYPES
-} from "../models/Enums";
-import { HTTPError } from "../models/HTTPError";
-import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Configuration } from "../utils/Configuration";
-import { LambdaService } from "./LambdaService";
-import { S3BucketService } from "./S3BucketService";
-import { ITestStation } from "../models/ITestStations";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IDefectParent } from "../models/IDefectParent";
-import { IItem } from "../models/IItem";
-import { IDefectChild } from "../models/IDefectChild";
-import { toUint8Array } from "@smithy/util-utf8";
-import { GetObjectOutput } from "@aws-sdk/client-s3";
+import {ADR_TEST, AVAILABLE_WELSH, BASIC_IVA_TEST, CERTIFICATE_DATA, ERRORS, HGV_TRL_ROADWORTHINESS_TEST_TYPES, IVA30_TEST, IVA_30, LOCATION_ENGLISH, LOCATION_WELSH, MSVA30_TEST, TEST_RESULTS, VEHICLE_TYPES} from "../models/Enums";
+import {HTTPError} from "../models/HTTPError";
+import {ISearchResult, TechRecordGet, TechRecordType} from "../models/Types";
+import {Service} from "../models/injector/ServiceDecorator";
+import {Configuration} from "../utils/Configuration";
+import {LambdaService} from "./LambdaService";
+import {S3BucketService} from "./S3BucketService";
+import {ITestStation} from "../models/ITestStations";
+import {IFlatDefect} from "../models/IFlatDefect";
+import {IDefectParent} from "../models/IDefectParent";
+import {IItem} from "../models/IItem";
+import {IDefectChild} from "../models/IDefectChild";
+import {toUint8Array} from "@smithy/util-utf8";
+import {GetObjectOutput} from "@aws-sdk/client-s3";
 import {Readable} from "stream";
 
 /**
@@ -136,18 +122,6 @@ class CertificateGenerationService {
         body: payload,
       })),
     };
-    console.log(JSON.stringify({
-      httpMethod: "POST",
-      pathParameters: {
-        documentName: certificateTypes[vehicleTestRes],
-        documentDirectory: config.documentDir,
-      },
-      json: true,
-      body: payload,
-    }));
-    console.log("invoke paramas; ", invokeParams);
-    console.log("invoke paramas; ", invokeParams.Payload);
-    console.log("invoke paramas; ", new TextDecoder().decode(invokeParams.Payload));
     return this.lambdaClient
       .invoke(invokeParams)
       .then(
@@ -303,7 +277,6 @@ class CertificateGenerationService {
    * @returns the signature as a base64 encoded string
    */
   public async getSignature(staffId: string): Promise<string | null> {
-    console.log("staffId: ", staffId);
     try {
       const result: GetObjectOutput = await this.s3Client
           .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`);
@@ -314,26 +287,14 @@ class CertificateGenerationService {
           chunks.push(chunk);
         }
         const buffer = Buffer.concat(chunks);
-        const signature = buffer.toString("utf-8");
-        console.log(`signature result: ${signature}`);
-        return signature;
+        return buffer.toString("utf-8");
       } else {
-        return this.s3Client
-            .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-            .then((result: GetObjectOutput) => {
-              return result.Body!.toString();
-            })
-            .catch((error: ServiceException) => {
-              console.error(
-                  `Unable to fetch signature for staff id ${staffId}. ${error.message}`
-              );
-              return null;
-            });
+        console.log(`Unexpected body type: ${typeof result.Body}`);
       }
     } catch (error) {
       console.error(`Unable to fetch signature for staff id ${staffId}. ${(error as Error).message}`);
-      return null;
     }
+    return null;
   }
 
   /**
@@ -351,14 +312,9 @@ class CertificateGenerationService {
       testResult.testerName = name;
     }
 
-    console.log("Getting signature....");
-    console.log("test result created by id or staff id: ", testResult.createdById ?? testResult.testerStaffId);
     const signature: string | null = await this.getSignature(
       testResult.createdById ?? testResult.testerStaffId
     );
-
-    console.log("logging signature: ", signature);
-    console.log(signature?.toString());
 
     let makeAndModel: any = null;
     if (
@@ -382,11 +338,6 @@ class CertificateGenerationService {
         ImageData: signature,
       },
     };
-    console.log("payload completed: ");
-    console.log(payload);
-    console.log(payload.Signature);
-    console.log(payload.Signature.ImageType);
-    console.log(payload.Signature.ImageData);
 
     const { testTypes, vehicleType, systemNumber, testHistory } = testResult;
 

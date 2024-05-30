@@ -1,5 +1,5 @@
-import { GetObjectOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
+import {GetObjectOutput, PutObjectCommandOutput} from "@aws-sdk/client-s3";
+import {Readable} from "stream";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -59,13 +59,13 @@ class S3BucketMockService {
    * @param fileName - the name of the file
    */
   public async download(
-    bucketName: string,
-    fileName: string
+      bucketName: string,
+      fileName: string
   ): Promise<GetObjectOutput> {
     const bucket: IBucket | undefined = S3BucketMockService.buckets.find(
-      (currentBucket: IBucket) => {
-        return currentBucket.bucketName === bucketName;
-      }
+        (currentBucket: IBucket) => {
+          return currentBucket.bucketName === bucketName;
+        }
     );
 
     if (!bucket) {
@@ -80,11 +80,10 @@ class S3BucketMockService {
       throw error;
     }
 
-    // @ts-ignore
     const bucketKey: string | undefined = bucket.files.find(
-      (currentFileName: string) => {
-        return currentFileName === fileName;
-      }
+        (currentFileName: string) => {
+          return currentFileName === fileName;
+        }
     );
 
     if (!bucketKey) {
@@ -99,19 +98,23 @@ class S3BucketMockService {
       throw error;
     }
 
-    const file: any = fs.readFileSync(
-      path.resolve(__dirname, `../resources/signatures/${bucketKey}`)
+    const fileContent: Buffer = fs.readFileSync(
+        path.resolve(__dirname, `../resources/signatures/${bucketKey}`)
     );
-    const data: GetObjectOutput = {
-      Body: file,
-      ContentLength: file.length,
+
+    const stream = new Readable();
+    stream.push(fileContent);
+    stream.push(null);
+
+    return {
+      Body: stream,
+      ContentLength: fileContent.length,
       ETag: "621c9c14d75958d4c3ed8ad77c80cde1",
       LastModified: new Date(),
       Metadata: {},
     };
-
-    return data;
   }
 }
+
 
 export { S3BucketMockService };
