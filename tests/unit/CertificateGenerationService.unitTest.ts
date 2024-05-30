@@ -1223,7 +1223,7 @@ describe("Certificate Generation Service", () => {
             jest.resetAllMocks();
           });
         });
-        context("with a test station that does not have country populated", () => {
+        context("with a test station that does not have test station country populated", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "Nonsense_P_Number";
@@ -1245,7 +1245,7 @@ describe("Certificate Generation Service", () => {
             jest.resetAllMocks();
           });
         });
-        context("with a test station that is an empty string", () => {
+        context("with a test station that has an empty string value", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "12345";
@@ -1272,7 +1272,7 @@ describe("Certificate Generation Service", () => {
             jest.resetAllMocks();
           });
         });
-        context("with a test station that is not a string", () => {
+        context("with a test station that has a non-string value", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "Nonsense_P_Number";
@@ -1299,7 +1299,7 @@ describe("Certificate Generation Service", () => {
             jest.resetAllMocks();
           });
         });
-        context("with a response object that has testStation undefined", () => {
+        context("with a response object that does not have testStation", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "P11223";
