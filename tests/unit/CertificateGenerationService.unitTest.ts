@@ -768,8 +768,8 @@ describe("Certificate Generation Service", () => {
   });
 
   describe("welsh address function", () => {
-    const mockStations = testStationsMock;
     context("test getTestStation method", () => {
+      const mockStations = testStationsMock;
       it("should return a test station object if invoke is successful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
@@ -1165,10 +1165,10 @@ describe("Certificate Generation Service", () => {
       });
 
       context("test isTestStationWelsh method", () => {
+        const mockStations = testStationsMock;
         context("with a valid Welsh test station P number", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
-          testResult.testStationPNumber = "P11223";
 
           it("should identify the test requires translation", async () => {
 
@@ -1186,14 +1186,15 @@ describe("Certificate Generation Service", () => {
         context("with a non-Welsh test station P number", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
-
-          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-            Payload: JSON.stringify({ body: JSON.stringify(mockStations[2]) }),
-            FunctionError: undefined,
-            StatusCode: 200,
-          });
+          testResult.testStationPNumber = "69-2361520";
 
           it("should identify that the test does not require translation", async () => {
+
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(mockStations[2]) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
 
             const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
             expect(isWelsh).toBeFalsy();
@@ -1205,13 +1206,13 @@ describe("Certificate Generation Service", () => {
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "Nonsense_P_Number";
 
-          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-            Payload: JSON.stringify({ body: `No resources match the search criteria.`}),
-            FunctionError: undefined,
-            StatusCode: 404,
-          });
-
           it("should identify no test station exists with that P number and log relevant message", async () => {
+
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: `No resources match the search criteria.`}),
+              FunctionError: undefined,
+              StatusCode: 404,
+            });
 
             const logSpy = jest.spyOn(console, "error");
 
@@ -1222,18 +1223,18 @@ describe("Certificate Generation Service", () => {
             jest.resetAllMocks();
           });
         });
-        context("with a test station that does not have country populated", () => {
+        context("with a test station that does not have test station country populated", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "Nonsense_P_Number";
 
-          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-            Payload: JSON.stringify({ body: JSON.stringify(mockStations[4]) }),
-            FunctionError: undefined,
-            StatusCode: 200,
-          });
+          it("should return false and log relevant message", async () => {
 
-          it("should identify no test stations exist with that P number and log relevant message", async () => {
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(mockStations[4]) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
 
             const logSpy = jest.spyOn(console, "error");
 
@@ -1244,24 +1245,104 @@ describe("Certificate Generation Service", () => {
             jest.resetAllMocks();
           });
         });
-        context("with a response object that has testStation undefined", () => {
+        context("with a test station that has an empty string value", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "12345";
+
+          it("should return false and log relevant message", async () => {
+
+            const mockStation = {
+              testStationPNumber: "12345",
+              testStationCountry: ""
+            };
+
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(mockStation) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
+
+            const logSpy = jest.spyOn(console, "log");
+
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Test station country for 12345 is set to `);
+            logSpy.mockClear();
+            jest.resetAllMocks();
+          });
+        });
+        context("with a test station that has a non-string value", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "Nonsense_P_Number";
+
+          it("should return false and log relevant message", async () => {
+
+            const mockStation = {
+              testStationPNumber: "12345",
+              testStationCountry: 12345
+            };
+
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(mockStation) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
+
+            const logSpy = jest.spyOn(console, "log");
+
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Test station country for Nonsense_P_Number is set to 12345`);
+            logSpy.mockClear();
+            jest.resetAllMocks();
+          });
+        });
+        context("with a response object that does not have testStation", () => {
           const event = cloneDeep(queueEventPass);
           const testResult: any = JSON.parse(event.Records[0].body);
           testResult.testStationPNumber = "P11223";
 
-          LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-            Payload: JSON.stringify({ body: JSON.stringify(undefined) }),
-            FunctionError: undefined,
-            StatusCode: 200,
-          });
+          it("should return false and log relevant message", async () => {
 
-          it("should identify test station undefined and log relevant message", async () => {
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(undefined) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
 
             const logSpy = jest.spyOn(console, "error");
 
             const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
             expect(isWelsh).toBeFalsy();
             expect(logSpy).toHaveBeenCalledWith(`Failed to retrieve test station details for P11223`);
+            logSpy.mockClear();
+            jest.resetAllMocks();
+          });
+        });
+        context("with a response object that has testStationCountry undefined", () => {
+          const event = cloneDeep(queueEventPass);
+          const testResult: any = JSON.parse(event.Records[0].body);
+          testResult.testStationPNumber = "P11223";
+
+          it("should return false and log relevant message", async () => {
+
+            const mockStation = {
+              testStationPNumber: "P11223"
+            };
+
+            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+              Payload: JSON.stringify({ body: JSON.stringify(mockStation) }),
+              FunctionError: undefined,
+              StatusCode: 200,
+            });
+
+            const logSpy = jest.spyOn(console, "log");
+
+            const isWelsh = await certGenSvc.isTestStationWelsh(testResult.testStationPNumber);
+            expect(isWelsh).toBeFalsy();
+            expect(logSpy).toHaveBeenCalledWith(`Test station country for P11223 is set to undefined`);
             logSpy.mockClear();
             jest.resetAllMocks();
           });
