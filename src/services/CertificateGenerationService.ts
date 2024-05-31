@@ -303,7 +303,7 @@ class CertificateGenerationService {
         const buffer = Buffer.concat(chunks);
         return buffer.toString("utf-8");
       } else {
-        throw new Error(`Unexpected body type: ${typeof result.Body} for staff ${staffId}`);
+        throw new Error(`Unexpected body type: ${typeof result.Body}`);
       }
     } catch (error) {
       console.error(`Unable to fetch signature for staff id ${staffId}. ${(error as Error).message}`);
