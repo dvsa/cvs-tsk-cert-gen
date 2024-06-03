@@ -43,6 +43,7 @@ import { IItem } from "../models/IItem";
 import { IDefectChild } from "../models/IDefectChild";
 import { toUint8Array } from "@smithy/util-utf8";
 import { GetObjectOutput } from "@aws-sdk/client-s3";
+import { Readable } from "stream";
 
 /**
  * Service class for Certificate Generation
@@ -290,17 +291,24 @@ class CertificateGenerationService {
    * @returns the signature as a base64 encoded string
    */
   public async getSignature(staffId: string): Promise<string | null> {
-    return this.s3Client
-      .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`)
-      .then((result: GetObjectOutput) => {
-        return result.Body!.toString();
-      })
-      .catch((error: ServiceException) => {
-        console.error(
-          `Unable to fetch signature for staff id ${staffId}. ${error.message}`
-        );
-        return null;
-      });
+    try {
+      const result: GetObjectOutput = await this.s3Client
+          .download(`cvs-signature-${process.env.BUCKET}`, `${staffId}.base64`);
+
+      if (result.Body instanceof Readable) {
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of result.Body) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        return buffer.toString("utf-8");
+      } else {
+        throw new Error(`Unexpected body type: ${typeof result.Body}`);
+      }
+    } catch (error) {
+      console.error(`Unable to fetch signature for staff id ${staffId}. ${(error as Error).message}`);
+    }
+    return null;
   }
 
   /**

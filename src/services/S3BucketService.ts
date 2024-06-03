@@ -1,9 +1,9 @@
-import { Service } from "../models/injector/ServiceDecorator";
-import { Readable } from "stream";
-import { Configuration } from "../utils/Configuration";
-import { IS3Config } from "../models";
+import {Service} from "../models/injector/ServiceDecorator";
+import {Readable} from "stream";
+import {Configuration} from "../utils/Configuration";
+import {IS3Config} from "../models";
 import AWSXRay from "aws-xray-sdk";
-import { DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
+import {DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client} from "@aws-sdk/client-s3";
 
 /**
  * Service class for communicating with Simple Storage Service
@@ -49,9 +49,9 @@ class S3BucketService {
    * @param bucketName - the bucket from which to download
    * @param fileName - the name of the file
    */
-  public download(
-    bucketName: string,
-    fileName: string
+  public async download(
+      bucketName: string,
+      fileName: string
   ): Promise<GetObjectCommandOutput> {
     const command = new GetObjectCommand({
       Bucket: bucketName,
@@ -59,7 +59,7 @@ class S3BucketService {
     });
 
     try {
-      return this.s3Client.send(command);
+      return await this.s3Client.send(command);
     } catch (err) {
       throw err;
     }
