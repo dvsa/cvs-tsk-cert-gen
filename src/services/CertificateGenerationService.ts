@@ -615,16 +615,6 @@ class CertificateGenerationService {
     }
   }
 
-  private sortRequiredStandards = (requiredStandards: IRequiredStandard[]) : IRequiredStandard[] => {
-    const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
-
-    return requiredStandards
-        .sort((a,b) =>
-        collator.compare(a.sectionNumber, b.sectionNumber) ||
-        collator.compare(a.rsNumber.toString(), b.rsNumber.toString())
-      );
-  }
-
   /**
    * Formats the additional defects for IVA and MSVA test based on whether custom defects is populated
    * @param customDefects - the custom defects for the test
@@ -1391,6 +1381,21 @@ class CertificateGenerationService {
         testResult.testTypes.testTypeId
       )
     );
+  }
+
+  /**
+   * Sorts required required standards firstly by sectionNumber and then by rsNumber and then returns it
+   * @param requiredStandards - the requiredStandards collection to sort
+   * @returns - the sorted requiredStandards collection
+   */
+  private sortRequiredStandards = (requiredStandards: IRequiredStandard[]) : IRequiredStandard[] => {
+    const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+    return requiredStandards
+        .sort((a,b) =>
+        collator.compare(a.sectionNumber, b.sectionNumber) ||
+        collator.compare(a.rsNumber.toString(), b.rsNumber.toString())
+      );
   }
   //#endregion
 }
