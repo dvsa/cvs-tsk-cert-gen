@@ -1390,7 +1390,6 @@ class CertificateGenerationService {
    */
   private sortRequiredStandards = (requiredStandards: IRequiredStandard[]) : IRequiredStandard[] => {
     const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
-
     return requiredStandards
         .sort((a,b) =>
         collator.compare(a.sectionNumber, b.sectionNumber) ||
