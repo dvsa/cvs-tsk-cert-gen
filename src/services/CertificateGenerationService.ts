@@ -13,7 +13,8 @@ import {
   ITestType,
   ITrailerRegistration,
   IWeightDetails,
-  IFeatureFlags
+  IFeatureFlags,
+  IRequiredStandard
 } from "../models";
 import {
   ADR_TEST,
@@ -592,7 +593,7 @@ class CertificateGenerationService {
           reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: testResult.testTypes.requiredStandards
+          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards!)
         };
         return ivaFailDetailsForDocGen;
       case CERTIFICATE_DATA.MSVA_DATA:
@@ -608,10 +609,20 @@ class CertificateGenerationService {
           retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: testResult.testTypes.requiredStandards
+          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards!)
         };
         return msvaFailDetailsForDocGen;
     }
+  }
+
+  private sortRequiredStandards = (requiredStandards: IRequiredStandard[]) : IRequiredStandard[] => {
+    const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+    return requiredStandards
+        .sort((a,b) =>
+        collator.compare(a.sectionNumber, b.sectionNumber) ||
+        collator.compare(a.rsNumber.toString(), b.rsNumber.toString())
+      );
   }
 
   /**
