@@ -1,36 +1,36 @@
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
 
-import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
-import sinon from "sinon";
-import techRecordResp from "../resources/tech-records-response.json";
-import testResultsResp from "../resources/test-results-response.json";
-import testResultsRespFail from "../resources/test-results-fail-response.json";
-import testResultsRespPrs from "../resources/test-results-prs-response.json";
-import testResultsRespEmpty from "../resources/test-results-empty-response.json";
-import testResultsRespNoCert from "../resources/test-results-nocert-response.json";
 import { LambdaClient } from "@aws-sdk/client-lambda";
-import { LambdaService } from "../../src/services/LambdaService";
-import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
 import { cloneDeep } from "lodash";
-import techRecordsRwt from "../resources/tech-records-response-rwt.json";
-import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
-import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
-import techRecordsPsv from "../resources/tech-records-response-PSV.json";
-import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
-import mockTestResult from "../resources/test-result-with-defect.json";
-import mockIvaTestResult from "../resources/test-result-with-iva-defect.json";
+import sinon from "sinon";
+import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
+import { HTTPError } from "../../src/models/HTTPError";
+import { IDefectParent } from "../../src/models/IDefectParent";
+import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
+import { LambdaService } from "../../src/services/LambdaService";
 import defectsMock from "../../tests/resources/defects_mock.json";
 import flatDefectsMock from "../../tests/resources/flattened-defects.json";
 import testStationsMock from "../../tests/resources/testStationsMock.json";
-import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
-import { IDefectParent } from "../../src/models/IDefectParent";
-import { HTTPError } from "../../src/models/HTTPError";
-import queueEventPRS from "../resources/queue-event-prs.json";
-import queueEventPass from "../resources/queue-event-pass.json";
 import queueEventFail from "../resources/queue-event-fail.json";
+import queueEventPass from "../resources/queue-event-pass.json";
+import queueEventPRS from "../resources/queue-event-prs.json";
+import techRecordsPsv from "../resources/tech-records-response-PSV.json";
+import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
+import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
+import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
+import techRecordsRwt from "../resources/tech-records-response-rwt.json";
+import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
+import techRecordResp from "../resources/tech-records-response.json";
+import mockTestResult from "../resources/test-result-with-defect.json";
+import mockIvaTestResult from "../resources/test-result-with-iva-defect.json";
+import testResultsRespEmpty from "../resources/test-results-empty-response.json";
+import testResultsRespFail from "../resources/test-results-fail-response.json";
+import testResultsRespNoCert from "../resources/test-results-nocert-response.json";
+import testResultsRespPrs from "../resources/test-results-prs-response.json";
+import testResultsResp from "../resources/test-results-response.json";
 
-jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
 }));
 

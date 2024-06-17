@@ -1,19 +1,22 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from "@aws-sdk/client-lambda";
+import { GetObjectOutput } from "@aws-sdk/client-s3";
+import { getProfile } from "@dvsa/cvs-feature-flags/profiles/vtx";
+import { toUint8Array } from "@smithy/util-utf8";
 import moment from "moment";
-import { getProfile } from "@dvsa/cvs-microservice-common/feature-flags/profiles/vtx";
+import { Readable } from "stream";
 import {
   ICertificatePayload,
   ICustomDefect,
+  IFeatureFlags,
   IGeneratedCertificateResponse,
   IInvokeConfig,
-  IMakeAndModel,
   IMOTConfig,
+  IMakeAndModel,
   IRoadworthinessCertificateData,
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IWeightDetails,
-  IFeatureFlags
+  IWeightDetails
 } from "../models";
 import {
   ADR_TEST,
@@ -31,19 +34,16 @@ import {
   VEHICLE_TYPES
 } from "../models/Enums";
 import { HTTPError } from "../models/HTTPError";
+import { IDefectChild } from "../models/IDefectChild";
+import { IDefectParent } from "../models/IDefectParent";
+import { IFlatDefect } from "../models/IFlatDefect";
+import { IItem } from "../models/IItem";
+import { ITestStation } from "../models/ITestStations";
 import { ISearchResult, TechRecordGet, TechRecordType } from "../models/Types";
 import { Service } from "../models/injector/ServiceDecorator";
 import { Configuration } from "../utils/Configuration";
 import { LambdaService } from "./LambdaService";
 import { S3BucketService } from "./S3BucketService";
-import { ITestStation } from "../models/ITestStations";
-import { IFlatDefect } from "../models/IFlatDefect";
-import { IDefectParent } from "../models/IDefectParent";
-import { IItem } from "../models/IItem";
-import { IDefectChild } from "../models/IDefectChild";
-import { toUint8Array } from "@smithy/util-utf8";
-import { GetObjectOutput } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
 
 /**
  * Service class for Certificate Generation
