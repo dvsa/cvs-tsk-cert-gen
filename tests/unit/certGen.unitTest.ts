@@ -1,37 +1,37 @@
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
 
-import { Injector } from "../../src/models/injector/Injector";
 import * as fs from "fs";
+import { cloneDeep } from "lodash";
 import * as path from "path";
+import sinon from "sinon";
+import { certGen } from "../../src/functions/certGen";
+import { ICertificatePayload, IFeatureFlags, ITestResult } from "../../src/models";
+import { Injector } from "../../src/models/injector/Injector";
 import {
     CertificateGenerationService,
     IGeneratedCertificateResponse,
 } from "../../src/services/CertificateGenerationService";
-import { S3BucketMockService } from "../models/S3BucketMockService";
-import { LambdaMockService } from "../models/LambdaMockService";
 import { CertificateUploadService } from "../../src/services/CertificateUploadService";
-import { certGen } from "../../src/functions/certGen";
-import sinon from "sinon";
-import queueEventPass from "../resources/queue-event-pass.json";
-import queueEventFail from "../resources/queue-event-fail.json";
-import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
-import queueEventPRS from "../resources/queue-event-prs.json";
-import techRecordsRwt from "../resources/tech-records-response-rwt.json";
-import docGenRwt from "../resources/doc-gen-payload-rwt.json";
+import { LambdaMockService } from "../models/LambdaMockService";
+import { S3BucketMockService } from "../models/S3BucketMockService";
 import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
 import docGenMsva30 from "../resources/doc-gen-payload-msva30.json";
-
-const sandbox = sinon.createSandbox();
-import { cloneDeep } from "lodash";
-import { ITestResult, ICertificatePayload, IFeatureFlags } from "../../src/models";
-import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
-import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
-import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
+import docGenRwt from "../resources/doc-gen-payload-rwt.json";
+import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
+import queueEventFail from "../resources/queue-event-fail.json";
+import queueEventPass from "../resources/queue-event-pass.json";
+import queueEventPRS from "../resources/queue-event-prs.json";
 import techRecordsPsv from "../resources/tech-records-response-PSV.json";
+import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
+import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
+import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
+import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
 
-jest.mock("@dvsa/cvs-microservice-common/feature-flags/profiles/vtx", () => ({
+const sandbox = sinon.createSandbox();
+
+jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
     getProfile: mockGetProfile
 }));
 
