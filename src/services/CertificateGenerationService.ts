@@ -593,7 +593,7 @@ class CertificateGenerationService {
           reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards!)
+          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards)
         };
         return ivaFailDetailsForDocGen;
       case CERTIFICATE_DATA.MSVA_DATA:
@@ -609,7 +609,7 @@ class CertificateGenerationService {
           retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards!)
+          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards)
         };
         return msvaFailDetailsForDocGen;
     }
@@ -1384,11 +1384,14 @@ class CertificateGenerationService {
   }
 
   /**
-   * Sorts required required standards firstly by sectionNumber and then by rsNumber and then returns it
+   * Sorts required required standards if present firstly by sectionNumber and then by rsNumber and then returns it
    * @param requiredStandards - the requiredStandards collection to sort
    * @returns - the sorted requiredStandards collection
    */
-  private sortRequiredStandards = (requiredStandards: IRequiredStandard[]) : IRequiredStandard[] => {
+  private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined) : IRequiredStandard[] => {
+    if(!requiredStandards)
+      return [];
+
     const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
     return requiredStandards
         .sort((a,b) =>
