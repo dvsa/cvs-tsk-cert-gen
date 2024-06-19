@@ -1384,9 +1384,9 @@ class CertificateGenerationService {
   }
 
   /**
-   * Sorts required required standards if present firstly by sectionNumber and then by rsNumber and then returns it
-   * @param requiredStandards - the requiredStandards collection to sort
-   * @returns - the sorted requiredStandards collection
+   * Sorts required standards if present firstly by sectionNumber and then by rsNumber and then returns it
+   * @param requiredStandards - the requiredStandards array to sort
+   * @returns - the sorted requiredStandards array
    */
   private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined): IRequiredStandard[] | undefined => {
     if (!requiredStandards) {
