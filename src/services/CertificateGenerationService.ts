@@ -1388,9 +1388,9 @@ class CertificateGenerationService {
    * @param requiredStandards - the requiredStandards collection to sort
    * @returns - the sorted requiredStandards collection
    */
-  private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined) : IRequiredStandard[] => {
+  private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined) : IRequiredStandard[] | undefined => {
     if(!requiredStandards)
-      return [];
+      return;
 
     const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
     return requiredStandards
