@@ -204,6 +204,7 @@ interface ITestType {
   modType: IVehicleClass;
   emissionStandard: string;
   fuelType: string;
+  reapplicationDate?: string;
   defects: IDefect[];
   requiredStandards?: IRequiredStandard[];
   customDefects?: ICustomDefect[];
