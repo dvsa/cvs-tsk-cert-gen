@@ -1388,15 +1388,16 @@ class CertificateGenerationService {
    * @param requiredStandards - the requiredStandards collection to sort
    * @returns - the sorted requiredStandards collection
    */
-  private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined) : IRequiredStandard[] | undefined => {
-    if(!requiredStandards)
+  private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined): IRequiredStandard[] | undefined => {
+    if (!requiredStandards) {
       return;
+    }
 
-    const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+    const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
     return requiredStandards
-        .sort((a,b) =>
-        collator.compare(a.sectionNumber, b.sectionNumber) ||
-        collator.compare(a.rsNumber.toString(), b.rsNumber.toString())
+        .sort((a, b) =>
+          collator.compare(a.sectionNumber, b.sectionNumber) ||
+          collator.compare(a.rsNumber.toString(), b.rsNumber.toString())
       );
   }
   //#endregion

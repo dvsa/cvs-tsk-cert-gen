@@ -5346,7 +5346,6 @@ describe("cert-gen", () => {
                                 });
                         });
 
-                        
                         it("should return Certificate Data with sorted requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
                                 vin: "P0123010956789",
