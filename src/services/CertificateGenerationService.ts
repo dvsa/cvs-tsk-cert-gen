@@ -1384,7 +1384,7 @@ class CertificateGenerationService {
   }
 
   /**
-   * Sorts required standards if present firstly by sectionNumber and then by rsNumber and then returns it
+   * Sorts required standards if present by refCalculation and then returns it
    * @param requiredStandards - the requiredStandards array to sort
    * @returns - the sorted requiredStandards array
    */
@@ -1396,8 +1396,7 @@ class CertificateGenerationService {
     const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
     return requiredStandards
         .sort((a, b) =>
-          collator.compare(a.sectionNumber, b.sectionNumber) ||
-          collator.compare(a.rsNumber.toString(), b.rsNumber.toString())
+          collator.compare(a.refCalculation, b.refCalculation)
       );
   }
   //#endregion
