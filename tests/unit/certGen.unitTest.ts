@@ -4919,6 +4919,7 @@ describe("cert-gen", () => {
         context("when a failing test result is read from the queue", () => {
             const event: any = { ...queueEventFail };
             const testResult1: any = JSON.parse(event.Records[3].body);
+            const testResult21: any = JSON.parse(event.Records[20].body);
 
             context("and certificate Data is generated", () => {
                 context(
@@ -4964,6 +4965,65 @@ describe("cert-gen", () => {
 
                             return await certificateGenerationService
                                 .generateCertificateData(testResult1, "IVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+
+                        it("should return Certificate Data with sorted requiredStandards in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: ""
+                                    }
+                                ],
+                                bodyType: null,
+                                date: "04/03/2024",
+                                requiredStandards: [
+                                    {
+                                        sectionNumber: "01",
+                                        sectionDescription: "Noise",
+                                        rsNumber: 1,
+                                        requiredStandard: "The exhaust must be securely mounted",
+                                        refCalculation: "1.1",
+                                        additionalInfo: true,
+                                        inspectionTypes: [
+                                            "normal",
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        additionalNotes: "The exhaust was held on with blue tac"
+                                    },
+                                    {
+                                        sectionNumber: "6a",
+                                        sectionDescription: "Lighting",
+                                        rsNumber: 2,
+                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                        refCalculation: "6.2a",
+                                        additionalInfo: true,
+                                        inspectionTypes: [
+                                            "normal",
+                                            "basic"
+                                        ],
+                                        prs: false,
+                                        additionalNotes: "The bulbs were slightly worn"
+                                    },
+                                ],
+                                make: null,
+                                model: null,
+                                reapplicationDate: "03/09/2024",
+                                serialNumber: "ZX345CV",
+                                station: "Abshire-Kub",
+                                testCategoryBasicNormal: "Basic",
+                                testCategoryClass: "l1e-a",
+                                testerName: "CVS Dev1",
+                                vehicleTrailerNrNo: "ZX345CV",
+                                vin: "P0123010956789",
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult21, "IVA_DATA")
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
                                 });
@@ -5236,6 +5296,57 @@ describe("cert-gen", () => {
                     "and test-result is a MSVA test with multiple required standards and a test status of fail",
                     () => {
                         it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
+                            const expectedResult: any = {
+                                vin: "P0123010956789",
+                                serialNumber: "ZX345CV",
+                                vehicleZNumber: "ZX345CV",
+                                make: null,
+                                model: null,
+                                type: "motorcycle",
+                                testerName: "CVS Dev1",
+                                date: "04/03/2024",
+                                retestDate: "03/09/2024",
+                                station: "Abshire-Kub",
+                                additionalDefects: [
+                                    {
+                                        defectName: "N/A",
+                                        defectNotes: "",
+                                    }
+                                ],
+                                requiredStandards: [
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "The bulbs were slightly worn",
+                                        inspectionTypes: [],
+                                        prs: false,
+                                        refCalculation: "6.2a",
+                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                        rsNumber: 2,
+                                        sectionDescription: "Lighting",
+                                        sectionNumber: "06"
+                                    },
+                                    {
+                                        additionalInfo: true,
+                                        additionalNotes: "Switch was missing",
+                                        inspectionTypes: [],
+                                        prs: false,
+                                        refCalculation: "6.3a",
+                                        requiredStandard: "Any light switch; missing",
+                                        rsNumber: 3,
+                                        sectionDescription: "Lighting",
+                                        sectionNumber: "06"
+                                    },
+                                ],
+                            };
+
+                            return await certificateGenerationService
+                                .generateCertificateData(testResult7, "MSVA_DATA")
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                });
+                        });
+
+                        it("should return Certificate Data with sorted requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
                                 vin: "P0123010956789",
                                 serialNumber: "ZX345CV",

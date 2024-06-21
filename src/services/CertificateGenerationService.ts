@@ -16,7 +16,8 @@ import {
   ITestResult,
   ITestType,
   ITrailerRegistration,
-  IWeightDetails
+  IWeightDetails,
+  IRequiredStandard
 } from "../models";
 import {
   ADR_TEST,
@@ -592,7 +593,7 @@ class CertificateGenerationService {
           reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: testResult.testTypes.requiredStandards
+          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards)
         };
         return ivaFailDetailsForDocGen;
       case CERTIFICATE_DATA.MSVA_DATA:
@@ -608,7 +609,7 @@ class CertificateGenerationService {
           retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-          requiredStandards: testResult.testTypes.requiredStandards
+          requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards)
         };
         return msvaFailDetailsForDocGen;
     }
@@ -1380,6 +1381,23 @@ class CertificateGenerationService {
         testResult.testTypes.testTypeId
       )
     );
+  }
+
+  /**
+   * Sorts required standards if present by refCalculation and then returns it
+   * @param requiredStandards - the requiredStandards array to sort
+   * @returns - the sorted requiredStandards array
+   */
+  private sortRequiredStandards = (requiredStandards: IRequiredStandard[] | undefined): IRequiredStandard[] | undefined => {
+    if (!requiredStandards) {
+      return;
+    }
+
+    const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+    return requiredStandards
+        .sort((a, b) =>
+          collator.compare(a.refCalculation, b.refCalculation)
+      );
   }
   //#endregion
 }
