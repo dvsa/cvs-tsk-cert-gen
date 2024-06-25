@@ -590,7 +590,7 @@ class CertificateGenerationService {
           bodyType: testResult.bodyType?.description,
           date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
           testerName: testResult.testerName,
-          reapplicationDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+          reapplicationDate: testResult.testTypes?.reapplicationDate ? moment(testResult.testTypes?.reapplicationDate).format("DD/MM/YYYY") : "",
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
           requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards)
@@ -606,7 +606,7 @@ class CertificateGenerationService {
           type: testResult.vehicleType,
           testerName: testResult.testerName,
           date: moment(testResult.testTypes.testTypeStartTimestamp).format("DD/MM/YYYY"),
-          retestDate: this.calculateVehicleApprovalRetestDate(testResult.testTypes.testTypeStartTimestamp),
+          reapplicationDate: testResult.testTypes?.reapplicationDate ? moment(testResult.testTypes?.reapplicationDate).format("DD/MM/YYYY") : "",
           station: testResult.testStationName,
           additionalDefects: this.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
           requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards)

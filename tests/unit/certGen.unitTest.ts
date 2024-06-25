@@ -4953,7 +4953,7 @@ describe("cert-gen", () => {
                                 ],
                                 make: "some make",
                                 model: "some model",
-                                reapplicationDate: "27/05/2024",
+                                reapplicationDate: "",
                                 serialNumber: "C456789",
                                 station: "Abshire-Kub",
                                 testCategoryBasicNormal: "Basic",
@@ -5012,7 +5012,7 @@ describe("cert-gen", () => {
                                 ],
                                 make: null,
                                 model: null,
-                                reapplicationDate: "03/09/2024",
+                                reapplicationDate: "",
                                 serialNumber: "ZX345CV",
                                 station: "Abshire-Kub",
                                 testCategoryBasicNormal: "Basic",
@@ -5076,7 +5076,7 @@ describe("cert-gen", () => {
                                 ],
                                 make: "some make",
                                 model: "some model",
-                                reapplicationDate: "27/05/2024",
+                                reapplicationDate: "",
                                 serialNumber: "C456789",
                                 station: "Abshire-Kub",
                                 testCategoryBasicNormal: "Basic",
@@ -5125,7 +5125,7 @@ describe("cert-gen", () => {
                                 ],
                                 make: "some make",
                                 model: "some model",
-                                reapplicationDate: "27/05/2024",
+                                reapplicationDate: "",
                                 serialNumber: "C456789",
                                 station: "Abshire-Kub",
                                 testCategoryBasicNormal: "Basic",
@@ -5175,7 +5175,7 @@ describe("cert-gen", () => {
                                 ],
                                 make: "some make",
                                 model: "some model",
-                                reapplicationDate: "27/05/2024",
+                                reapplicationDate: "",
                                 serialNumber: "C456789",
                                 station: "Abshire-Kub",
                                 testCategoryBasicNormal: "Basic",
@@ -5226,7 +5226,7 @@ describe("cert-gen", () => {
                                 ],
                                 make: "some make",
                                 model: "some model",
-                                reapplicationDate: "27/05/2024",
+                                reapplicationDate: "",
                                 serialNumber: "C456789",
                                 station: "Abshire-Kub",
                                 testCategoryBasicNormal: "Normal",
@@ -5259,8 +5259,8 @@ describe("cert-gen", () => {
                                 type: "motorcycle",
                                 testerName: "CVS Dev1",
                                 date: "04/03/2024",
-                                retestDate: "03/09/2024",
                                 station: "Abshire-Kub",
+                                reapplicationDate: "",
                                 additionalDefects: [
                                     {
                                         defectName: "N/A",
@@ -5305,7 +5305,7 @@ describe("cert-gen", () => {
                                 type: "motorcycle",
                                 testerName: "CVS Dev1",
                                 date: "04/03/2024",
-                                retestDate: "03/09/2024",
+                                reapplicationDate: "",
                                 station: "Abshire-Kub",
                                 additionalDefects: [
                                     {
@@ -5356,7 +5356,7 @@ describe("cert-gen", () => {
                                 type: "motorcycle",
                                 testerName: "CVS Dev1",
                                 date: "04/03/2024",
-                                retestDate: "03/09/2024",
+                                reapplicationDate: "",
                                 station: "Abshire-Kub",
                                 additionalDefects: [
                                     {
@@ -5413,7 +5413,7 @@ describe("cert-gen", () => {
                                 type: "motorcycle",
                                 testerName: "CVS Dev1",
                                 date: "04/03/2024",
-                                retestDate: "03/09/2024",
+                                reapplicationDate: "",
                                 station: "Abshire-Kub",
                                 additionalDefects: [
                                     {
@@ -7571,17 +7571,75 @@ describe("cert-gen", () => {
     });
 
     context("CertGenService for IVA 30 test", () => {
-        context(
-            "when a failing test result for basic IVA test is read from the queue",
-            () => {
-                const event: any = cloneDeep(queueEventFail);
-                const testResult: ITestResult = JSON.parse(event.Records[3].body); // retrieve record
-                context("and a payload is generated", () => {
-                    context("and no signatures were found in the bucket", () => {
-                        it("should return an IVA_30 payload without signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenIva30[0]
-                            );
+        context("when a failing test result for basic IVA test is read from the queue", () => {
+            let testResult: ITestResult;
+            const event: any = cloneDeep(queueEventFail);
+            testResult = JSON.parse(event.Records[3].body);
+
+            describe("reapplication date handling", () => {
+                    testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";
+                    context("and reapplication date is provided", () => {
+                        const event: any = cloneDeep(queueEventFail);
+                        const testResultReapplication: ITestResult = JSON.parse(event.Records[21].body);
+
+                        it("should include reapplication date when provided", async () => {
+                            testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";
+                            const expectedResult: ICertificatePayload = {
+                                "IVA_DATA": {
+                                    "additionalDefects": [
+                                        {
+                                            "defectName": "N/A",
+                                            "defectNotes": ""
+                                        }
+                                    ],
+                                    "bodyType": "some bodyType",
+                                    "date": "28/11/2023",
+                                    "make": "some make",
+                                    "model": "some model",
+                                    "reapplicationDate": "27/05/2024",
+                                    "requiredStandards": [
+                                        {
+                                            "additionalInfo": true,
+                                            "additionalNotes": "The exhaust was held on with blue tac",
+                                            "inspectionTypes": [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.1",
+                                            "requiredStandard": "The exhaust must be securely mounted",
+                                            "rsNumber": 1,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        },
+                                        {
+                                            "additionalInfo": false,
+                                            "additionalNotes": null,
+                                            "inspectionTypes": [
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.5",
+                                            "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            "rsNumber": 5,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        }
+                                    ],
+                                    "serialNumber": "C456789",
+                                    "station": "Abshire-Kub",
+                                    "testCategoryBasicNormal": "Basic",
+                                    "testCategoryClass": "m1",
+                                    "testerName": "CVS Dev1",
+                                    "vehicleTrailerNrNo": "C456789",
+                                    "vin": "T12876765"
+                                },
+                                "Signature": {
+                                    "ImageData": null,
+                                    "ImageType": "png"
+                                },
+                                "Watermark": "NOT VALID"
+                            };
 
                             const getTechRecordSearchStub = sandbox
                                 .stub(certificateGenerationService, "callSearchTechRecords")
@@ -7593,7 +7651,7 @@ describe("cert-gen", () => {
                                 .resolves((techRecordResponseRwtMock) as any);
 
                             return await certificateGenerationService
-                                .generatePayload(testResult)
+                                .generatePayload(testResultReapplication)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
                                     getTechRecordStub.restore();
@@ -7601,18 +7659,68 @@ describe("cert-gen", () => {
                                 });
                         });
                     });
+                    context("and reapplication date is NOT provided", () => {
+                        const event: any = cloneDeep(queueEventFail);
+                        const testResultReapplication: ITestResult = JSON.parse(event.Records[21].body);
 
-                    context("and signatures were found in the bucket", () => {
-                        it("should return an IVA 30 payload with signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenIva30[1]
-                            );
-
-                            // Add a new signature
-                            S3BucketMockService.buckets.push({
-                                bucketName: `cvs-signature-${process.env.BUCKET}`,
-                                files: ["1.base64"],
-                            });
+                        it("should return the IVA_30 payload with the reapplication date in the payload", async () => {
+                            testResultReapplication.testTypes.reapplicationDate = "";
+                            const expectedResult: ICertificatePayload = {
+                                "IVA_DATA": {
+                                    "additionalDefects": [
+                                        {
+                                            "defectName": "N/A",
+                                            "defectNotes": ""
+                                        }
+                                    ],
+                                    "bodyType": "some bodyType",
+                                    "date": "28/11/2023",
+                                    "make": "some make",
+                                    "model": "some model",
+                                    "reapplicationDate": "",
+                                    "requiredStandards": [
+                                        {
+                                            "additionalInfo": true,
+                                            "additionalNotes": "The exhaust was held on with blue tac",
+                                            "inspectionTypes": [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.1",
+                                            "requiredStandard": "The exhaust must be securely mounted",
+                                            "rsNumber": 1,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        },
+                                        {
+                                            "additionalInfo": false,
+                                            "additionalNotes": null,
+                                            "inspectionTypes": [
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.5",
+                                            "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            "rsNumber": 5,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        }
+                                    ],
+                                    "serialNumber": "C456789",
+                                    "station": "Abshire-Kub",
+                                    "testCategoryBasicNormal": "Basic",
+                                    "testCategoryClass": "m1",
+                                    "testerName": "CVS Dev1",
+                                    "vehicleTrailerNrNo": "C456789",
+                                    "vin": "T12876765"
+                                },
+                                "Signature": {
+                                    "ImageData": null,
+                                    "ImageType": "png"
+                                },
+                                "Watermark": "NOT VALID"
+                            };
 
                             const getTechRecordSearchStub = sandbox
                                 .stub(certificateGenerationService, "callSearchTechRecords")
@@ -7624,77 +7732,7 @@ describe("cert-gen", () => {
                                 .resolves((techRecordResponseRwtMock) as any);
 
                             return await certificateGenerationService
-                                .generatePayload(testResult)
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    S3BucketMockService.buckets.pop();
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
-                                });
-                        });
-                    });
-
-                    context(
-                        "and the generated payload is used to call the MOT service",
-                        () => {
-                            it("successfully generate a certificate", async () => {
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
-
-                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
-
-                                expect.assertions(3);
-                                return await certificateGenerationService
-                                    .generateCertificate(testResult)
-                                    .then((response: any) => {
-                                        expect(response.fileName).toEqual(
-                                            "W01A00310_T12876765.pdf"
-                                        );
-                                        expect(response.certificateType).toEqual("IVA30");
-                                        expect(response.certificateOrder).toEqual({
-                                            current: 2,
-                                            total: 2,
-                                        });
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
-                                    });
-                            });
-                        }
-                    );
-                });
-            }
-        );
-    });
-
-    context("CertGenService for MSVA 30 test", () => {
-        context(
-            "when a failing test result MSVA test is read from the queue",
-            () => {
-                const event: any = cloneDeep(queueEventFail);
-                const testResult: ITestResult = JSON.parse(event.Records[8].body); // retrieve record
-                context("and a payload is generated", () => {
-                    context("and no signatures were found in the bucket", () => {
-                        it("should return an MSVA_30 payload without signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenMsva30[0]
-                            );
-
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
-
-                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
-
-                            return await certificateGenerationService
-                                .generatePayload(testResult)
+                                .generatePayload(testResultReapplication)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
                                     getTechRecordStub.restore();
@@ -7702,201 +7740,492 @@ describe("cert-gen", () => {
                                 });
                         });
                     });
-
-                    context("and signatures were found in the bucket", () => {
-                        it("should return a MSVA 30 payload with signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenMsva30[1]
-                            );
-
-                            // Add a new signature
-                            S3BucketMockService.buckets.push({
-                                bucketName: `cvs-signature-${process.env.BUCKET}`,
-                                files: ["1.base64"],
-                            });
-
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
-
-                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
-
-                            return await certificateGenerationService
-                                .generatePayload(testResult)
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    S3BucketMockService.buckets.pop();
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
-                                });
-                        });
-                    });
-
-                    context(
-                        "and the generated payload is used to call the MOT service",
-                        () => {
-                            it("successfully generate a certificate", async () => {
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
-
-                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
-
-                                expect.assertions(3);
-                                return await certificateGenerationService
-                                    .generateCertificate(testResult)
-                                    .then((response: any) => {
-                                        expect(response.fileName).toEqual(
-                                            "W01A00128_P0123010956789.pdf"
-                                        );
-                                        expect(response.certificateType).toEqual("MSVA30");
-                                        expect(response.certificateOrder).toEqual({
-                                            current: 2,
-                                            total: 2,
-                                        });
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
-                                    });
-                            });
-                        }
-                    );
-                });
-            }
-        );
-    });
-
-    context("CertificateUploadService", () => {
-        context("when a valid event is received", () => {
-            const event: any = JSON.parse(
-                fs.readFileSync(
-                    path.resolve(__dirname, "../resources/queue-event-prs.json"),
-                    "utf8"
-                )
-            );
-            const testResult: any = JSON.parse(event.Records[0].body);
-            const certificateUploadService: CertificateUploadService =
-                Injector.resolve<CertificateUploadService>(CertificateUploadService, [
-                    S3BucketMockService,
-                ]);
-
-            // tslint:disable-next-line:no-shadowed-variable
-            const certificateGenerationService: CertificateGenerationService =
-                Injector.resolve<CertificateGenerationService>(
-                    CertificateGenerationService,
-                    [S3BucketMockService, LambdaMockService]
-                );
-
-            context("when uploading a certificate", () => {
-                context("and the S3 bucket exists and is accesible", () => {
-                    it("should successfully upload the certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
-
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
-
-                        const generatedCertificateResponse: IGeneratedCertificateResponse =
-                            await certificateGenerationService.generateCertificate(
-                                testResult
-                            );
-                        S3BucketMockService.buckets.push({
-                            bucketName: `cvs-cert-${process.env.BUCKET}`,
-                            files: [],
-                        });
-
-                        return certificateUploadService
-                            .uploadCertificate(generatedCertificateResponse)
-                            .then((response: any) => {
-                                expect(response.Key).toEqual(
-                                    `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
+                    context("and a payload is generated", () => {
+                        context("and no signatures were found in the bucket", () => {
+                            it("should return an IVA_30 payload without signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenIva30[0]
                                 );
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
-                                S3BucketMockService.buckets.pop();
+
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
                             });
+                        });
+
+                        context("and signatures were found in the bucket", () => {
+                            it("should return an IVA 30 payload with signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenIva30[1]
+                                );
+
+                                // Add a new signature
+                                S3BucketMockService.buckets.push({
+                                    bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                    files: ["1.base64"],
+                                });
+
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        getTechRecordStub.restore();
+                                        S3BucketMockService.buckets.pop();
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        });
+
+                        context(
+                            "and the generated payload is used to call the MOT service",
+                            () => {
+                                it("successfully generate a certificate", async () => {
+                                    const getTechRecordSearchStub = sandbox
+                                        .stub(certificateGenerationService, "callSearchTechRecords")
+                                        .resolves(techRecordsRwtSearch);
+
+                                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                    const getTechRecordStub = sandbox
+                                        .stub(certificateGenerationService, "callGetTechRecords")
+                                        .resolves((techRecordResponseRwtMock) as any);
+
+                                    expect.assertions(3);
+                                    return await certificateGenerationService
+                                        .generateCertificate(testResult)
+                                        .then((response: any) => {
+                                            expect(response.fileName).toEqual(
+                                                "W01A00310_T12876765.pdf"
+                                            );
+                                            expect(response.certificateType).toEqual("IVA30");
+                                            expect(response.certificateOrder).toEqual({
+                                                current: 2,
+                                                total: 2,
+                                            });
+                                            getTechRecordStub.restore();
+                                            getTechRecordSearchStub.restore();
+                                        });
+                                });
+                            }
+                        );
                     });
-                });
+                }
+            );
+        });
 
-                context("and the S3 bucket does not exist or is not accesible", () => {
-                    it("should throw an error", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+        context("CertGenService for MSVA 30 test", () => {
+            context(
+                "when a failing test result MSVA test is read from the queue",
+                () => {
+                    const event: any = cloneDeep(queueEventFail);
+                    const testResult: ITestResult = JSON.parse(event.Records[8].body); // retrieve record
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                    context("and a payload is generated", () => {
+                        context("and reapplication date is provided", () => {
+                            const event: any = cloneDeep(queueEventFail);
+                            const testResultReapplication: ITestResult = JSON.parse(event.Records[21].body);
 
-                        const generatedCertificateResponse: IGeneratedCertificateResponse =
-                            await certificateGenerationService.generateCertificate(
-                                testResult
-                            );
-                        expect.assertions(1);
-                        return certificateUploadService
-                            .uploadCertificate(generatedCertificateResponse)
-                            .catch((error: any) => {
-                                expect(error).toBeInstanceOf(Error);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                            it("should return the IVA_30 payload with the reapplication date in the payload", async () => {
+                                testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";
+                                const expectedResult: ICertificatePayload = {
+                                    "IVA_DATA": {
+                                        "additionalDefects": [
+                                            {
+                                                "defectName": "N/A",
+                                                "defectNotes": ""
+                                            }
+                                        ],
+                                        "bodyType": "some bodyType",
+                                        "date": "28/11/2023",
+                                        "make": "some make",
+                                        "model": "some model",
+                                        "reapplicationDate": "27/05/2024",
+                                        "requiredStandards": [
+                                            {
+                                                "additionalInfo": true,
+                                                "additionalNotes": "The exhaust was held on with blue tac",
+                                                "inspectionTypes": [
+                                                    "normal",
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.1",
+                                                "requiredStandard": "The exhaust must be securely mounted",
+                                                "rsNumber": 1,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            },
+                                            {
+                                                "additionalInfo": false,
+                                                "additionalNotes": null,
+                                                "inspectionTypes": [
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.5",
+                                                "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                                "rsNumber": 5,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            }
+                                        ],
+                                        "serialNumber": "C456789",
+                                        "station": "Abshire-Kub",
+                                        "testCategoryBasicNormal": "Basic",
+                                        "testCategoryClass": "m1",
+                                        "testerName": "CVS Dev1",
+                                        "vehicleTrailerNrNo": "C456789",
+                                        "vin": "T12876765"
+                                    },
+                                    "Signature": {
+                                        "ImageData": null,
+                                        "ImageType": "png"
+                                    },
+                                    "Watermark": "NOT VALID"
+                                };
+
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResultReapplication)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
                             });
+                        });
+                        context("and reapplication date is NOT provided", () => {
+                            const event: any = cloneDeep(queueEventFail);
+                            const testResultReapplication: ITestResult = JSON.parse(event.Records[21].body);
+
+                            it("should return the IVA_30 payload with the reapplication date in the payload", async () => {
+                                testResultReapplication.testTypes.reapplicationDate = "";
+                                const expectedResult: ICertificatePayload = {
+                                    "IVA_DATA": {
+                                        "additionalDefects": [
+                                            {
+                                                "defectName": "N/A",
+                                                "defectNotes": ""
+                                            }
+                                        ],
+                                        "bodyType": "some bodyType",
+                                        "date": "28/11/2023",
+                                        "make": "some make",
+                                        "model": "some model",
+                                        "reapplicationDate": "",
+                                        "requiredStandards": [
+                                            {
+                                                "additionalInfo": true,
+                                                "additionalNotes": "The exhaust was held on with blue tac",
+                                                "inspectionTypes": [
+                                                    "normal",
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.1",
+                                                "requiredStandard": "The exhaust must be securely mounted",
+                                                "rsNumber": 1,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            },
+                                            {
+                                                "additionalInfo": false,
+                                                "additionalNotes": null,
+                                                "inspectionTypes": [
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.5",
+                                                "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                                "rsNumber": 5,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            }
+                                        ],
+                                        "serialNumber": "C456789",
+                                        "station": "Abshire-Kub",
+                                        "testCategoryBasicNormal": "Basic",
+                                        "testCategoryClass": "m1",
+                                        "testerName": "CVS Dev1",
+                                        "vehicleTrailerNrNo": "C456789",
+                                        "vin": "T12876765"
+                                    },
+                                    "Signature": {
+                                        "ImageData": null,
+                                        "ImageType": "png"
+                                    },
+                                    "Watermark": "NOT VALID"
+                                };
+
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResultReapplication)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        });
+
+                        context("and no signatures were found in the bucket", () => {
+                            it("should return an MSVA_30 payload without signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenMsva30[0]
+                                );
+
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        });
+
+                        context("and signatures were found in the bucket", () => {
+                            it("should return a MSVA 30 payload with signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenMsva30[1]
+                                );
+
+                                // Add a new signature
+                                S3BucketMockService.buckets.push({
+                                    bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                    files: ["1.base64"],
+                                });
+
+                                const getTechRecordSearchStub = sandbox
+                                    .stub(certificateGenerationService, "callSearchTechRecords")
+                                    .resolves(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                const getTechRecordStub = sandbox
+                                    .stub(certificateGenerationService, "callGetTechRecords")
+                                    .resolves((techRecordResponseRwtMock) as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        getTechRecordStub.restore();
+                                        S3BucketMockService.buckets.pop();
+                                        getTechRecordStub.restore();
+                                        getTechRecordSearchStub.restore();
+                                    });
+                            });
+                        });
+
+                        context(
+                            "and the generated payload is used to call the MOT service",
+                            () => {
+                                it("successfully generate a certificate", async () => {
+                                    const getTechRecordSearchStub = sandbox
+                                        .stub(certificateGenerationService, "callSearchTechRecords")
+                                        .resolves(techRecordsRwtSearch);
+
+                                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                    const getTechRecordStub = sandbox
+                                        .stub(certificateGenerationService, "callGetTechRecords")
+                                        .resolves((techRecordResponseRwtMock) as any);
+
+                                    expect.assertions(3);
+                                    return await certificateGenerationService
+                                        .generateCertificate(testResult)
+                                        .then((response: any) => {
+                                            expect(response.fileName).toEqual(
+                                                "W01A00128_P0123010956789.pdf"
+                                            );
+                                            expect(response.certificateType).toEqual("MSVA30");
+                                            expect(response.certificateOrder).toEqual({
+                                                current: 2,
+                                                total: 2,
+                                            });
+                                            getTechRecordStub.restore();
+                                            getTechRecordSearchStub.restore();
+                                        });
+                                });
+                            }
+                        );
+                    });
+                }
+            );
+        });
+
+        context("CertificateUploadService", () => {
+            context("when a valid event is received", () => {
+                const event: any = JSON.parse(
+                    fs.readFileSync(
+                        path.resolve(__dirname, "../resources/queue-event-prs.json"),
+                        "utf8"
+                    )
+                );
+                const testResult: any = JSON.parse(event.Records[0].body);
+                const certificateUploadService: CertificateUploadService =
+                    Injector.resolve<CertificateUploadService>(CertificateUploadService, [
+                        S3BucketMockService,
+                    ]);
+
+                // tslint:disable-next-line:no-shadowed-variable
+                const certificateGenerationService: CertificateGenerationService =
+                    Injector.resolve<CertificateGenerationService>(
+                        CertificateGenerationService,
+                        [S3BucketMockService, LambdaMockService]
+                    );
+
+                context("when uploading a certificate", () => {
+                    context("and the S3 bucket exists and is accesible", () => {
+                        it("should successfully upload the certificate", async () => {
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            const generatedCertificateResponse: IGeneratedCertificateResponse =
+                                await certificateGenerationService.generateCertificate(
+                                    testResult
+                                );
+                            S3BucketMockService.buckets.push({
+                                bucketName: `cvs-cert-${process.env.BUCKET}`,
+                                files: [],
+                            });
+
+                            return certificateUploadService
+                                .uploadCertificate(generatedCertificateResponse)
+                                .then((response: any) => {
+                                    expect(response.Key).toEqual(
+                                        `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
+                                    );
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                    S3BucketMockService.buckets.pop();
+                                });
+                        });
+                    });
+
+                    context("and the S3 bucket does not exist or is not accesible", () => {
+                        it("should throw an error", async () => {
+                            const getTechRecordSearchStub = sandbox
+                                .stub(certificateGenerationService, "callSearchTechRecords")
+                                .resolves(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            const getTechRecordStub = sandbox
+                                .stub(certificateGenerationService, "callGetTechRecords")
+                                .resolves((techRecordResponseRwtMock) as any);
+
+                            const generatedCertificateResponse: IGeneratedCertificateResponse =
+                                await certificateGenerationService.generateCertificate(
+                                    testResult
+                                );
+                            expect.assertions(1);
+                            return certificateUploadService
+                                .uploadCertificate(generatedCertificateResponse)
+                                .catch((error: any) => {
+                                    expect(error).toBeInstanceOf(Error);
+                                    getTechRecordStub.restore();
+                                    getTechRecordSearchStub.restore();
+                                });
+                        });
                     });
                 });
             });
         });
-    });
 
-    context("CertGen function", () => {
-        context("when a failing test result is read from the queue", () => {
-            const event: any = { ...queueEventFail };
-            context("and the testResultId is malformed", () => {
-                it("should thrown an error", async () => {
-                    expect.assertions(1);
-                    try {
-                        await certGen(event, undefined as any, () => {
-                            return;
-                        });
-                    } catch (err) {
-                        expect((err as unknown as Error).message).toEqual("Bad Test Record: 1");
-                    }
-                });
-            });
-            context("and the event is empty", () => {
-                it("should thrown an error", async () => {
-                    expect.assertions(1);
-                    try {
-                        await certGen({}, undefined as any, () => {
-                            return;
-                        });
-                    } catch (err) {
-                        expect((err as unknown as Error).message).toEqual("Event is empty");
-                    }
-                });
-            });
-            context("and the event has no records", () => {
-                it("should thrown an error", async () => {
-                    expect.assertions(1);
-                    try {
-                        await certGen(
-                            { otherStuff: "hi", Records: [] },
-                            undefined as any,
-                            () => {
+        context("CertGen function", () => {
+            context("when a failing test result is read from the queue", () => {
+                const event: any = {...queueEventFail};
+                context("and the testResultId is malformed", () => {
+                    it("should thrown an error", async () => {
+                        expect.assertions(1);
+                        try {
+                            await certGen(event, undefined as any, () => {
                                 return;
-                            }
-                        );
-                    } catch (err) {
-                        expect((err as unknown as Error).message).toEqual("Event is empty");
-                    }
+                            });
+                        } catch (err) {
+                            expect((err as unknown as Error).message).toEqual("Bad Test Record: 1");
+                        }
+                    });
+                });
+                context("and the event is empty", () => {
+                    it("should thrown an error", async () => {
+                        expect.assertions(1);
+                        try {
+                            await certGen({}, undefined as any, () => {
+                                return;
+                            });
+                        } catch (err) {
+                            expect((err as unknown as Error).message).toEqual("Event is empty");
+                        }
+                    });
+                });
+                context("and the event has no records", () => {
+                    it("should thrown an error", async () => {
+                        expect.assertions(1);
+                        try {
+                            await certGen(
+                                {otherStuff: "hi", Records: []},
+                                undefined as any,
+                                () => {
+                                    return;
+                                }
+                            );
+                        } catch (err) {
+                            expect((err as unknown as Error).message).toEqual("Event is empty");
+                        }
+                    });
                 });
             });
         });
