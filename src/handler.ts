@@ -1,14 +1,16 @@
 import { certGen } from "./functions/certGen";
-import { config as AWSConfig } from "aws-sdk";
 
 const isOffline: boolean =
   !process.env.BRANCH || process.env.BRANCH === "local";
 
+let credentials = {};
+
 if (isOffline) {
-  AWSConfig.credentials = {
+  credentials = {
     accessKeyId: "accessKey1",
     secretAccessKey: "verySecretKey1",
   };
 }
 
+export { credentials };
 export { certGen as handler };

@@ -1,8 +1,5 @@
-import S3, { Metadata } from "aws-sdk/clients/s3";
-import { AWSError, Response } from "aws-sdk";
-import { Readable } from "stream";
-import { PromiseResult } from "aws-sdk/lib/request";
-import { ManagedUpload } from "aws-sdk/lib/s3/managed_upload";
+import {GetObjectOutput, PutObjectCommandOutput} from "@aws-sdk/client-s3";
+import {Readable} from "stream";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -28,8 +25,8 @@ class S3BucketMockService {
     bucketName: string,
     fileName: string,
     content: Buffer | Uint8Array | Blob | string | Readable,
-    metadata?: Metadata
-  ): Promise<ManagedUpload.SendData> {
+    metadata?: Record<string, string>
+  ): Promise<PutObjectCommandOutput> {
     const bucket: IBucket | undefined = S3BucketMockService.buckets.find(
       (currentBucket: IBucket) => {
         return currentBucket.bucketName === bucketName;
@@ -47,9 +44,8 @@ class S3BucketMockService {
 
       throw error;
     }
-    const response: ManagedUpload.SendData = {
-      Location: `http://localhost:7000/${bucketName}/${fileName}`,
-      ETag: "621c9c14d75958d4c3ed8ad77c80cde1",
+
+    const response: any = {
       Bucket: bucketName,
       Key: `${process.env.BRANCH}/${fileName}`,
     };
@@ -63,13 +59,13 @@ class S3BucketMockService {
    * @param fileName - the name of the file
    */
   public async download(
-    bucketName: string,
-    fileName: string
-  ): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
+      bucketName: string,
+      fileName: string
+  ): Promise<GetObjectOutput> {
     const bucket: IBucket | undefined = S3BucketMockService.buckets.find(
-      (currentBucket: IBucket) => {
-        return currentBucket.bucketName === bucketName;
-      }
+        (currentBucket: IBucket) => {
+          return currentBucket.bucketName === bucketName;
+        }
     );
 
     if (!bucket) {
@@ -84,11 +80,10 @@ class S3BucketMockService {
       throw error;
     }
 
-    // @ts-ignore
     const bucketKey: string | undefined = bucket.files.find(
-      (currentFileName: string) => {
-        return currentFileName === fileName;
-      }
+        (currentFileName: string) => {
+          return currentFileName === fileName;
+        }
     );
 
     if (!bucketKey) {
@@ -103,26 +98,23 @@ class S3BucketMockService {
       throw error;
     }
 
-    // @ts-ignore
-    const file: Buffer = fs.readFileSync(
-      path.resolve(__dirname, `../resources/signatures/${bucketKey}`)
+    const fileContent: Buffer = fs.readFileSync(
+        path.resolve(__dirname, `../resources/signatures/${bucketKey}`)
     );
-    const data: S3.Types.GetObjectOutput = {
-      Body: file,
-      ContentLength: file.length,
+
+    const stream = new Readable();
+    stream.push(fileContent);
+    stream.push(null);
+
+    return {
+      Body: stream,
+      ContentLength: fileContent.length,
       ETag: "621c9c14d75958d4c3ed8ad77c80cde1",
       LastModified: new Date(),
       Metadata: {},
     };
-
-    const response = new Response<S3.Types.GetObjectOutput, AWSError>();
-    Object.assign(response, { data });
-
-    return {
-      $response: response,
-      ...data,
-    };
   }
 }
+
 
 export { S3BucketMockService };

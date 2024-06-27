@@ -1,25 +1,20 @@
-import S3, { Metadata } from "aws-sdk/clients/s3";
-import { AWSError, config as AWSConfig } from "aws-sdk";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Readable } from "stream";
-import { Configuration } from "../utils/Configuration";
-import { IS3Config } from "../models";
-import { ManagedUpload } from "aws-sdk/lib/s3/managed_upload";
-import { PromiseResult } from "aws-sdk/lib/request";
+import {Service} from "../models/injector/ServiceDecorator";
+import {Readable} from "stream";
+import {Configuration} from "../utils/Configuration";
+import {IS3Config} from "../models";
 import AWSXRay from "aws-xray-sdk";
+import {DeleteObjectCommand, DeleteObjectCommandOutput, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client} from "@aws-sdk/client-s3";
 
 /**
  * Service class for communicating with Simple Storage Service
  */
 @Service()
 class S3BucketService {
-  public readonly s3Client: S3;
+  public readonly s3Client: S3Client;
 
-  constructor(s3Client: S3) {
+  constructor(s3Client: S3Client) {
     const config: IS3Config = Configuration.getInstance().getS3Config();
-    this.s3Client = AWSXRay.captureAWSClient(s3Client);
-
-    AWSConfig.s3 = config;
+    this.s3Client = AWSXRay.captureAWSv3Client(new S3Client({ ...s3Client, ...config }));
   }
 
   /**
@@ -29,20 +24,24 @@ class S3BucketService {
    * @param content - contents of the file
    * @param metadata - optional metadata
    */
-  public upload(
+  public async upload(
     bucketName: string,
     fileName: string,
     content: Buffer | Uint8Array | Blob | string | Readable,
-    metadata?: Metadata
-  ): Promise<ManagedUpload.SendData> {
-    return this.s3Client
-      .upload({
-        Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
-        Body: content,
-        Metadata: metadata,
-      })
-      .promise();
+    metadata?: Record<string, string>
+  ): Promise<PutObjectCommandOutput> {
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: `${process.env.BRANCH}/${fileName}`,
+      Body: content,
+      Metadata: metadata,
+    });
+
+    try {
+      return await this.s3Client.send(command);
+    } catch (err) {
+      throw err;
+    }
   }
 
   /**
@@ -50,16 +49,20 @@ class S3BucketService {
    * @param bucketName - the bucket from which to download
    * @param fileName - the name of the file
    */
-  public download(
-    bucketName: string,
-    fileName: string
-  ): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
-    return this.s3Client
-      .getObject({
-        Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
-      })
-      .promise();
+  public async download(
+      bucketName: string,
+      fileName: string
+  ): Promise<GetObjectCommandOutput> {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: `${process.env.BRANCH}/${fileName}`,
+    });
+
+    try {
+      return await this.s3Client.send(command);
+    } catch (err) {
+      throw err;
+    }
   }
 
   /**
@@ -70,13 +73,17 @@ class S3BucketService {
   public delete(
     bucketName: string,
     fileName: string
-  ): Promise<PromiseResult<S3.DeleteObjectOutput, AWSError>> {
-    return this.s3Client
-      .deleteObject({
-        Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
-      })
-      .promise();
+  ): Promise<DeleteObjectCommandOutput> {
+    const command = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: `${process.env.BRANCH}/${fileName}`,
+    });
+
+    try {
+      return this.s3Client.send(command);
+    } catch (err) {
+      throw err;
+    }
   }
 }
 

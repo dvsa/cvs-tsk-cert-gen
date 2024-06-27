@@ -1,14 +1,14 @@
+import { DeleteObjectCommandOutput, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
+import { ERRORS } from "../models/Enums";
 import { Injector } from "../models/injector/Injector";
-import S3, { ManagedUpload } from "aws-sdk/clients/s3";
 import {
   CertificateGenerationService,
   IGeneratedCertificateResponse,
 } from "../services/CertificateGenerationService";
 import { CertificateUploadService } from "../services/CertificateUploadService";
-import { ERRORS } from "../models/Enums";
 
-type CertGenReturn = S3.ManagedUpload.SendData | S3.DeleteObjectOutput;
+type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
 /**
  * λ function to process an SQS message detailing info for certificate generation
@@ -41,6 +41,7 @@ const certGen: Handler = async (
 
   event.Records.forEach((record: SQSRecord) => {
     const testResult: any = JSON.parse(record.body);
+    console.log(`parsed test result is ${testResult.testResultId} with the system number ${testResult.systemNumber}`);
     if (testResult.testStatus === "cancelled") {
       const s3DeletePromise =
         certificateUploadService.removeCertificate(testResult);
@@ -51,7 +52,7 @@ const certGen: Handler = async (
       )
     ) {
       // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
-      const generatedCertificateResponse: Promise<ManagedUpload.SendData> =
+      const generatedCertificateResponse: Promise<PutObjectCommandOutput> =
         certificateGenerationService
           .generateCertificate(testResult)
           .then((response: IGeneratedCertificateResponse) => {

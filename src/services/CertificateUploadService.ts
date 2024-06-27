@@ -1,7 +1,7 @@
+import { PutObjectCommandOutput } from "@aws-sdk/client-s3";
+import { IGeneratedCertificateResponse } from "../models";
 import { Service } from "../models/injector/ServiceDecorator";
 import { S3BucketService } from "./S3BucketService";
-import { IGeneratedCertificateResponse } from "../models";
-import { ManagedUpload, Metadata } from "aws-sdk/clients/s3";
 
 /**
  * Service class for uploading certificates to S3
@@ -20,14 +20,14 @@ class CertificateUploadService {
    */
   public uploadCertificate(
     payload: IGeneratedCertificateResponse
-  ): Promise<ManagedUpload.SendData> {
+  ): Promise<PutObjectCommandOutput> {
     let shouldEmailCertificate = payload.shouldEmailCertificate;
 
     if (shouldEmailCertificate !== "false") {
       shouldEmailCertificate = "true";
     }
 
-    const metadata: Metadata = {
+    const metadata: Record<string, string> = {
       "vrm": payload.vrm,
       "test-type-name": payload.testTypeName,
       "test-type-result": payload.testTypeResult,
@@ -40,6 +40,8 @@ class CertificateUploadService {
       "email": payload.email,
       "should-email-certificate": shouldEmailCertificate,
     };
+
+    console.log(`metadata in s3 upload: ${JSON.stringify(metadata)}`);
 
     return this.s3BucketService.upload(
       `cvs-cert-${process.env.BUCKET}`,
