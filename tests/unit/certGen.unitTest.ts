@@ -1,4 +1,6 @@
 /* eslint-disable import/first */
+import { FeatureFlags } from "@dvsa/cvs-feature-flags/profiles/vtx";
+
 const mockGetProfile = jest.fn();
 
 import * as fs from "fs";
@@ -6,7 +8,7 @@ import { cloneDeep } from "lodash";
 import * as path from "path";
 import sinon from "sinon";
 import { certGen } from "../../src/functions/certGen";
-import { ICertificatePayload, IFeatureFlags, ITestResult } from "../../src/models";
+import { ICertificatePayload, ITestResult } from "../../src/models";
 import { Injector } from "../../src/models/injector/Injector";
 import {
     CertificateGenerationService,
@@ -52,7 +54,7 @@ describe("cert-gen", () => {
         jest.setTimeout(5000);
     });
     beforeEach(() => {
-        const featureFlags: IFeatureFlags = {
+        const featureFlags: FeatureFlags = {
             welshTranslation: {
                 enabled: false,
                 translatePassTestResult: false,

@@ -1,13 +1,12 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from "@aws-sdk/client-lambda";
 import { GetObjectOutput } from "@aws-sdk/client-s3";
-import { getProfile } from "@dvsa/cvs-feature-flags/profiles/vtx";
+import { FeatureFlags, getProfile} from "@dvsa/cvs-feature-flags/profiles/vtx";
 import { toUint8Array } from "@smithy/util-utf8";
 import moment from "moment";
 import { Readable } from "stream";
 import {
   ICertificatePayload,
   ICustomDefect,
-  IFeatureFlags,
   IGeneratedCertificateResponse,
   IInvokeConfig,
   IMOTConfig,
@@ -181,7 +180,7 @@ class CertificateGenerationService {
   public async shouldTranslateTestResult(testResult: any): Promise<boolean> {
     let shouldTranslateTestResult = false;
     try {
-      const featureFlags: IFeatureFlags = await getProfile();
+      const featureFlags: FeatureFlags = await getProfile();
       console.log("Using feature flags ", featureFlags);
 
       if (this.isGlobalWelshFlagEnabled(featureFlags) && this.isTestResultFlagEnabled(testResult.testTypes.testResult, featureFlags)) {
@@ -198,7 +197,7 @@ class CertificateGenerationService {
    * @param featureFlags IFeatureFlags interface
    * @returns boolean
    */
-  public isGlobalWelshFlagEnabled(featureFlags: IFeatureFlags): boolean {
+  public isGlobalWelshFlagEnabled(featureFlags: FeatureFlags): boolean {
     if (!featureFlags.welshTranslation.enabled) {
       console.warn(`Unable to translate any test results: global Welsh flag disabled.`);
       return false;
@@ -212,7 +211,7 @@ class CertificateGenerationService {
    * @param testResult string of result, PASS/PRS/FAIL
    * @returns boolean
    */
-  public isTestResultFlagEnabled(testResult: string, featureFlags: IFeatureFlags): boolean {
+  public isTestResultFlagEnabled(testResult: string, featureFlags: FeatureFlags): boolean {
     let shouldTranslate: boolean = false;
     switch (testResult) {
       case TEST_RESULTS.PRS:
