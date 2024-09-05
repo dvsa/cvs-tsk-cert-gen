@@ -1,6 +1,6 @@
 import { PutObjectCommandOutput } from '@aws-sdk/client-s3';
+import { Inject, Service } from 'typedi';
 import { IGeneratedCertificateResponse } from '../models';
-import { Service } from '../models/injector/ServiceDecorator';
 import { S3BucketService } from './S3BucketService';
 
 /**
@@ -10,7 +10,7 @@ import { S3BucketService } from './S3BucketService';
 class CertificateUploadService {
 	private readonly s3BucketService: S3BucketService;
 
-	constructor(s3BucketService: S3BucketService) {
+	constructor(@Inject() s3BucketService: S3BucketService) {
 		this.s3BucketService = s3BucketService;
 	}
 

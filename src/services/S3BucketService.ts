@@ -9,8 +9,8 @@ import {
 	S3Client,
 } from '@aws-sdk/client-s3';
 import AWSXRay from 'aws-xray-sdk';
+import { Inject, Service } from 'typedi';
 import { IS3Config } from '../models';
-import { Service } from '../models/injector/ServiceDecorator';
 import { Configuration } from '../utils/Configuration';
 
 /**
@@ -20,7 +20,7 @@ import { Configuration } from '../utils/Configuration';
 class S3BucketService {
 	public readonly s3Client: S3Client;
 
-	constructor(s3Client: S3Client) {
+	constructor(@Inject() s3Client: S3Client) {
 		const config: IS3Config = Configuration.getInstance().getS3Config();
 		this.s3Client = AWSXRay.captureAWSv3Client(new S3Client({ ...s3Client, ...config }));
 	}

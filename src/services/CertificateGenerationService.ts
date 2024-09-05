@@ -4,6 +4,7 @@ import { GetObjectOutput } from '@aws-sdk/client-s3';
 import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
+import { Inject, Service } from 'typedi';
 import {
 	ICertificatePayload,
 	ICustomDefect,
@@ -41,7 +42,6 @@ import { IFlatDefect } from '../models/IFlatDefect';
 import { IItem } from '../models/IItem';
 import { ITestStation } from '../models/ITestStations';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
-import { Service } from '../models/injector/ServiceDecorator';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
@@ -55,7 +55,7 @@ class CertificateGenerationService {
 	private readonly config: Configuration;
 	private readonly lambdaClient: LambdaService;
 
-	constructor(s3Client: S3BucketService, lambdaClient: LambdaService) {
+	constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService) {
 		this.s3Client = s3Client;
 		this.config = Configuration.getInstance();
 		this.lambdaClient = lambdaClient;
