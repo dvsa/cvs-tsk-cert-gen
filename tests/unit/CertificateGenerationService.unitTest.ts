@@ -35,6 +35,7 @@ import testResultsResp from "../resources/test-results-response.json";
 import { S3BucketService } from "../../src/services/S3BucketService";
 import { S3BucketMockService } from "../models/S3BucketMockService";
 import { LambdaMockService } from "../models/LambdaMockService";
+import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -350,7 +351,8 @@ describe("Certificate Generation Service", () => {
         const certGenSvc = new CertificateGenerationService(
           // @ts-ignore
           null,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
         const getTechRecordSearchStub = sandbox
           .stub(certGenSvc, "callSearchTechRecords")
@@ -757,7 +759,8 @@ describe("Certificate Generation Service", () => {
       it("should log any exceptions flattening defects", () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
         const logSpy = jest.spyOn(console, "error");
 
@@ -783,7 +786,8 @@ describe("Certificate Generation Service", () => {
       it("should return a test station object if invoke is successful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
@@ -802,7 +806,8 @@ describe("Certificate Generation Service", () => {
 
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
@@ -822,7 +827,8 @@ describe("Certificate Generation Service", () => {
       it("should return an empty object if test stations invoke is unsuccessful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
@@ -839,7 +845,8 @@ describe("Certificate Generation Service", () => {
       it("should throw error if issue when parsing test station", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
@@ -861,7 +868,8 @@ describe("Certificate Generation Service", () => {
       it("should return an array of defects if invoke is successful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         const mockDefects = defectsMock;
@@ -882,7 +890,8 @@ describe("Certificate Generation Service", () => {
 
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
@@ -902,7 +911,8 @@ describe("Certificate Generation Service", () => {
       it("should return an empty array if defects invoke is unsuccessful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
@@ -919,7 +929,8 @@ describe("Certificate Generation Service", () => {
       it("should throw error if issue when parsing defects", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         const mockDefects: IDefectParent[] = [];
@@ -943,7 +954,8 @@ describe("Certificate Generation Service", () => {
       beforeEach(() => {
         certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
       });
       afterEach(() => {
@@ -1366,7 +1378,8 @@ describe("Certificate Generation Service", () => {
       it("should return true if test type id on test result exists in basic array", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         const ivaTestResult = cloneDeep(mockIvaTestResult);
@@ -1378,7 +1391,8 @@ describe("Certificate Generation Service", () => {
       it("should return false if test type id on test result does not exist in basic array", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient())
+          new LambdaService(new LambdaClient()),
+          Container.get(TrailerRepository),
         );
 
         const ivaTestResult = cloneDeep(mockIvaTestResult);

@@ -32,6 +32,7 @@ import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
 import { S3BucketService } from "../../src/services/S3BucketService";
 import { LambdaService } from "../../src/services/LambdaService";
+import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 
 const sandbox = sinon.createSandbox();
 
@@ -6589,7 +6590,7 @@ describe("cert-gen", () => {
 
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
                             .resolves({ Trn: undefined, IsTrailer: true });
@@ -6661,7 +6662,7 @@ describe("cert-gen", () => {
 
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
                             .rejects({ statusCode: 500, body: "an error occured" });
@@ -7271,7 +7272,7 @@ describe("cert-gen", () => {
                         };
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
                             .resolves({ Trn: undefined, IsTrailer: true });
