@@ -576,7 +576,7 @@ class CertificateGenerationService {
           Notes: testResult.testTypes.additionalNotesRecorded,
           TestTypeDate: testResult.testTypes.testTypeStartTimestamp,
         };
-        console.log("CHECK HERE DOCGENPAYLOAD -> ", docGenPayloadAdr);
+
         return docGenPayloadAdr;
       case CERTIFICATE_DATA.IVA_DATA:
         const ivaFailDetailsForDocGen = {
@@ -1087,7 +1087,7 @@ class CertificateGenerationService {
         Object.assign(defects, { [k]: undefined });
       }
     });
-    console.log(JSON.stringify(defects));
+
     return defects;
   }
 
@@ -1213,7 +1213,7 @@ class CertificateGenerationService {
       if (defect.additionalInformation.notes) {
         defectString += ` ${defect.additionalInformation.notes}`;
       }
-      console.log(`Welsh Defect String Generated: ${defectString}`);
+
       return defectString;
     } else {
       console.log(`ERROR: Unable to find a filtered defect`);

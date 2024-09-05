@@ -533,15 +533,15 @@ describe("Certificate Generation Service", () => {
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
-        console.log(testResultWithDefect.testTypes[0].defects[0]);
+
         const format = certGenSvc.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "hgv",
           flatDefectsMock
         );
-        console.log(format);
+
         expect(format).toEqual(
-          "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None"
+          "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None",
         );
       });
       it("should return welsh string for trl vehicle type when there are shared defect refs", () => {
@@ -553,13 +553,13 @@ describe("Certificate Generation Service", () => {
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
-        console.log(testResultWithDefect.testTypes[0].defects[0]);
+
         const format = certGenSvc.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "trl",
           flatDefectsMock
         );
-        console.log(format);
+
         expect(format).toEqual(
           "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Blaen. None"
         );
@@ -573,13 +573,13 @@ describe("Certificate Generation Service", () => {
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
-        console.log(testResultWithDefect.testTypes[0].defects[0]);
+
         const format = certGenSvc.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "psv",
           flatDefectsMock
         );
-        console.log(format);
+
         expect(format).toEqual(
           "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd  ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson arall. Blaen. None"
         );
@@ -596,13 +596,13 @@ describe("Certificate Generation Service", () => {
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { rowNumber: 1 });
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { seatNumber: 2 });
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { axleNumber: 3 });
-        console.log(testResultWithDefect.testTypes[0].defects[0]);
+
         const format = certGenSvc.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "hgv",
           flatDefectsMock
         );
-        console.log(format);
+
         expect(format).toEqual(
           "74.1 Diffyg na ddisgrifir mewn man arall yn y llawlyfr fel: byddai defnyddio'r cerbyd neu'r trelar ar y ffordd yn golygu perygl uniongyrchol o anaf i unrhyw berson. Echelau: 3. Blaen Rhesi: 1. Seddi: 2.. None"
         );
@@ -619,13 +619,13 @@ describe("Certificate Generation Service", () => {
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
-        console.log(testResultWithDefect.testTypes[0].defects[0]);
+
         const format = certGenSvc.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "hgv",
           []
         );
-        console.log(format);
+
         expect(format).toBeNull();
         filterFlatDefectsStub.restore();
       });
