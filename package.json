@@ -89,6 +89,7 @@
     "serverless-plugin-tracing": "^2.0.0",
     "serverless-plugin-typescript": "^2.1.2",
     "sinon": "^7.5.0",
+    "sonar-scanner": "^3.1.0",
     "ts-jest": "^28.0.8",
     "tslint": "^5.20.0",
     "tslint-no-unused-expression-chai": "^0.1.4",
