@@ -8,22 +8,14 @@ import {
 	PutObjectCommandOutput,
 	S3Client,
 } from '@aws-sdk/client-s3';
-import AWSXRay from 'aws-xray-sdk';
-import { Inject, Service } from 'typedi';
-import { IS3Config } from '../models';
-import { Configuration } from '../utils/Configuration';
+import { Service } from 'typedi';
 
 /**
  * Service class for communicating with Simple Storage Service
  */
 @Service()
 class S3BucketService {
-	public readonly s3Client: S3Client;
-
-	constructor(@Inject() s3Client: S3Client) {
-		const config: IS3Config = Configuration.getInstance().getS3Config();
-		this.s3Client = AWSXRay.captureAWSv3Client(new S3Client({ ...s3Client, ...config }));
-	}
+	constructor(private s3Client: S3Client) {}
 
 	/**
 	 * Uploads a file to an S3 bucket

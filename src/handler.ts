@@ -1,15 +1,6 @@
+import { DependencyInjection } from './config/DependencyInjection';
 import { certGen } from './functions/certGen';
 
-const isOffline: boolean = !process.env.BRANCH || process.env.BRANCH === 'local';
+DependencyInjection.register();
 
-let credentials = {};
-
-if (isOffline) {
-	credentials = {
-		accessKeyId: 'accessKey1',
-		secretAccessKey: 'verySecretKey1',
-	};
-}
-
-export { credentials };
 export { certGen as handler };

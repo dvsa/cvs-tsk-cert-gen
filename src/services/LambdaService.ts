@@ -1,23 +1,14 @@
 import { InvocationRequest, InvocationResponse, InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
-import { Inject, Service } from 'typedi';
-import { IInvokeConfig } from '../models';
+import { Service } from 'typedi';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
-import { Configuration } from '../utils/Configuration';
-
-import AWSXRay from 'aws-xray-sdk';
 
 /**
  * Service class for invoking external lambda functions
  */
 @Service()
 class LambdaService {
-	public readonly lambdaClient: LambdaClient;
-
-	constructor(@Inject() lambdaClient: LambdaClient) {
-		const config: IInvokeConfig = Configuration.getInstance().getInvokeConfig();
-		this.lambdaClient = AWSXRay.captureAWSv3Client(new LambdaClient({ ...lambdaClient, ...config.params }));
-	}
+	constructor(private lambdaClient: LambdaClient) {}
 
 	/**
 	 * Invokes a lambda function based on the given parameters

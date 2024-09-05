@@ -4,7 +4,7 @@ import { GetObjectOutput } from '@aws-sdk/client-s3';
 import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 import {
 	ICertificatePayload,
 	ICustomDefect,
@@ -51,15 +51,12 @@ import { S3BucketService } from './S3BucketService';
  */
 @Service()
 class CertificateGenerationService {
-	private readonly s3Client: S3BucketService;
-	private readonly config: Configuration;
-	private readonly lambdaClient: LambdaService;
+	private readonly config: Configuration = Configuration.getInstance();
 
-	constructor(@Inject() s3Client: S3BucketService, @Inject() lambdaClient: LambdaService) {
-		this.s3Client = s3Client;
-		this.config = Configuration.getInstance();
-		this.lambdaClient = lambdaClient;
-	}
+	constructor(
+		private s3Client: S3BucketService,
+		private lambdaClient: LambdaService
+	) {}
 
 	/**
 	 * Generates MOT certificate for a given test result
