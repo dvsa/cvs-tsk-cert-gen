@@ -13,12 +13,17 @@ import { IWeightDetails, ITestResult } from "../../src/models";
 import { HTTPError } from "../../src/models/HTTPError";
 import { S3BucketService } from "../../src/services/S3BucketService";
 import { LambdaService } from "../../src/services/LambdaService";
+import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
 
 const sandbox = sinon.createSandbox();
 
 describe("cert-gen", () => {
     Container.set(S3BucketService, new S3BucketMockService());
     Container.set(LambdaService, new LambdaMockService());
+
+    const techRecordRepository = Container.get(TechRecordRepository);
+    const callGetTechRecordSpy = jest.spyOn(techRecordRepository, 'callGetTechRecords');
+    Container.set(TechRecordRepository, techRecordRepository);
 
     const certificateGenerationService = Container.get(CertificateGenerationService);
 
@@ -46,20 +51,17 @@ describe("cert-gen", () => {
                                 .stub(certificateGenerationService, "callSearchTechRecords")
                                 .resolves(techRecordsRwtSearch);
 
-
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             // expect.assertions(1);
                             await certificateGenerationService
-                                .getWeightDetails(testResult)
-                                .then((weightDetails) => {
-                                    expect(weightDetails).toEqual(expectedWeightDetails);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
-                                });
+                              .getWeightDetails(testResult)
+                              .then((weightDetails) => {
+                                expect(weightDetails).toEqual(expectedWeightDetails);
+                                callGetTechRecordSpy.mockClear();
+                                getTechRecordSearchStub.restore();
+                              });
                         });
                     });
                 }
@@ -82,20 +84,17 @@ describe("cert-gen", () => {
                                 .stub(certificateGenerationService, "callSearchTechRecords")
                                 .resolves(techRecordsRwtSearch);
 
-
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             // expect.assertions(1);
                             await certificateGenerationService
-                                .getWeightDetails(testResult)
-                                .then((weightDetails) => {
-                                    expect(weightDetails).toEqual(expectedWeightDetails);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
-                                });
+                              .getWeightDetails(testResult)
+                              .then((weightDetails) => {
+                                expect(weightDetails).toEqual(expectedWeightDetails);
+                                callGetTechRecordSpy.mockClear();
+                                getTechRecordSearchStub.restore();
+                              });
                         });
                     });
                 }
@@ -115,9 +114,7 @@ describe("cert-gen", () => {
                                 .stub(certificateGenerationService, "callSearchTechRecords")
                                 .resolves(techRecordsRwtSearch);
 
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves(techRecordResponseRwtMock);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             // expect.assertions(1);
                             const expectedError = new HTTPError(
@@ -128,7 +125,7 @@ describe("cert-gen", () => {
                                 .getWeightDetails(testResult)
                                 .catch((err) => {
                                     expect(err).toEqual(expectedError);
-                                    getTechRecordStub.restore();
+                                    callGetTechRecordSpy.mockClear();
                                     getTechRecordSearchStub.restore();
                                 });
                         });
@@ -152,9 +149,7 @@ describe("cert-gen", () => {
                             it("it should throw error", async () => {
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                                 techRecordResponseRwtMock.techRecord_axles = [];
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                                 const getTechRecordSearchStub = sandbox
                                     .stub(certificateGenerationService, "callSearchTechRecords")
                                     .resolves(techRecordsRwtSearch);
@@ -169,7 +164,7 @@ describe("cert-gen", () => {
                                     .getWeightDetails(testResult)
                                     .catch((err) => {
                                         expect(err).toEqual(expectedError);
-                                        getTechRecordStub.restore();
+                                        callGetTechRecordSpy.mockClear();
                                         getTechRecordSearchStub.restore();
                                     });
                             });

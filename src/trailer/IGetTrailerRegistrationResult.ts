@@ -1,4 +1,4 @@
 export interface IGetTrailerRegistrationResult {
-  Trn?: string;
-  IsTrailer: boolean;
+	Trn?: string;
+	IsTrailer: boolean;
 }

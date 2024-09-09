@@ -17,7 +17,6 @@ import {
 	IRoadworthinessCertificateData,
 	ITestResult,
 	ITestType,
-	ITrailerRegistration,
 	IWeightDetails,
 } from '../models';
 import {
@@ -42,10 +41,11 @@ import { IFlatDefect } from '../models/IFlatDefect';
 import { IItem } from '../models/IItem';
 import { ITestStation } from '../models/ITestStations';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { TechRecordRepository } from '../tech-record/TechRecordRepository';
+import { TrailerRepository } from '../trailer/TrailerRepository';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
-import { TrailerRepository } from "../trailer/TrailerRepository";
 
 /**
  * Service class for Certificate Generation
@@ -57,7 +57,8 @@ class CertificateGenerationService {
 	constructor(
 		private s3Client: S3BucketService,
 		private lambdaClient: LambdaService,
-		private trailerRepository: TrailerRepository
+		private trailerRepository: TrailerRepository,
+		private techRecordRepository: TechRecordRepository
 	) {}
 
 	/**
@@ -604,16 +605,16 @@ class CertificateGenerationService {
 		if (searchResult) {
 			const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
 			return processRecordsRes.currentCount !== 0
-				? this.callGetTechRecords(
+				? this.techRecordRepository.callGetTechRecords(
 						processRecordsRes.currentRecords[0].systemNumber,
 						processRecordsRes.currentRecords[0].createdTimestamp
 					)
 				: processRecordsRes.provisionalCount === 1
-					? this.callGetTechRecords(
+					? this.techRecordRepository.callGetTechRecords(
 							processRecordsRes.provisionalRecords[0].systemNumber,
 							processRecordsRes.provisionalRecords[0].createdTimestamp
 						)
-					: this.callGetTechRecords(
+					: this.techRecordRepository.callGetTechRecords(
 							processRecordsRes.provisionalRecords[1].systemNumber,
 							processRecordsRes.provisionalRecords[1].createdTimestamp
 						);
@@ -809,42 +810,6 @@ class CertificateGenerationService {
 			return JSON.parse(res.body);
 		} catch (e) {
 			console.log('Error searching technical records');
-			console.log(JSON.stringify(e));
-			return undefined;
-		}
-	};
-
-	/**
-	 * Used to get a singular whole technical record.
-	 * @param systemNumber
-	 * @param createdTimestamp
-	 */
-	public callGetTechRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(
-		systemNumber: string,
-		createdTimestamp: string
-	): Promise<TechRecordType<T> | undefined> => {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.techRecords.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
-					pathParameters: {
-						systemNumber,
-						createdTimestamp,
-					},
-				})
-			),
-		};
-		try {
-			const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
-			const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
-			return JSON.parse(res.body);
-		} catch (e) {
-			console.log('Error in get technical record');
 			console.log(JSON.stringify(e));
 			return undefined;
 		}
