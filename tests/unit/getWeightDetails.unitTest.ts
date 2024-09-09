@@ -22,7 +22,8 @@ describe("cert-gen", () => {
     Container.set(LambdaService, new LambdaMockService());
 
     const techRecordRepository = Container.get(TechRecordRepository);
-    const callGetTechRecordSpy = jest.spyOn(techRecordRepository, 'callGetTechRecords');
+    const callGetTechRecordSpy = jest.spyOn(techRecordRepository, "callGetTechRecords");
+    const callSearchTechRecordSpy = jest.spyOn(techRecordRepository, "callSearchTechRecords");
     Container.set(TechRecordRepository, techRecordRepository);
 
     const certificateGenerationService = Container.get(CertificateGenerationService);
@@ -47,10 +48,8 @@ describe("cert-gen", () => {
                                 dgvw: 2000,
                                 weight2: 0,
                             };
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
 
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
@@ -60,7 +59,7 @@ describe("cert-gen", () => {
                               .then((weightDetails) => {
                                 expect(weightDetails).toEqual(expectedWeightDetails);
                                 callGetTechRecordSpy.mockClear();
-                                getTechRecordSearchStub.restore();
+                                callSearchTechRecordSpy.mockClear();
                               });
                         });
                     });
@@ -80,10 +79,8 @@ describe("cert-gen", () => {
                                 dgvw: 2000,
                                 weight2: 0,
                             };
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
 
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
@@ -93,7 +90,7 @@ describe("cert-gen", () => {
                               .then((weightDetails) => {
                                 expect(weightDetails).toEqual(expectedWeightDetails);
                                 callGetTechRecordSpy.mockClear();
-                                getTechRecordSearchStub.restore();
+                                callSearchTechRecordSpy.mockClear();
                               });
                         });
                     });
@@ -110,10 +107,8 @@ describe("cert-gen", () => {
                     context("and tech record for vehicle is not found", () => {
                         it("should throw error", async () => {
                             const techRecordResponseRwtMock = undefined;
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
 
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
                             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             // expect.assertions(1);
@@ -126,7 +121,7 @@ describe("cert-gen", () => {
                                 .catch((err) => {
                                     expect(err).toEqual(expectedError);
                                     callGetTechRecordSpy.mockClear();
-                                    getTechRecordSearchStub.restore();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -150,9 +145,7 @@ describe("cert-gen", () => {
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                                 techRecordResponseRwtMock.techRecord_axles = [];
                                 callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
                                 // expect.assertions(1);
@@ -165,7 +158,7 @@ describe("cert-gen", () => {
                                     .catch((err) => {
                                         expect(err).toEqual(expectedError);
                                         callGetTechRecordSpy.mockClear();
-                                        getTechRecordSearchStub.restore();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         }

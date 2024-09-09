@@ -48,6 +48,7 @@ describe("Certificate Generation Service", () => {
 
   const techRecordRepository = Container.get(TechRecordRepository);
   const callGetTechRecordSpy = jest.spyOn(techRecordRepository, "callGetTechRecords");
+  const callSearchTechRecordSpy = jest.spyOn(techRecordRepository, "callSearchTechRecords");
   Container.set(TechRecordRepository, techRecordRepository);
 
   const sandbox = sinon.createSandbox();
@@ -61,9 +62,7 @@ describe("Certificate Generation Service", () => {
       it("should return the record & only invoke the LambdaService once", async () => {
         const certGenSvc = Container.get(CertificateGenerationService);
 
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, "callSearchTechRecords")
-          .resolves(techRecordsRwtSearch);
+        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
@@ -77,7 +76,7 @@ describe("Certificate Generation Service", () => {
         );
         expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
         callGetTechRecordSpy.mockClear();
-        getTechRecordSearchStub.restore();
+        callSearchTechRecordSpy.mockClear();
       });
     });
 
@@ -87,9 +86,7 @@ describe("Certificate Generation Service", () => {
         it("should return the record & invoke the LambdaService twice", async () => {
           const certGenSvc = Container.get(CertificateGenerationService);
 
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, "callSearchTechRecords")
-            .resolves(techRecordsRwtSearch);
+          callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
@@ -104,7 +101,7 @@ describe("Certificate Generation Service", () => {
           );
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
           callGetTechRecordSpy.mockClear();
-          getTechRecordSearchStub.restore();
+          callSearchTechRecordSpy.mockClear();
         });
       }
     );
@@ -122,9 +119,7 @@ describe("Certificate Generation Service", () => {
 
           const certGenSvc = Container.get(CertificateGenerationService);
 
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, "callSearchTechRecords")
-            .resolves(techRecordsRwtSearch);
+          callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
@@ -141,7 +136,7 @@ describe("Certificate Generation Service", () => {
           // expect(LambdaStub.calledTwice).toBeTruthy();
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
           callGetTechRecordSpy.mockClear();
-          getTechRecordSearchStub.restore();
+          callSearchTechRecordSpy.mockClear();
         });
       }
     );
@@ -161,9 +156,7 @@ describe("Certificate Generation Service", () => {
 
           const certGenSvc = Container.get(CertificateGenerationService);
 
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, "callSearchTechRecords")
-            .resolves(techRecordsRwtSearch);
+          callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
@@ -181,7 +174,7 @@ describe("Certificate Generation Service", () => {
           expect(LambdaStub.calledTwice).toBeFalsy();
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
           callGetTechRecordSpy.mockClear();
-          getTechRecordSearchStub.restore();
+          callSearchTechRecordSpy.mockClear();
         });
       }
     );
@@ -192,9 +185,7 @@ describe("Certificate Generation Service", () => {
         it("should return the record & invoke the LambdaService four times", async () => {
           const certGenSvc = Container.get(CertificateGenerationService);
 
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, "callSearchTechRecords")
-            .resolves(techRecordsRwtSearch);
+          callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
@@ -211,7 +202,7 @@ describe("Certificate Generation Service", () => {
           );
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
           callGetTechRecordSpy.mockClear();
-          getTechRecordSearchStub.restore();
+          callSearchTechRecordSpy.mockClear();
         });
       }
     );
@@ -224,9 +215,7 @@ describe("Certificate Generation Service", () => {
 
         const certGenSvc = Container.get(CertificateGenerationService);
 
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, "callSearchTechRecords")
-          .resolves(techRecordsRwtSearch);
+        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
@@ -247,7 +236,7 @@ describe("Certificate Generation Service", () => {
             "Unable to retrieve unique Tech Record for Test Result"
           );
           callGetTechRecordSpy.mockClear();
-          getTechRecordSearchStub.restore();
+          callSearchTechRecordSpy.mockClear();
         }
       });
     });
@@ -262,10 +251,7 @@ describe("Certificate Generation Service", () => {
 
           const certGenSvc = Container.get(CertificateGenerationService);
 
-          const getTechRecordSearchStub = sandbox
-            .stub(certGenSvc, "callSearchTechRecords")
-            .resolves(techRecordsRwtSearch);
-
+          callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
           const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
           callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
@@ -283,7 +269,7 @@ describe("Certificate Generation Service", () => {
               "Unable to retrieve unique Tech Record for Test Result"
             );
             callGetTechRecordSpy.mockClear();
-            getTechRecordSearchStub.restore();
+            callSearchTechRecordSpy.mockClear();
           }
         });
       }
@@ -293,10 +279,7 @@ describe("Certificate Generation Service", () => {
       it("should return make and model from chassis details", async () => {
         const certGenSvc = Container.get(CertificateGenerationService);
 
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, "callSearchTechRecords")
-          .resolves(techRecordsSearchPsv);
-
+        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
         callGetTechRecordSpy.mockResolvedValue(techRecordsPsv as any);
@@ -310,7 +293,7 @@ describe("Certificate Generation Service", () => {
         expect(makeAndModel.Make).toBe("AEC");
         expect(makeAndModel.Model).toBe("RELIANCE");
         callGetTechRecordSpy.mockClear();
-        getTechRecordSearchStub.restore();
+        callSearchTechRecordSpy.mockClear();
       });
     });
 
@@ -318,9 +301,7 @@ describe("Certificate Generation Service", () => {
       it("should return make and model from not-chassis details", async () => {
         const certGenSvc = Container.get(CertificateGenerationService);
 
-        const getTechRecordSearchStub = sandbox
-          .stub(certGenSvc, "callSearchTechRecords")
-          .resolves(techRecordsRwtHgvSearch);
+        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
         callGetTechRecordSpy.mockResolvedValue(techRecordsRwtHgv as any);
 
         const testResultMock = {
@@ -332,7 +313,7 @@ describe("Certificate Generation Service", () => {
         expect(makeAndModel.Make).toBe("Isuzu");
         expect(makeAndModel.Model).toBe("FM");
         callGetTechRecordSpy.mockClear();
-        getTechRecordSearchStub.restore();
+        callSearchTechRecordSpy.mockClear();
       });
     });
   });
