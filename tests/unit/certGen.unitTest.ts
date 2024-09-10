@@ -34,6 +34,7 @@ import { S3BucketService } from "../../src/services/S3BucketService";
 import { LambdaService } from "../../src/services/LambdaService";
 import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
+import { TestResultRepository } from "../../src/test-result/TestResultRepository";
 
 const sandbox = sinon.createSandbox();
 
@@ -53,6 +54,10 @@ describe("cert-gen", () => {
   const callGetTechRecordSpy = jest.spyOn(techRecordRepository, "callGetTechRecords");
   const callSearchTechRecordSpy = jest.spyOn(techRecordRepository, "callSearchTechRecords");
   Container.set(TechRecordRepository, techRecordRepository);
+
+  const testResultRepository = Container.get(TestResultRepository);
+  let callGetOdometerSpy = jest.spyOn(testResultRepository, 'getOdometerHistory');
+  Container.set(TestResultRepository, testResultRepository);
 
   const certificateGenerationService = Container.get(CertificateGenerationService);
 
@@ -74,9 +79,12 @@ describe("cert-gen", () => {
         };
 
         mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
+
+        callGetOdometerSpy = jest.spyOn(testResultRepository, "getOdometerHistory");
     });
     afterEach(() => {
         sandbox.restore();
+        callGetOdometerSpy.mockRestore();
     });
     context("CertificateGenerationService", () => {
         LambdaMockService.populateFunctions();
@@ -324,12 +332,7 @@ describe("cert-gen", () => {
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
                         // const getVehicleMakeAndModelStub = sandbox
                         //     .stub(
@@ -341,7 +344,7 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
@@ -1573,17 +1576,12 @@ describe("cert-gen", () => {
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
                             });
@@ -4368,17 +4366,12 @@ describe("cert-gen", () => {
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
@@ -5322,17 +5315,12 @@ describe("cert-gen", () => {
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                          .stub(
-                              CertificateGenerationService.prototype,
-                              "getOdometerHistory"
-                          )
-                          .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                           .generatePayload(testResult)
                           .then((payload: any) => {
                             expect(payload).toEqual(expectedResult);
-                            getOdometerHistoryStub.restore();
+                            callGetOdometerSpy.mockClear();
                             // getVehicleMakeAndModelStub.restore();
                             callGetTechRecordSpy.mockClear();
                             callSearchTechRecordSpy.mockClear();
@@ -5620,17 +5608,12 @@ describe("cert-gen", () => {
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                           .generatePayload(testResult)
                           .then((payload: any) => {
                               expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
@@ -5908,18 +5891,13 @@ describe("cert-gen", () => {
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
                         return await certificateGenerationService
                           .generatePayload(testResult)
                           .then((payload: any) => {
                               expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
                           });
@@ -6134,17 +6112,12 @@ describe("cert-gen", () => {
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
@@ -6523,17 +6496,12 @@ describe("cert-gen", () => {
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
                             });
@@ -6767,17 +6735,12 @@ describe("cert-gen", () => {
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
