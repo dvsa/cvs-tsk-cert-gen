@@ -39,6 +39,7 @@ import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
 import { TestStationRepository } from "../../src/test-station/TestStationRepository";
 import { TestResultRepository } from "../../src/test-result/TestResultRepository";
+import { DefectRepository } from "../../src/defect/DefectRepository";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -797,7 +798,7 @@ describe("Certificate Generation Service", () => {
 
     context("test getDefectTranslations method", () => {
       it("should return an array of defects if invoke is successful", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const defectRepository = Container.get(DefectRepository);
 
         const mockDefects = defectsMock;
 
@@ -807,7 +808,7 @@ describe("Certificate Generation Service", () => {
           StatusCode: 200,
         });
 
-        const defects = await certGenSvc.getDefectTranslations();
+        const defects = await defectRepository.getDefectTranslations();
 
         expect(defects).toEqual(mockDefects);
         jest.clearAllMocks();
@@ -815,7 +816,7 @@ describe("Certificate Generation Service", () => {
       it("should invoke defects up to 3 times if there is an issue", async () => {
         const logSpy = jest.spyOn(console, "error");
 
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const defectRepository = Container.get(DefectRepository);
 
         const payload = JSON.stringify({ body: "" });
         invokeSpy.mockResolvedValue({
@@ -824,16 +825,16 @@ describe("Certificate Generation Service", () => {
           StatusCode: 200,
         });
 
-        const defects = await certGenSvc.getDefectTranslations();
+        const defects = await defectRepository.getDefectTranslations();
 
-        expect(logSpy).toHaveBeenLastCalledWith(`There was an error retrieving the welsh defect translations on attempt 3: Error: ${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${payload}.`);
+        expect(logSpy).toHaveBeenLastCalledWith(`There was an error retrieving the welsh defect translations on attempt 3: ${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${payload}.`);
         expect(logSpy).toHaveBeenCalledTimes(3);
         expect(defects).not.toBeNull();
         logSpy.mockClear();
         jest.clearAllMocks();
       });
       it("should return an empty array if defects invoke is unsuccessful", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const defectRepository = Container.get(DefectRepository);
 
         invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: "" }),
@@ -841,13 +842,13 @@ describe("Certificate Generation Service", () => {
           StatusCode: 200,
         });
 
-        const defects = await certGenSvc.getDefectTranslations();
+        const defects = await defectRepository.getDefectTranslations();
 
         expect(defects).toEqual([]);
         jest.clearAllMocks();
       });
       it("should throw error if issue when parsing defects", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const defectRepository = Container.get(DefectRepository);
 
         const mockDefects: IDefectParent[] = [];
 
@@ -857,7 +858,7 @@ describe("Certificate Generation Service", () => {
           StatusCode: 200,
         });
 
-        const defects = await certGenSvc.getDefectTranslations()
+        const defects = await defectRepository.getDefectTranslations()
           .catch((e) => {
             expect(e).toBeInstanceOf(HTTPError);
           });

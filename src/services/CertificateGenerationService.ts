@@ -5,6 +5,7 @@ import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
 import { Service } from 'typedi';
+import { DefectRepository } from '../defect/DefectRepository';
 import {
 	ICertificatePayload,
 	ICustomDefect,
@@ -23,7 +24,6 @@ import {
 	AVAILABLE_WELSH,
 	BASIC_IVA_TEST,
 	CERTIFICATE_DATA,
-	ERRORS,
 	HGV_TRL_ROADWORTHINESS_TEST_TYPES,
 	IVA30_TEST,
 	IVA_30,
@@ -60,7 +60,8 @@ class CertificateGenerationService {
 		private trailerRepository: TrailerRepository,
 		private techRecordRepository: TechRecordRepository,
 		private testStationRepository: TestStationRepository,
-		private testResultRepository: TestResultRepository
+		private testResultRepository: TestResultRepository,
+		private defectRepository: DefectRepository
 	) {}
 
 	/**
@@ -391,7 +392,7 @@ class CertificateGenerationService {
 		let defectListFromApi: IDefectParent[] = [];
 		let flattenedDefects: IFlatDefect[] = [];
 		if (isWelsh) {
-			defectListFromApi = await this.getDefectTranslations();
+			defectListFromApi = await this.defectRepository.getDefectTranslations();
 			flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
 		}
 		const testType: any = testResult.testTypes;
@@ -682,44 +683,6 @@ class CertificateGenerationService {
 	 */
 	public isValidForTrn(vehicleType: string, makeAndModel: IMakeAndModel): boolean {
 		return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
-	}
-
-	/**
-	 * Method used to retrieve the Welsh translations for the certificates
-	 * @returns a list of defects
-	 */
-	public async getDefectTranslations(): Promise<IDefectParent[]> {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.defects.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/defects/`,
-				})
-			),
-		};
-		let defects: IDefectParent[] = [];
-		let retries = 0;
-		while (retries < 3) {
-			try {
-				const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-				const payload: any = this.lambdaClient.validateInvocationResponse(response);
-				const defectsParsed = JSON.parse(payload.body);
-
-				if (!defectsParsed || defectsParsed.length === 0) {
-					throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
-				}
-				defects = defectsParsed;
-				return defects;
-			} catch (error) {
-				retries++;
-				console.error(`There was an error retrieving the welsh defect translations on attempt ${retries}: ${error}`);
-			}
-		}
-		return defects;
 	}
 
 	/**

@@ -35,6 +35,7 @@ import { LambdaService } from "../../src/services/LambdaService";
 import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
 import { TestResultRepository } from "../../src/test-result/TestResultRepository";
+import { DefectRepository } from "../../src/defect/DefectRepository";
 
 const sandbox = sinon.createSandbox();
 
@@ -1432,17 +1433,21 @@ describe("cert-gen", () => {
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                        const defectSpy = jest.spyOn(certificateGenerationService, "getDefectTranslations");
+                        const defectRepository = Container.get(DefectRepository);
+                        const getDefectTranslationsSpy = jest.spyOn(defectRepository, "getDefectTranslations");
+                        Container.set(DefectRepository, defectRepository);
+
                         const flattenSpy = jest.spyOn(certificateGenerationService, "flattenDefectsFromApi");
 
                         return await certificateGenerationService
                             .generatePayload(psvTestResultWithMinorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                expect(defectSpy).not.toHaveBeenCalled();
+                                expect(getDefectTranslationsSpy).not.toHaveBeenCalled();
                                 expect(flattenSpy).not.toHaveBeenCalled();
                                 callGetTechRecordSpy.mockClear();
                                 callSearchTechRecordSpy.mockClear();
+                                getDefectTranslationsSpy.mockRestore();
                             });
                     });
                 });
