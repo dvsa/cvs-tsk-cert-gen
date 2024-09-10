@@ -7,7 +7,7 @@ import Container from "typedi";
 import { LambdaClient } from "@aws-sdk/client-lambda";
 import { cloneDeep } from "lodash";
 import sinon from "sinon";
-import { LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
+import { ERRORS, LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
 import { HTTPError } from "../../src/models/HTTPError";
 import { IDefectParent } from "../../src/models/IDefectParent";
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
@@ -37,6 +37,7 @@ import { S3BucketMockService } from "../models/S3BucketMockService";
 import { LambdaMockService } from "../models/LambdaMockService";
 import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
+import { TestStationRepository } from "../../src/test-station/TestStationRepository";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -700,12 +701,7 @@ describe("Certificate Generation Service", () => {
         expect(flattenedArray).toHaveLength(7);
       });
       it("should log any exceptions flattening defects", () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
         const logSpy = jest.spyOn(console, "error");
 
         const defectsMockForError = cloneDeep(defectsMock);
@@ -725,23 +721,29 @@ describe("Certificate Generation Service", () => {
   });
 
   describe("welsh address function", () => {
+    let invokeSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      const lambdaService = Container.get(LambdaService);
+      invokeSpy = jest.spyOn(lambdaService, 'invoke');
+      Container.set(LambdaService, lambdaService);
+    });
+
+    afterAll(() => {
+      Container.set(LambdaService, new LambdaMockService());
+    });
+
     context("test getTestStation method", () => {
       const mockStations = testStationsMock;
       it("should return a test station object if invoke is successful", async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
-
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+        invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: JSON.stringify(mockStations[0]) }),
           FunctionError: undefined,
           StatusCode: 200,
         });
 
-        const testStation = await certGenSvc.getTestStation("somePNumber");
+        const testStationRepository = Container.get(TestStationRepository);
+        const testStation = await testStationRepository.getTestStation('somePNumber');
 
         expect(testStation).toEqual(mockStations[0]);
         jest.clearAllMocks();
@@ -749,61 +751,44 @@ describe("Certificate Generation Service", () => {
       it("should invoke test stations up to 3 times if there is an issue", async () => {
         const logSpy = jest.spyOn(console, "error");
 
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
-
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: "" }),
+        const payload = JSON.stringify({ body: '' });
+        invokeSpy.mockResolvedValue({
+          Payload: payload,
           FunctionError: undefined,
           StatusCode: 200,
         });
 
-        const testStation = await certGenSvc.getTestStation("somePNumber");
+        const testStationRepository = Container.get(TestStationRepository);
+        const testStation = await testStationRepository.getTestStation('somePNumber');
 
-        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the test station on attempt 3: Error");
+        expect(logSpy).toHaveBeenLastCalledWith(`There was an error retrieving the test station on attempt 3: ${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${payload}.`);
         expect(logSpy).toHaveBeenCalledTimes(3);
         expect(testStation).not.toBeNull();
         logSpy.mockClear();
         jest.clearAllMocks();
       });
       it("should return an empty object if test stations invoke is unsuccessful", async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
-
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+        invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: "" }),
           FunctionError: undefined,
           StatusCode: 200,
         });
 
-        const testStation = await certGenSvc.getTestStation("somePNumber");
+        const testStationRepository = Container.get(TestStationRepository);
+        const testStation = await testStationRepository.getTestStation('somePNumber');
 
         expect(testStation).toEqual({});
         jest.clearAllMocks();
       });
       it("should throw error if issue when parsing test station", async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
-
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+        invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: `No resources match the search criteria.`}),
           FunctionError: undefined,
           StatusCode: 200,
         });
 
-        const testStation = await certGenSvc.getTestStation("somePNumber")
+        const testStationRepository = Container.get(TestStationRepository);
+        const testStation = await testStationRepository.getTestStation('somePNumber')
           .catch((e) => {
             expect(e).toBeInstanceOf(HTTPError);
           });
@@ -816,14 +801,15 @@ describe("Certificate Generation Service", () => {
       it("should return an array of defects if invoke is successful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient()),
+          Container.get(LambdaService),
           Container.get(TrailerRepository),
           Container.get(TechRecordRepository),
+          Container.get(TestStationRepository),
         );
 
         const mockDefects = defectsMock;
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+        invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
           FunctionError: undefined,
           StatusCode: 200,
@@ -839,20 +825,22 @@ describe("Certificate Generation Service", () => {
 
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient()),
+          Container.get(LambdaService),
           Container.get(TrailerRepository),
           Container.get(TechRecordRepository),
+          Container.get(TestStationRepository),
         );
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
-          Payload: JSON.stringify({ body: "" }),
+        const payload = JSON.stringify({ body: "" });
+        invokeSpy.mockResolvedValue({
+          Payload: payload,
           FunctionError: undefined,
           StatusCode: 200,
         });
 
         const defects = await certGenSvc.getDefectTranslations();
 
-        expect(logSpy).toHaveBeenLastCalledWith("There was an error retrieving the welsh defect translations on attempt 3: Error");
+        expect(logSpy).toHaveBeenLastCalledWith(`There was an error retrieving the welsh defect translations on attempt 3: Error: ${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${payload}.`);
         expect(logSpy).toHaveBeenCalledTimes(3);
         expect(defects).not.toBeNull();
         logSpy.mockClear();
@@ -861,12 +849,13 @@ describe("Certificate Generation Service", () => {
       it("should return an empty array if defects invoke is unsuccessful", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient()),
+          Container.get(LambdaService),
           Container.get(TrailerRepository),
           Container.get(TechRecordRepository),
+          Container.get(TestStationRepository),
         );
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+        invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: "" }),
           FunctionError: undefined,
           StatusCode: 200,
@@ -880,14 +869,15 @@ describe("Certificate Generation Service", () => {
       it("should throw error if issue when parsing defects", async () => {
         const certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient()),
+          Container.get(LambdaService),
           Container.get(TrailerRepository),
           Container.get(TechRecordRepository),
+          Container.get(TestStationRepository),
         );
 
         const mockDefects: IDefectParent[] = [];
 
-        LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+        invokeSpy.mockResolvedValue({
           Payload: JSON.stringify({ body: JSON.stringify(mockDefects) }),
           FunctionError: undefined,
           StatusCode: 200,
@@ -906,9 +896,10 @@ describe("Certificate Generation Service", () => {
       beforeEach(() => {
         certGenSvc = new CertificateGenerationService(
           null as any,
-          new LambdaService(new LambdaClient()),
+          Container.get(LambdaService),
           Container.get(TrailerRepository),
           Container.get(TechRecordRepository),
+          Container.get(TestStationRepository),
         );
       });
       afterEach(() => {
@@ -1147,7 +1138,7 @@ describe("Certificate Generation Service", () => {
 
           it("should identify the test requires translation", async () => {
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(mockStations[0]) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1165,7 +1156,7 @@ describe("Certificate Generation Service", () => {
 
           it("should identify that the test does not require translation", async () => {
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(mockStations[2]) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1183,7 +1174,7 @@ describe("Certificate Generation Service", () => {
 
           it("should identify no test station exists with that P number and log relevant message", async () => {
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: `No resources match the search criteria.`}),
               FunctionError: undefined,
               StatusCode: 404,
@@ -1205,7 +1196,7 @@ describe("Certificate Generation Service", () => {
 
           it("should return false and log relevant message", async () => {
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(mockStations[4]) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1232,7 +1223,7 @@ describe("Certificate Generation Service", () => {
               testStationCountry: ""
             };
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(mockStation) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1259,7 +1250,7 @@ describe("Certificate Generation Service", () => {
               testStationCountry: 12345
             };
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(mockStation) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1281,7 +1272,7 @@ describe("Certificate Generation Service", () => {
 
           it("should return false and log relevant message", async () => {
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(undefined) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1307,7 +1298,7 @@ describe("Certificate Generation Service", () => {
               testStationPNumber: "P11223"
             };
 
-            LambdaService.prototype.invoke = jest.fn().mockResolvedValue({
+            invokeSpy.mockResolvedValue({
               Payload: JSON.stringify({ body: JSON.stringify(mockStation) }),
               FunctionError: undefined,
               StatusCode: 200,
@@ -1329,12 +1320,7 @@ describe("Certificate Generation Service", () => {
   describe("iva 30 logic", () => {
     context("test isBasicIvaTest logic", () => {
       it("should return true if test type id on test result exists in basic array", async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const ivaTestResult = cloneDeep(mockIvaTestResult);
 
@@ -1343,12 +1329,7 @@ describe("Certificate Generation Service", () => {
         expect(result).toBeTruthy();
       });
       it("should return false if test type id on test result does not exist in basic array", async () => {
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient()),
-          Container.get(TrailerRepository),
-          Container.get(TechRecordRepository),
-        );
+        const certGenSvc = Container.get(CertificateGenerationService);
 
         const ivaTestResult = cloneDeep(mockIvaTestResult);
         ivaTestResult.testTypes[0].testTypeId = "130";

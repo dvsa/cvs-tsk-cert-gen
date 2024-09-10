@@ -39,9 +39,9 @@ import { IDefectChild } from '../models/IDefectChild';
 import { IDefectParent } from '../models/IDefectParent';
 import { IFlatDefect } from '../models/IFlatDefect';
 import { IItem } from '../models/IItem';
-import { ITestStation } from '../models/ITestStations';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
 import { TechRecordRepository } from '../tech-record/TechRecordRepository';
+import { TestStationRepository } from '../test-station/TestStationRepository';
 import { TrailerRepository } from '../trailer/TrailerRepository';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
@@ -58,7 +58,8 @@ class CertificateGenerationService {
 		private s3Client: S3BucketService,
 		private lambdaClient: LambdaService,
 		private trailerRepository: TrailerRepository,
-		private techRecordRepository: TechRecordRepository
+		private techRecordRepository: TechRecordRepository,
+		private testStationRepository: TestStationRepository
 	) {}
 
 	/**
@@ -234,7 +235,7 @@ class CertificateGenerationService {
 	 * @returns Promise<boolean> true if the test station country is set to Wales, false otherwise
 	 */
 	public async isTestStationWelsh(testStationPNumber: string): Promise<boolean> {
-		const testStation = await this.getTestStation(testStationPNumber);
+		const testStation = await this.testStationRepository.getTestStation(testStationPNumber);
 
 		if (!testStation.testStationPNumber) {
 			console.error(`Failed to retrieve test station details for ${testStationPNumber}`);
@@ -244,42 +245,6 @@ class CertificateGenerationService {
 		const isWelshCountry = testStation.testStationCountry?.toString().toUpperCase() === `WALES`;
 		console.log(`Test station country for ${testStationPNumber} is set to ${testStation.testStationCountry}`);
 		return isWelshCountry;
-	}
-
-	/**
-	 * Method to retrieve Test Station details from API
-	 * @returns a test station object
-	 */
-	public async getTestStation(testStationPNumber: string): Promise<ITestStation> {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.testStations.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/test-stations/${testStationPNumber}`,
-				})
-			),
-		};
-		let testStation: ITestStation = {} as ITestStation;
-		let retries = 0;
-
-		while (retries < 3) {
-			try {
-				const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-				const payload: any = this.lambdaClient.validateInvocationResponse(response);
-
-				testStation = JSON.parse(payload.body);
-
-				return testStation;
-			} catch (error) {
-				retries++;
-				console.error(`There was an error retrieving the test station on attempt ${retries}: ${error}`);
-			}
-		}
-		return testStation;
 	}
 
 	/**
