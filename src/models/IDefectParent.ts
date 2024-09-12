@@ -1,8 +1,8 @@
-import {IItem} from "./IItem";
+import { IItem } from './IItem';
 
 export interface IDefectParent {
-    imNumber?: number;
-    imDescription?: string;
-    imDescriptionWelsh?: string;
-    items: IItem[];
+	imNumber?: number;
+	imDescription?: string;
+	imDescriptionWelsh?: string;
+	items: IItem[];
 }
