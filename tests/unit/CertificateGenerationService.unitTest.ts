@@ -35,11 +35,11 @@ import testResultsResp from "../resources/test-results-response.json";
 import { S3BucketService } from "../../src/services/S3BucketService";
 import { S3BucketMockService } from "../models/S3BucketMockService";
 import { LambdaMockService } from "../models/LambdaMockService";
-import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
 import { TestStationRepository } from "../../src/test-station/TestStationRepository";
 import { TestResultRepository } from "../../src/test-result/TestResultRepository";
 import { DefectRepository } from "../../src/defect/DefectRepository";
+import { TestResultService } from "../../src/test-result/TestResultService";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -1289,22 +1289,22 @@ describe("Certificate Generation Service", () => {
   describe("iva 30 logic", () => {
     context("test isBasicIvaTest logic", () => {
       it("should return true if test type id on test result exists in basic array", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const testResultService = Container.get(TestResultService);
 
         const ivaTestResult = cloneDeep(mockIvaTestResult);
 
-        const result: boolean = certGenSvc.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
+        const result: boolean = testResultService.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
 
         expect(result).toBeTruthy();
       });
       it("should return false if test type id on test result does not exist in basic array", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const testResultService = Container.get(TestResultService);
 
         const ivaTestResult = cloneDeep(mockIvaTestResult);
         ivaTestResult.testTypes[0].testTypeId = "130";
         ivaTestResult.testTypes[0].testTypeName = "Mutual recognition/ end of series & inspection";
 
-        const result: boolean = certGenSvc.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
+        const result: boolean = testResultService.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
 
         expect(result).toBeFalsy();
       });

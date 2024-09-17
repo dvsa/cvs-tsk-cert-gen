@@ -13,23 +13,16 @@ import {
 	IGeneratedCertificateResponse,
 	IInvokeConfig,
 	IMOTConfig,
-	IMakeAndModel,
 	IRequiredStandard,
 	IRoadworthinessCertificateData,
 	ITestResult,
 	IWeightDetails,
 } from '../models';
 import {
-	ADR_TEST,
-	AVAILABLE_WELSH,
-	BASIC_IVA_TEST,
 	CERTIFICATE_DATA,
-	HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-	IVA30_TEST,
 	IVA_30,
 	LOCATION_ENGLISH,
 	LOCATION_WELSH,
-	MSVA30_TEST,
 	TEST_RESULTS,
 	VEHICLE_TYPES,
 } from '../models/Enums';
@@ -41,6 +34,7 @@ import { IItem } from '../models/IItem';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
 import { TechRecordRepository } from '../tech-record/TechRecordRepository';
 import { TestResultRepository } from '../test-result/TestResultRepository';
+import { TestResultService } from '../test-result/TestResultService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
 import { TrailerRepository } from '../trailer/TrailerRepository';
 import { Configuration } from '../utils/Configuration';
@@ -61,7 +55,8 @@ class CertificateGenerationService {
 		private techRecordRepository: TechRecordRepository,
 		private testStationRepository: TestStationRepository,
 		private testResultRepository: TestResultRepository,
-		private defectRepository: DefectRepository
+		private defectRepository: DefectRepository,
+		private testResultService: TestResultService
 	) {}
 
 	/**
@@ -103,17 +98,17 @@ class CertificateGenerationService {
 		};
 
 		let vehicleTestRes: string;
-		if (CertificateGenerationService.isRoadworthinessTestType(testType.testTypeId)) {
+		if (this.testResultService.isRoadworthinessTestType(testType.testTypeId)) {
 			// CVSB-7677 is road-worthiness test
 			vehicleTestRes = 'rwt';
-		} else if (this.isTestTypeAdr(testResult.testTypes)) {
+		} else if (this.testResultService.isTestTypeAdr(testResult.testTypes)) {
 			vehicleTestRes = 'adr_pass';
-		} else if (this.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+		} else if (this.testResultService.isIvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
 			vehicleTestRes = 'iva_fail';
-		} else if (this.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
+		} else if (this.testResultService.isMsvaTest(testResult.testTypes.testTypeId) && testType.testResult === 'fail') {
 			vehicleTestRes = 'msva_fail';
 		} else if (
-			this.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) &&
+			this.testResultService.isWelshCertificateAvailable(testResult.vehicleType, testType.testResult) &&
 			shouldTranslateTestResult
 		) {
 			vehicleTestRes = testResult.vehicleType + '_' + testType.testResult + '_bilingual';
@@ -295,7 +290,7 @@ class CertificateGenerationService {
 		const signature: string | null = await this.getSignature(testResult.createdById ?? testResult.testerStaffId);
 
 		let makeAndModel: any = null;
-		if (!CertificateGenerationService.isRoadworthinessTestType(testResult.testTypes.testTypeId)) {
+		if (!this.testResultService.isRoadworthinessTestType(testResult.testTypes.testTypeId)) {
 			makeAndModel = await this.getVehicleMakeAndModel(testResult);
 		}
 
@@ -330,22 +325,25 @@ class CertificateGenerationService {
 			}
 		}
 
-		if (CertificateGenerationService.isHgvTrlRoadworthinessCertificate(testResult)) {
+		if (this.testResultService.isHgvTrlRoadworthinessCertificate(testResult)) {
 			// CVSB-7677 for roadworthiness test for hgv or trl.
 			const rwtData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.RWT_DATA);
 			payload.RWT_DATA = { ...rwtData };
-		} else if (testResult.testTypes.testResult === TEST_RESULTS.PASS && this.isTestTypeAdr(testResult.testTypes)) {
+		} else if (
+			testResult.testTypes.testResult === TEST_RESULTS.PASS &&
+			this.testResultService.isTestTypeAdr(testResult.testTypes)
+		) {
 			const adrData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.ADR_DATA);
 			payload.ADR_DATA = { ...adrData, ...makeAndModel };
 		} else if (
 			testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
-			this.isIvaTest(testResult.testTypes.testTypeId)
+			this.testResultService.isIvaTest(testResult.testTypes.testTypeId)
 		) {
 			const ivaData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.IVA_DATA);
 			payload.IVA_DATA = { ...ivaData };
 		} else if (
 			testResult.testTypes.testResult === TEST_RESULTS.FAIL &&
-			this.isMsvaTest(testResult.testTypes.testTypeId)
+			this.testResultService.isMsvaTest(testResult.testTypes.testTypeId)
 		) {
 			const msvaData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.MSVA_DATA);
 			payload.MSVA_DATA = { ...msvaData };
@@ -354,7 +352,7 @@ class CertificateGenerationService {
 				vehicleType === VEHICLE_TYPES.TRL
 					? undefined
 					: await this.testResultRepository.getOdometerHistory(systemNumber);
-			const TrnObj = this.isValidForTrn(vehicleType, makeAndModel)
+			const TrnObj = this.testResultService.isValidForTrn(vehicleType, makeAndModel)
 				? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make)
 				: undefined;
 			if (testTypes.testResult !== TEST_RESULTS.FAIL) {
@@ -502,7 +500,9 @@ class CertificateGenerationService {
 					serialNumber: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
 					vehicleTrailerNrNo: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
 					testCategoryClass: testResult.euVehicleCategory,
-					testCategoryBasicNormal: this.isBasicIvaTest(testResult.testTypes.testTypeId) ? IVA_30.BASIC : IVA_30.NORMAL,
+					testCategoryBasicNormal: this.testResultService.isBasicIvaTest(testResult.testTypes.testTypeId)
+						? IVA_30.BASIC
+						: IVA_30.NORMAL,
 					make: testResult.make,
 					model: testResult.model,
 					bodyType: testResult.bodyType?.description,
@@ -676,16 +676,6 @@ class CertificateGenerationService {
 	};
 
 	/**
-	 * To check if the testResult is valid for fetching Trn.
-	 * @param vehicleType the vehicle type
-	 * @param makeAndModel object containing Make and Model
-	 * @returns returns if the condition is satisfied else false
-	 */
-	public isValidForTrn(vehicleType: string, makeAndModel: IMakeAndModel): boolean {
-		return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
-	}
-
-	/**
 	 * Generates an object containing defects for a given test type and certificate type
 	 * @param testTypes - the source test type for defect generation
 	 * @param type - the certificate type
@@ -719,13 +709,13 @@ class CertificateGenerationService {
 				case 'dangerous':
 					if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
 						defects.PRSDefects.push(this.formatDefect(defect));
-						if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+						if (this.testResultService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
 							defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 						}
 					} else if (testTypes.testResult === 'fail') {
 						defects.DangerousDefects.push(this.formatDefect(defect));
 						// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
-						if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+						if (this.testResultService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
 							defects.DangerousDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 						}
 					}
@@ -733,26 +723,26 @@ class CertificateGenerationService {
 				case 'major':
 					if ((testTypes.testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
 						defects.PRSDefects.push(this.formatDefect(defect));
-						if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+						if (this.testResultService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
 							defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 						}
 					} else if (testTypes.testResult === 'fail') {
 						defects.MajorDefects.push(this.formatDefect(defect));
 						// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
-						if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+						if (this.testResultService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
 							defects.MajorDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 						}
 					}
 					break;
 				case 'minor':
 					defects.MinorDefects.push(this.formatDefect(defect));
-					if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+					if (this.testResultService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
 						defects.MinorDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 					}
 					break;
 				case 'advisory':
 					defects.AdvisoryDefects.push(this.formatDefect(defect));
-					if (this.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
+					if (this.testResultService.isWelshCertificateAvailable(vehicleType, testTypes.testResult) && isWelsh) {
 						defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
 					}
 					break;
@@ -767,15 +757,6 @@ class CertificateGenerationService {
 		console.log(JSON.stringify(defects));
 		return defects;
 	}
-
-	/**
-	 * Check that the test result and vehicle type are a valid combination and bilingual certificate is available
-	 * @param vehicleType - the vehicle type from the test result
-	 * @param testResult - the result of the test
-	 */
-	public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => {
-		return AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
-	};
 
 	/**
 	 * Returns a formatted string containing data about a given defect
@@ -973,59 +954,6 @@ class CertificateGenerationService {
 	}
 
 	/**
-	 * Returns true if testType is adr and false if not
-	 * @param testType - testType which is tested
-	 */
-	public isTestTypeAdr(testType: any): boolean {
-		return ADR_TEST.IDS.includes(testType.testTypeId);
-	}
-
-	/**
-	 * Returns a boolean value indicating whether the test type is a basic IVA test
-	 * @param testTypeId - the test type ID on the test result
-	 */
-	public isBasicIvaTest = (testTypeId: string): boolean => {
-		return BASIC_IVA_TEST.IDS.includes(testTypeId);
-	};
-
-	/**
-	 * Returns true if testType is iva and false if not
-	 * @param testTypeId - test type id which is being tested
-	 */
-	public isIvaTest(testTypeId: string): boolean {
-		return IVA30_TEST.IDS.includes(testTypeId);
-	}
-
-	/**
-	 * Returns true if testType is msva and false if not
-	 * @param testTypeId - test type id which is being tested
-	 */
-	public isMsvaTest(testTypeId: string): boolean {
-		return MSVA30_TEST.IDS.includes(testTypeId);
-	}
-
-	//#region Private Static Functions
-
-	/**
-	 * Returns true if testType is roadworthiness test for HGV or TRL and false if not
-	 * @param testTypeId - testType which is tested
-	 */
-	private static isRoadworthinessTestType(testTypeId: string): boolean {
-		return HGV_TRL_ROADWORTHINESS_TEST_TYPES.IDS.includes(testTypeId);
-	}
-
-	/**
-	 * Returns true if provided testResult is HGV or TRL Roadworthiness test otherwise false
-	 * @param testResult - testResult of the vehicle
-	 */
-	private static isHgvTrlRoadworthinessCertificate(testResult: any): boolean {
-		return (
-			(testResult.vehicleType === VEHICLE_TYPES.HGV || testResult.vehicleType === VEHICLE_TYPES.TRL) &&
-			CertificateGenerationService.isRoadworthinessTestType(testResult.testTypes.testTypeId)
-		);
-	}
-
-	/**
 	 * Sorts required standards if present by refCalculation and then returns it
 	 * @param requiredStandards - the requiredStandards array to sort
 	 * @returns - the sorted requiredStandards array
@@ -1040,7 +968,6 @@ class CertificateGenerationService {
 		const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
 		return requiredStandards.sort((a, b) => collator.compare(a.refCalculation, b.refCalculation));
 	};
-	//#endregion
 }
 
 export { CertificateGenerationService, IGeneratedCertificateResponse };
