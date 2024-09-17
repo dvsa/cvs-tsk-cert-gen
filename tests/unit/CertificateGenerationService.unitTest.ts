@@ -41,6 +41,7 @@ import { TestResultRepository } from "../../src/test-result/TestResultRepository
 import { DefectRepository } from "../../src/defect/DefectRepository";
 import { TestResultService } from "../../src/test-result/TestResultService";
 import { TechRecordService } from "../../src/tech-record/TechRecordService";
+import { DefectService } from "../../src/defect/DefectService";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -481,16 +482,12 @@ describe("Certificate Generation Service", () => {
   describe("welsh defect function", () => {
     context("test formatDefectWelsh method", () => {
       it("should return welsh string for hgv vehicle type when there are shared defect refs", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = defectService.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "hgv",
           flatDefectsMock
@@ -501,16 +498,12 @@ describe("Certificate Generation Service", () => {
         );
       });
       it("should return welsh string for trl vehicle type when there are shared defect refs", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = defectService.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "trl",
           flatDefectsMock
@@ -521,16 +514,12 @@ describe("Certificate Generation Service", () => {
         );
       });
       it("should return welsh string for psv vehicle type when there are shared defect refs", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = defectService.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "psv",
           flatDefectsMock
@@ -541,11 +530,7 @@ describe("Certificate Generation Service", () => {
         );
       });
       it("should return welsh string including location numbers if populated ", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
@@ -553,7 +538,7 @@ describe("Certificate Generation Service", () => {
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { seatNumber: 2 });
         Object.assign(testResultWithDefect.testTypes[0].defects[0].additionalInformation.location, { axleNumber: 3 });
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = defectService.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "hgv",
           flatDefectsMock
@@ -564,19 +549,15 @@ describe("Certificate Generation Service", () => {
         );
       });
       it("should return null if filteredFlatDefect array is empty", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
 
         const filterFlatDefectsStub = sandbox
-          .stub(certGenSvc, "filterFlatDefects").returns(null);
+          .stub(defectService, "filterFlatDefects").returns(null);
 
         // get mock of defect or test result
         const testResultWithDefect = cloneDeep(mockTestResult);
         console.log(testResultWithDefect.testTypes[0].defects[0]);
-        const format = certGenSvc.formatDefectWelsh(
+        const format = defectService.formatDefectWelsh(
           testResultWithDefect.testTypes[0].defects[0],
           "hgv",
           []
@@ -589,39 +570,36 @@ describe("Certificate Generation Service", () => {
 
     context("test convertLocationWelsh method", () => {
       it("should return the translated location value", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
-        const welshLocation1 = certGenSvc.convertLocationWelsh(
+        const defectService = Container.get(DefectService);
+
+        const welshLocation1 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.FRONT
         );
-        const welshLocation2 = certGenSvc.convertLocationWelsh(
+        const welshLocation2 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.REAR
         );
-        const welshLocation3 = certGenSvc.convertLocationWelsh(
+        const welshLocation3 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.UPPER
         );
-        const welshLocation4 = certGenSvc.convertLocationWelsh(
+        const welshLocation4 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.LOWER
         );
-        const welshLocation5 = certGenSvc.convertLocationWelsh(
+        const welshLocation5 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.NEARSIDE
         );
-        const welshLocation6 = certGenSvc.convertLocationWelsh(
+        const welshLocation6 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.OFFSIDE
         );
-        const welshLocation7 = certGenSvc.convertLocationWelsh(
+        const welshLocation7 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.CENTRE
         );
-        const welshLocation8 = certGenSvc.convertLocationWelsh(
+        const welshLocation8 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.INNER
         );
-        const welshLocation9 = certGenSvc.convertLocationWelsh(
+        const welshLocation9 = defectService.convertLocationWelsh(
           LOCATION_ENGLISH.OUTER
         );
-        const welshLocation10 = certGenSvc.convertLocationWelsh("mockLocation");
+        const welshLocation10 = defectService.convertLocationWelsh("mockLocation");
         expect(welshLocation1).toEqual(LOCATION_WELSH.FRONT);
         expect(welshLocation2).toEqual(LOCATION_WELSH.REAR);
         expect(welshLocation3).toEqual(LOCATION_WELSH.UPPER);
@@ -637,51 +615,35 @@ describe("Certificate Generation Service", () => {
 
     context("test filterFlatDefects method", () => {
       it("should return a filtered flat defect for hgv", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
         const flatDefect = flatDefectsMock[0];
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           flatDefectsMock,
           "hgv"
         );
         expect(filterFlatDefect).toEqual(flatDefect);
       });
       it("should return a filtered flat defect for trl", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
         const flatDefect = flatDefectsMock[0];
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           flatDefectsMock,
           "trl"
         );
         expect(filterFlatDefect).toEqual(flatDefect);
       });
       it("should return a filtered flat defect for psv", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
+        const defectService = Container.get(DefectService);
         const flatDefect = flatDefectsMock[1];
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const filterFlatDefect = defectService.filterFlatDefects(
           flatDefectsMock,
           "psv"
         );
         expect(filterFlatDefect).toEqual(flatDefect);
       });
       it("should return null if array is empty", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
-        const filterFlatDefect = certGenSvc.filterFlatDefects(
+        const defectService = Container.get(DefectService);
+        const filterFlatDefect = defectService.filterFlatDefects(
           [],
           "hgv"
         );
@@ -691,17 +653,13 @@ describe("Certificate Generation Service", () => {
 
     context("test flattenDefectsFromApi method", () => {
       it("should return the defects in a flat array", () => {
-        // @ts-ignore
-        const certGenSvc = new CertificateGenerationService(
-          null as any,
-          new LambdaService(new LambdaClient())
-        );
-        const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMock);
+        const defectService = Container.get(DefectService);
+        const flattenedArray = defectService.flattenDefectsFromApi(defectsMock);
         expect(flattenedArray).toEqual(flatDefectsMock);
         expect(flattenedArray).toHaveLength(7);
       });
       it("should log any exceptions flattening defects", () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const defectService = Container.get(DefectService);
         const logSpy = jest.spyOn(console, "error");
 
         const defectsMockForError = cloneDeep(defectsMock);
@@ -709,7 +667,7 @@ describe("Certificate Generation Service", () => {
           throw new Error("Some random error");
         });
 
-        const flattenedArray = certGenSvc.flattenDefectsFromApi(defectsMockForError);
+        const flattenedArray = defectService.flattenDefectsFromApi(defectsMockForError);
         expect(logSpy).toHaveBeenCalledWith(
           "Error flattening defects: Error: Some random error"
         );

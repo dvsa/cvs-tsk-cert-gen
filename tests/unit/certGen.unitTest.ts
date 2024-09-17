@@ -36,6 +36,7 @@ import { TrailerRepository } from "../../src/trailer/TrailerRepository";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
 import { TestResultRepository } from "../../src/test-result/TestResultRepository";
 import { DefectRepository } from "../../src/defect/DefectRepository";
+import { DefectService } from "../../src/defect/DefectService";
 
 const sandbox = sinon.createSandbox();
 
@@ -1437,7 +1438,9 @@ describe("cert-gen", () => {
                         const getDefectTranslationsSpy = jest.spyOn(defectRepository, "getDefectTranslations");
                         Container.set(DefectRepository, defectRepository);
 
-                        const flattenSpy = jest.spyOn(certificateGenerationService, "flattenDefectsFromApi");
+                        const defectService = Container.get(DefectService);
+                        const flattenSpy = jest.spyOn(defectService, "flattenDefectsFromApi");
+                        Container.set(DefectService, defectService);
 
                         return await certificateGenerationService
                             .generatePayload(psvTestResultWithMinorDefect)
