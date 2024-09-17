@@ -53,7 +53,7 @@ resources:
       Type: AWS::AppConfig::Application
       Properties:
         Name: "cvs-app-config"
-        Description: "Example serverless feature flag demo."
+        Description: "Contains the feature flag profile for the application"
         Tags:
           - Key: App
             Value: "FeatureFlagApplication"
