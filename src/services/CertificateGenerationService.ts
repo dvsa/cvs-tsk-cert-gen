@@ -16,7 +16,6 @@ import {
 	IRequiredStandard,
 	IRoadworthinessCertificateData,
 	ITestResult,
-	IWeightDetails,
 } from '../models';
 import {
 	CERTIFICATE_DATA,
@@ -26,13 +25,13 @@ import {
 	TEST_RESULTS,
 	VEHICLE_TYPES,
 } from '../models/Enums';
-import { HTTPError } from '../models/HTTPError';
 import { IDefectChild } from '../models/IDefectChild';
 import { IDefectParent } from '../models/IDefectParent';
 import { IFlatDefect } from '../models/IFlatDefect';
 import { IItem } from '../models/IItem';
-import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { TechRecordType } from '../models/Types';
 import { TechRecordRepository } from '../tech-record/TechRecordRepository';
+import { TechRecordService } from '../tech-record/TechRecordService';
 import { TestResultRepository } from '../test-result/TestResultRepository';
 import { TestResultService } from '../test-result/TestResultService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
@@ -56,7 +55,8 @@ class CertificateGenerationService {
 		private testStationRepository: TestStationRepository,
 		private testResultRepository: TestResultRepository,
 		private defectRepository: DefectRepository,
-		private testResultService: TestResultService
+		private testResultService: TestResultService,
+		private techRecordService: TechRecordService
 	) {}
 
 	/**
@@ -291,7 +291,7 @@ class CertificateGenerationService {
 
 		let makeAndModel: any = null;
 		if (!this.testResultService.isRoadworthinessTestType(testResult.testTypes.testTypeId)) {
-			makeAndModel = await this.getVehicleMakeAndModel(testResult);
+			makeAndModel = await this.techRecordService.getVehicleMakeAndModel(testResult);
 		}
 
 		let payload: ICertificatePayload = {
@@ -434,7 +434,7 @@ class CertificateGenerationService {
 					...defects,
 				};
 			case CERTIFICATE_DATA.RWT_DATA:
-				const weightDetails = await this.getWeightDetails(testResult);
+				const weightDetails = await this.techRecordService.getWeightDetails(testResult);
 				let defectRWTList: any;
 				if (testResult.testTypes.testResult === TEST_RESULTS.FAIL) {
 					defectRWTList = [];
@@ -460,7 +460,7 @@ class CertificateGenerationService {
 				};
 				return resultPass;
 			case CERTIFICATE_DATA.ADR_DATA:
-				const adrDetails: TechRecordType<any> = await this.getAdrDetails(testResult);
+				const adrDetails: TechRecordType<any> = await this.techRecordService.getAdrDetails(testResult);
 				const docGenPayloadAdr = {
 					ChasisNumber: testResult.vin,
 					RegistrationNumber: testResult.vrm,
@@ -557,122 +557,6 @@ class CertificateGenerationService {
 	 */
 	public calculateVehicleApprovalRetestDate = (testTypeStartTimestamp: string): string => {
 		return moment(testTypeStartTimestamp).add(6, 'months').subtract(1, 'day').format('DD/MM/YYYY');
-	};
-
-	/**
-	 * Retrieves the adrDetails from a techRecord searched by vin
-	 * @param testResult - testResult from which the VIN is used to search a tech-record
-	 */
-	public getAdrDetails = async (testResult: any) => {
-		const searchRes = await this.techRecordRepository.callSearchTechRecords(testResult.systemNumber);
-		return (await this.processGetCurrentProvisionalRecords(searchRes)) as TechRecordType<'hgv' | 'trl'>;
-	};
-
-	public processGetCurrentProvisionalRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(
-		searchResult: ISearchResult[]
-	): Promise<TechRecordType<T> | undefined> => {
-		if (searchResult) {
-			const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
-			return processRecordsRes.currentCount !== 0
-				? this.techRecordRepository.callGetTechRecords(
-						processRecordsRes.currentRecords[0].systemNumber,
-						processRecordsRes.currentRecords[0].createdTimestamp
-					)
-				: processRecordsRes.provisionalCount === 1
-					? this.techRecordRepository.callGetTechRecords(
-							processRecordsRes.provisionalRecords[0].systemNumber,
-							processRecordsRes.provisionalRecords[0].createdTimestamp
-						)
-					: this.techRecordRepository.callGetTechRecords(
-							processRecordsRes.provisionalRecords[1].systemNumber,
-							processRecordsRes.provisionalRecords[1].createdTimestamp
-						);
-		} else {
-			await Promise.reject('Tech record Search returned nothing.');
-		}
-	};
-
-	/**
-	 * helper function is used to process records and count provisional and current records
-	 * @param records
-	 */
-	public groupRecordsByStatusCode = (
-		records: ISearchResult[]
-	): {
-		currentRecords: ISearchResult[];
-		provisionalRecords: ISearchResult[];
-		currentCount: number;
-		provisionalCount: number;
-	} => {
-		const currentRecords: ISearchResult[] = [];
-		const provisionalRecords: ISearchResult[] = [];
-		records.forEach((record) => {
-			if (record.techRecord_statusCode === 'current') {
-				currentRecords.push(record);
-			} else if (record.techRecord_statusCode === 'provisional') {
-				provisionalRecords.push(record);
-			}
-		});
-
-		return {
-			currentRecords,
-			provisionalRecords,
-			currentCount: currentRecords.length,
-			provisionalCount: provisionalRecords.length,
-		};
-	};
-	/**
-	 * Retrieves the vehicle weight details for Roadworthisness certificates
-	 * @param testResult
-	 */
-	public async getWeightDetails(testResult: any) {
-		const searchRes = await this.techRecordRepository.callSearchTechRecords(testResult.systemNumber);
-		const techRecord = (await this.processGetCurrentProvisionalRecords(searchRes)) as TechRecordType<
-			'hgv' | 'psv' | 'trl'
-		>;
-		if (techRecord) {
-			const weightDetails: IWeightDetails = {
-				dgvw: techRecord.techRecord_grossDesignWeight ?? 0,
-				weight2: 0,
-			};
-			if (testResult.vehicleType === VEHICLE_TYPES.HGV) {
-				weightDetails.weight2 = (techRecord as TechRecordType<'hgv'>).techRecord_trainDesignWeight ?? 0;
-			} else {
-				if ((techRecord.techRecord_noOfAxles ?? -1) > 0) {
-					const initialValue: number = 0;
-					weightDetails.weight2 = (techRecord.techRecord_axles as any).reduce(
-						(accumulator: number, currentValue: { weights_designWeight: number }) =>
-							accumulator + currentValue.weights_designWeight,
-						initialValue
-					);
-				} else {
-					throw new HTTPError(500, 'No axle weights for Roadworthiness test certificates!');
-				}
-			}
-			return weightDetails;
-		} else {
-			console.log('No techRecord found for weight details');
-			throw new HTTPError(500, 'No vehicle found for Roadworthiness test certificate!');
-		}
-	}
-
-	/**
-	 * Method for getting make and model based on the vehicle from a test-result
-	 * @param testResult - the testResult for which the tech record search is done for
-	 */
-	public getVehicleMakeAndModel = async (testResult: any) => {
-		const searchRes = await this.techRecordRepository.callSearchTechRecords(testResult.systemNumber);
-		const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
-		// Return bodyMake and bodyModel values for PSVs
-		return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV
-			? {
-					Make: (techRecord as TechRecordType<'psv'>).techRecord_chassisMake,
-					Model: (techRecord as TechRecordType<'psv'>).techRecord_chassisModel,
-				}
-			: {
-					Make: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_make,
-					Model: (techRecord as TechRecordType<'hgv' | 'trl'>).techRecord_model,
-				};
 	};
 
 	/**

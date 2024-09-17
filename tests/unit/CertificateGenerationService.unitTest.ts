@@ -40,6 +40,7 @@ import { TestStationRepository } from "../../src/test-station/TestStationReposit
 import { TestResultRepository } from "../../src/test-result/TestResultRepository";
 import { DefectRepository } from "../../src/defect/DefectRepository";
 import { TestResultService } from "../../src/test-result/TestResultService";
+import { TechRecordService } from "../../src/tech-record/TechRecordService";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile
@@ -63,7 +64,7 @@ describe("Certificate Generation Service", () => {
   describe("getVehicleMakeAndModel function", () => {
     context("when given a systemNumber with matching record", () => {
       it("should return the record & only invoke the LambdaService once", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const techRecordService = Container.get(TechRecordService);
 
         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -74,7 +75,7 @@ describe("Certificate Generation Service", () => {
         const testResultMock = {
           systemNumber: "12345678",
         };
-        const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordService.getVehicleMakeAndModel(
           testResultMock
         );
         expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
@@ -87,7 +88,7 @@ describe("Certificate Generation Service", () => {
       "when given a systemNumber  with no matching record and a vin with matching record",
       () => {
         it("should return the record & invoke the LambdaService twice", async () => {
-          const certGenSvc = Container.get(CertificateGenerationService);
+          const techRecordService = Container.get(TechRecordService);
 
           callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -99,7 +100,7 @@ describe("Certificate Generation Service", () => {
             systemNumber: "134567889",
             vin: "abc123",
           };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+          const makeAndModel = await techRecordService.getVehicleMakeAndModel(
             testResultMock
           );
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
@@ -120,7 +121,7 @@ describe("Certificate Generation Service", () => {
             .onSecondCall()
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
 
-          const certGenSvc = Container.get(CertificateGenerationService);
+          const techRecordService = Container.get(TechRecordService);
 
           callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -132,7 +133,7 @@ describe("Certificate Generation Service", () => {
             vin: "abc123",
             partialVin: "abc123",
           };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+          const makeAndModel = await techRecordService.getVehicleMakeAndModel(
             testResultMock
           );
           expect(LambdaStub.calledOnce).toBeFalsy();
@@ -157,7 +158,7 @@ describe("Certificate Generation Service", () => {
             .onThirdCall()
             .resolves(AWSResolve(JSON.stringify(techRecordResp)));
 
-          const certGenSvc = Container.get(CertificateGenerationService);
+          const techRecordService = Container.get(TechRecordService);
 
           callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -170,7 +171,7 @@ describe("Certificate Generation Service", () => {
             partialVin: "abc123",
             vrm: "testvrm",
           };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+          const makeAndModel = await techRecordService.getVehicleMakeAndModel(
             testResultMock
           );
           expect(LambdaStub.calledOnce).toBeFalsy();
@@ -186,7 +187,7 @@ describe("Certificate Generation Service", () => {
       "when given a vin, partialVin and VRM with no matching record but a matching TrailerID",
       () => {
         it("should return the record & invoke the LambdaService four times", async () => {
-          const certGenSvc = Container.get(CertificateGenerationService);
+          const techRecordService = Container.get(TechRecordService);
 
           callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -200,7 +201,7 @@ describe("Certificate Generation Service", () => {
             vrm: "testvrm",
             trailerId: "testTrailerId",
           };
-          const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+          const makeAndModel = await techRecordService.getVehicleMakeAndModel(
             testResultMock
           );
           expect(makeAndModel).toEqual({ Make: "STANLEY", Model: "AUTOTRL" });
@@ -216,7 +217,7 @@ describe("Certificate Generation Service", () => {
           .stub(LambdaService.prototype, "invoke")
           .resolves(AWSReject("no"));
 
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const techRecordService = Container.get(TechRecordService);
 
         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -231,7 +232,7 @@ describe("Certificate Generation Service", () => {
           trailerId: "testTrailerId",
         };
         try {
-          await certGenSvc.getVehicleMakeAndModel(testResultMock);
+          await techRecordService.getVehicleMakeAndModel(testResultMock);
         } catch (e) {
           expect(LambdaStub.callCount).toEqual(4);
           expect(e).toBeInstanceOf(Error);
@@ -252,7 +253,7 @@ describe("Certificate Generation Service", () => {
             .stub(LambdaService.prototype, "invoke")
             .resolves(AWSReject("no"));
 
-          const certGenSvc = Container.get(CertificateGenerationService);
+          const techRecordService = Container.get(TechRecordService);
 
           callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -264,7 +265,7 @@ describe("Certificate Generation Service", () => {
             trailerId: "testTrailerId",
           };
           try {
-            await certGenSvc.getVehicleMakeAndModel(testResultMock);
+            await techRecordService.getVehicleMakeAndModel(testResultMock);
           } catch (e) {
             expect(LambdaStub.callCount).toEqual(2);
             expect(e).toBeInstanceOf(Error);
@@ -280,7 +281,7 @@ describe("Certificate Generation Service", () => {
 
     context("when lookup returns a PSV tech record", () => {
       it("should return make and model from chassis details", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const techRecordService = Container.get(TechRecordService);
 
         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
@@ -290,7 +291,7 @@ describe("Certificate Generation Service", () => {
         const testResultMock = {
           systemNumber: "12345678",
         };
-        const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordService.getVehicleMakeAndModel(
           testResultMock
         );
         expect(makeAndModel.Make).toBe("AEC");
@@ -302,7 +303,7 @@ describe("Certificate Generation Service", () => {
 
     context("when lookup returns a non-PSV tech record", () => {
       it("should return make and model from not-chassis details", async () => {
-        const certGenSvc = Container.get(CertificateGenerationService);
+        const techRecordService = Container.get(TechRecordService);
 
         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
         callGetTechRecordSpy.mockResolvedValue(techRecordsRwtHgv as any);
@@ -310,7 +311,7 @@ describe("Certificate Generation Service", () => {
         const testResultMock = {
           systemNumber: "12345678",
         };
-        const makeAndModel = await certGenSvc.getVehicleMakeAndModel(
+        const makeAndModel = await techRecordService.getVehicleMakeAndModel(
           testResultMock
         );
         expect(makeAndModel.Make).toBe("Isuzu");
