@@ -1,3 +1,4 @@
+import { Service } from "typedi";
 import {GetObjectOutput, PutObjectCommandOutput} from "@aws-sdk/client-s3";
 import {Readable} from "stream";
 import * as fs from "fs";
@@ -11,6 +12,7 @@ interface IBucket {
 /**
  * Service for mocking the S3BucketService
  */
+@Service()
 class S3BucketMockService {
   public static buckets: IBucket[] = [];
 

@@ -1,23 +1,27 @@
-import { Injector } from "../../src/models/injector/Injector";
+import 'reflect-metadata';
+
+import { Container } from "typedi";
+import { cloneDeep } from "lodash";
+import sinon from "sinon";
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import { S3BucketMockService } from "../models/S3BucketMockService";
 import { LambdaMockService } from "../models/LambdaMockService";
-import sinon from "sinon";
 import queueEventPass from "../resources/queue-event-pass.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
-
-const sandbox = sinon.createSandbox();
-import { cloneDeep } from "lodash";
 import { IWeightDetails, ITestResult } from "../../src/models";
 import { HTTPError } from "../../src/models/HTTPError";
+import { S3BucketService } from "../../src/services/S3BucketService";
+import { LambdaService } from "../../src/services/LambdaService";
+
+const sandbox = sinon.createSandbox();
 
 describe("cert-gen", () => {
-    const certificateGenerationService: CertificateGenerationService =
-        Injector.resolve<CertificateGenerationService>(
-            CertificateGenerationService,
-            [S3BucketMockService, LambdaMockService]
-        );
+    Container.set(S3BucketService, new S3BucketMockService());
+    Container.set(LambdaService, new LambdaMockService());
+
+    const certificateGenerationService = Container.get(CertificateGenerationService);
+
     afterEach(() => {
         sandbox.restore();
     });

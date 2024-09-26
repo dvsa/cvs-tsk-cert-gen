@@ -1,7 +1,7 @@
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { Callback, Context, Handler, SQSEvent, SQSRecord } from 'aws-lambda';
+import { Container } from 'typedi';
 import { ERRORS } from '../models/Enums';
-import { Injector } from '../models/injector/Injector';
 import { CertificateGenerationService, IGeneratedCertificateResponse } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
 
@@ -19,10 +19,8 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
 		throw new Error('Event is empty');
 	}
 
-	const certificateGenerationService: CertificateGenerationService =
-		Injector.resolve<CertificateGenerationService>(CertificateGenerationService);
-	const certificateUploadService: CertificateUploadService =
-		Injector.resolve<CertificateUploadService>(CertificateUploadService);
+	const certificateGenerationService: CertificateGenerationService = Container.get(CertificateGenerationService);
+	const certificateUploadService: CertificateUploadService = Container.get(CertificateUploadService);
 	const certificateUploadPromises: Array<Promise<CertGenReturn>> = [];
 
 	event.Records.forEach((record: SQSRecord) => {

@@ -1,13 +1,15 @@
+import 'reflect-metadata';
+
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
 
 import * as fs from "fs";
 import { cloneDeep } from "lodash";
 import * as path from "path";
+import { Container } from "typedi";
 import sinon from "sinon";
 import { certGen } from "../../src/functions/certGen";
 import { ICertificatePayload, IFeatureFlags, ITestResult } from "../../src/models";
-import { Injector } from "../../src/models/injector/Injector";
 import {
     CertificateGenerationService,
     IGeneratedCertificateResponse,
@@ -28,6 +30,8 @@ import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
 import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
 import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
+import { S3BucketService } from "../../src/services/S3BucketService";
+import { LambdaService } from "../../src/services/LambdaService";
 
 const sandbox = sinon.createSandbox();
 
@@ -39,11 +43,12 @@ describe("cert-gen", () => {
     it("should pass", () => {
         expect(true).toBe(true);
     });
-    const certificateGenerationService: CertificateGenerationService =
-        Injector.resolve<CertificateGenerationService>(
-            CertificateGenerationService,
-            [S3BucketMockService, LambdaMockService]
-        );
+
+    Container.set(S3BucketService, new S3BucketMockService());
+    Container.set(LambdaService, new LambdaMockService());
+  
+    const certificateGenerationService = Container.get(CertificateGenerationService);
+
     beforeAll(() => {
         jest.setTimeout(10000);
     });
@@ -8109,17 +8114,7 @@ describe("cert-gen", () => {
                     )
                 );
                 const testResult: any = JSON.parse(event.Records[0].body);
-                const certificateUploadService: CertificateUploadService =
-                    Injector.resolve<CertificateUploadService>(CertificateUploadService, [
-                        S3BucketMockService,
-                    ]);
-
-                // tslint:disable-next-line:no-shadowed-variable
-                const certificateGenerationService: CertificateGenerationService =
-                    Injector.resolve<CertificateGenerationService>(
-                        CertificateGenerationService,
-                        [S3BucketMockService, LambdaMockService]
-                    );
+                const certificateUploadService = Container.get(CertificateUploadService);
 
                 context("when uploading a certificate", () => {
                     context("and the S3 bucket exists and is accesible", () => {
