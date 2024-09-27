@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import { DependencyInjection } from './config/DependencyInjection';
 import { certGen } from './functions/certGen';
 
