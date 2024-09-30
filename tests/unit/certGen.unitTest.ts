@@ -1,4 +1,4 @@
-import 'reflect-metadata';
+import "reflect-metadata";
 
 /* eslint-disable import/first */
 const mockGetProfile = jest.fn();
@@ -32,6 +32,10 @@ import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
 import { S3BucketService } from "../../src/services/S3BucketService";
 import { LambdaService } from "../../src/services/LambdaService";
+import { TrailerRepository } from "../../src/trailer/TrailerRepository";
+import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
+import { TestResultRepository } from "../../src/test-result/TestResultRepository";
+import { DefectRepository } from "../../src/defect/DefectRepository";
 
 const sandbox = sinon.createSandbox();
 
@@ -44,10 +48,19 @@ describe("cert-gen", () => {
         expect(true).toBe(true);
     });
 
-    Container.set(S3BucketService, new S3BucketMockService());
-    Container.set(LambdaService, new LambdaMockService());
-  
-    const certificateGenerationService = Container.get(CertificateGenerationService);
+  Container.set(S3BucketService, new S3BucketMockService());
+  Container.set(LambdaService, new LambdaMockService());
+
+  const techRecordRepository = Container.get(TechRecordRepository);
+  const callGetTechRecordSpy = jest.spyOn(techRecordRepository, "callGetTechRecords");
+  const callSearchTechRecordSpy = jest.spyOn(techRecordRepository, "callSearchTechRecords");
+  Container.set(TechRecordRepository, techRecordRepository);
+
+  const testResultRepository = Container.get(TestResultRepository);
+  let callGetOdometerSpy = jest.spyOn(testResultRepository, 'getOdometerHistory');
+  Container.set(TestResultRepository, testResultRepository);
+
+  const certificateGenerationService = Container.get(CertificateGenerationService);
 
     beforeAll(() => {
         jest.setTimeout(10000);
@@ -67,9 +80,12 @@ describe("cert-gen", () => {
         };
 
         mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
+
+        callGetOdometerSpy = jest.spyOn(testResultRepository, "getOdometerHistory");
     });
     afterEach(() => {
         sandbox.restore();
+        callGetOdometerSpy.mockRestore();
     });
     context("CertificateGenerationService", () => {
         LambdaMockService.populateFunctions();
@@ -128,21 +144,17 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -194,22 +206,17 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult2)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -269,22 +276,18 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -318,9 +321,7 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
 
@@ -328,18 +329,11 @@ describe("cert-gen", () => {
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
                         // const getVehicleMakeAndModelStub = sandbox
                         //     .stub(
@@ -351,10 +345,10 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -416,21 +410,17 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -442,14 +432,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -463,8 +449,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -530,21 +516,17 @@ describe("cert-gen", () => {
                                 Date: "14.12.2022"
                             }
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResultWithTestHistoryForResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -598,21 +580,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResultWithTestHistoryForSomeotherResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -683,20 +661,16 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvTestResultWithMinorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
 
@@ -755,21 +729,17 @@ describe("cert-gen", () => {
                                 },
                             };
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtHgvSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(hgvTestResultWithMinorDefect, true)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -829,21 +799,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvTestResultWithAdvisoryDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -902,21 +868,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return certificateGenerationService
                             .generatePayload(hgvTestResultWithAdvisoryDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -959,21 +921,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlTestResultWithMinorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1016,21 +974,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlTestResultWithMinorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1073,21 +1027,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlTestResultWithAdvisoryDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1130,21 +1080,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return certificateGenerationService
                             .generatePayload(trlTestResultWithAdvisoryDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1203,21 +1149,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(psvTestResultWithMinorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1276,21 +1218,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return certificateGenerationService
                             .generatePayload(psvTestResultWithMinorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1350,21 +1288,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(psvTestResultWithAdvisoryDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1425,21 +1359,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return certificateGenerationService
                             .generatePayload(psvTestResultWithAdvisoryDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1498,26 +1428,26 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                        const defectSpy = jest.spyOn(certificateGenerationService, "getDefectTranslations");
+                        const defectRepository = Container.get(DefectRepository);
+                        const getDefectTranslationsSpy = jest.spyOn(defectRepository, "getDefectTranslations");
+                        Container.set(DefectRepository, defectRepository);
+
                         const flattenSpy = jest.spyOn(certificateGenerationService, "flattenDefectsFromApi");
 
                         return await certificateGenerationService
                             .generatePayload(psvTestResultWithMinorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                expect(defectSpy).not.toHaveBeenCalled();
+                                expect(getDefectTranslationsSpy).not.toHaveBeenCalled();
                                 expect(flattenSpy).not.toHaveBeenCalled();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                                getDefectTranslationsSpy.mockRestore();
                             });
                     });
                 });
@@ -1587,21 +1517,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1644,34 +1570,25 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1742,22 +1659,18 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -1769,14 +1682,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -1790,8 +1699,8 @@ describe("cert-gen", () => {
                                     current: 2,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -1871,21 +1780,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1945,21 +1850,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2018,21 +1919,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2092,21 +1989,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2168,21 +2061,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousAndMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2248,21 +2137,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousAndMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2330,21 +2215,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithAdvisoryMinorDangerousMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2422,21 +2303,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithAdvisoryMinorDangerousMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2498,21 +2375,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefectMajorRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2582,21 +2455,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefectMajorRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2660,21 +2529,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefectDangerousRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2742,21 +2607,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefectDangerousRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2799,21 +2660,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2859,21 +2716,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2918,21 +2771,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2978,21 +2827,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3040,21 +2885,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousAndMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3106,21 +2947,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousAndMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3174,21 +3011,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithAdvisoryMinorDangerousMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3252,21 +3085,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithAdvisoryMinorDangerousMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3321,21 +3150,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefectMajorRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -3399,21 +3224,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefectMajorRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -3466,21 +3287,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefectDangerousRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -3543,29 +3360,23 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefectDangerousRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
             });
 
             context("should return Certificate Data without any Welsh defect arrays populated", () => {
-                let getTechRecordSearchStub: any;
-                let getTechRecordStub: any;
                 let techRecordsPsvStub: any;
                 const expectedResultEnglish: any = {
                     FAIL_DATA: {
@@ -3627,19 +3438,15 @@ describe("cert-gen", () => {
                     Watermark: "NOT VALID"
                 };
                 beforeEach(() => {
-                    getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+                    callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                     techRecordsPsvStub = cloneDeep(psvFailWithDefects);
-                    getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordsPsv) as any);
+                    callGetTechRecordSpy.mockResolvedValue(techRecordsPsv as any);
                 });
 
                 afterEach(() => {
-                    getTechRecordStub.restore();
-                    getTechRecordSearchStub.restore();
+                    callGetTechRecordSpy.mockClear();
+                    callSearchTechRecordSpy.mockClear();
                 });
                 it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
                     return await certificateGenerationService
@@ -3679,7 +3486,6 @@ describe("cert-gen", () => {
             });
             context("should return certificate data with welsh defects array", () => {
                 let getTechRecordSearchStub: any;
-                let getTechRecordStub: any;
                 let techRecordsPsvStub: any;
                 const expectedResultWelsh: any = {
                     FAIL_DATA: {
@@ -3752,19 +3558,15 @@ describe("cert-gen", () => {
                     Watermark: "NOT VALID"
                 };
                 beforeEach(() => {
-                    getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+                    callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                     techRecordsPsvStub = cloneDeep(psvFailWithDefects);
-                    getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordsPsv) as any);
+                    callGetTechRecordSpy.mockResolvedValue(techRecordsPsv as any);
                 });
 
                 afterEach(() => {
-                    getTechRecordStub.restore();
-                    getTechRecordSearchStub.restore();
+                  callGetTechRecordSpy.mockClear();
+                  callSearchTechRecordSpy.mockClear();
                 });
 
 
@@ -3874,21 +3676,17 @@ describe("cert-gen", () => {
                                 },
                                 Watermark: "NOT VALID"
                             };
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtHgvSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(trlPRS)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         }
                     );
@@ -3953,21 +3751,17 @@ describe("cert-gen", () => {
                                 },
                                 Watermark: "NOT VALID"
                             };
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtHgvSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(trlPRS, true)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -4068,21 +3862,17 @@ describe("cert-gen", () => {
                             Watermark: "NOT VALID"
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(psvPRS)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4180,21 +3970,17 @@ describe("cert-gen", () => {
                             },
                             Watermark: "NOT VALID"
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(psvPRS, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4295,21 +4081,17 @@ describe("cert-gen", () => {
                             Watermark: "NOT VALID"
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvWithDefectRectifiedAtTest)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4408,21 +4190,17 @@ describe("cert-gen", () => {
                             Watermark: "NOT VALID"
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvWithDefectRectifiedAtTest, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4517,21 +4295,17 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4586,35 +4360,26 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4717,22 +4482,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 resBody = payload.body;
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -4744,14 +4505,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -4765,8 +4522,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -5508,22 +5265,18 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -5557,37 +5310,28 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
-                            .generatePayload(testResult)
-                            .then((payload: any) => {
-                                expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
-                            });
+                          .generatePayload(testResult)
+                          .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            callGetOdometerSpy.mockClear();
+                            // getVehicleMakeAndModelStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
+                          });
+                      });
                     });
-                });
 
                 context("and signatures were found in the bucket", () => {
                     it("should return a VTG5 payload with signature", async () => {
@@ -5647,22 +5391,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -5674,14 +5414,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -5695,8 +5431,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -5802,21 +5538,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -5871,34 +5603,25 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
-                            .generatePayload(testResult)
-                            .then((payload: any) => {
-                                expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                          .generatePayload(testResult)
+                          .then((payload: any) => {
+                              expect(payload).toEqual(expectedResult);
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6000,22 +5723,18 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 resBody = payload.body;
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -6027,14 +5746,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -6048,8 +5763,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -6118,21 +5833,17 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6175,35 +5886,26 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
                         return await certificateGenerationService
-                            .generatePayload(testResult)
-                            .then((payload: any) => {
-                                expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
-                            });
+                          .generatePayload(testResult)
+                          .then((payload: any) => {
+                              expect(payload).toEqual(expectedResult);
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                          });
                     });
                 });
 
@@ -6273,21 +5975,17 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -6299,14 +5997,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -6320,8 +6014,8 @@ describe("cert-gen", () => {
                                     current: 2,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -6367,21 +6061,17 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6416,35 +6106,26 @@ describe("cert-gen", () => {
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6491,22 +6172,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -6519,14 +6196,10 @@ describe("cert-gen", () => {
                 () => {
                     it("successfully generate a certificate", async () => {
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -6538,8 +6211,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -6589,26 +6262,22 @@ describe("cert-gen", () => {
 
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
                             .resolves({ Trn: undefined, IsTrailer: true });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -6661,26 +6330,22 @@ describe("cert-gen", () => {
 
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
                             .rejects({ statusCode: 500, body: "an error occured" });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .catch((err: any) => {
                                 expect(err.statusCode).toEqual(500);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -6757,21 +6422,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6829,34 +6490,25 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6927,14 +6579,10 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
@@ -6943,8 +6591,8 @@ describe("cert-gen", () => {
                                 resBody = payload.body;
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6955,14 +6603,10 @@ describe("cert-gen", () => {
                 () => {
                     it("successfully generate a certificate", async () => {
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -6974,8 +6618,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -7029,21 +6673,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
 
                     });
@@ -7089,34 +6729,25 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
                             });
                     });
@@ -7173,21 +6804,17 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -7200,14 +6827,10 @@ describe("cert-gen", () => {
                 () => {
                     it("successfully generate a certificate", async () => {
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -7220,8 +6843,8 @@ describe("cert-gen", () => {
                                     total: 2,
 
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -7271,26 +6894,22 @@ describe("cert-gen", () => {
                         };
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
                             .resolves({ Trn: undefined, IsTrailer: true });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordSearchStub.restore();
-                                getTechRecordStub.restore();
+                                callSearchTechRecordSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -7330,24 +6949,20 @@ describe("cert-gen", () => {
                             )
                         );
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         delete expectedResult.techRecord_make;
                         delete expectedResult.techRecord_model;
                         delete expectedResult.ApplicantDetails;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -7384,22 +6999,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 // getTechRecordStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 S3BucketMockService.buckets.pop();
                             });
                     });
@@ -7424,21 +7035,17 @@ describe("cert-gen", () => {
                                 docGenRwt[0]
                             );
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(testResult)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -7455,23 +7062,18 @@ describe("cert-gen", () => {
                                 files: ["1.base64"],
                             });
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(testResult)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
+                                    callGetTechRecordSpy.mockClear();
                                     S3BucketMockService.buckets.pop();
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -7488,22 +7090,18 @@ describe("cert-gen", () => {
                     testResult.vin = "GYFC26269R240355";
                     testResult.vrm = "NKPILNCN";
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
+                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                     const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                     expect.assertions(1);
                     return await certificateGenerationService
                         .generateCertificate(testResult)
                         .then((response: any) => {
                             expect(response.certificateType).toEqual("RWT");
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
                         });
                 });
             }
@@ -7523,21 +7121,16 @@ describe("cert-gen", () => {
                             const expectedResult: ICertificatePayload = cloneDeep(
                                 docGenRwt[4]
                             );
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             const payload = await certificateGenerationService
-                                .generatePayload(testResult);
+                              .generatePayload(testResult);
                             expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
                         });
                     });
 
@@ -7553,21 +7146,17 @@ describe("cert-gen", () => {
                                 files: ["1.base64"],
                             });
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             const payload = await certificateGenerationService
                                 .generatePayload(testResult);
                             expect(payload).toEqual(expectedResult);
                             S3BucketMockService.buckets.pop();
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
                         });
                     });
                 });
@@ -7646,21 +7235,17 @@ describe("cert-gen", () => {
                                 "Watermark": "NOT VALID"
                             };
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(testResultReapplication)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -7727,21 +7312,17 @@ describe("cert-gen", () => {
                                 "Watermark": "NOT VALID"
                             };
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(testResultReapplication)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -7752,21 +7333,17 @@ describe("cert-gen", () => {
                                     docGenIva30[0]
                                 );
 
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                 return await certificateGenerationService
                                     .generatePayload(testResult)
                                     .then((payload: any) => {
                                         expect(payload).toEqual(expectedResult);
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         });
@@ -7783,23 +7360,18 @@ describe("cert-gen", () => {
                                     files: ["1.base64"],
                                 });
 
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                 return await certificateGenerationService
                                     .generatePayload(testResult)
                                     .then((payload: any) => {
                                         expect(payload).toEqual(expectedResult);
-                                        getTechRecordStub.restore();
+                                        callGetTechRecordSpy.mockClear();
                                         S3BucketMockService.buckets.pop();
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         });
@@ -7808,14 +7380,10 @@ describe("cert-gen", () => {
                             "and the generated payload is used to call the MOT service",
                             () => {
                                 it("successfully generate a certificate", async () => {
-                                    const getTechRecordSearchStub = sandbox
-                                        .stub(certificateGenerationService, "callSearchTechRecords")
-                                        .resolves(techRecordsRwtSearch);
+                                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                     const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                    const getTechRecordStub = sandbox
-                                        .stub(certificateGenerationService, "callGetTechRecords")
-                                        .resolves((techRecordResponseRwtMock) as any);
+                                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                     expect.assertions(3);
                                     return await certificateGenerationService
@@ -7829,8 +7397,8 @@ describe("cert-gen", () => {
                                                 current: 2,
                                                 total: 2,
                                             });
-                                            getTechRecordStub.restore();
-                                            getTechRecordSearchStub.restore();
+                                            callGetTechRecordSpy.mockClear();
+                                            callSearchTechRecordSpy.mockClear();
                                         });
                                 });
                             }
@@ -7911,21 +7479,17 @@ describe("cert-gen", () => {
                                     "Watermark": "NOT VALID"
                                 };
 
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                 return await certificateGenerationService
                                     .generatePayload(testResultReapplication)
                                     .then((payload: any) => {
                                         expect(payload).toEqual(expectedResult);
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         });
@@ -7992,21 +7556,17 @@ describe("cert-gen", () => {
                                     "Watermark": "NOT VALID"
                                 };
 
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                 return await certificateGenerationService
                                     .generatePayload(testResultReapplication)
                                     .then((payload: any) => {
                                         expect(payload).toEqual(expectedResult);
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         });
@@ -8017,21 +7577,17 @@ describe("cert-gen", () => {
                                     docGenMsva30[0]
                                 );
 
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                 return await certificateGenerationService
                                     .generatePayload(testResult)
                                     .then((payload: any) => {
                                         expect(payload).toEqual(expectedResult);
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         });
@@ -8048,23 +7604,18 @@ describe("cert-gen", () => {
                                     files: ["1.base64"],
                                 });
 
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                 const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                 return await certificateGenerationService
                                     .generatePayload(testResult)
                                     .then((payload: any) => {
                                         expect(payload).toEqual(expectedResult);
-                                        getTechRecordStub.restore();
+                                        callGetTechRecordSpy.mockClear();
                                         S3BucketMockService.buckets.pop();
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
+                                        callSearchTechRecordSpy.mockClear();
                                     });
                             });
                         });
@@ -8073,14 +7624,10 @@ describe("cert-gen", () => {
                             "and the generated payload is used to call the MOT service",
                             () => {
                                 it("successfully generate a certificate", async () => {
-                                    const getTechRecordSearchStub = sandbox
-                                        .stub(certificateGenerationService, "callSearchTechRecords")
-                                        .resolves(techRecordsRwtSearch);
+                                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                                     const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                    const getTechRecordStub = sandbox
-                                        .stub(certificateGenerationService, "callGetTechRecords")
-                                        .resolves((techRecordResponseRwtMock) as any);
+                                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                                     expect.assertions(3);
                                     return await certificateGenerationService
@@ -8094,8 +7641,8 @@ describe("cert-gen", () => {
                                                 current: 2,
                                                 total: 2,
                                             });
-                                            getTechRecordStub.restore();
-                                            getTechRecordSearchStub.restore();
+                                            callGetTechRecordSpy.mockClear();
+                                            callSearchTechRecordSpy.mockClear();
                                         });
                                 });
                             }
@@ -8119,14 +7666,10 @@ describe("cert-gen", () => {
                 context("when uploading a certificate", () => {
                     context("and the S3 bucket exists and is accesible", () => {
                         it("should successfully upload the certificate", async () => {
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             const generatedCertificateResponse: IGeneratedCertificateResponse =
                                 await certificateGenerationService.generateCertificate(
@@ -8143,8 +7686,8 @@ describe("cert-gen", () => {
                                     expect(response.Key).toEqual(
                                         `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
                                     );
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                     S3BucketMockService.buckets.pop();
                                 });
                         });
@@ -8152,14 +7695,10 @@ describe("cert-gen", () => {
 
                     context("and the S3 bucket does not exist or is not accesible", () => {
                         it("should throw an error", async () => {
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             const generatedCertificateResponse: IGeneratedCertificateResponse =
                                 await certificateGenerationService.generateCertificate(
@@ -8170,8 +7709,8 @@ describe("cert-gen", () => {
                                 .uploadCertificate(generatedCertificateResponse)
                                 .catch((error: any) => {
                                     expect(error).toBeInstanceOf(Error);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });

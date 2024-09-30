@@ -5,6 +5,7 @@ import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
 import { Service } from 'typedi';
+import { DefectRepository } from '../defect/DefectRepository';
 import {
 	ICertificatePayload,
 	ICustomDefect,
@@ -16,8 +17,6 @@ import {
 	IRequiredStandard,
 	IRoadworthinessCertificateData,
 	ITestResult,
-	ITestType,
-	ITrailerRegistration,
 	IWeightDetails,
 } from '../models';
 import {
@@ -25,7 +24,6 @@ import {
 	AVAILABLE_WELSH,
 	BASIC_IVA_TEST,
 	CERTIFICATE_DATA,
-	ERRORS,
 	HGV_TRL_ROADWORTHINESS_TEST_TYPES,
 	IVA30_TEST,
 	IVA_30,
@@ -40,8 +38,11 @@ import { IDefectChild } from '../models/IDefectChild';
 import { IDefectParent } from '../models/IDefectParent';
 import { IFlatDefect } from '../models/IFlatDefect';
 import { IItem } from '../models/IItem';
-import { ITestStation } from '../models/ITestStations';
 import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { TechRecordRepository } from '../tech-record/TechRecordRepository';
+import { TestResultRepository } from '../test-result/TestResultRepository';
+import { TestStationRepository } from '../test-station/TestStationRepository';
+import { TrailerRepository } from '../trailer/TrailerRepository';
 import { Configuration } from '../utils/Configuration';
 import { LambdaService } from './LambdaService';
 import { S3BucketService } from './S3BucketService';
@@ -55,7 +56,12 @@ class CertificateGenerationService {
 
 	constructor(
 		private s3Client: S3BucketService,
-		private lambdaClient: LambdaService
+		private lambdaClient: LambdaService,
+		private trailerRepository: TrailerRepository,
+		private techRecordRepository: TechRecordRepository,
+		private testStationRepository: TestStationRepository,
+		private testResultRepository: TestResultRepository,
+		private defectRepository: DefectRepository
 	) {}
 
 	/**
@@ -231,7 +237,7 @@ class CertificateGenerationService {
 	 * @returns Promise<boolean> true if the test station country is set to Wales, false otherwise
 	 */
 	public async isTestStationWelsh(testStationPNumber: string): Promise<boolean> {
-		const testStation = await this.getTestStation(testStationPNumber);
+		const testStation = await this.testStationRepository.getTestStation(testStationPNumber);
 
 		if (!testStation.testStationPNumber) {
 			console.error(`Failed to retrieve test station details for ${testStationPNumber}`);
@@ -241,42 +247,6 @@ class CertificateGenerationService {
 		const isWelshCountry = testStation.testStationCountry?.toString().toUpperCase() === `WALES`;
 		console.log(`Test station country for ${testStationPNumber} is set to ${testStation.testStationCountry}`);
 		return isWelshCountry;
-	}
-
-	/**
-	 * Method to retrieve Test Station details from API
-	 * @returns a test station object
-	 */
-	public async getTestStation(testStationPNumber: string): Promise<ITestStation> {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.testStations.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/test-stations/${testStationPNumber}`,
-				})
-			),
-		};
-		let testStation: ITestStation = {} as ITestStation;
-		let retries = 0;
-
-		while (retries < 3) {
-			try {
-				const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-				const payload: any = this.lambdaClient.validateInvocationResponse(response);
-
-				testStation = JSON.parse(payload.body);
-
-				return testStation;
-			} catch (error) {
-				retries++;
-				console.error(`There was an error retrieving the test station on attempt ${retries}: ${error}`);
-			}
-		}
-		return testStation;
 	}
 
 	/**
@@ -381,9 +351,11 @@ class CertificateGenerationService {
 			payload.MSVA_DATA = { ...msvaData };
 		} else {
 			const odometerHistory =
-				vehicleType === VEHICLE_TYPES.TRL ? undefined : await this.getOdometerHistory(systemNumber);
+				vehicleType === VEHICLE_TYPES.TRL
+					? undefined
+					: await this.testResultRepository.getOdometerHistory(systemNumber);
 			const TrnObj = this.isValidForTrn(vehicleType, makeAndModel)
-				? await this.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make)
+				? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make)
 				: undefined;
 			if (testTypes.testResult !== TEST_RESULTS.FAIL) {
 				const passData = await this.generateCertificateData(testResult, CERTIFICATE_DATA.PASS_DATA, isWelsh);
@@ -420,7 +392,7 @@ class CertificateGenerationService {
 		let defectListFromApi: IDefectParent[] = [];
 		let flattenedDefects: IFlatDefect[] = [];
 		if (isWelsh) {
-			defectListFromApi = await this.getDefectTranslations();
+			defectListFromApi = await this.defectRepository.getDefectTranslations();
 			flattenedDefects = this.flattenDefectsFromApi(defectListFromApi);
 		}
 		const testType: any = testResult.testTypes;
@@ -592,7 +564,7 @@ class CertificateGenerationService {
 	 * @param testResult - testResult from which the VIN is used to search a tech-record
 	 */
 	public getAdrDetails = async (testResult: any) => {
-		const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+		const searchRes = await this.techRecordRepository.callSearchTechRecords(testResult.systemNumber);
 		return (await this.processGetCurrentProvisionalRecords(searchRes)) as TechRecordType<'hgv' | 'trl'>;
 	};
 
@@ -602,16 +574,16 @@ class CertificateGenerationService {
 		if (searchResult) {
 			const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
 			return processRecordsRes.currentCount !== 0
-				? this.callGetTechRecords(
+				? this.techRecordRepository.callGetTechRecords(
 						processRecordsRes.currentRecords[0].systemNumber,
 						processRecordsRes.currentRecords[0].createdTimestamp
 					)
 				: processRecordsRes.provisionalCount === 1
-					? this.callGetTechRecords(
+					? this.techRecordRepository.callGetTechRecords(
 							processRecordsRes.provisionalRecords[0].systemNumber,
 							processRecordsRes.provisionalRecords[0].createdTimestamp
 						)
-					: this.callGetTechRecords(
+					: this.techRecordRepository.callGetTechRecords(
 							processRecordsRes.provisionalRecords[1].systemNumber,
 							processRecordsRes.provisionalRecords[1].createdTimestamp
 						);
@@ -654,7 +626,7 @@ class CertificateGenerationService {
 	 * @param testResult
 	 */
 	public async getWeightDetails(testResult: any) {
-		const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+		const searchRes = await this.techRecordRepository.callSearchTechRecords(testResult.systemNumber);
 		const techRecord = (await this.processGetCurrentProvisionalRecords(searchRes)) as TechRecordType<
 			'hgv' | 'psv' | 'trl'
 		>;
@@ -685,89 +657,11 @@ class CertificateGenerationService {
 	}
 
 	/**
-	 * Retrieves the odometer history for a given VIN from the Test Results microservice
-	 * @param systemNumber - systemNumber for which to retrieve odometer history
-	 */
-	public async getOdometerHistory(systemNumber: string) {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.testResults.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/test-results/${systemNumber}`,
-					pathParameters: {
-						systemNumber,
-					},
-				})
-			),
-		};
-
-		return this.lambdaClient
-			.invoke(invokeParams)
-			.then((response: InvocationResponse) => {
-				const payload: any = this.lambdaClient.validateInvocationResponse(response);
-				// TODO: convert to correct type
-				const testResults: any[] = JSON.parse(payload.body);
-
-				if (!testResults || testResults.length === 0) {
-					throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
-				}
-				// Sort results by testEndTimestamp
-				testResults.sort((first: any, second: any): number => {
-					if (moment(first.testEndTimestamp).isBefore(second.testEndTimestamp)) {
-						return 1;
-					}
-
-					if (moment(first.testEndTimestamp).isAfter(second.testEndTimestamp)) {
-						return -1;
-					}
-
-					return 0;
-				});
-
-				// Remove the first result as it should be the current one.
-				testResults.shift();
-
-				// Set the array to only submitted tests (exclude cancelled)
-				const submittedTests = testResults.filter((testResult) => {
-					return testResult.testStatus === 'submitted';
-				});
-
-				const filteredTestResults = submittedTests
-					.filter(({ testTypes }) =>
-						testTypes?.some(
-							(testType: ITestType) =>
-								testType.testTypeClassification === 'Annual With Certificate' &&
-								(testType.testResult === 'pass' || testType.testResult === 'prs')
-						)
-					)
-					.slice(0, 3); // Only last three entries are used for the history.
-
-				return {
-					OdometerHistoryList: filteredTestResults.map((testResult) => {
-						return {
-							value: testResult.odometerReading,
-							unit: testResult.odometerReadingUnits,
-							date: moment(testResult.testEndTimestamp).format('DD.MM.YYYY'),
-						};
-					}),
-				};
-			})
-			.catch((error: ServiceException | Error) => {
-				console.log(error);
-				throw error;
-			});
-	}
-
-	/**
 	 * Method for getting make and model based on the vehicle from a test-result
 	 * @param testResult - the testResult for which the tech record search is done for
 	 */
 	public getVehicleMakeAndModel = async (testResult: any) => {
-		const searchRes = await this.callSearchTechRecords(testResult.systemNumber);
+		const searchRes = await this.techRecordRepository.callSearchTechRecords(testResult.systemNumber);
 		const techRecord = await this.processGetCurrentProvisionalRecords(searchRes);
 		// Return bodyMake and bodyModel values for PSVs
 		return techRecord?.techRecord_vehicleType === VEHICLE_TYPES.PSV
@@ -782,119 +676,6 @@ class CertificateGenerationService {
 	};
 
 	/**
-	 * Used to return a subset of technical record information.
-	 * @param searchIdentifier
-	 */
-	public callSearchTechRecords = async (searchIdentifier: string) => {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.techRecordsSearch.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/v3/technical-records/search/${searchIdentifier}?searchCriteria=systemNumber`,
-					pathParameters: {
-						searchIdentifier,
-					},
-				})
-			),
-		};
-		try {
-			const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
-			const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
-			return JSON.parse(res.body);
-		} catch (e) {
-			console.log('Error searching technical records');
-			console.log(JSON.stringify(e));
-			return undefined;
-		}
-	};
-
-	/**
-	 * Used to get a singular whole technical record.
-	 * @param systemNumber
-	 * @param createdTimestamp
-	 */
-	public callGetTechRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(
-		systemNumber: string,
-		createdTimestamp: string
-	): Promise<TechRecordType<T> | undefined> => {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.techRecords.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/v3/technical-records/${systemNumber}/${createdTimestamp}`,
-					pathParameters: {
-						systemNumber,
-						createdTimestamp,
-					},
-				})
-			),
-		};
-		try {
-			const lambdaResponse = await this.lambdaClient.invoke(invokeParams);
-			const res = await this.lambdaClient.validateInvocationResponse(lambdaResponse);
-			return JSON.parse(res.body);
-		} catch (e) {
-			console.log('Error in get technical record');
-			console.log(JSON.stringify(e));
-			return undefined;
-		}
-	};
-
-	/**
-	 * To fetch trailer registration
-	 * @param vin The vin of the trailer
-	 * @param make The make of the trailer
-	 * @returns A payload containing the TRN of the trailer and a boolean.
-	 */
-	public async getTrailerRegistrationObject(vin: string, make: string) {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.trailerRegistration.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/v1/trailers/${vin}`,
-					pathParameters: {
-						proxy: `/v1/trailers`,
-					},
-					queryStringParameters: {
-						make,
-					},
-				})
-			),
-		};
-		const response = await this.lambdaClient.invoke(invokeParams);
-		try {
-			if (!response.Payload || Buffer.from(response.Payload).toString() === '') {
-				throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${response.StatusCode} ${ERRORS.EMPTY_PAYLOAD}`);
-			}
-			const payload: any = JSON.parse(Buffer.from(response.Payload).toString());
-			if (payload.statusCode === 404) {
-				console.debug(`vinOrChassisWithMake not found ${vin + make}`);
-				return { Trn: undefined, IsTrailer: true };
-			}
-			if (payload.statusCode >= 400) {
-				throw new HTTPError(500, `${ERRORS.LAMBDA_INVOCATION_ERROR} ${payload.statusCode} ${payload.body}`);
-			}
-			const trailerRegistration = JSON.parse(payload.body) as ITrailerRegistration;
-			return { Trn: trailerRegistration.trn, IsTrailer: true };
-		} catch (err) {
-			console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, err);
-			throw err;
-		}
-	}
-
-	/**
 	 * To check if the testResult is valid for fetching Trn.
 	 * @param vehicleType the vehicle type
 	 * @param makeAndModel object containing Make and Model
@@ -902,44 +683,6 @@ class CertificateGenerationService {
 	 */
 	public isValidForTrn(vehicleType: string, makeAndModel: IMakeAndModel): boolean {
 		return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
-	}
-
-	/**
-	 * Method used to retrieve the Welsh translations for the certificates
-	 * @returns a list of defects
-	 */
-	public async getDefectTranslations(): Promise<IDefectParent[]> {
-		const config: IInvokeConfig = this.config.getInvokeConfig();
-		const invokeParams: InvocationRequest = {
-			FunctionName: config.functions.defects.name,
-			InvocationType: 'RequestResponse',
-			LogType: 'Tail',
-			Payload: toUint8Array(
-				JSON.stringify({
-					httpMethod: 'GET',
-					path: `/defects/`,
-				})
-			),
-		};
-		let defects: IDefectParent[] = [];
-		let retries = 0;
-		while (retries < 3) {
-			try {
-				const response: InvocationResponse = await this.lambdaClient.invoke(invokeParams);
-				const payload: any = this.lambdaClient.validateInvocationResponse(response);
-				const defectsParsed = JSON.parse(payload.body);
-
-				if (!defectsParsed || defectsParsed.length === 0) {
-					throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
-				}
-				defects = defectsParsed;
-				return defects;
-			} catch (error) {
-				retries++;
-				console.error(`There was an error retrieving the welsh defect translations on attempt ${retries}: ${error}`);
-			}
-		}
-		return defects;
 	}
 
 	/**
