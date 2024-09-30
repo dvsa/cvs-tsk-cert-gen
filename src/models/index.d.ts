@@ -142,6 +142,7 @@ interface IWeightDetails {
 }
 
 interface ITestResult {
+	testResultId: string;
 	vrm: string;
 	trailerId: string;
 	vin: string;
@@ -175,6 +176,7 @@ interface ITestResult {
 	model?: string;
 	bodyType?: IBodyTypeModel;
 	testTypes: ITestType;
+	systemNumber: string;
 }
 
 interface ITestType {
