@@ -1,4 +1,4 @@
-import { Callback, Context, Handler, SQSBatchItemFailure, SQSBatchResponse, SQSEvent, SQSRecord } from 'aws-lambda';
+import { Callback, Context, Handler, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
 import { Container } from 'typedi';
 import { CertificateRequestProcessor } from './CertificateRequestProcessor';
 

@@ -35,8 +35,7 @@ export class CertificateRequestProcessor {
 	}
 
 	private async create(testResult: ITestResult): Promise<PutObjectCommandOutput> {
-		return this.certificateGenerationService
-			.generateCertificate(testResult)
-			.then((response: IGeneratedCertificateResponse) => this.certificateUploadService.uploadCertificate(response));
+		const response = await this.certificateGenerationService.generateCertificate(testResult);
+		return this.certificateUploadService.uploadCertificate(response);
 	}
 }
