@@ -7724,13 +7724,12 @@ describe("cert-gen", () => {
                 context("and the testResultId is malformed", () => {
                     it("should thrown an error", async () => {
                         expect.assertions(1);
-                        try {
-                            await certGen(event, undefined as any, () => {
-                                return;
-                            });
-                        } catch (err) {
-                            expect((err as unknown as Error).message).toEqual("Bad Test Record: 1");
-                        }
+
+                        const result = await certGen(event, undefined as any, () => {
+                            return;
+                        });
+
+                        expect(result.batchItemFailures).toHaveLength(event.Records.length);
                     });
                 });
                 context("and the event is empty", () => {

@@ -21,6 +21,11 @@ export enum TEST_RESULTS {
 	PRS = 'prs',
 }
 
+export enum TEST_RESULT_STATUS {
+	SUBMITTED = 'submitted',
+	CANCELLED = 'cancelled',
+}
+
 export enum CERTIFICATE_DATA {
 	RWT_DATA = 'RWT_DATA',
 	PASS_DATA = 'PASS_DATA',
