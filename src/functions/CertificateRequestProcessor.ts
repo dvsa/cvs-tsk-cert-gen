@@ -3,7 +3,7 @@ import { Service } from 'typedi';
 import { validate as uuidValidate } from 'uuid';
 import { ITestResult } from '../models';
 import { ERRORS, TEST_RESULT_STATUS } from '../models/Enums';
-import { CertificateGenerationService, IGeneratedCertificateResponse } from '../services/CertificateGenerationService';
+import { CertificateGenerationService } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
 
 export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
