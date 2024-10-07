@@ -14,6 +14,7 @@ import { HTTPError } from "../../src/models/HTTPError";
 import { S3BucketService } from "../../src/services/S3BucketService";
 import { LambdaService } from "../../src/services/LambdaService";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
+import { TechRecordService } from '../../src/tech-record/TechRecordService';
 
 const sandbox = sinon.createSandbox();
 
@@ -26,7 +27,7 @@ describe("cert-gen", () => {
     const callSearchTechRecordSpy = jest.spyOn(techRecordRepository, "callSearchTechRecords");
     Container.set(TechRecordRepository, techRecordRepository);
 
-    const certificateGenerationService = Container.get(CertificateGenerationService);
+    const techRecordService = Container.get(TechRecordService);
 
     afterEach(() => {
         sandbox.restore();
@@ -54,7 +55,7 @@ describe("cert-gen", () => {
                             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             // expect.assertions(1);
-                            await certificateGenerationService
+                            await techRecordService
                               .getWeightDetails(testResult)
                               .then((weightDetails) => {
                                 expect(weightDetails).toEqual(expectedWeightDetails);
@@ -85,7 +86,7 @@ describe("cert-gen", () => {
                             callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             // expect.assertions(1);
-                            await certificateGenerationService
+                            await techRecordService
                               .getWeightDetails(testResult)
                               .then((weightDetails) => {
                                 expect(weightDetails).toEqual(expectedWeightDetails);
@@ -116,7 +117,7 @@ describe("cert-gen", () => {
                                 500,
                                 "No vehicle found for Roadworthiness test certificate!"
                             );
-                            await certificateGenerationService
+                            await techRecordService
                                 .getWeightDetails(testResult)
                                 .catch((err) => {
                                     expect(err).toEqual(expectedError);
@@ -153,7 +154,7 @@ describe("cert-gen", () => {
                                     500,
                                     "No axle weights for Roadworthiness test certificates!"
                                 );
-                                await certificateGenerationService
+                                await techRecordService
                                     .getWeightDetails(testResult)
                                     .catch((err) => {
                                         expect(err).toEqual(expectedError);
