@@ -1,3 +1,5 @@
+import { TEST_RESULTS } from './Enums';
+
 interface IInvokeConfig {
 	params: { apiVersion: string; endpoint?: string };
 	functions: {
@@ -176,6 +178,7 @@ interface ITestResult {
 	model?: string;
 	bodyType?: IBodyTypeModel;
 	testTypes: ITestType;
+	createdById?: string;
 	systemNumber: string;
 }
 
@@ -198,7 +201,7 @@ interface ITestType {
 	numberOfSeatbeltsFitted: number;
 	lastSeatbeltInstallationCheckDate: string;
 	seatbeltInstallationCheckDate: boolean;
-	testResult: string;
+	testResult: TEST_RESULTS;
 	prohibitionIssued: boolean;
 	reasonForAbandoning: string;
 	additionalNotesRecorded: string;
