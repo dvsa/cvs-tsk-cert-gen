@@ -22,9 +22,9 @@ export class IvaCertificateCommand implements ICertificatePayloadCommand {
 		this.type = type;
 	}
 
-	public generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
 		if (!this.certificateIsAnIva()) {
-			return Promise.resolve({} as ICertificatePayload);
+			return {} as ICertificatePayload;
 		}
 
 		const ivaFailDetailsForDocGen = {
@@ -48,9 +48,9 @@ export class IvaCertificateCommand implements ICertificatePayloadCommand {
 			requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards),
 		};
 
-		return Promise.resolve({
+		return {
 			IVA_DATA: ivaFailDetailsForDocGen,
-		} as ICertificatePayload);
+		} as ICertificatePayload;
 	}
 
 	/**
