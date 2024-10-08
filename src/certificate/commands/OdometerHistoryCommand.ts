@@ -3,35 +3,34 @@ import { ICertificatePayload } from '../../models';
 import { ITestResult } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { TestResultRepository } from '../../test-result/TestResultRepository';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class OdometerHistoryCommand implements ICertificatePayloadCommand {
-	protected type?: CERTIFICATE_DATA;
-
-	constructor(private testResultRepository: TestResultRepository) {}
+export class OdometerHistoryCommand extends BasePayloadCommand {
+	constructor(private testResultRepository: TestResultRepository) {
+		super();
+	}
 
 	private certificateIsAnPassOrFail = (): boolean =>
-		this.type === CERTIFICATE_DATA.PASS_DATA || this.type === CERTIFICATE_DATA.FAIL_DATA;
+		this.state.type === CERTIFICATE_DATA.PASS_DATA || this.state.type === CERTIFICATE_DATA.FAIL_DATA;
 
 	private vehicleIsTrailer = (testResult: ITestResult): boolean => testResult.vehicleType === VEHICLE_TYPES.TRL;
 
-	initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
-	}
-
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	public async generate(): Promise<ICertificatePayload> {
 		const result = {} as ICertificatePayload;
 
 		if (!this.certificateIsAnPassOrFail()) {
 			return result;
 		}
 
+		const {
+			testResult,
+			testResult: { testTypes, systemNumber },
+		} = this.state;
+
 		if (this.vehicleIsTrailer(testResult)) {
 			return result;
 		}
-
-		const { testTypes, systemNumber } = testResult;
 
 		const odometerHistory = await this.testResultRepository.getOdometerHistory(systemNumber);
 

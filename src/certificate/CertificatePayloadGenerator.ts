@@ -3,6 +3,7 @@ import { Service } from 'typedi';
 import { ITestResult } from '../models';
 import { ICertificatePayload } from '../models';
 import { CERTIFICATE_DATA } from '../models/Enums';
+import { CertificatePayloadStateBag } from './CertificatePayloadStateBag';
 import { ICertificatePayloadCommand } from './ICertificatePayloadCommand';
 import { AdrCertificateCommand } from './commands/AdrCertificateCommand';
 import { DefectsCommand } from './commands/DefectsCommand';
@@ -61,8 +62,12 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
 		type: CERTIFICATE_DATA,
 		isWelsh = false
 	): Promise<ICertificatePayload> {
-		this.initialise(type, isWelsh);
-		return this.generate(testResult);
+		this.initialise({
+			type,
+			isWelsh,
+			testResult,
+		});
+		return this.generate();
 	}
 
 	/**
@@ -70,8 +75,8 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
 	 * @param type The type of certificate to generate
 	 * @param isWelsh True if a Welsh certificate should also be generated.
 	 */
-	public initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.commands.forEach((cmd) => cmd.initialise(type, isWelsh));
+	public initialise(state: CertificatePayloadStateBag) {
+		this.commands.forEach((cmd) => cmd.initialise(state));
 	}
 
 	/**
@@ -79,9 +84,9 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
 	 * @param testResult the source test result for certificate generation
 	 * @returns A generated certificate payload
 	 */
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	public async generate(): Promise<ICertificatePayload> {
 		// Map over all the commands and get their certificate data.
-		const results = await Promise.all(this.commands.map((cmd) => cmd.generate(testResult)));
+		const results = await Promise.all(this.commands.map((cmd) => cmd.generate()));
 
 		// Flatten all the certificate data into our result payload.
 		return Promise.resolve(merge({} as ICertificatePayload, ...results));

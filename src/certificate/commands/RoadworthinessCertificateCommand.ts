@@ -1,32 +1,29 @@
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
-import { ITestResult } from '../../models';
 import { IRoadworthinessCertificateData } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
 import { TechRecordService } from '../../tech-record/TechRecordService';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class RoadworthinessCertificateCommand implements ICertificatePayloadCommand {
-	private type?: CERTIFICATE_DATA;
-
+export class RoadworthinessCertificateCommand extends BasePayloadCommand {
 	constructor(
 		private defectService: DefectService,
 		private techRecordService: TechRecordService
-	) {}
-
-	private certificateIsAnRwt = (): boolean => this.type === CERTIFICATE_DATA.RWT_DATA;
-
-	initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
+	) {
+		super();
 	}
 
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	private certificateIsAnRwt = (): boolean => this.state.type === CERTIFICATE_DATA.RWT_DATA;
+
+	public async generate(): Promise<ICertificatePayload> {
 		if (!this.certificateIsAnRwt()) {
 			return {} as ICertificatePayload;
 		}
+
+		const { testResult } = this.state;
 
 		const weightDetails = await this.techRecordService.getWeightDetails(testResult);
 

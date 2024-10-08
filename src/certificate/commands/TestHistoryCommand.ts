@@ -1,18 +1,16 @@
 import moment from 'moment';
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
-import { ITestResult } from '../../models';
-import { CERTIFICATE_DATA } from '../../models/Enums';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class TestHistoryCommand implements ICertificatePayloadCommand {
-	initialise(type: CERTIFICATE_DATA, isWelsh = false) {}
-
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+export class TestHistoryCommand extends BasePayloadCommand {
+	public async generate(): Promise<ICertificatePayload> {
 		const result = {} as ICertificatePayload;
 
-		const { testTypes, testHistory, createdByName, createdAt } = testResult as any;
+		const {
+			testResult: { testTypes, testHistory, createdByName, createdAt },
+		} = this.state as any;
 
 		if (testHistory) {
 			// eslint-disable-next-line

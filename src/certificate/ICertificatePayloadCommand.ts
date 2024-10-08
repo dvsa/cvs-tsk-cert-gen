@@ -1,8 +1,17 @@
 import { ICertificatePayload } from '../models';
-import { ITestResult } from '../models';
-import { CERTIFICATE_DATA } from '../models/Enums';
+import { CertificatePayloadStateBag } from './CertificatePayloadStateBag';
 
 export interface ICertificatePayloadCommand {
-	initialise(type: CERTIFICATE_DATA, isWelsh: boolean): void;
-	generate(testResult: ITestResult): Promise<ICertificatePayload>;
+	initialise(state: CertificatePayloadStateBag): void;
+	generate(): Promise<ICertificatePayload>;
+}
+
+export abstract class BasePayloadCommand implements ICertificatePayloadCommand {
+	protected state: CertificatePayloadStateBag = {} as CertificatePayloadStateBag;
+
+	initialise(state: CertificatePayloadStateBag) {
+		this.state = state;
+	}
+
+	abstract generate(): Promise<ICertificatePayload>;
 }

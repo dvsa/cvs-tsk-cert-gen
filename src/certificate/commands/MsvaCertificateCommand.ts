@@ -1,28 +1,25 @@
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
-import { ITestResult } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { IRequiredStandard } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class MsvaCertificateCommand implements ICertificatePayloadCommand {
-	private type?: CERTIFICATE_DATA;
-
-	constructor(private defectService: DefectService) {}
-
-	private certificateIsAnMsva = (): boolean => this.type === CERTIFICATE_DATA.MSVA_DATA;
-
-	initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
+export class MsvaCertificateCommand extends BasePayloadCommand {
+	constructor(private defectService: DefectService) {
+		super();
 	}
 
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	private certificateIsAnMsva = (): boolean => this.state.type === CERTIFICATE_DATA.MSVA_DATA;
+
+	public async generate(): Promise<ICertificatePayload> {
 		if (!this.certificateIsAnMsva()) {
 			return {} as ICertificatePayload;
 		}
+
+		const { testResult } = this.state;
 
 		const msvaFailDetailsForDocGen = {
 			vin: testResult.vin,

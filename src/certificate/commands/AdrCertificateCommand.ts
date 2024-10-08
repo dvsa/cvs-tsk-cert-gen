@@ -1,27 +1,24 @@
 import { Service } from 'typedi';
-import { ITestResult } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 import { TechRecordType } from '../../models/Types';
 import { TechRecordService } from '../../tech-record/TechRecordService';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class AdrCertificateCommand implements ICertificatePayloadCommand {
-	private type?: CERTIFICATE_DATA;
-
-	constructor(private techRecordService: TechRecordService) {}
-
-	private certificateIsAnAdr = (): boolean => this.type === CERTIFICATE_DATA.ADR_DATA;
-
-	public initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
+export class AdrCertificateCommand extends BasePayloadCommand {
+	constructor(private techRecordService: TechRecordService) {
+		super();
 	}
 
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	private certificateIsAnAdr = (): boolean => this.state.type === CERTIFICATE_DATA.ADR_DATA;
+
+	public async generate(): Promise<ICertificatePayload> {
 		if (!this.certificateIsAnAdr()) {
 			return {} as ICertificatePayload;
 		}
+
+		const { testResult } = this.state;
 
 		const adrDetails: TechRecordType<any> = await this.techRecordService.getAdrDetails(testResult);
 		const makeAndModel = await this.techRecordService.getVehicleMakeAndModel(testResult);

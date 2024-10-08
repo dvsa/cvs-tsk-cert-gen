@@ -1,31 +1,29 @@
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
-import { IRequiredStandard, ITestResult } from '../../models';
+import { IRequiredStandard } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA, IVA_30 } from '../../models/Enums';
 import { TestResultService } from '../../test-result/TestResultService';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class IvaCertificateCommand implements ICertificatePayloadCommand {
-	private type?: CERTIFICATE_DATA;
-
+export class IvaCertificateCommand extends BasePayloadCommand {
 	constructor(
 		private defectService: DefectService,
 		private testResultService: TestResultService
-	) {}
-
-	private certificateIsAnIva = (): boolean => this.type === CERTIFICATE_DATA.IVA_DATA;
-
-	initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
+	) {
+		super();
 	}
 
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	private certificateIsAnIva = (): boolean => this.state.type === CERTIFICATE_DATA.IVA_DATA;
+
+	public async generate(): Promise<ICertificatePayload> {
 		if (!this.certificateIsAnIva()) {
 			return {} as ICertificatePayload;
 		}
+
+		const { testResult } = this.state;
 
 		const ivaFailDetailsForDocGen = {
 			vin: testResult.vin,

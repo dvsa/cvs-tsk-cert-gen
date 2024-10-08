@@ -7,32 +7,29 @@ import { ITestType } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
 import { IDefectParent } from '../../models/IDefectParent';
 import { IFlatDefect } from '../../models/IFlatDefect';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class DefectsCommand {
-	protected type?: CERTIFICATE_DATA;
-
-	protected isWelsh = false;
-
+export class DefectsCommand extends BasePayloadCommand {
 	constructor(
 		private defectService: DefectService,
 		private defectRepository: DefectRepository
-	) {}
-
-	private certificateIsAnPassOrFail = (): boolean =>
-		this.type === CERTIFICATE_DATA.PASS_DATA || this.type === CERTIFICATE_DATA.FAIL_DATA;
-
-	public initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
-		this.isWelsh = isWelsh;
+	) {
+		super();
 	}
 
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	private certificateIsAnPassOrFail = (): boolean =>
+		this.state.type === CERTIFICATE_DATA.PASS_DATA || this.state.type === CERTIFICATE_DATA.FAIL_DATA;
+
+	public async generate(): Promise<ICertificatePayload> {
 		if (!this.certificateIsAnPassOrFail()) {
 			return {} as ICertificatePayload;
 		}
 
-		const { testTypes } = testResult;
+		const {
+			testResult,
+			testResult: { testTypes },
+		} = this.state;
 
 		const result = {} as ICertificatePayload;
 
@@ -52,10 +49,12 @@ export class DefectsCommand {
 	}
 
 	private async getPayloadData(testResult: ITestResult, type: CERTIFICATE_DATA): Promise<any> {
+		const { isWelsh } = this.state;
+
 		let defectListFromApi: IDefectParent[] = [];
 		let flattenedDefects: IFlatDefect[] = [];
 
-		if (this.isWelsh) {
+		if (isWelsh) {
 			defectListFromApi = await this.defectRepository.getDefectTranslations();
 			flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
 		}
@@ -65,7 +64,7 @@ export class DefectsCommand {
 			type,
 			testResult.vehicleType,
 			flattenedDefects,
-			this.isWelsh
+			isWelsh
 		);
 		return defects;
 	}

@@ -3,27 +3,24 @@ import { Service } from 'typedi';
 import { ITestResult } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class PassOrFailCertificateCommand implements ICertificatePayloadCommand {
-	protected type?: CERTIFICATE_DATA;
-
+export class PassOrFailCertificateCommand extends BasePayloadCommand {
 	private certificateIsAnPassOrFail = (): boolean =>
-		this.type === CERTIFICATE_DATA.PASS_DATA || this.type === CERTIFICATE_DATA.FAIL_DATA;
+		this.state.type === CERTIFICATE_DATA.PASS_DATA || this.state.type === CERTIFICATE_DATA.FAIL_DATA;
 
-	public initialise(type: CERTIFICATE_DATA, isWelsh = false) {
-		this.type = type;
-	}
-
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
+	public async generate(): Promise<ICertificatePayload> {
 		const result = {} as ICertificatePayload;
 
 		if (!this.certificateIsAnPassOrFail()) {
 			return result;
 		}
 
-		const { testTypes } = testResult;
+		const {
+			testResult,
+			testResult: { testTypes },
+		} = this.state;
 
 		const payload = await this.getPayloadData(testResult);
 

@@ -2,20 +2,18 @@ import { Readable } from 'stream';
 import { GetObjectOutput } from '@aws-sdk/client-s3';
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
-import { ITestResult } from '../../models';
-import { CERTIFICATE_DATA } from '../../models/Enums';
 import { S3BucketService } from '../../services/S3BucketService';
-import { ICertificatePayloadCommand } from '../ICertificatePayloadCommand';
+import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
-export class SignatureCommand implements ICertificatePayloadCommand {
+export class SignatureCommand extends BasePayloadCommand {
 	constructor(private s3Client: S3BucketService) {
-		this.s3Client = s3Client;
+		super();
 	}
 
-	initialise(type: CERTIFICATE_DATA, isWelsh = false) {}
+	public async generate(): Promise<ICertificatePayload> {
+		const { testResult } = this.state;
 
-	public async generate(testResult: ITestResult): Promise<ICertificatePayload> {
 		const signature = await this.getSignature(testResult.createdById ?? testResult.testerStaffId);
 
 		return {

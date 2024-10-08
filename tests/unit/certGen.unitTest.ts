@@ -42,6 +42,7 @@ import { CERTIFICATE_DATA } from "../../src/models/Enums";
 import { IvaCertificateCommand } from "../../src/certificate/commands/IvaCertificateCommand";
 import { PassOrFailCertificateCommand } from "../../src/certificate/commands/PassOrFailCertificateCommand";
 import { DefectsCommand } from "../../src/certificate/commands/DefectsCommand";
+import { CertificatePayloadStateBag } from "../../src/certificate/CertificatePayloadStateBag";
 
 const sandbox = sinon.createSandbox();
 
@@ -4581,16 +4582,21 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult
+                            } as CertificatePayloadStateBag;
+
                             const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
-                            passOrFailCommand.initialise(CERTIFICATE_DATA.FAIL_DATA);
+                            passOrFailCommand.initialise(state);
 
                             const defectsCommand = Container.get(DefectsCommand);
-                            defectsCommand.initialise(CERTIFICATE_DATA.FAIL_DATA);
+                            defectsCommand.initialise(state);
 
                             const payload = {
                                 FAIL_DATA: {
-                                    ...(await passOrFailCommand.generate(testResult)).FAIL_DATA,
-                                    ...(await defectsCommand.generate(testResult)).FAIL_DATA
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
                                 }
                             };
 
@@ -4640,16 +4646,21 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult: testResult2
+                            } as CertificatePayloadStateBag;
+
                             const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
-                            passOrFailCommand.initialise(CERTIFICATE_DATA.FAIL_DATA);
+                            passOrFailCommand.initialise(state);
 
                             const defectsCommand = Container.get(DefectsCommand);
-                            defectsCommand.initialise(CERTIFICATE_DATA.FAIL_DATA);
+                            defectsCommand.initialise(state);
 
                             const payload = {
                                 FAIL_DATA: {
-                                    ...(await passOrFailCommand.generate(testResult2)).FAIL_DATA,
-                                    ...(await defectsCommand.generate(testResult2)).FAIL_DATA
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
                                 }
                             };
 
@@ -4699,16 +4710,21 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult: testResult3
+                            } as CertificatePayloadStateBag;
+
                             const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
-                            passOrFailCommand.initialise(CERTIFICATE_DATA.FAIL_DATA);
+                            passOrFailCommand.initialise(state);
 
                             const defectsCommand = Container.get(DefectsCommand);
-                            defectsCommand.initialise(CERTIFICATE_DATA.FAIL_DATA);
+                            defectsCommand.initialise(state);
 
                             const payload = {
                                 FAIL_DATA: {
-                                    ...(await passOrFailCommand.generate(testResult3)).FAIL_DATA,
-                                    ...(await defectsCommand.generate(testResult3)).FAIL_DATA
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
                                 }
                             };
 
@@ -4768,9 +4784,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult1
+                            } as CertificatePayloadStateBag;
+
                             const ivaCommand = Container.get(IvaCertificateCommand);
-                            ivaCommand.initialise(CERTIFICATE_DATA.IVA_DATA);
-                            const payload = await ivaCommand.generate(testResult1);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
 
@@ -4828,9 +4849,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult21
+                            } as CertificatePayloadStateBag;
+
                             const ivaCommand = Container.get(IvaCertificateCommand);
-                            ivaCommand.initialise(CERTIFICATE_DATA.IVA_DATA);
-                            const payload = await ivaCommand.generate(testResult21);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -4893,9 +4919,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult2
+                            } as CertificatePayloadStateBag;
+
                             const ivaCommand = Container.get(IvaCertificateCommand);
-                            ivaCommand.initialise(CERTIFICATE_DATA.IVA_DATA);
-                            const payload = await ivaCommand.generate(testResult2);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -4943,9 +4974,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult3
+                            } as CertificatePayloadStateBag;
+
                             const ivaCommand = Container.get(IvaCertificateCommand);
-                            ivaCommand.initialise(CERTIFICATE_DATA.IVA_DATA);
-                            const payload = await ivaCommand.generate(testResult3);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -4994,9 +5030,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult4
+                            } as CertificatePayloadStateBag;
+
                             const ivaCommand = Container.get(IvaCertificateCommand);
-                            ivaCommand.initialise(CERTIFICATE_DATA.IVA_DATA);
-                            const payload = await ivaCommand.generate(testResult4);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -5046,9 +5087,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult5
+                            } as CertificatePayloadStateBag;
+
                             const ivaCommand = Container.get(IvaCertificateCommand);
-                            ivaCommand.initialise(CERTIFICATE_DATA.IVA_DATA);
-                            const payload = await ivaCommand.generate(testResult5);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -5093,9 +5139,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult6
+                            } as CertificatePayloadStateBag;
+
                             const msvaCommand = Container.get(MsvaCertificateCommand);
-                            msvaCommand.initialise(CERTIFICATE_DATA.MSVA_DATA);
-                            const payload = await msvaCommand.generate(testResult6);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -5151,9 +5202,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult7
+                            } as CertificatePayloadStateBag;
+
                             const msvaCommand = Container.get(MsvaCertificateCommand);
-                            msvaCommand.initialise(CERTIFICATE_DATA.MSVA_DATA);
-                            const payload = await msvaCommand.generate(testResult7);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
 
@@ -5203,9 +5259,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult7
+                            } as CertificatePayloadStateBag;
+
                             const msvaCommand = Container.get(MsvaCertificateCommand);
-                            msvaCommand.initialise(CERTIFICATE_DATA.MSVA_DATA);
-                            const payload = await msvaCommand.generate(testResult7);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
@@ -5250,9 +5311,14 @@ describe("cert-gen", () => {
                                 }
                             };
 
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult8
+                            } as CertificatePayloadStateBag;
+
                             const msvaCommand = Container.get(MsvaCertificateCommand);
-                            msvaCommand.initialise(CERTIFICATE_DATA.MSVA_DATA);
-                            const payload = await msvaCommand.generate(testResult8);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
                             expect(payload).toEqual(expectedResult);
                         });
                     }
