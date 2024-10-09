@@ -1,7 +1,6 @@
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
-import { TechRecordType } from '../../models/Types';
 import { TechRecordService } from '../../tech-record/TechRecordService';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -20,8 +19,10 @@ export class AdrCertificateCommand extends BasePayloadCommand {
 
 		const { testResult } = this.state;
 
-		const adrDetails: TechRecordType<any> = await this.techRecordService.getAdrDetails(testResult);
-		const makeAndModel = await this.techRecordService.getVehicleMakeAndModel(testResult);
+		const [adrDetails, makeAndModel] = await Promise.all([
+			this.techRecordService.getAdrDetails(testResult),
+			this.techRecordService.getVehicleMakeAndModel(testResult),
+		]);
 
 		const docGenPayloadAdr = {
 			ChasisNumber: testResult.vin,
