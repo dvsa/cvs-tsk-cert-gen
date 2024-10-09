@@ -16,6 +16,7 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
 		try {
 			await processRequest.process(JSON.parse(record.body));
 		} catch (error) {
+			console.error(error);
 			batchItemFailures.push({ itemIdentifier: record.messageId });
 		}
 	}
