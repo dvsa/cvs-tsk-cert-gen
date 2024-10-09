@@ -1,8 +1,9 @@
 import { Service } from 'typedi';
-import { ICertificatePayload } from '../../models';
+import { ICertificatePayload, IMakeAndModel } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
 import { TechRecordService } from '../../tech-record/TechRecordService';
 import { TestResultService } from '../../test-result/TestResultService';
+import { IGetTrailerRegistrationResult } from '../../trailer/IGetTrailerRegistrationResult';
 import { TrailerRepository } from '../../trailer/TrailerRepository';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -28,14 +29,11 @@ export class MakeAndModelCommand extends BasePayloadCommand {
 
 		const {
 			testResult,
-			testResult: { testTypes, vehicleType },
+			testResult: { testTypes },
 		} = this.state;
 
-		const makeAndModel = await this.techRecordService.getVehicleMakeAndModel(testResult);
-
-		const trnRegistration = this.testResultService.isValidForTrn(vehicleType, makeAndModel as any)
-			? await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make as any)
-			: undefined;
+		const makeAndModel = (await this.techRecordService.getVehicleMakeAndModel(testResult)) as Required<IMakeAndModel>;
+		const trnRegistration = await this.trailerRegistration(makeAndModel);
 
 		if (testTypes.testResult !== TEST_RESULTS.FAIL) {
 			result.DATA = {
@@ -52,5 +50,19 @@ export class MakeAndModelCommand extends BasePayloadCommand {
 		}
 
 		return result;
+	}
+
+	private async trailerRegistration(makeAndModel: IMakeAndModel): Promise<IGetTrailerRegistrationResult | undefined> {
+		const {
+			testResult,
+			testResult: { vehicleType },
+		} = this.state;
+
+		const isValidForTrn = this.testResultService.isValidForTrn(vehicleType, makeAndModel);
+		if (isValidForTrn) {
+			return await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make);
+		}
+
+		return undefined;
 	}
 }
