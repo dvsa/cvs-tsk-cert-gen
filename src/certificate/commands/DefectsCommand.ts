@@ -5,7 +5,6 @@ import { ITestResult } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { ITestType } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
-import { IDefectParent } from '../../models/IDefectParent';
 import { IFlatDefect } from '../../models/IFlatDefect';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -51,11 +50,10 @@ export class DefectsCommand extends BasePayloadCommand {
 	private async getPayloadData(testResult: ITestResult, type: CERTIFICATE_DATA): Promise<any> {
 		const { isWelsh } = this.state;
 
-		let defectListFromApi: IDefectParent[] = [];
 		let flattenedDefects: IFlatDefect[] = [];
 
 		if (isWelsh) {
-			defectListFromApi = await this.defectRepository.getDefectTranslations();
+			const defectListFromApi = await this.defectRepository.getDefectTranslations();
 			flattenedDefects = this.defectService.flattenDefectsFromApi(defectListFromApi);
 		}
 
