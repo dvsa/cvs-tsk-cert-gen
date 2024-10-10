@@ -1,5 +1,6 @@
 import { build } from 'esbuild';
 import { copyFile } from 'fs';
+import { esbuildDecorators } from 'esbuild-plugin-typescript-decorators';
 
 (async () => {
     const zipName = process.env.ZIP_NAME || 'tsk-cert-gen';
@@ -12,6 +13,7 @@ import { copyFile } from 'fs';
         sourcemap: process.argv.includes('--source-map'),
         logLevel: 'info',
         platform: 'node',
+        plugins: [esbuildDecorators()],
     });
 
     copyFile('src/config/config.yml', `${zipName}/config.yml`, (err) => {
