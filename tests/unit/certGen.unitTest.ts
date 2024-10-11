@@ -37,6 +37,12 @@ import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository
 import { TestResultRepository } from "../../src/test-result/TestResultRepository";
 import { DefectRepository } from "../../src/defect/DefectRepository";
 import { DefectService } from "../../src/defect/DefectService";
+import { MsvaCertificateCommand } from "../../src/certificate/commands/MsvaCertificateCommand";
+import { CERTIFICATE_DATA } from "../../src/models/Enums";
+import { IvaCertificateCommand } from "../../src/certificate/commands/IvaCertificateCommand";
+import { PassOrFailCertificateCommand } from "../../src/certificate/commands/PassOrFailCertificateCommand";
+import { DefectsCommand } from "../../src/certificate/commands/DefectsCommand";
+import { CertificatePayloadStateBag } from "../../src/certificate/CertificatePayloadStateBag";
 
 const sandbox = sinon.createSandbox();
 
@@ -4543,42 +4549,58 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with PRSDefects list in Fail data", async () => {
                             const expectedResult: any = {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "BQ91YHQ",
-                                EarliestDateOfTheNextTest: "26.12.2019",
-                                ExpiryDate: "25.02.2020",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                DangerousDefects: [
-                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-                                ],
-                                MajorDefects: undefined,
-                                MinorDefects: [
-                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
-                                ],
-                                AdvisoryDefects: [
-                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
-                                ],
-                                PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                FAIL_DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "XMGDE02FS0H012345",
+                                    RawVRM: "BQ91YHQ",
+                                    EarliestDateOfTheNextTest: "26.12.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    DangerousDefects: [
+                                        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                    ],
+                                    MajorDefects: undefined,
+                                    MinorDefects: [
+                                        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                                    ],
+                                    AdvisoryDefects: [
+                                        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                                    ],
+                                    PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult, "FAIL_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult
+                            } as CertificatePayloadStateBag;
+
+                            const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
+                            passOrFailCommand.initialise(state);
+
+                            const defectsCommand = Container.get(DefectsCommand);
+                            defectsCommand.initialise(state);
+
+                            const payload = {
+                                FAIL_DATA: {
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
+                                }
+                            };
+
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4591,42 +4613,58 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with PRSDefects list in Fail Data", async () => {
                             const expectedResult: any = {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "BQ91YHQ",
-                                EarliestDateOfTheNextTest: "26.12.2019",
-                                ExpiryDate: "25.02.2020",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                DangerousDefects: undefined,
-                                MajorDefects: ["1.1.a A registration plate: missing. Front."],
-                                MinorDefects: [
-                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
-                                ],
-                                AdvisoryDefects: [
-                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
-                                ],
-                                PRSDefects: [
-                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-                                ],
+                                FAIL_DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "XMGDE02FS0H012345",
+                                    RawVRM: "BQ91YHQ",
+                                    EarliestDateOfTheNextTest: "26.12.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    DangerousDefects: undefined,
+                                    MajorDefects: ["1.1.a A registration plate: missing. Front."],
+                                    MinorDefects: [
+                                        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                                    ],
+                                    AdvisoryDefects: [
+                                        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                                    ],
+                                    PRSDefects: [
+                                        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult2, "FAIL_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult: testResult2
+                            } as CertificatePayloadStateBag;
+
+                            const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
+                            passOrFailCommand.initialise(state);
+
+                            const defectsCommand = Container.get(DefectsCommand);
+                            defectsCommand.initialise(state);
+
+                            const payload = {
+                                FAIL_DATA: {
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
+                                }
+                            };
+
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4639,42 +4677,58 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with 0 PRSDefects list in Fail Data", async () => {
                             const expectedResult: any = {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "BQ91YHQ",
-                                EarliestDateOfTheNextTest: "26.12.2019",
-                                ExpiryDate: "25.02.2020",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                DangerousDefects: [
-                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-                                ],
-                                MajorDefects: ["1.1.a A registration plate: missing. Front."],
-                                MinorDefects: [
-                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
-                                ],
-                                AdvisoryDefects: [
-                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
-                                ],
-                                PRSDefects: undefined,
+                                FAIL_DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "XMGDE02FS0H012345",
+                                    RawVRM: "BQ91YHQ",
+                                    EarliestDateOfTheNextTest: "26.12.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    DangerousDefects: [
+                                        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                    ],
+                                    MajorDefects: ["1.1.a A registration plate: missing. Front."],
+                                    MinorDefects: [
+                                        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                                    ],
+                                    AdvisoryDefects: [
+                                        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                                    ],
+                                    PRSDefects: undefined,
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult3, "FAIL_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult: testResult3
+                            } as CertificatePayloadStateBag;
+
+                            const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
+                            passOrFailCommand.initialise(state);
+
+                            const defectsCommand = Container.get(DefectsCommand);
+                            defectsCommand.initialise(state);
+
+                            const payload = {
+                                FAIL_DATA: {
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
+                                }
+                            };
+
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4692,106 +4746,118 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: ""
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765",
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: ""
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765",
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult1, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult1
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
 
                         it("should return Certificate Data with sorted requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: ""
-                                    }
-                                ],
-                                bodyType: null,
-                                date: "04/03/2024",
-                                requiredStandards: [
-                                    {
-                                        sectionNumber: "01",
-                                        sectionDescription: "Noise",
-                                        rsNumber: 1,
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        refCalculation: "1.1",
-                                        additionalInfo: true,
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        additionalNotes: "The exhaust was held on with blue tac"
-                                    },
-                                    {
-                                        sectionNumber: "6a",
-                                        sectionDescription: "Lighting",
-                                        rsNumber: 2,
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        refCalculation: "6.2a",
-                                        additionalInfo: true,
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        additionalNotes: "The bulbs were slightly worn"
-                                    },
-                                ],
-                                make: null,
-                                model: null,
-                                reapplicationDate: "",
-                                serialNumber: "ZX345CV",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "l1e-a",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "ZX345CV",
-                                vin: "P0123010956789",
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: ""
+                                        }
+                                    ],
+                                    bodyType: null,
+                                    date: "04/03/2024",
+                                    requiredStandards: [
+                                        {
+                                            sectionNumber: "01",
+                                            sectionDescription: "Noise",
+                                            rsNumber: 1,
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            refCalculation: "1.1",
+                                            additionalInfo: true,
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            additionalNotes: "The exhaust was held on with blue tac"
+                                        },
+                                        {
+                                            sectionNumber: "6a",
+                                            sectionDescription: "Lighting",
+                                            rsNumber: 2,
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            refCalculation: "6.2a",
+                                            additionalInfo: true,
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            additionalNotes: "The bulbs were slightly worn"
+                                        },
+                                    ],
+                                    make: null,
+                                    model: null,
+                                    reapplicationDate: "",
+                                    serialNumber: "ZX345CV",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "l1e-a",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "ZX345CV",
+                                    vin: "P0123010956789",
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult21, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult21
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4802,60 +4868,66 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    },
-                                    {
-                                        additionalInfo: false,
-                                        additionalNotes: null,
-                                        inspectionTypes: [
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.5",
-                                        requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
-                                        rsNumber: 5,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    },
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        },
+                                        {
+                                            additionalInfo: false,
+                                            additionalNotes: null,
+                                            inspectionTypes: [
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.5",
+                                            requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            rsNumber: 5,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        },
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult2, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult2
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4866,45 +4938,51 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    "Some custom defect one",
-                                    "Some other custom defect two"
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        "Some custom defect one",
+                                        "Some other custom defect two"
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult3, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult3
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4915,46 +4993,52 @@ describe("cert-gen", () => {
                     () => {
                         it("return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: false,
-                                        additionalNotes: null,
-                                        inspectionTypes: [
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.5",
-                                        requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
-                                        rsNumber: 5,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: false,
+                                            additionalNotes: null,
+                                            inspectionTypes: [
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.5",
+                                            requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            rsNumber: 5,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult4, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult4
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4965,47 +5049,53 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Normal",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Normal",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult5, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult5
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -5016,42 +5106,48 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                station: "Abshire-Kub",
-                                reapplicationDate: "",
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    }
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    station: "Abshire-Kub",
+                                    reapplicationDate: "",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        }
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult6, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult6
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -5062,104 +5158,116 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                reapplicationDate: "",
-                                station: "Abshire-Kub",
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    },
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "Switch was missing",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.3a",
-                                        requiredStandard: "Any light switch; missing",
-                                        rsNumber: 3,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    },
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    reapplicationDate: "",
+                                    station: "Abshire-Kub",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "Switch was missing",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.3a",
+                                            requiredStandard: "Any light switch; missing",
+                                            rsNumber: 3,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult7, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult7
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
 
                         it("should return Certificate Data with sorted requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                reapplicationDate: "",
-                                station: "Abshire-Kub",
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    },
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "Switch was missing",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.3a",
-                                        requiredStandard: "Any light switch; missing",
-                                        rsNumber: 3,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    },
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    reapplicationDate: "",
+                                    station: "Abshire-Kub",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "Switch was missing",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.3a",
+                                            requiredStandard: "Any light switch; missing",
+                                            rsNumber: 3,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult7, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult7
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -5170,42 +5278,48 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                reapplicationDate: "",
-                                station: "Abshire-Kub",
-                                additionalDefects: [
-                                    {
-                                        defectName: "Rust",
-                                        defectNotes: "slight rust around the wheel arch",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "6"
-                                    }
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    reapplicationDate: "",
+                                    station: "Abshire-Kub",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "Rust",
+                                            defectNotes: "slight rust around the wheel arch",
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "6"
+                                        }
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult8, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult8
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -7201,7 +7315,7 @@ describe("cert-gen", () => {
                                             "inspectionTypes": [
                                                 "normal",
                                                 "basic"
-                                            ],
+                                            ],  
                                             "prs": false,
                                             "refCalculation": "1.1",
                                             "requiredStandard": "The exhaust must be securely mounted",

@@ -82,3 +82,5 @@ mot:
   documentDir: CVS
 welsh:
   secret_key:
+network:
+  retryAttempts: 3

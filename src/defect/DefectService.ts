@@ -1,7 +1,6 @@
-import moment from 'moment';
 import { Service } from 'typedi';
 import { ICustomDefect } from '../models';
-import { IVA_30, LOCATION_ENGLISH, LOCATION_WELSH } from '../models/Enums';
+import { CERTIFICATE_DATA, IVA_30, LOCATION_ENGLISH, LOCATION_WELSH, TEST_RESULTS } from '../models/Enums';
 import { IDefectChild } from '../models/IDefectChild';
 import { IDefectParent } from '../models/IDefectParent';
 import { IFlatDefect } from '../models/IFlatDefect';
@@ -218,6 +217,85 @@ export class DefectService {
 				flatDefect.forVehicleType!.includes(vehicleType)
 			);
 			return filteredWelshDefectsOnVehicleType[0];
+		}
+	}
+
+	public generateDangerousDefects(
+		testResult: TEST_RESULTS,
+		defect: any,
+		type: CERTIFICATE_DATA,
+		defects: any,
+		vehicleType: string,
+		isWelsh: boolean,
+		flattenedDefects: IFlatDefect[]
+	) {
+		if ((testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+			defects.PRSDefects.push(this.formatDefect(defect));
+
+			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
+				defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+			}
+		} else if (testResult === TEST_RESULTS.FAIL) {
+			defects.DangerousDefects.push(this.formatDefect(defect));
+
+			// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
+			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
+				defects.DangerousDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+			}
+		}
+	}
+
+	public generateMajorDefects(
+		testResult: TEST_RESULTS,
+		defect: any,
+		type: CERTIFICATE_DATA,
+		defects: any,
+		vehicleType: string,
+		isWelsh: boolean,
+		flattenedDefects: IFlatDefect[]
+	) {
+		if ((testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+			defects.PRSDefects.push(this.formatDefect(defect));
+
+			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
+				defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+			}
+		} else if (testResult === TEST_RESULTS.FAIL) {
+			defects.MajorDefects.push(this.formatDefect(defect));
+
+			// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
+			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
+				defects.MajorDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+			}
+		}
+	}
+
+	public generateMinorDefects(
+		defects: any,
+		defect: any,
+		vehicleType: string,
+		testResult: TEST_RESULTS,
+		isWelsh: boolean,
+		flattenedDefects: IFlatDefect[]
+	) {
+		defects.MinorDefects.push(this.formatDefect(defect));
+
+		if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
+			defects.MinorDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
+		}
+	}
+
+	public generateAdvisoryDefects(
+		defects: any,
+		defect: any,
+		vehicleType: string,
+		testResult: TEST_RESULTS,
+		isWelsh: boolean
+	) {
+		defects.AdvisoryDefects.push(this.formatDefect(defect));
+
+		if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
+			defects.AdvisoryDefectsWelsh.push(this.formatDefect(defect));
 		}
 	}
 }
