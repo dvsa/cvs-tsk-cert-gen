@@ -20,10 +20,7 @@ export class TrailerRepository {
 	 * @param make The make of the trailer
 	 * @returns A payload containing the TRN of the trailer and a boolean.
 	 */
-	public async getTrailerRegistrationObject(
-		vin: string,
-		make: string
-	): Promise<IGetTrailerRegistrationResult | undefined> {
+	public async getTrailerRegistrationObject(vin: string, make: string): Promise<IGetTrailerRegistrationResult> {
 		const config: IInvokeConfig = this.config.getInvokeConfig();
 		const invokeParams: InvocationRequest = {
 			FunctionName: config.functions.trailerRegistration.name,
@@ -59,6 +56,7 @@ export class TrailerRepository {
 			return { Trn: trailerRegistration.trn, IsTrailer: true };
 		} catch (err) {
 			console.error(`Error on fetching vinOrChassisWithMake ${vin + make}`, err);
+			throw err;
 		}
 	}
 }

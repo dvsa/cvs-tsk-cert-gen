@@ -61,6 +61,8 @@ export class MakeAndModelCommand extends BasePayloadCommand {
 		const isValidForTrn = this.testResultService.isValidForTrn(vehicleType, makeAndModel);
 		if (isValidForTrn) {
 			return await this.trailerRepository.getTrailerRegistrationObject(testResult.vin, makeAndModel.Make);
+		} else {
+			console.log('Vehicle is not valid for Trn.');
 		}
 
 		return undefined;
