@@ -6851,8 +6851,6 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        // delete techRecordResponseRwtMock.techRecord_make;
-                        // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
