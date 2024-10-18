@@ -6194,7 +6194,7 @@ describe("cert-gen", () => {
                 });
 
                 context("and lambda-to-lambda calls were unsuccessful", () => {
-                    it("should return a VTG5A payload without bodyMake, bodyModel and odometer history", async () => {
+                    it("should return a VTG5A payload without bodyModel and odometer history", async () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -6212,6 +6212,7 @@ describe("cert-gen", () => {
                                 CountryOfRegistrationCode: "gb",
                                 VehicleEuClassification: "M1",
                                 RawVIN: "T12876765",
+                                Make: "STANLEY",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "01.11.2019",
                                 SeatBeltTested: "Yes",
@@ -6229,7 +6230,6 @@ describe("cert-gen", () => {
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
@@ -6555,7 +6555,7 @@ describe("cert-gen", () => {
                 });
 
                 context("and lambda-to-lambda calls were unsuccessful", () => {
-                    it("should return a PRS payload without bodyMake, bodyModel and odometer history", async () => {
+                    it("should return a PRS payload without, bodyModel and odometer history", async () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -6578,6 +6578,7 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Make: "STANLEY",
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6600,6 +6601,7 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                Make: "STANLEY"
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6610,8 +6612,6 @@ describe("cert-gen", () => {
                         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
@@ -6830,6 +6830,7 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                "Make": "STANLEY",
                                 DangerousDefects: [
                                     "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
                                 ],
@@ -6849,8 +6850,6 @@ describe("cert-gen", () => {
                         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
                         // @ts-ignore
                         delete techRecordResponseRwtMock.techRecord_model;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
@@ -7315,7 +7314,7 @@ describe("cert-gen", () => {
                                             "inspectionTypes": [
                                                 "normal",
                                                 "basic"
-                                            ],  
+                                            ],
                                             "prs": false,
                                             "refCalculation": "1.1",
                                             "requiredStandard": "The exhaust must be securely mounted",

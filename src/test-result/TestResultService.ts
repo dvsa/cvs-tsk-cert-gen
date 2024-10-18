@@ -70,7 +70,7 @@ export class TestResultService {
 	 * @returns returns if the condition is satisfied else false
 	 */
 	public isValidForTrn(vehicleType: string, makeAndModel: IMakeAndModel): boolean {
-		return makeAndModel && vehicleType === VEHICLE_TYPES.TRL;
+		return makeAndModel && !!makeAndModel.Make && vehicleType === VEHICLE_TYPES.TRL;
 	}
 
 	/**
