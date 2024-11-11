@@ -1,8 +1,9 @@
+import { TechRecordSearchSchema } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/search';
 import { Service } from 'typedi';
 import { IWeightDetails } from '../models';
 import { VEHICLE_TYPES } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
-import { ISearchResult, TechRecordGet, TechRecordType } from '../models/Types';
+import { TechRecordGet, TechRecordType } from '../models/Types';
 import { TechRecordRepository } from './TechRecordRepository';
 
 @Service()
@@ -29,7 +30,7 @@ export class TechRecordService {
 	};
 
 	private processGetCurrentProvisionalRecords = async <T extends TechRecordGet['techRecord_vehicleType']>(
-		searchResult: ISearchResult[]
+		searchResult: TechRecordSearchSchema[]
 	): Promise<TechRecordType<T> | undefined> => {
 		if (searchResult) {
 			const processRecordsRes = this.groupRecordsByStatusCode(searchResult);
@@ -57,15 +58,15 @@ export class TechRecordService {
 	 * @param records
 	 */
 	private groupRecordsByStatusCode = (
-		records: ISearchResult[]
+		records: TechRecordSearchSchema[]
 	): {
-		currentRecords: ISearchResult[];
-		provisionalRecords: ISearchResult[];
+		currentRecords: TechRecordSearchSchema[];
+		provisionalRecords: TechRecordSearchSchema[];
 		currentCount: number;
 		provisionalCount: number;
 	} => {
-		const currentRecords: ISearchResult[] = [];
-		const provisionalRecords: ISearchResult[] = [];
+		const currentRecords: TechRecordSearchSchema[] = [];
+		const provisionalRecords: TechRecordSearchSchema[] = [];
 		records.forEach((record) => {
 			if (record.techRecord_statusCode === 'current') {
 				currentRecords.push(record);

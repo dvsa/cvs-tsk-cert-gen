@@ -23,7 +23,6 @@ import docGenRwt from "../resources/doc-gen-payload-rwt.json";
 import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
 import queueEventFail from "../resources/queue-event-fail.json";
 import queueEventPass from "../resources/queue-event-pass.json";
-import queueEventPRS from "../resources/queue-event-prs.json";
 import techRecordsPsv from "../resources/tech-records-response-PSV.json";
 import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
 import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
@@ -333,9 +332,9 @@ describe("cert-gen", () => {
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
 
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
@@ -1583,9 +1582,9 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
@@ -1719,7 +1718,6 @@ describe("cert-gen", () => {
         context("when a failing test result is read from the queue", () => {
             const event: any = { ...queueEventFail };
             const failWithPrsEvent: any = { ...queueEventFailPRS };
-            const prsEvent: any = { ...queueEventPRS };
 
             const hgvFailWithDangerousDefect: any = JSON.parse(event.Records[11].body);
             const hgvFailWithMajorDefect: any = JSON.parse(event.Records[12].body);
@@ -1727,14 +1725,18 @@ describe("cert-gen", () => {
             const hgvFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[14].body);
             const hgvFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[3].body);
             const hgvFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[4].body);
-            const psvPrsNotAcceptableForBilingualCert: any = JSON.parse(prsEvent.Records[0].body);
-            const psvFailWithDefects: any = JSON.parse(event.Records[19].body);
             const trlFailWithDangerousDefect: any = JSON.parse(event.Records[15].body);
             const trlFailWithMajorDefect: any = JSON.parse(event.Records[16].body);
             const trlFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[17].body);
             const trlFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[18].body);
             const trlFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[5].body);
             const trlFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[6].body);
+            const psvFailWithDangerousDefect: any = JSON.parse(event.Records[22].body);
+            const psvFailWithMajorDefect: any = JSON.parse(event.Records[23].body);
+            const psvFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[24].body);
+            const psvFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[19].body);
+            const psvFailWithMajorDefectDangerousRectified: any = JSON.parse(event.Records[25].body);
+            const psvFailWithDangerousDefectMajorRectified: any = JSON.parse(event.Records[26].body);
 
             context("and the hgv result has a dangerous defect", () => {
                 context("and the test station location is not in Wales", () => {
@@ -3385,235 +3387,858 @@ describe("cert-gen", () => {
                 });
             });
 
-            context("should return Certificate Data without any Welsh defect arrays populated", () => {
-                let techRecordsPsvStub: any;
-                const expectedResultEnglish: any = {
-                    FAIL_DATA: {
-                        AdvisoryDefects: [
-                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                        ],
-                        CountryOfRegistrationCode: "gb",
-                        CurrentOdometer: {
-                            unit: "kilometres",
-                            value: 12312
-                        },
-                        DangerousDefects: [
-                            "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
-                        ],
+            context("and the psv result has a dangerous defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without the DangerousDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
 
-                        DateOfTheTest: "26.02.2019",
-                        EarliestDateOfTheNextTest: "26.12.2019",
-                        ExpiryDate: "25.02.2020",
-                        IssuersName: "Dev1 CVS",
-                        MajorDefects: [
-                            "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
-                        ],
-                        MinorDefects: [
-                            "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
-                        ],
-                        OdometerHistoryList: [
-                            {
-                                date: "19.01.2019",
-                                unit: "kilometres",
-                                value: 400000
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
                             },
-                            {
-                                date: "18.01.2019",
-                                unit: "kilometres",
-                                value: 390000
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
                             },
-                            {
-                                date: "17.01.2019",
-                                unit: "kilometres",
-                                value: 380000
-                            }
-                        ],
-                        RawVIN: "XMGDE02FS0H012345",
-                        RawVRM: "BQ91YHQ",
-                        SeatBeltNumber: 2,
-                        SeatBeltPreviousCheckDate: "26.02.2019",
-                        SeatBeltTested: "Yes",
-                        TestNumber: "W01A00310",
-                        TestStationName: "Abshire-Kub",
-                        Make: "AEC",
-                        Model: "RELIANCE",
-                        TestStationPNumber: "09-4129632",
-                        VehicleEuClassification: "M1"
-                    },
-                    Signature: {
-                        ImageData: null,
-                        ImageType: "png"
-                    },
-                    Watermark: "NOT VALID"
-                };
-                beforeEach(() => {
-                    callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+                            Watermark: "NOT VALID"
+                        };
 
-                    techRecordsPsvStub = cloneDeep(psvFailWithDefects);
-                    callGetTechRecordSpy.mockResolvedValue(techRecordsPsv as any);
-                });
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
-                afterEach(() => {
-                    callGetTechRecordSpy.mockClear();
-                    callSearchTechRecordSpy.mockClear();
-                });
-                it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
-                        });
-                });
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
 
-                it("should return a VTP30W payload with the MinorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.MinorDefectsWelsh).toBeUndefined();
-                        });
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
 
-                });
-
-                it("should return a VTP30W payload without the AdvisoryDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toBeUndefined();
-                        });
-                });
-                it("should return a VTP30W payload without the DangerousDefects array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
-                        });
-                });
-            });
-            context("should return certificate data with welsh defects array", () => {
-                let getTechRecordSearchStub: any;
-                let techRecordsPsvStub: any;
-                const expectedResultWelsh: any = {
-                    FAIL_DATA: {
-                        AdvisoryDefects: [
-                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                        ],
-                        AdvisoryDefectsWelsh: [
-                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                        ],
-                        CountryOfRegistrationCode: "gb",
-                        CurrentOdometer: {
-                            unit: "kilometres",
-                            value: 12312
-                        },
-                        DangerousDefects: [
-                            "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
-                        ],
-                        DangerousDefectsWelsh: [
-                            "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
-                        ],
-                        DateOfTheTest: "26.02.2019",
-                        EarliestDateOfTheNextTest: "26.12.2019",
-                        ExpiryDate: "25.02.2020",
-                        IssuersName: "Dev1 CVS",
-                        MajorDefects: [
-                            "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
-                        ],
-                        MajorDefectsWelsh: [
-                            "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
-                        ],
-                        MinorDefects: [
-                            "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
-                        ],
-                        MinorDefectsWelsh: [
-                            "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
-                        ],
-                        OdometerHistoryList: [
-                            {
-                                date: "19.01.2019",
-                                unit: "kilometres",
-                                value: 400000
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with the DangerousDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
                             },
-                            {
-                                date: "18.01.2019",
-                                unit: "kilometres",
-                                value: 390000
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
                             },
-                            {
-                                date: "17.01.2019",
-                                unit: "kilometres",
-                                value: 380000
-                            }
-                        ],
-                        RawVIN: "XMGDE02FS0H012345",
-                        RawVRM: "BQ91YHQ",
-                        SeatBeltNumber: 2,
-                        SeatBeltPreviousCheckDate: "26.02.2019",
-                        SeatBeltTested: "Yes",
-                        TestNumber: "W01A00310",
-                        TestStationName: "Abshire-Kub",
-                        TestStationPNumber: "09-4129632",
-                        Model: "RELIANCE",
-                        Make: "AEC",
-                        VehicleEuClassification: "M1"
-                    },
-                    Signature: {
-                        ImageData: null,
-                        ImageType: "png"
-                    },
-                    Watermark: "NOT VALID"
-                };
-                beforeEach(() => {
-                    callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+                            Watermark: "NOT VALID"
+                        };
 
-                    techRecordsPsvStub = cloneDeep(psvFailWithDefects);
-                    callGetTechRecordSpy.mockResolvedValue(techRecordsPsv as any);
-                });
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
-                afterEach(() => {
-                  callGetTechRecordSpy.mockClear();
-                  callSearchTechRecordSpy.mockClear();
-                });
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
 
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
 
-                it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.MajorDefectsWelsh).toEqual(["6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"]);
-                        });
-                });
+            context("and the psv result has a major defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without the MajorDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
 
-                it("should return a VTP30W payload with the MinorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.MinorDefectsWelsh).toEqual(["54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."]);
-                        });
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
-                });
-                it("should return a VTP30W payload with the AdvisoryDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toEqual(["5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"]);
-                        });
-                });
-                it("should return a VTP30W payload with the DangerousDefects array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.DangerousDefectsWelsh).toEqual(["54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"]);
-                        });
-                });
-            });
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with the MajorDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a major and dangerous defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without the Major or DangerousDefectsWelsh arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousAndMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousAndMajorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with the Major and DangerousDefectsWelsh arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousAndMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousAndMajorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a advisory, minor, dangerous and major defects", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without any Welsh defect arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "AdvisoryDefects": [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "MinorDefects": [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithAdvisoryMinorDangerousMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithAdvisoryMinorDangerousMajorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MinorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with all Welsh defect arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                "MinorDefects": [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                "MinorDefectsWelsh": [
+                                    "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
+                                ],
+                                "AdvisoryDefects": [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                "AdvisoryDefectsWelsh": [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithAdvisoryMinorDangerousMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithAdvisoryMinorDangerousMajorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a dangerous defect with major rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "PRSDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefectMajorRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefectMajorRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.PRSDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "PRSDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "PRSDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefectMajorRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefectMajorRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a major defect with dangerous rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "PRSDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefectDangerousRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefectDangerousRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.PRSDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "PRSDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "PRSDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1"
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefectDangerousRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefectDangerousRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
         });
 
 
@@ -3995,7 +4620,7 @@ describe("cert-gen", () => {
                 });
             });
             const testResult: any = JSON.parse(event.Records[0].body);
-            let resBody: string = "";
+            let resBody = "";
 
             context("and the result has a defect that is rectified at test", () => {
                 const hgvWithDefectRectifiedAtTest: any = JSON.parse(event.Records[3].body);
@@ -4373,9 +4998,9 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
@@ -5431,9 +6056,9 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
@@ -5564,7 +6189,7 @@ describe("cert-gen", () => {
                 )
             );
             const testResult: any = JSON.parse(event.Records[1].body);
-            let resBody: string = "";
+            let resBody = "";
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", async () => {
@@ -5724,9 +6349,9 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
@@ -6007,9 +6632,9 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
@@ -6228,7 +6853,7 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         // @ts-ignore
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
@@ -6407,38 +7032,7 @@ describe("cert-gen", () => {
                 "and trailer registration lambda returns status code other than 200 or 404 not found",
                 () => {
                     it("should throw an error", async () => {
-                        const expectedResult: any = {
-                            Watermark: "NOT VALID",
-                            DATA: {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "T12876765",
-                                ExpiryDate: "25.02.2020",
-                                EarliestDateOfTheNextTest: "01.11.2019",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
-                            },
-                            Signature: {
-                                ImageType: "png",
-                                ImageData: fs
-                                    .readFileSync(
-                                        path.resolve(__dirname, `../resources/signatures/1.base64`)
-                                    )
-                                    .toString(),
-                            },
-                        };
+
                         // Add a new signature
                         S3BucketMockService.buckets.push({
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
@@ -6480,7 +7074,7 @@ describe("cert-gen", () => {
                 )
             );
             const testResult: any = JSON.parse(event.Records[2].body);
-            let resBody: string = "";
+            let resBody = "";
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", async () => {
@@ -6613,7 +7207,7 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
@@ -6851,7 +7445,7 @@ describe("cert-gen", () => {
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
@@ -7055,22 +7649,12 @@ describe("cert-gen", () => {
                             )
                         );
 
-                        const techRecordResponseAdrMock = JSON.parse(
-                            fs.readFileSync(
-                                path.resolve(
-                                    __dirname,
-                                    "../resources/tech-records-response-adr.json"
-                                ),
-                                "utf8"
-                            )
-                        );
-
                         callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        delete expectedResult.techRecord_make;
-                        delete expectedResult.techRecord_model;
-                        delete expectedResult.ApplicantDetails;
+                        expectedResult.techRecord_make = undefined;
+                        expectedResult.techRecord_model = undefined;
+                        expectedResult.ApplicantDetails = undefined;
                         callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
@@ -7282,9 +7866,8 @@ describe("cert-gen", () => {
 
     context("CertGenService for IVA 30 test", () => {
         context("when a failing test result for basic IVA test is read from the queue", () => {
-            let testResult: ITestResult;
             const event: any = cloneDeep(queueEventFail);
-            testResult = JSON.parse(event.Records[3].body);
+            const testResult: ITestResult = JSON.parse(event.Records[3].body);
 
             describe("reapplication date handling", () => {
                     testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";

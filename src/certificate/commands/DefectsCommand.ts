@@ -1,11 +1,10 @@
 import { Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
-import { ITestResult } from '../../models';
+import { IFlatDefect, ITestResult } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { ITestType } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
-import { IFlatDefect } from '../../models/IFlatDefect';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()

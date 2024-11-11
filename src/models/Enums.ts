@@ -21,11 +21,6 @@ export enum TEST_RESULTS {
 	PRS = 'prs',
 }
 
-export enum TEST_RESULT_STATUS {
-	SUBMITTED = 'submitted',
-	CANCELLED = 'cancelled',
-}
-
 export enum CERTIFICATE_DATA {
 	RWT_DATA = 'RWT_DATA',
 	PASS_DATA = 'PASS_DATA',
@@ -67,53 +62,6 @@ export enum IVA_30 {
 	NORMAL = 'Normal',
 	EMPTY_CUSTOM_DEFECTS = 'N/A',
 }
-
-export const ADR_TEST = {
-	IDS: ['50', '59', '60'],
-};
-
-export const BASIC_IVA_TEST = {
-	IDS: ['125', '129', '154', '158', '159', '185'],
-};
-
-export const IVA30_TEST = {
-	IDS: [
-		'125',
-		'126',
-		'128',
-		'129',
-		'130',
-		'153',
-		'154',
-		'158',
-		'159',
-		'161',
-		'162',
-		'163',
-		'184',
-		'185',
-		'186',
-		'187',
-		'188',
-		'189',
-		'190',
-		'191',
-		'192',
-		'193',
-		'194',
-		'195',
-		'196',
-		'197',
-	],
-};
-
-export const MSVA30_TEST = {
-	IDS: ['133', '134', '135', '136', '138', '139', '140', '166', '167', '169', '170', '172', '173'],
-};
-
-export const HGV_TRL_ROADWORTHINESS_TEST_TYPES = {
-	IDS: ['62', '63', '91', '101', '122'],
-};
 
 export const AVAILABLE_WELSH = {
 	CERTIFICATES: [

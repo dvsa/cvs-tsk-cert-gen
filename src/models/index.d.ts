@@ -1,3 +1,5 @@
+import { DefectDetailsSchema } from '@dvsa/cvs-type-definitions/types/v1/defect-details';
+import { InspectionType } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { TEST_RESULTS } from './Enums';
 
 interface IInvokeConfig {
@@ -143,6 +145,7 @@ interface IWeightDetails {
 	weight2: number;
 }
 
+// TODO: move to types definition interface after CB2-12580
 interface ITestResult {
 	testResultId: string;
 	vrm: string;
@@ -182,6 +185,7 @@ interface ITestResult {
 	systemNumber: string;
 }
 
+// TODO: move to types definition interface after CB2-12580
 interface ITestType {
 	createdAt: string;
 	lastUpdatedAt: string;
@@ -210,44 +214,12 @@ interface ITestType {
 	emissionStandard: string;
 	fuelType: string;
 	reapplicationDate?: string;
-	defects: IDefect[];
+	defects: DefectDetailsSchema[];
 	requiredStandards?: IRequiredStandard[];
 	customDefects?: ICustomDefect[];
 }
 
-interface IDefect {
-	imNumber: number;
-	imDescription: string;
-	additionalInformation: IAdditionalInformation;
-	itemNumber: number;
-	itemDescription: string;
-	deficiencyRef: string;
-	deficiencyId: string;
-	deficiencySubId: string;
-	deficiencyCategory: string;
-	deficiencyText: string;
-	stdForProhibition: boolean;
-	prs: boolean;
-	prohibitionIssued: boolean;
-}
-
-type InspectionType = 'basic' | 'normal';
-
-interface IAdditionalInformation {
-	location: ILocation;
-	notes: string;
-}
-
-interface ILocation {
-	vertical: string;
-	horizontal: string;
-	lateral: string;
-	longitudinal: string;
-	rowNumber: number;
-	seatNumber: number;
-	axleNumber: number;
-}
-
+// TODO: move to types definition interface after CB2-12580
 interface IVehicleClass {
 	code: string;
 	description: string;
@@ -267,6 +239,7 @@ interface IMakeAndModel {
 	Model: string;
 }
 
+// TODO: move to types definition interface after CB2-12580
 interface IRequiredStandard {
 	sectionNumber: string;
 	sectionDescription: string;
@@ -279,11 +252,13 @@ interface IRequiredStandard {
 	additionalNotes?: string;
 }
 
+// TODO: move to types definition interface after CB2-12580
 interface IBodyTypeModel {
 	code: string;
 	description: string;
 }
 
+// TODO: move to types definition interface after CB2-12580
 interface ICustomDefect {
 	referenceNumber?: string;
 	defectName: string;
@@ -297,6 +272,40 @@ interface IFeatureFlags {
 		translateFailTestResult: boolean;
 		translatePrsTestResult: boolean;
 	};
+}
+
+interface IDefectChild {
+	ref?: string;
+	deficiencyText?: string;
+	deficiencyTextWelsh?: string;
+	forVehicleType?: string[];
+}
+
+interface IItem {
+	itemNumber?: number;
+	itemDescription?: string;
+	itemDescriptionWelsh?: string;
+	deficiencies: IDefectChild[];
+}
+
+interface IDefectParent {
+	imNumber?: number;
+	imDescription?: string;
+	imDescriptionWelsh?: string;
+	items: IItem[];
+}
+
+interface IFlatDefect {
+	imNumber?: number;
+	imDescription?: string;
+	imDescriptionWelsh?: string;
+	itemNumber?: number;
+	itemDescription?: string;
+	itemDescriptionWelsh?: string;
+	ref?: string;
+	deficiencyText?: string;
+	deficiencyTextWelsh?: string;
+	forVehicleType?: string[];
 }
 
 export type {
@@ -316,4 +325,8 @@ export type {
 	IBodyTypeModel,
 	ICustomDefect,
 	IFeatureFlags,
+	IDefectChild,
+	IItem,
+	IDefectParent,
+	IFlatDefect,
 };

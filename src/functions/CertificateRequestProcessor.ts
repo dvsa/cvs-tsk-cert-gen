@@ -1,8 +1,9 @@
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
+import { TestStatus } from '@dvsa/cvs-type-definitions/types/v1/enums/testStatus.enum';
 import { Service } from 'typedi';
 import { validate as uuidValidate } from 'uuid';
 import { ITestResult } from '../models';
-import { ERRORS, TEST_RESULT_STATUS } from '../models/Enums';
+import { ERRORS } from '../models/Enums';
 import { CertificateGenerationService } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
 
@@ -16,7 +17,7 @@ export class CertificateRequestProcessor {
 	) {}
 
 	public async process(testResult: ITestResult): Promise<CertGenReturn> {
-		const isCancelled = testResult.testStatus === TEST_RESULT_STATUS.CANCELLED;
+		const isCancelled = testResult.testStatus === TestStatus.CANCELLED;
 		if (isCancelled) {
 			return this.remove(testResult);
 		}

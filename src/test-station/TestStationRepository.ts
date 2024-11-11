@@ -1,8 +1,8 @@
 import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
+import { TestStationSchema } from '@dvsa/cvs-type-definitions/types/v1/test-station';
 import { toUint8Array } from '@smithy/util-utf8';
 import { Service } from 'typedi';
 import { IInvokeConfig } from '../models';
-import { ITestStation } from '../models/ITestStations';
 import { LambdaService } from '../services/LambdaService';
 import { Configuration } from '../utils/Configuration';
 
@@ -16,7 +16,7 @@ export class TestStationRepository {
 	 * Method to retrieve Test Station details from API
 	 * @returns a test station object
 	 */
-	public async getTestStation(testStationPNumber: string): Promise<ITestStation> {
+	public async getTestStation(testStationPNumber: string): Promise<TestStationSchema> {
 		const config: IInvokeConfig = this.config.getInvokeConfig();
 		const invokeParams: InvocationRequest = {
 			FunctionName: config.functions.testStations.name,
@@ -30,7 +30,7 @@ export class TestStationRepository {
 			),
 		};
 
-		let testStation: ITestStation = {} as ITestStation;
+		let testStation: TestStationSchema = {} as TestStationSchema;
 		let retries = 0;
 
 		while (retries < 3) {

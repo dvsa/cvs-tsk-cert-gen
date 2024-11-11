@@ -1,10 +1,6 @@
 import { Service } from 'typedi';
-import { ICustomDefect } from '../models';
+import { ICustomDefect, IDefectChild, IDefectParent, IFlatDefect, IItem } from '../models';
 import { CERTIFICATE_DATA, IVA_30, LOCATION_ENGLISH, LOCATION_WELSH, TEST_RESULTS } from '../models/Enums';
-import { IDefectChild } from '../models/IDefectChild';
-import { IDefectParent } from '../models/IDefectParent';
-import { IFlatDefect } from '../models/IFlatDefect';
-import { IItem } from '../models/IItem';
 import { TestResultService } from '../test-result/TestResultService';
 
 @Service()

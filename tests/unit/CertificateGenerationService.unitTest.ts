@@ -9,7 +9,6 @@ import { cloneDeep } from "lodash";
 import sinon from "sinon";
 import { ERRORS, LOCATION_ENGLISH, LOCATION_WELSH } from "../../src/models/Enums";
 import { HTTPError } from "../../src/models/HTTPError";
-import { IDefectParent } from "../../src/models/IDefectParent";
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import { LambdaService } from "../../src/services/LambdaService";
 import defectsMock from "../resources/defects_mock.json";
@@ -42,6 +41,7 @@ import { DefectRepository } from "../../src/defect/DefectRepository";
 import { TestResultService } from "../../src/test-result/TestResultService";
 import { TechRecordService } from "../../src/tech-record/TechRecordService";
 import { DefectService } from "../../src/defect/DefectService";
+import { IDefectParent } from "../../src/models";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
   getProfile: mockGetProfile

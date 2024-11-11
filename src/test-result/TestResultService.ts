@@ -1,14 +1,14 @@
-import { Service } from 'typedi';
-import { IMakeAndModel } from '../models';
 import {
 	ADR_TEST,
-	AVAILABLE_WELSH,
 	BASIC_IVA_TEST,
-	HGV_TRL_ROADWORTHINESS_TEST_TYPES,
-	IVA30_TEST,
-	MSVA30_TEST,
-	VEHICLE_TYPES,
-} from '../models/Enums';
+	HGV_TRL_RWT_TEST,
+	IVA_TEST,
+	MSVA_TEST,
+} from '@dvsa/cvs-microservice-common/classes/testTypes/Constants';
+import { TestTypeHelper } from '@dvsa/cvs-microservice-common/classes/testTypes/testTypeHelper';
+import { Service } from 'typedi';
+import { IMakeAndModel } from '../models';
+import { AVAILABLE_WELSH, VEHICLE_TYPES } from '../models/Enums';
 
 @Service()
 export class TestResultService {
@@ -17,7 +17,7 @@ export class TestResultService {
 	 * @param testType - testType which is tested
 	 */
 	public isTestTypeAdr(testType: any): boolean {
-		return ADR_TEST.IDS.includes(testType.testTypeId);
+		return TestTypeHelper.validateTestTypeIdInList(ADR_TEST, testType.testTypeId);
 	}
 
 	/**
@@ -25,7 +25,7 @@ export class TestResultService {
 	 * @param testTypeId - the test type ID on the test result
 	 */
 	public isBasicIvaTest = (testTypeId: string): boolean => {
-		return BASIC_IVA_TEST.IDS.includes(testTypeId);
+		return TestTypeHelper.validateTestTypeIdInList(BASIC_IVA_TEST, testTypeId);
 	};
 
 	/**
@@ -33,7 +33,7 @@ export class TestResultService {
 	 * @param testTypeId - test type id which is being tested
 	 */
 	public isIvaTest(testTypeId: string): boolean {
-		return IVA30_TEST.IDS.includes(testTypeId);
+		return TestTypeHelper.validateTestTypeIdInList(IVA_TEST, testTypeId);
 	}
 
 	/**
@@ -41,7 +41,7 @@ export class TestResultService {
 	 * @param testTypeId - test type id which is being tested
 	 */
 	public isMsvaTest(testTypeId: string): boolean {
-		return MSVA30_TEST.IDS.includes(testTypeId);
+		return TestTypeHelper.validateTestTypeIdInList(MSVA_TEST, testTypeId);
 	}
 
 	/**
@@ -49,7 +49,7 @@ export class TestResultService {
 	 * @param testTypeId - testType which is tested
 	 */
 	public isRoadworthinessTestType(testTypeId: string): boolean {
-		return HGV_TRL_ROADWORTHINESS_TEST_TYPES.IDS.includes(testTypeId);
+		return TestTypeHelper.validateTestTypeIdInList(HGV_TRL_RWT_TEST, testTypeId);
 	}
 
 	/**

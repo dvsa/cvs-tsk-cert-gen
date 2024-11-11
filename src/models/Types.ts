@@ -1,53 +1,38 @@
-import { TechRecordCompleteCarSchema } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/car/complete';
-import { TechRecordSkeletonCarSchema } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/car/skeleton';
-import { GETHGVTechnicalRecordV3Complete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/hgv/complete';
-import { GETHGVTechnicalRecordV3Skeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/hgv/skeleton';
-import { GETHGVTechnicalRecordV3Testable } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/hgv/testable';
-import { TechRecordCompleteMotorcycleSchema } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/motorcycle/complete';
-import { GETPSVTechnicalRecordV3Complete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/psv/complete';
-import { GETPSVTechnicalRecordV3Skeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/psv/skeleton';
-import { GETPSVTechnicalRecordV3Testable } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/psv/testable';
-import { GETTRLTechnicalRecordV3Complete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/trl/complete';
-import { GETTRLTechnicalRecordV3Skeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/trl/skeleton';
-import { GETTRLTechnicalRecordV3Testable } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/trl/testable';
+import { TechRecordGETCarComplete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/car/complete';
+import { TechRecordGETCarSkeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/car/skeleton';
+import { TechRecordGETHGVComplete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/hgv/complete';
+import { TechRecordGETHGVSkeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/hgv/skeleton';
+import { TechRecordGETHGVTestable } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/hgv/testable';
+import { TechRecordGETMotorcycleComplete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/motorcycle/complete';
+import { TechRecordGETPSVComplete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/psv/complete';
+import { TechRecordGETPSVSkeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/psv/skeleton';
+import { TechRecordGETPSVTestable } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/psv/testable';
+import { TechRecordGETTRLComplete } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/trl/complete';
+import { TechRecordGETTRLSkeleton } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/trl/skeleton';
+import { TechRecordGETTRLTestable } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/trl/testable';
 
 export type TechRecordGet =
-	| TechRecordCompleteCarSchema
-	| TechRecordSkeletonCarSchema
-	| GETHGVTechnicalRecordV3Complete
-	| GETHGVTechnicalRecordV3Testable
-	| GETHGVTechnicalRecordV3Skeleton
-	| TechRecordCompleteMotorcycleSchema
-	| GETPSVTechnicalRecordV3Complete
-	| GETPSVTechnicalRecordV3Testable
-	| GETPSVTechnicalRecordV3Skeleton
-	| GETTRLTechnicalRecordV3Complete
-	| GETTRLTechnicalRecordV3Testable
-	| GETTRLTechnicalRecordV3Skeleton;
+	| TechRecordGETCarComplete
+	| TechRecordGETCarSkeleton
+	| TechRecordGETHGVComplete
+	| TechRecordGETHGVTestable
+	| TechRecordGETHGVSkeleton
+	| TechRecordGETMotorcycleComplete
+	| TechRecordGETPSVComplete
+	| TechRecordGETPSVTestable
+	| TechRecordGETPSVSkeleton
+	| TechRecordGETTRLComplete
+	| TechRecordGETTRLTestable
+	| TechRecordGETTRLSkeleton;
 
 export type TechRecordType<T extends TechRecordGet['techRecord_vehicleType']> = T extends 'car' | 'lgv'
-	? TechRecordCompleteCarSchema
+	? TechRecordGETCarComplete
 	: T extends 'hgv'
-		? GETHGVTechnicalRecordV3Complete | GETHGVTechnicalRecordV3Testable
+		? TechRecordGETHGVComplete | TechRecordGETHGVTestable
 		: T extends 'motorcycle'
-			? TechRecordCompleteMotorcycleSchema
+			? TechRecordGETMotorcycleComplete
 			: T extends 'psv'
-				? GETPSVTechnicalRecordV3Complete | GETPSVTechnicalRecordV3Testable
+				? TechRecordGETPSVComplete | TechRecordGETPSVTestable
 				: T extends 'trl'
-					? GETTRLTechnicalRecordV3Complete | GETTRLTechnicalRecordV3Testable
+					? TechRecordGETTRLComplete | TechRecordGETTRLTestable
 					: never;
-
-export interface ISearchResult {
-	systemNumber: string;
-	createdTimestamp: string;
-	vin: string;
-	primaryVrm?: string;
-	trailerId?: string;
-	techRecord_vehicleType: string;
-	techRecord_manufactureYear?: number | null;
-	techRecord_chassisMake?: string;
-	techRecord_chassisModel?: string;
-	techRecord_make?: string;
-	techRecord_model?: string;
-	techRecord_statusCode?: string;
-}

@@ -1,10 +1,9 @@
 import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
 import { toUint8Array } from '@smithy/util-utf8';
 import { Service } from 'typedi';
-import { IInvokeConfig } from '../models';
+import { IDefectParent, IInvokeConfig } from '../models';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
-import { IDefectParent } from '../models/IDefectParent';
 import { LambdaService } from '../services/LambdaService';
 import { Configuration } from '../utils/Configuration';
 
