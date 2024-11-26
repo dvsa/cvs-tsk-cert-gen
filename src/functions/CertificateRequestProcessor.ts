@@ -1,5 +1,7 @@
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { TestStatus } from '@dvsa/cvs-type-definitions/types/v1/enums/testStatus.enum';
+import { DynamoDBRecord, SQSRecord } from 'aws-lambda';
 import { Service } from 'typedi';
 import { validate as uuidValidate } from 'uuid';
 import { ITestResult } from '../models';
@@ -15,6 +17,24 @@ export class CertificateRequestProcessor {
 		private certificateGenerationService: CertificateGenerationService,
 		private certificateUploadService: CertificateUploadService
 	) {}
+
+	public async preProcessSnsPayload(record: SQSRecord): Promise<ITestResult[]> {
+		let records: ITestResult[] = [];
+		console.log(record);
+		const dynamoRecord: DynamoDBRecord = JSON.parse(record.body) as DynamoDBRecord;
+		console.log(dynamoRecord);
+		if (dynamoRecord.eventName === "INSERT" || (dynamoRecord.eventName === "MODIFY" 
+			&& CertificateRequestProcessor.isProcessModifyEventsEnabled())) {
+				if (dynamoRecord.dynamodb && dynamoRecord.dynamodb.NewImage) {
+					const unmarshalledRecord = unmarshall((record as any).dynamodb.NewImage);
+					records = CertificateRequestProcessor.expandRecords(unmarshalledRecord);
+				  }
+			} else {
+				console.log("event name was not of correct type");
+			}
+		
+        return records;
+	}
 
 	public async process(testResult: ITestResult): Promise<CertGenReturn> {
 		const isCancelled = testResult.testStatus === TestStatus.CANCELLED;
@@ -38,5 +58,46 @@ export class CertificateRequestProcessor {
 	private async create(testResult: ITestResult): Promise<PutObjectCommandOutput> {
 		const response = await this.certificateGenerationService.generateCertificate(testResult);
 		return this.certificateUploadService.uploadCertificate(response);
+	}
+
+	/**
+	 * Returns true or false as a boolean based on PROCESS_MODIFY_EVENTS, if
+	 * it is not a valid value then it should throw an error
+	 */
+	private static isProcessModifyEventsEnabled(): boolean {
+		if (
+			process.env.PROCESS_MODIFY_EVENTS !== "true" &&
+			process.env.PROCESS_MODIFY_EVENTS !== "false"
+		) {
+			throw Error(
+			"PROCESS_MODIFY_EVENTS environment variable must be true or false"
+			);
+		}
+		return process.env.PROCESS_MODIFY_EVENTS === "true";
+	}
+
+	private static expandRecords(record: any): ITestResult[] {
+		const splitRecords: ITestResult[] = [];
+		const templateRecord = Object.assign({}, record)
+		Object.assign(templateRecord, {});
+		if (record.testTypes instanceof Array) {
+			record.testTypes?.forEach(
+			  (testType: any, i: number, array: any[]) => {
+				const clonedRecord: any = Object.assign({}, templateRecord); // Create record from template
+				Object.assign(clonedRecord, { testTypes: testType }); // Assign it the test type
+				Object.assign(clonedRecord, {
+					// Assign certificate order number
+					order: {
+					  current: i + 1,
+					  total: array.length,
+					},
+				  });
+				splitRecords.push(clonedRecord);
+			  }
+			);
+		}
+		console.log(splitRecords);
+
+		return splitRecords.reduce((acc: any[], val: any) => acc.concat(val), []); // Flatten the array
 	}
 }
