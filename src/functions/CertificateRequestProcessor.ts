@@ -26,7 +26,7 @@ export class CertificateRequestProcessor {
 		if (dynamoRecord.eventName === "INSERT" || (dynamoRecord.eventName === "MODIFY" 
 			&& CertificateRequestProcessor.isProcessModifyEventsEnabled())) {
 				if (dynamoRecord.dynamodb && dynamoRecord.dynamodb.NewImage) {
-					const unmarshalledRecord = unmarshall((record as any).dynamodb.NewImage);
+					const unmarshalledRecord = unmarshall((dynamoRecord as any).dynamodb.NewImage);
 					records = CertificateRequestProcessor.expandRecords(unmarshalledRecord);
 				  }
 			} else {
