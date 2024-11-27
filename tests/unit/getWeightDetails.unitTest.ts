@@ -1,20 +1,19 @@
 import 'reflect-metadata';
 
-import { Container } from "typedi";
 import { cloneDeep } from "lodash";
 import sinon from "sinon";
-import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
-import { S3BucketMockService } from "../models/S3BucketMockService";
-import { LambdaMockService } from "../models/LambdaMockService";
-import queueEventPass from "../resources/queue-event-pass.json";
-import techRecordsRwt from "../resources/tech-records-response-rwt.json";
-import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
-import { IWeightDetails, ITestResult } from "../../src/models";
+import { Container } from "typedi";
+import { IWeightDetails, TestResultSchemaTestTypesAsObject } from "../../src/models";
 import { HTTPError } from "../../src/models/HTTPError";
-import { S3BucketService } from "../../src/services/S3BucketService";
 import { LambdaService } from "../../src/services/LambdaService";
+import { S3BucketService } from "../../src/services/S3BucketService";
 import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
 import { TechRecordService } from '../../src/tech-record/TechRecordService';
+import { LambdaMockService } from "../models/LambdaMockService";
+import { S3BucketMockService } from "../models/S3BucketMockService";
+import queueEventPass from "../resources/queue-event-pass.json";
+import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
+import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 
 const sandbox = sinon.createSandbox();
 
@@ -39,7 +38,7 @@ describe("cert-gen", () => {
                 "when a passing test result for Roadworthiness test for TRL is read from the queue",
                 () => {
                     const event: any = cloneDeep(queueEventPass);
-                    const testResult: ITestResult = JSON.parse(event.Records[2].body);
+                    const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[2].body);
                     testResult.testTypes.testTypeId = "91";
                     testResult.vin = "T12768594";
                     testResult.trailerId = "0285678";
@@ -73,7 +72,7 @@ describe("cert-gen", () => {
                 "when a passing test result for Roadworthiness test for HGV is read from the queue",
                 () => {
                     const event: any = cloneDeep(queueEventPass);
-                    const testResult: ITestResult = JSON.parse(event.Records[1].body);
+                    const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[1].body);
                     context("and weightDetails are fetched", () => {
                         it("should return dgvw as 'grossDesignWeight' and weight2 and 'trainDesignWeight' of the vehicle", async () => {
                             const expectedWeightDetails: IWeightDetails = {
@@ -104,7 +103,7 @@ describe("cert-gen", () => {
                 "when a passing test result for Roadworthiness test for HGV is read from the queue",
                 () => {
                     const event: any = cloneDeep(queueEventPass);
-                    const testResult: ITestResult = JSON.parse(event.Records[1].body);
+                    const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[1].body);
                     context("and tech record for vehicle is not found", () => {
                         it("should throw error", async () => {
                             const techRecordResponseRwtMock = undefined;
@@ -135,7 +134,7 @@ describe("cert-gen", () => {
                 "when a passing test result for Roadworthiness test for TRL is read from the queue",
                 () => {
                     const event: any = cloneDeep(queueEventPass);
-                    const testResult: ITestResult = JSON.parse(event.Records[2].body);
+                    const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[2].body);
                     testResult.testTypes.testTypeId = "91";
                     testResult.vin = "T12768594";
                     testResult.trailerId = "0285678";

@@ -14,10 +14,11 @@
       "additionalDefects": [
         {
           "defectName": "N/A",
-          "defectNotes": ""
+          "defectNotes": "",
+          "referenceNumber": ""
         }
       ],
-      "requiredStandards":[
+      "requiredStandards": [
         {
           "prs": false,
           "requiredStandard": "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
@@ -52,10 +53,11 @@
       "additionalDefects": [
         {
           "defectName": "N/A",
-          "defectNotes": ""
+          "defectNotes": "",
+          "referenceNumber": ""
         }
       ],
-      "requiredStandards":[
+      "requiredStandards": [
         {
           "prs": false,
           "requiredStandard": "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
