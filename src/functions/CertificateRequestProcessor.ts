@@ -1,10 +1,10 @@
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { TestStatus } from '@dvsa/cvs-type-definitions/types/v1/enums/testStatus.enum';
+import { TestResultSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { DynamoDBRecord, SQSRecord } from 'aws-lambda';
 import { Service } from 'typedi';
 import { validate as uuidValidate } from 'uuid';
-import { ITestResult } from '../models';
 import { ERRORS } from '../models/Enums';
 import { CertificateGenerationService } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
@@ -18,8 +18,8 @@ export class CertificateRequestProcessor {
 		private certificateUploadService: CertificateUploadService
 	) {}
 
-	public async preProcessSnsPayload(record: SQSRecord): Promise<ITestResult[]> {
-		let records: ITestResult[] = [];
+	public async preProcessSnsPayload(record: SQSRecord): Promise<TestResultSchema[]> {
+		let records: TestResultSchema[] = [];
 		console.log(record);
 		const dynamoRecord: DynamoDBRecord = JSON.parse(record.body) as DynamoDBRecord;
 		console.log(dynamoRecord);
@@ -36,7 +36,7 @@ export class CertificateRequestProcessor {
         return records;
 	}
 
-	public async process(testResult: ITestResult): Promise<CertGenReturn> {
+	public async process(testResult: TestResultSchema): Promise<CertGenReturn> {
 		const isCancelled = testResult.testStatus === TestStatus.CANCELLED;
 		if (isCancelled) {
 			return this.remove(testResult);
@@ -51,11 +51,11 @@ export class CertificateRequestProcessor {
 		throw new Error(`Bad Test Record: ${testResult.testResultId}`);
 	}
 
-	private async remove(testResult: ITestResult): Promise<DeleteObjectCommandOutput> {
+	private async remove(testResult: TestResultSchema): Promise<DeleteObjectCommandOutput> {
 		return this.certificateUploadService.removeCertificate(testResult);
 	}
 
-	private async create(testResult: ITestResult): Promise<PutObjectCommandOutput> {
+	private async create(testResult: TestResultSchema): Promise<PutObjectCommandOutput> {
 		const response = await this.certificateGenerationService.generateCertificate(testResult);
 		return this.certificateUploadService.uploadCertificate(response);
 	}
@@ -76,8 +76,8 @@ export class CertificateRequestProcessor {
 		return process.env.PROCESS_MODIFY_EVENTS === "true";
 	}
 
-	private static expandRecords(record: any): ITestResult[] {
-		const splitRecords: ITestResult[] = [];
+	private static expandRecords(record: any): TestResultSchema[] {
+		const splitRecords: TestResultSchema[] = [];
 		const templateRecord = Object.assign({}, record)
 		Object.assign(templateRecord, {});
 		if (record.testTypes instanceof Array) {

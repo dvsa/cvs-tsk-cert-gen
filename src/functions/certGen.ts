@@ -1,6 +1,5 @@
 import { Callback, Context, Handler, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
 import { Container } from 'typedi';
-import { ITestResult } from '../models';
 import { CertificateRequestProcessor } from './CertificateRequestProcessor';
 
 const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<SQSBatchResponse> => {
@@ -15,7 +14,7 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
 
 	for (const record of event.Records) {
 		try {
-			const individualTestTypes: ITestResult[] = await processRequest.preProcessSnsPayload(record);
+			const individualTestTypes = await processRequest.preProcessSnsPayload(record);
 			for (let test of individualTestTypes) {
 				await processRequest.process(test);
 			}

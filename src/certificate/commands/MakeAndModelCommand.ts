@@ -1,6 +1,8 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
+import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
 import { ICertificatePayload, IMakeAndModel } from '../../models';
-import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
+import { CERTIFICATE_DATA } from '../../models/Enums';
 import { TechRecordService } from '../../tech-record/TechRecordService';
 import { TestResultService } from '../../test-result/TestResultService';
 import { IGetTrailerRegistrationResult } from '../../trailer/IGetTrailerRegistrationResult';
@@ -35,14 +37,14 @@ export class MakeAndModelCommand extends BasePayloadCommand {
 		const makeAndModel = (await this.techRecordService.getVehicleMakeAndModel(testResult)) as Required<IMakeAndModel>;
 		const trnRegistration = await this.trailerRegistration(makeAndModel);
 
-		if (testTypes.testResult !== TEST_RESULTS.FAIL) {
+		if ((testTypes as unknown as TestTypeSchema).testResult !== TestResults.FAIL) {
 			result.DATA = {
 				...makeAndModel,
 				...trnRegistration,
 			};
 		}
 
-		if (testTypes.testResult !== TEST_RESULTS.PASS) {
+		if ((testTypes as unknown as TestTypeSchema).testResult !== TestResults.PASS) {
 			result.FAIL_DATA = {
 				...makeAndModel,
 				...trnRegistration,

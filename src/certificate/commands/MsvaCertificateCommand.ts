@@ -1,8 +1,8 @@
+import { SpecialistCustomDefectsSchemaPut, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayload } from '../../models';
-import { IRequiredStandard } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -20,6 +20,7 @@ export class MsvaCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
+		const testTypes = testResult.testTypes as unknown as TestTypeSchema
 
 		const msvaFailDetailsForDocGen = {
 			vin: testResult.vin,
@@ -29,13 +30,13 @@ export class MsvaCertificateCommand extends BasePayloadCommand {
 			model: testResult.model,
 			type: testResult.vehicleType,
 			testerName: testResult.testerName,
-			date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
-			reapplicationDate: testResult.testTypes?.reapplicationDate
-				? moment(testResult.testTypes?.reapplicationDate).format('DD/MM/YYYY')
+			date: moment(testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
+			reapplicationDate: testTypes.reapplicationDate
+				? moment(testTypes.reapplicationDate).format('DD/MM/YYYY')
 				: '',
 			station: testResult.testStationName,
-			additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-			requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards),
+			additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testTypes.customDefects ?? []),
+			requiredStandards: this.sortRequiredStandards(testTypes.requiredStandards),
 		};
 
 		return {
@@ -49,8 +50,8 @@ export class MsvaCertificateCommand extends BasePayloadCommand {
 	 * @returns - the sorted requiredStandards array
 	 */
 	private sortRequiredStandards = (
-		requiredStandards: IRequiredStandard[] | undefined
-	): IRequiredStandard[] | undefined => {
+		requiredStandards: SpecialistCustomDefectsSchemaPut[] | undefined
+	): SpecialistCustomDefectsSchemaPut[] | undefined => {
 		if (!requiredStandards) {
 			return;
 		}

@@ -15,12 +15,6 @@ export enum VEHICLE_TYPES {
 	TRL = 'trl',
 }
 
-export enum TEST_RESULTS {
-	PASS = 'pass',
-	FAIL = 'fail',
-	PRS = 'prs',
-}
-
 export enum CERTIFICATE_DATA {
 	RWT_DATA = 'RWT_DATA',
 	PASS_DATA = 'PASS_DATA',

@@ -1,7 +1,7 @@
+import { SpecialistCustomDefectsSchemaPut, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
-import { IRequiredStandard } from '../../models';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA, IVA_30 } from '../../models/Enums';
 import { TestResultService } from '../../test-result/TestResultService';
@@ -24,26 +24,28 @@ export class IvaCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
+		const testTypes = testResult.testTypes as unknown as TestTypeSchema
+
 
 		const ivaFailDetailsForDocGen = {
 			vin: testResult.vin,
 			serialNumber: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
 			vehicleTrailerNrNo: testResult.vehicleType === 'trl' ? testResult.trailerId : testResult.vrm,
 			testCategoryClass: testResult.euVehicleCategory,
-			testCategoryBasicNormal: this.testResultService.isBasicIvaTest(testResult.testTypes.testTypeId)
+			testCategoryBasicNormal: this.testResultService.isBasicIvaTest(testTypes.testTypeId)
 				? IVA_30.BASIC
 				: IVA_30.NORMAL,
 			make: testResult.make,
 			model: testResult.model,
 			bodyType: testResult.bodyType?.description,
-			date: moment(testResult.testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
+			date: moment(testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
 			testerName: testResult.testerName,
-			reapplicationDate: testResult.testTypes?.reapplicationDate
-				? moment(testResult.testTypes?.reapplicationDate).format('DD/MM/YYYY')
+			reapplicationDate: testTypes.reapplicationDate
+				? moment(testTypes.reapplicationDate).format('DD/MM/YYYY')
 				: '',
 			station: testResult.testStationName,
-			additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testResult.testTypes.customDefects),
-			requiredStandards: this.sortRequiredStandards(testResult.testTypes.requiredStandards),
+			additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testTypes.customDefects ?? []),
+			requiredStandards: this.sortRequiredStandards(testTypes.requiredStandards),
 		};
 
 		return {
@@ -57,8 +59,8 @@ export class IvaCertificateCommand extends BasePayloadCommand {
 	 * @returns - the sorted requiredStandards array
 	 */
 	private sortRequiredStandards = (
-		requiredStandards: IRequiredStandard[] | undefined
-	): IRequiredStandard[] | undefined => {
+		requiredStandards: SpecialistCustomDefectsSchemaPut[] | undefined
+	): SpecialistCustomDefectsSchemaPut[] | undefined => {
 		if (!requiredStandards) {
 			return;
 		}

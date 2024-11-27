@@ -1,10 +1,10 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
+import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
-import { IFlatDefect, ITestResult } from '../../models';
-import { ICertificatePayload } from '../../models';
-import { ITestType } from '../../models';
-import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
+import { ICertificatePayload, IFlatDefect } from '../../models';
+import { CERTIFICATE_DATA } from '../../models/Enums';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
@@ -24,20 +24,18 @@ export class DefectsCommand extends BasePayloadCommand {
 			return {} as ICertificatePayload;
 		}
 
-		const {
-			testResult,
-			testResult: { testTypes },
-		} = this.state;
+		const { testResult } = this.state;
+		const testTypes = testResult.testTypes as unknown as TestTypeSchema;
 
 		const result = {} as ICertificatePayload;
 
-		if (testTypes.testResult !== TEST_RESULTS.FAIL) {
+		if (testTypes.testResult !== TestResults.FAIL) {
 			result.DATA = {
 				...(await this.getPayloadData(testResult, CERTIFICATE_DATA.PASS_DATA)),
 			};
 		}
 
-		if (testTypes.testResult !== TEST_RESULTS.PASS) {
+		if (testTypes.testResult !== TestResults.PASS) {
 			result.FAIL_DATA = {
 				...(await this.getPayloadData(testResult, CERTIFICATE_DATA.FAIL_DATA)),
 			};
@@ -46,7 +44,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		return result;
 	}
 
-	private async getPayloadData(testResult: ITestResult, type: CERTIFICATE_DATA): Promise<any> {
+	private async getPayloadData(testResult: TestResultSchema, type: CERTIFICATE_DATA): Promise<any> {
 		const { isWelsh } = this.state;
 
 		let flattenedDefects: IFlatDefect[] = [];
@@ -57,7 +55,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		}
 
 		const defects = await this.generateDefects(
-			testResult.testTypes,
+			testResult.testTypes as unknown as TestTypeSchema,
 			type,
 			testResult.vehicleType,
 			flattenedDefects,
@@ -75,7 +73,7 @@ export class DefectsCommand extends BasePayloadCommand {
 	 * @param isWelsh - determines whether the atf in which the test result was conducted resides in Wales
 	 */
 	private generateDefects(
-		testTypes: ITestType,
+		testTypes: TestTypeSchema,
 		type: CERTIFICATE_DATA,
 		vehicleType: string,
 		flattenedDefects: IFlatDefect[],
@@ -98,7 +96,7 @@ export class DefectsCommand extends BasePayloadCommand {
 			switch (defect.deficiencyCategory.toLowerCase()) {
 				case 'dangerous':
 					this.defectService.generateDangerousDefects(
-						testTypes.testResult,
+						testTypes.testResult as TestResults,
 						defect,
 						type,
 						defects,
@@ -109,7 +107,7 @@ export class DefectsCommand extends BasePayloadCommand {
 					break;
 				case 'major':
 					this.defectService.generateMajorDefects(
-						testTypes.testResult,
+						testTypes.testResult as TestResults,
 						defect,
 						type,
 						defects,
@@ -123,13 +121,13 @@ export class DefectsCommand extends BasePayloadCommand {
 						defects,
 						defect,
 						vehicleType,
-						testTypes.testResult,
+						testTypes.testResult as TestResults,
 						isWelsh,
 						flattenedDefects
 					);
 					break;
 				case 'advisory':
-					this.defectService.generateAdvisoryDefects(defects, defect, vehicleType, testTypes.testResult, isWelsh);
+					this.defectService.generateAdvisoryDefects(defects, defect, vehicleType, testTypes.testResult as TestResults, isWelsh);
 					break;
 				default:
 					break;

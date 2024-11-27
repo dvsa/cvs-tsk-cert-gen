@@ -1,6 +1,3 @@
-import { DefectDetailsSchema } from '@dvsa/cvs-type-definitions/types/v1/defect-details';
-import { InspectionType } from '@dvsa/cvs-type-definitions/types/v1/test-result';
-import { TEST_RESULTS } from './Enums';
 
 interface IInvokeConfig {
 	params: { apiVersion: string; endpoint?: string };
@@ -72,28 +69,6 @@ interface IGeneratedCertificateResponse {
 	shouldEmailCertificate: string;
 }
 
-interface ICertificateData {
-	TestNumber: string;
-	TestStationPNumber: string;
-	TestStationName: string;
-	CurrentOdometer: IOdometer;
-	IssuersName: string;
-	DateOfTheTest: string;
-	CountryOfRegistrationCode: string;
-	VehicleEuClassification: string;
-	RawVIN: string;
-	RawVRM: string;
-	ExpiryDate: string;
-	EarliestDateOfTheNextTest: string;
-	SeatBeltTested: string;
-	SeatBeltPreviousCheckDate: string;
-	SeatBeltNumber: number;
-}
-
-interface IOdometer {
-	value: string;
-	unit: string;
-}
 
 interface IDefects {
 	DangerousDefects: string[];
@@ -145,86 +120,6 @@ interface IWeightDetails {
 	weight2: number;
 }
 
-// TODO: move to types definition interface after CB2-12580
-interface ITestResult {
-	testResultId: string;
-	vrm: string;
-	trailerId: string;
-	vin: string;
-	vehicleId: string;
-	deletionFlag: boolean;
-	testStationName: string;
-	testStationPNumber: string;
-	testStationType: string;
-	testerName: string;
-	testerStaffId: string;
-	testerEmailAddress: string;
-	testStartTimestamp: string;
-	testEndTimestamp: string;
-	testStatus: string;
-	reasonForCancellation: string;
-	vehicleClass: IVehicleClass;
-	vehicleType: string;
-	numberOfSeats: number;
-	vehicleConfiguration: string;
-	odometerReading: number;
-	odometerReadingUnits: string;
-	preparerId: string;
-	preparerName: string;
-	euVehicleCategory: string;
-	countryOfRegistration: string;
-	vehicleSize: string;
-	noOfAxles: number;
-	regnDate: string;
-	firstUseDate: string;
-	make?: string;
-	model?: string;
-	bodyType?: IBodyTypeModel;
-	testTypes: ITestType;
-	createdById?: string;
-	systemNumber: string;
-}
-
-// TODO: move to types definition interface after CB2-12580
-interface ITestType {
-	createdAt: string;
-	lastUpdatedAt: string;
-	deletionFlag: boolean;
-	testCode: string;
-	testTypeName: string;
-	testTypeClassification: string;
-	name: string;
-	testTypeId: string;
-	testNumber: string;
-	certificateNumber: string;
-	certificateLink: string;
-	testExpiryDate: string;
-	testAnniversaryDate: string;
-	testTypeStartTimestamp: string;
-	testTypeEndTimestamp: string;
-	numberOfSeatbeltsFitted: number;
-	lastSeatbeltInstallationCheckDate: string;
-	seatbeltInstallationCheckDate: boolean;
-	testResult: TEST_RESULTS;
-	prohibitionIssued: boolean;
-	reasonForAbandoning: string;
-	additionalNotesRecorded: string;
-	additionalCommentsForAbandon: string;
-	modType: IVehicleClass;
-	emissionStandard: string;
-	fuelType: string;
-	reapplicationDate?: string;
-	defects: DefectDetailsSchema[];
-	requiredStandards?: IRequiredStandard[];
-	customDefects?: ICustomDefect[];
-}
-
-// TODO: move to types definition interface after CB2-12580
-interface IVehicleClass {
-	code: string;
-	description: string;
-}
-
 interface ITrailerRegistration {
 	vinOrChassisWithMake?: string;
 	vin: string;
@@ -237,32 +132,6 @@ interface ITrailerRegistration {
 interface IMakeAndModel {
 	Make: string;
 	Model: string;
-}
-
-// TODO: move to types definition interface after CB2-12580
-interface IRequiredStandard {
-	sectionNumber: string;
-	sectionDescription: string;
-	rsNumber: number;
-	requiredStandard: string;
-	refCalculation: string;
-	additionalInfo: boolean;
-	inspectionTypes: InspectionType[];
-	prs: boolean;
-	additionalNotes?: string;
-}
-
-// TODO: move to types definition interface after CB2-12580
-interface IBodyTypeModel {
-	code: string;
-	description: string;
-}
-
-// TODO: move to types definition interface after CB2-12580
-interface ICustomDefect {
-	referenceNumber?: string;
-	defectName: string;
-	defectNotes: string;
 }
 
 interface IFeatureFlags {
@@ -309,24 +178,20 @@ interface IFlatDefect {
 }
 
 export type {
-	IInvokeConfig,
-	IMOTConfig,
-	IS3Config,
-	IGeneratedCertificateResponse,
-	IDefects,
 	ICertificatePayload,
-	IRoadworthinessCertificateData,
-	IWeightDetails,
-	ITestResult,
-	ITestType,
-	ITrailerRegistration,
-	IMakeAndModel,
-	IRequiredStandard,
-	IBodyTypeModel,
-	ICustomDefect,
-	IFeatureFlags,
 	IDefectChild,
-	IItem,
 	IDefectParent,
+	IDefects,
+	IFeatureFlags,
 	IFlatDefect,
+	IGeneratedCertificateResponse,
+	IInvokeConfig,
+	IItem,
+	IMOTConfig,
+	IMakeAndModel,
+	IRoadworthinessCertificateData,
+	IS3Config,
+	ITrailerRegistration,
+	IWeightDetails
 };
+

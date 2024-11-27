@@ -1,9 +1,10 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
+import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
-import { IRoadworthinessCertificateData } from '../../models';
-import { ICertificatePayload } from '../../models';
-import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
+import { ICertificatePayload, IRoadworthinessCertificateData } from '../../models';
+import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../../models/Enums';
 import { TechRecordService } from '../../tech-record/TechRecordService';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -24,27 +25,26 @@ export class RoadworthinessCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
+		const testTypes = testResult.testTypes as unknown as TestTypeSchema
 
 		const weightDetails = await this.techRecordService.getWeightDetails(testResult);
-
+		
 		let defectRWTList: string[] | undefined;
-		if ((testResult.testTypes.testResult as TEST_RESULTS) === TEST_RESULTS.FAIL) {
-			defectRWTList = testResult.testTypes.defects.map((defect) => this.defectService.formatDefect(defect));
+		if ((testTypes.testResult as TestResults) === TestResults.FAIL) {
+			defectRWTList = testTypes.defects.map((defect) => this.defectService.formatDefect(defect));
 		}
-
-		const testType = testResult.testTypes;
 
 		const resultPass: IRoadworthinessCertificateData = {
 			Dgvw: weightDetails.dgvw,
 			Weight2: weightDetails.weight2,
 			VehicleNumber:
-				(testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm,
+				((testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.TRL ? testResult.trailerId : testResult.vrm) ?? '',
 			Vin: testResult.vin,
-			IssuersName: testResult.testerName,
-			DateOfInspection: moment(testType.testTypeStartTimestamp).format('DD.MM.YYYY'),
-			TestStationPNumber: testResult.testStationPNumber,
-			DocumentNumber: testType.certificateNumber,
-			Date: moment(testType.testTypeStartTimestamp).format('DD.MM.YYYY'),
+			IssuersName: testResult.testerName ?? '',
+			DateOfInspection: moment(testTypes.testTypeStartTimestamp).format('DD.MM.YYYY'),
+			TestStationPNumber: testResult.testStationPNumber ?? '',
+			DocumentNumber: testTypes.certificateNumber ?? '',
+			Date: moment(testTypes.testTypeStartTimestamp).format('DD.MM.YYYY'),
 			Defects: defectRWTList,
 			IsTrailer: (testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.TRL,
 		};

@@ -1,6 +1,8 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
+import { SpecialistCustomDefectsSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
-import { ICustomDefect, IDefectChild, IDefectParent, IFlatDefect, IItem } from '../models';
-import { CERTIFICATE_DATA, IVA_30, LOCATION_ENGLISH, LOCATION_WELSH, TEST_RESULTS } from '../models/Enums';
+import { IDefectChild, IDefectParent, IFlatDefect, IItem } from '../models';
+import { CERTIFICATE_DATA, IVA_30, LOCATION_ENGLISH, LOCATION_WELSH } from '../models/Enums';
 import { TestResultService } from '../test-result/TestResultService';
 
 @Service()
@@ -12,11 +14,12 @@ export class DefectService {
 	 * @param customDefects - the custom defects for the test
 	 */
 	public formatVehicleApprovalAdditionalDefects = (
-		customDefects: ICustomDefect[] | undefined
-	): ICustomDefect[] | undefined => {
-		const defaultCustomDefect: ICustomDefect = {
+		customDefects: SpecialistCustomDefectsSchema[] | undefined
+	): SpecialistCustomDefectsSchema[] | undefined => {
+		const defaultCustomDefect: SpecialistCustomDefectsSchema = {
 			defectName: IVA_30.EMPTY_CUSTOM_DEFECTS,
 			defectNotes: '',
+			referenceNumber: ''
 		};
 		return customDefects && customDefects.length > 0 ? customDefects : [defaultCustomDefect];
 	};
@@ -217,7 +220,7 @@ export class DefectService {
 	}
 
 	public generateDangerousDefects(
-		testResult: TEST_RESULTS,
+		testResult: TestResults,
 		defect: any,
 		type: CERTIFICATE_DATA,
 		defects: any,
@@ -225,13 +228,13 @@ export class DefectService {
 		isWelsh: boolean,
 		flattenedDefects: IFlatDefect[]
 	) {
-		if ((testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+		if ((testResult === TestResults.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
 			defects.PRSDefects.push(this.formatDefect(defect));
 
 			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
 				defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 			}
-		} else if (testResult === TEST_RESULTS.FAIL) {
+		} else if (testResult === TestResults.FAIL) {
 			defects.DangerousDefects.push(this.formatDefect(defect));
 
 			// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
@@ -242,7 +245,7 @@ export class DefectService {
 	}
 
 	public generateMajorDefects(
-		testResult: TEST_RESULTS,
+		testResult: TestResults,
 		defect: any,
 		type: CERTIFICATE_DATA,
 		defects: any,
@@ -250,13 +253,13 @@ export class DefectService {
 		isWelsh: boolean,
 		flattenedDefects: IFlatDefect[]
 	) {
-		if ((testResult === TEST_RESULTS.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+		if ((testResult === TestResults.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
 			defects.PRSDefects.push(this.formatDefect(defect));
 
 			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
 				defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 			}
-		} else if (testResult === TEST_RESULTS.FAIL) {
+		} else if (testResult === TestResults.FAIL) {
 			defects.MajorDefects.push(this.formatDefect(defect));
 
 			// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
@@ -270,7 +273,7 @@ export class DefectService {
 		defects: any,
 		defect: any,
 		vehicleType: string,
-		testResult: TEST_RESULTS,
+		testResult: TestResults,
 		isWelsh: boolean,
 		flattenedDefects: IFlatDefect[]
 	) {
@@ -285,7 +288,7 @@ export class DefectService {
 		defects: any,
 		defect: any,
 		vehicleType: string,
-		testResult: TEST_RESULTS,
+		testResult: TestResults,
 		isWelsh: boolean
 	) {
 		defects.AdvisoryDefects.push(this.formatDefect(defect));

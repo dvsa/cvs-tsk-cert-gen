@@ -1,8 +1,9 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
+import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
-import { ITestResult } from '../../models';
 import { ICertificatePayload } from '../../models';
-import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
+import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../../models/Enums';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
@@ -17,20 +18,18 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 			return result;
 		}
 
-		const {
-			testResult,
-			testResult: { testTypes },
-		} = this.state;
+		const { testResult } = this.state;
+		const testTypes = testResult.testTypes as unknown as TestTypeSchema;
 
 		const payload = await this.getPayloadData(testResult);
 
-		if (testTypes.testResult !== TEST_RESULTS.FAIL) {
+		if (testTypes.testResult !== TestResults.FAIL) {
 			result.DATA = {
 				...payload,
 			};
 		}
 
-		if (testTypes.testResult !== TEST_RESULTS.PASS) {
+		if (testTypes.testResult !== TestResults.PASS) {
 			result.FAIL_DATA = {
 				...payload,
 			};
@@ -39,8 +38,8 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 		return result;
 	}
 
-	private async getPayloadData(testResult: ITestResult): Promise<any> {
-		const testType = testResult.testTypes;
+	private async getPayloadData(testResult: TestResultSchema): Promise<any> {
+		const testType = testResult.testTypes as unknown as TestTypeSchema;
 
 		return {
 			TestNumber: testType.testNumber,
@@ -60,8 +59,8 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 			EarliestDateOfTheNextTest:
 				((testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.HGV ||
 					(testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.TRL) &&
-				((testResult.testTypes.testResult as TEST_RESULTS) === TEST_RESULTS.PASS ||
-					(testResult.testTypes.testResult as TEST_RESULTS) === TEST_RESULTS.PRS)
+				((testType.testResult) === TestResults.PASS ||
+					(testType.testResult) === TestResults.PRS)
 					? moment(testType.testAnniversaryDate).subtract(1, 'months').startOf('month').format('DD.MM.YYYY')
 					: moment(testType.testAnniversaryDate).format('DD.MM.YYYY'),
 			SeatBeltTested: testType.seatbeltInstallationCheckDate ? 'Yes' : 'No',

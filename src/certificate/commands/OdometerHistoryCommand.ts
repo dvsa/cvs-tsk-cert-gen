@@ -1,7 +1,8 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
+import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
-import { ITestResult } from '../../models';
-import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
+import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../../models/Enums';
 import { TestResultRepository } from '../../test-result/TestResultRepository';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -14,7 +15,7 @@ export class OdometerHistoryCommand extends BasePayloadCommand {
 	private certificateIsAnPassOrFail = (): boolean =>
 		this.state.type === CERTIFICATE_DATA.PASS_DATA || this.state.type === CERTIFICATE_DATA.FAIL_DATA;
 
-	private vehicleIsTrailer = (testResult: ITestResult): boolean => testResult.vehicleType === VEHICLE_TYPES.TRL;
+	private vehicleIsTrailer = (testResult: TestResultSchema): boolean => testResult.vehicleType === VEHICLE_TYPES.TRL;
 
 	public async generate(): Promise<ICertificatePayload> {
 		const result = {} as ICertificatePayload;
@@ -23,24 +24,22 @@ export class OdometerHistoryCommand extends BasePayloadCommand {
 			return result;
 		}
 
-		const {
-			testResult,
-			testResult: { testTypes, systemNumber },
-		} = this.state;
+		const { testResult } = this.state;
+		const testTypes = testResult.testTypes as unknown as TestTypeSchema;
 
 		if (this.vehicleIsTrailer(testResult)) {
 			return result;
 		}
 
-		const odometerHistory = await this.testResultRepository.getOdometerHistory(systemNumber);
+		const odometerHistory = await this.testResultRepository.getOdometerHistory(testResult.systemNumber);
 
-		if (testTypes.testResult !== TEST_RESULTS.FAIL) {
+		if (testTypes.testResult !== TestResults.FAIL) {
 			result.DATA = {
 				...odometerHistory,
 			};
 		}
 
-		if (testTypes.testResult !== TEST_RESULTS.PASS) {
+		if (testTypes.testResult !== TestResults.PASS) {
 			result.FAIL_DATA = {
 				...odometerHistory,
 			};

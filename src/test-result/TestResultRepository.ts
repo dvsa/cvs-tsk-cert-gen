@@ -1,8 +1,9 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sdk/client-lambda';
+import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
 import { Service } from 'typedi';
-import { IInvokeConfig, ITestType } from '../models';
+import { IInvokeConfig } from '../models';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 import { LambdaService } from '../services/LambdaService';
@@ -39,8 +40,7 @@ export class TestResultRepository {
 			.invoke(invokeParams)
 			.then((response: InvocationResponse) => {
 				const payload: any = this.lambdaClient.validateInvocationResponse(response);
-				// TODO: convert to correct type
-				const testResults: any[] = JSON.parse(payload.body);
+				const testResults: TestResultSchema[] = JSON.parse(payload.body);
 
 				if (!testResults || testResults.length === 0) {
 					throw new HTTPError(400, `${ERRORS.LAMBDA_INVOCATION_BAD_DATA} ${JSON.stringify(payload)}.`);
@@ -67,7 +67,7 @@ export class TestResultRepository {
 				const filteredTestResults = submittedTests
 					.filter(({ testTypes }) =>
 						testTypes?.some(
-							(testType: ITestType) =>
+							(testType: TestTypeSchema) =>
 								testType.testTypeClassification === 'Annual With Certificate' &&
 								(testType.testResult === 'pass' || testType.testResult === 'prs')
 						)
