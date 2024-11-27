@@ -1,5 +1,4 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
 import { ICertificatePayload, IMakeAndModel } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
@@ -37,14 +36,14 @@ export class MakeAndModelCommand extends BasePayloadCommand {
 		const makeAndModel = (await this.techRecordService.getVehicleMakeAndModel(testResult)) as Required<IMakeAndModel>;
 		const trnRegistration = await this.trailerRegistration(makeAndModel);
 
-		if ((testTypes as unknown as TestTypeSchema).testResult !== TestResults.FAIL) {
+		if (testTypes.testResult !== TestResults.FAIL) {
 			result.DATA = {
 				...makeAndModel,
 				...trnRegistration,
 			};
 		}
 
-		if ((testTypes as unknown as TestTypeSchema).testResult !== TestResults.PASS) {
+		if (testTypes.testResult !== TestResults.PASS) {
 			result.FAIL_DATA = {
 				...makeAndModel,
 				...trnRegistration,

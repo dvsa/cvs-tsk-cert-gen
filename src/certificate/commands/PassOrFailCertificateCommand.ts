@@ -1,8 +1,7 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
-import { ICertificatePayload } from '../../models';
+import { ICertificatePayload, TestResultSchemaTestTypesAsObject } from '../../models';
 import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../../models/Enums';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -19,7 +18,7 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes as unknown as TestTypeSchema;
+		const testTypes = testResult.testTypes
 
 		const payload = await this.getPayloadData(testResult);
 
@@ -38,8 +37,8 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 		return result;
 	}
 
-	private async getPayloadData(testResult: TestResultSchema): Promise<any> {
-		const testType = testResult.testTypes as unknown as TestTypeSchema;
+	private async getPayloadData(testResult: TestResultSchemaTestTypesAsObject): Promise<any> {
+		const testType = testResult.testTypes
 
 		return {
 			TestNumber: testType.testNumber,

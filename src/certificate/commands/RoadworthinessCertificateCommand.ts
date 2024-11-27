@@ -1,5 +1,4 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
@@ -25,7 +24,7 @@ export class RoadworthinessCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes as unknown as TestTypeSchema
+		const testTypes = testResult.testTypes
 
 		const weightDetails = await this.techRecordService.getWeightDetails(testResult);
 		

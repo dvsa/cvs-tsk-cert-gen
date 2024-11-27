@@ -1,4 +1,3 @@
-import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
@@ -19,7 +18,7 @@ export class AdrCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes as unknown as TestTypeSchema
+		const testTypes = testResult.testTypes
 
 		const [adrDetails, makeAndModel] = await Promise.all([
 			this.techRecordService.getAdrDetails(testResult),

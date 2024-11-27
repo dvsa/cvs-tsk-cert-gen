@@ -1,4 +1,4 @@
-import { SpecialistCustomDefectsSchemaPut, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { SpecialistCustomDefectsSchemaPut } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
 import { Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
@@ -24,7 +24,7 @@ export class IvaCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes as unknown as TestTypeSchema
+		const testTypes = testResult.testTypes
 
 
 		const ivaFailDetailsForDocGen = {

@@ -1,13 +1,12 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sdk/client-lambda';
 import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
 import { Service } from 'typedi';
 import { CertificatePayloadGenerator } from '../certificate/CertificatePayloadGenerator';
 import { CertificateTypes } from '../certificate/CertificateTypes';
-import { IFeatureFlags, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig } from '../models';
+import { IFeatureFlags, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, TestResultSchemaTestTypesAsObject } from '../models';
 import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../models/Enums';
 import { TestResultService } from '../test-result/TestResultService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
@@ -190,8 +189,8 @@ class CertificateGenerationService {
 		return isWelshCountry;
 	}
 
-	private getTestType(testResult: TestResultSchema): CERTIFICATE_DATA {
-		const testType = (testResult.testTypes as unknown as TestTypeSchema)
+	private getTestType(testResult: TestResultSchemaTestTypesAsObject): CERTIFICATE_DATA {
+		const testType = testResult.testTypes
 		if (this.testResultService.isHgvTrlRoadworthinessCertificate(testResult)) {
 			return CERTIFICATE_DATA.RWT_DATA;
 		}

@@ -1,9 +1,9 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
-import { ICertificatePayload, IFlatDefect } from '../../models';
+import { ICertificatePayload, IFlatDefect, TestResultSchemaTestTypesAsObject } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -25,7 +25,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes as unknown as TestTypeSchema;
+		const testTypes = testResult.testTypes
 
 		const result = {} as ICertificatePayload;
 
@@ -44,7 +44,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		return result;
 	}
 
-	private async getPayloadData(testResult: TestResultSchema, type: CERTIFICATE_DATA): Promise<any> {
+	private async getPayloadData(testResult: TestResultSchemaTestTypesAsObject, type: CERTIFICATE_DATA): Promise<any> {
 		const { isWelsh } = this.state;
 
 		let flattenedDefects: IFlatDefect[] = [];
@@ -55,7 +55,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		}
 
 		const defects = await this.generateDefects(
-			testResult.testTypes as unknown as TestTypeSchema,
+			testResult.testTypes,
 			type,
 			testResult.vehicleType,
 			flattenedDefects,

@@ -1,3 +1,7 @@
+import { TestResultSchema, TestTypeSchema } from "@dvsa/cvs-type-definitions/types/v1/test-result";
+
+//Create custom type of test result schema with flat test type array for this service.
+interface TestResultSchemaTestTypesAsObject extends Omit<TestResultSchema, 'testTypes'> {  testTypes: TestTypeSchema,}
 
 interface IInvokeConfig {
 	params: { apiVersion: string; endpoint?: string };
@@ -192,6 +196,7 @@ export type {
 	IRoadworthinessCertificateData,
 	IS3Config,
 	ITrailerRegistration,
-	IWeightDetails
+	IWeightDetails,
+	TestResultSchemaTestTypesAsObject
 };
 
