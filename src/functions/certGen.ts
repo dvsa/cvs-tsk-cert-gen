@@ -15,7 +15,7 @@ const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: C
 	for (const record of event.Records) {
 		try {
 			const individualTestTypes = await processRequest.preProcessSnsPayload(record);
-			for (let test of individualTestTypes) {
+			for (const test of individualTestTypes) {
 				await processRequest.process(test);
 			}
 		} catch (error) {

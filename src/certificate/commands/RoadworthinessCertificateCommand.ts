@@ -24,10 +24,10 @@ export class RoadworthinessCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
+		const testTypes = testResult.testTypes;
 
 		const weightDetails = await this.techRecordService.getWeightDetails(testResult);
-		
+
 		let defectRWTList: string[] | undefined;
 		if ((testTypes.testResult as TestResults) === TestResults.FAIL) {
 			defectRWTList = testTypes.defects.map((defect) => this.defectService.formatDefect(defect));

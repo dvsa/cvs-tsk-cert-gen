@@ -19,7 +19,7 @@ export class DefectService {
 		const defaultCustomDefect: SpecialistCustomDefectsSchema = {
 			defectName: IVA_30.EMPTY_CUSTOM_DEFECTS,
 			defectNotes: '',
-			referenceNumber: ''
+			referenceNumber: '',
 		};
 		return customDefects && customDefects.length > 0 ? customDefects : [defaultCustomDefect];
 	};

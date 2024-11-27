@@ -25,7 +25,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
+		const testTypes = testResult.testTypes;
 
 		const result = {} as ICertificatePayload;
 
@@ -127,7 +127,13 @@ export class DefectsCommand extends BasePayloadCommand {
 					);
 					break;
 				case 'advisory':
-					this.defectService.generateAdvisoryDefects(defects, defect, vehicleType, testTypes.testResult as TestResults, isWelsh);
+					this.defectService.generateAdvisoryDefects(
+						defects,
+						defect,
+						vehicleType,
+						testTypes.testResult as TestResults,
+						isWelsh
+					);
 					break;
 				default:
 					break;

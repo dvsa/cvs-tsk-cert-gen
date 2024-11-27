@@ -18,7 +18,7 @@ export class AdrCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
+		const testTypes = testResult.testTypes;
 
 		const [adrDetails, makeAndModel] = await Promise.all([
 			this.techRecordService.getAdrDetails(testResult),

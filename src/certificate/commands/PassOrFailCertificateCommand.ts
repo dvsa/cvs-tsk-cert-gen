@@ -18,7 +18,7 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
+		const testTypes = testResult.testTypes;
 
 		const payload = await this.getPayloadData(testResult);
 
@@ -38,7 +38,7 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 	}
 
 	private async getPayloadData(testResult: TestResultSchemaTestTypesAsObject): Promise<any> {
-		const testType = testResult.testTypes
+		const testType = testResult.testTypes;
 
 		return {
 			TestNumber: testType.testNumber,
@@ -58,8 +58,7 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 			EarliestDateOfTheNextTest:
 				((testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.HGV ||
 					(testResult.vehicleType as VEHICLE_TYPES) === VEHICLE_TYPES.TRL) &&
-				((testType.testResult) === TestResults.PASS ||
-					(testType.testResult) === TestResults.PRS)
+				(testType.testResult === TestResults.PASS || testType.testResult === TestResults.PRS)
 					? moment(testType.testAnniversaryDate).subtract(1, 'months').startOf('month').format('DD.MM.YYYY')
 					: moment(testType.testAnniversaryDate).format('DD.MM.YYYY'),
 			SeatBeltTested: testType.seatbeltInstallationCheckDate ? 'Yes' : 'No',

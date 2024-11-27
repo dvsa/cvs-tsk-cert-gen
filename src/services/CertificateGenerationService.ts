@@ -6,7 +6,13 @@ import moment from 'moment';
 import { Service } from 'typedi';
 import { CertificatePayloadGenerator } from '../certificate/CertificatePayloadGenerator';
 import { CertificateTypes } from '../certificate/CertificateTypes';
-import { IFeatureFlags, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, TestResultSchemaTestTypesAsObject } from '../models';
+import {
+	IFeatureFlags,
+	IGeneratedCertificateResponse,
+	IInvokeConfig,
+	IMOTConfig,
+	TestResultSchemaTestTypesAsObject,
+} from '../models';
 import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../models/Enums';
 import { TestResultService } from '../test-result/TestResultService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
@@ -190,29 +196,20 @@ class CertificateGenerationService {
 	}
 
 	private getTestType(testResult: TestResultSchemaTestTypesAsObject): CERTIFICATE_DATA {
-		const testType = testResult.testTypes
+		const testType = testResult.testTypes;
 		if (this.testResultService.isHgvTrlRoadworthinessCertificate(testResult)) {
 			return CERTIFICATE_DATA.RWT_DATA;
 		}
 
-		if (
-			testType.testResult === TestResults.PASS &&
-			this.testResultService.isTestTypeAdr(testResult.testTypes)
-		) {
+		if (testType.testResult === TestResults.PASS && this.testResultService.isTestTypeAdr(testResult.testTypes)) {
 			return CERTIFICATE_DATA.ADR_DATA;
 		}
 
-		if (
-			testType.testResult === TestResults.FAIL &&
-			this.testResultService.isIvaTest(testType.testTypeId)
-		) {
+		if (testType.testResult === TestResults.FAIL && this.testResultService.isIvaTest(testType.testTypeId)) {
 			return CERTIFICATE_DATA.IVA_DATA;
 		}
 
-		if (
-			testType.testResult === TestResults.FAIL &&
-			this.testResultService.isMsvaTest(testType.testTypeId)
-		) {
+		if (testType.testResult === TestResults.FAIL && this.testResultService.isMsvaTest(testType.testTypeId)) {
 			return CERTIFICATE_DATA.MSVA_DATA;
 		}
 

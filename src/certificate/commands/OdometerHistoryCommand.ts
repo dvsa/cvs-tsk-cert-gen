@@ -14,7 +14,8 @@ export class OdometerHistoryCommand extends BasePayloadCommand {
 	private certificateIsAnPassOrFail = (): boolean =>
 		this.state.type === CERTIFICATE_DATA.PASS_DATA || this.state.type === CERTIFICATE_DATA.FAIL_DATA;
 
-	private vehicleIsTrailer = (testResult: TestResultSchemaTestTypesAsObject): boolean => testResult.vehicleType === VEHICLE_TYPES.TRL;
+	private vehicleIsTrailer = (testResult: TestResultSchemaTestTypesAsObject): boolean =>
+		testResult.vehicleType === VEHICLE_TYPES.TRL;
 
 	public async generate(): Promise<ICertificatePayload> {
 		const result = {} as ICertificatePayload;
@@ -24,7 +25,7 @@ export class OdometerHistoryCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
+		const testTypes = testResult.testTypes;
 
 		if (this.vehicleIsTrailer(testResult)) {
 			return result;

@@ -24,8 +24,7 @@ export class IvaCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
-
+		const testTypes = testResult.testTypes;
 
 		const ivaFailDetailsForDocGen = {
 			vin: testResult.vin,
@@ -40,9 +39,7 @@ export class IvaCertificateCommand extends BasePayloadCommand {
 			bodyType: testResult.bodyType?.description,
 			date: moment(testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
 			testerName: testResult.testerName,
-			reapplicationDate: testTypes.reapplicationDate
-				? moment(testTypes.reapplicationDate).format('DD/MM/YYYY')
-				: '',
+			reapplicationDate: testTypes.reapplicationDate ? moment(testTypes.reapplicationDate).format('DD/MM/YYYY') : '',
 			station: testResult.testStationName,
 			additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testTypes.customDefects ?? []),
 			requiredStandards: this.sortRequiredStandards(testTypes.requiredStandards),

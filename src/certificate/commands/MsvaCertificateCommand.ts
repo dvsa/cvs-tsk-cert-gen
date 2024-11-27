@@ -20,7 +20,7 @@ export class MsvaCertificateCommand extends BasePayloadCommand {
 		}
 
 		const { testResult } = this.state;
-		const testTypes = testResult.testTypes
+		const testTypes = testResult.testTypes;
 
 		const msvaFailDetailsForDocGen = {
 			vin: testResult.vin,
@@ -31,9 +31,7 @@ export class MsvaCertificateCommand extends BasePayloadCommand {
 			type: testResult.vehicleType,
 			testerName: testResult.testerName,
 			date: moment(testTypes.testTypeStartTimestamp).format('DD/MM/YYYY'),
-			reapplicationDate: testTypes.reapplicationDate
-				? moment(testTypes.reapplicationDate).format('DD/MM/YYYY')
-				: '',
+			reapplicationDate: testTypes.reapplicationDate ? moment(testTypes.reapplicationDate).format('DD/MM/YYYY') : '',
 			station: testResult.testStationName,
 			additionalDefects: this.defectService.formatVehicleApprovalAdditionalDefects(testTypes.customDefects ?? []),
 			requiredStandards: this.sortRequiredStandards(testTypes.requiredStandards),

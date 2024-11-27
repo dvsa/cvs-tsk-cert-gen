@@ -1,7 +1,9 @@
-import { TestResultSchema, TestTypeSchema } from "@dvsa/cvs-type-definitions/types/v1/test-result";
+import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 
 //Create custom type of test result schema with flat test type array for this service.
-interface TestResultSchemaTestTypesAsObject extends Omit<TestResultSchema, 'testTypes'> {  testTypes: TestTypeSchema,}
+interface TestResultSchemaTestTypesAsObject extends Omit<TestResultSchema, 'testTypes'> {
+	testTypes: TestTypeSchema;
+}
 
 interface IInvokeConfig {
 	params: { apiVersion: string; endpoint?: string };
@@ -72,7 +74,6 @@ interface IGeneratedCertificateResponse {
 	email: string;
 	shouldEmailCertificate: string;
 }
-
 
 interface IDefects {
 	DangerousDefects: string[];
@@ -197,6 +198,5 @@ export type {
 	IS3Config,
 	ITrailerRegistration,
 	IWeightDetails,
-	TestResultSchemaTestTypesAsObject
+	TestResultSchemaTestTypesAsObject,
 };
-
