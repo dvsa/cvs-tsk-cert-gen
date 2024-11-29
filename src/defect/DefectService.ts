@@ -1,11 +1,11 @@
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ICustomDefect, IDefectChild, IDefectParent, IFlatDefect, IItem } from '../models';
 import { CERTIFICATE_DATA, IVA_30, LOCATION_ENGLISH, LOCATION_WELSH, TEST_RESULTS } from '../models/Enums';
 import { TestResultService } from '../test-result/TestResultService';
 
 @Service()
 export class DefectService {
-	constructor(private testResultService: TestResultService) {}
+	constructor(@Inject() private testResultService: TestResultService) {}
 
 	/**
 	 * Formats the additional defects for IVA and MSVA test based on whether custom defects is populated

@@ -1,13 +1,13 @@
 import { Readable } from 'stream';
 import { GetObjectOutput } from '@aws-sdk/client-s3';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
 import { S3BucketService } from '../../services/S3BucketService';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
 export class SignatureCommand extends BasePayloadCommand {
-	constructor(private s3Client: S3BucketService) {
+	constructor(@Inject() private s3Client: S3BucketService) {
 		super();
 	}
 

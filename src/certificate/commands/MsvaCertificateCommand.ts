@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayload } from '../../models';
 import { IRequiredStandard } from '../../models';
@@ -8,7 +8,7 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
 export class MsvaCertificateCommand extends BasePayloadCommand {
-	constructor(private defectService: DefectService) {
+	constructor(@Inject() private defectService: DefectService) {
 		super();
 	}
 

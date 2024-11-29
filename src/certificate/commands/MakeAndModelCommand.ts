@@ -1,4 +1,4 @@
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ICertificatePayload, IMakeAndModel } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS } from '../../models/Enums';
 import { TechRecordService } from '../../tech-record/TechRecordService';
@@ -10,9 +10,9 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 @Service()
 export class MakeAndModelCommand extends BasePayloadCommand {
 	constructor(
-		private techRecordService: TechRecordService,
-		private trailerRepository: TrailerRepository,
-		private testResultService: TestResultService
+		@Inject() private techRecordService: TechRecordService,
+		@Inject() private trailerRepository: TrailerRepository,
+		@Inject() private testResultService: TestResultService
 	) {
 		super();
 	}

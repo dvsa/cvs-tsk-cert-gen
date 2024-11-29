@@ -1,6 +1,6 @@
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { TestStatus } from '@dvsa/cvs-type-definitions/types/v1/enums/testStatus.enum';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { validate as uuidValidate } from 'uuid';
 import { ITestResult } from '../models';
 import { ERRORS } from '../models/Enums';
@@ -12,8 +12,8 @@ export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 @Service()
 export class CertificateRequestProcessor {
 	constructor(
-		private certificateGenerationService: CertificateGenerationService,
-		private certificateUploadService: CertificateUploadService
+		@Inject() private certificateGenerationService: CertificateGenerationService,
+		@Inject() private certificateUploadService: CertificateUploadService
 	) {}
 
 	public async process(testResult: ITestResult): Promise<CertGenReturn> {

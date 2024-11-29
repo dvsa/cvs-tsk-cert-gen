@@ -1,4 +1,4 @@
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
 import { IFlatDefect, ITestResult } from '../../models';
@@ -10,8 +10,8 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 @Service()
 export class DefectsCommand extends BasePayloadCommand {
 	constructor(
-		private defectService: DefectService,
-		private defectRepository: DefectRepository
+		@Inject() private defectService: DefectService,
+		@Inject() private defectRepository: DefectRepository
 	) {
 		super();
 	}

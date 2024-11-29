@@ -1,3 +1,4 @@
+import { join } from 'path';
 // @ts-ignore
 import * as yml from 'node-yaml';
 import { IInvokeConfig, IMOTConfig, IS3Config } from '../models';
@@ -39,7 +40,9 @@ class Configuration {
 	 */
 	public static getInstance(): Configuration {
 		if (!this.instance) {
-			this.instance = new Configuration('../config/config.yml');
+			this.instance = new Configuration(
+				process.env.BRANCH === 'local' ? '../config/config.yml' : join(process.cwd(), 'config.yml')
+			);
 		}
 
 		return Configuration.instance;

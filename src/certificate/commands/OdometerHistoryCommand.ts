@@ -1,4 +1,4 @@
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ICertificatePayload } from '../../models';
 import { ITestResult } from '../../models';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../../models/Enums';
@@ -7,7 +7,7 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
 export class OdometerHistoryCommand extends BasePayloadCommand {
-	constructor(private testResultRepository: TestResultRepository) {
+	constructor(@Inject() private testResultRepository: TestResultRepository) {
 		super();
 	}
 

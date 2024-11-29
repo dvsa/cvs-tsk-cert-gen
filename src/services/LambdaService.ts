@@ -1,5 +1,5 @@
 import { InvocationRequest, InvocationResponse, InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
 
@@ -8,7 +8,7 @@ import { HTTPError } from '../models/HTTPError';
  */
 @Service()
 class LambdaService {
-	constructor(private lambdaClient: LambdaClient) {}
+	constructor(@Inject() private lambdaClient: LambdaClient) {}
 
 	/**
 	 * Invokes a lambda function based on the given parameters

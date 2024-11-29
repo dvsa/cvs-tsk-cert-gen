@@ -1,7 +1,7 @@
 import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
 import { TestStationSchema } from '@dvsa/cvs-type-definitions/types/v1/test-station';
 import { toUint8Array } from '@smithy/util-utf8';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { IInvokeConfig } from '../models';
 import { LambdaService } from '../services/LambdaService';
 import { Configuration } from '../utils/Configuration';
@@ -10,7 +10,7 @@ import { Configuration } from '../utils/Configuration';
 export class TestStationRepository {
 	private readonly config: Configuration = Configuration.getInstance();
 
-	constructor(private lambdaClient: LambdaService) {}
+	constructor(@Inject() private lambdaClient: LambdaService) {}
 
 	/**
 	 * Method to retrieve Test Station details from API

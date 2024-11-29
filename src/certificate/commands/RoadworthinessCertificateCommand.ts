@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
 import { IRoadworthinessCertificateData } from '../../models';
 import { ICertificatePayload } from '../../models';
@@ -10,8 +10,8 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 @Service()
 export class RoadworthinessCertificateCommand extends BasePayloadCommand {
 	constructor(
-		private defectService: DefectService,
-		private techRecordService: TechRecordService
+		@Inject() private defectService: DefectService,
+		@Inject() private techRecordService: TechRecordService
 	) {
 		super();
 	}

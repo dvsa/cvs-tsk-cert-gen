@@ -8,14 +8,14 @@ import {
 	PutObjectCommandOutput,
 	S3Client,
 } from '@aws-sdk/client-s3';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 
 /**
  * Service class for communicating with Simple Storage Service
  */
 @Service()
 class S3BucketService {
-	constructor(private s3Client: S3Client) {}
+	constructor(@Inject() private s3Client: S3Client) {}
 
 	/**
 	 * Uploads a file to an S3 bucket

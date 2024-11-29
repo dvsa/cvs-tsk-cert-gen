@@ -2,10 +2,10 @@ import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sd
 import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { CertificatePayloadGenerator } from '../certificate/CertificatePayloadGenerator';
 import { CertificateTypes } from '../certificate/CertificateTypes';
-import { IFeatureFlags, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, ITestResult } from '../models';
+import type { IFeatureFlags, IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, ITestResult } from '../models';
 import { CERTIFICATE_DATA, TEST_RESULTS, VEHICLE_TYPES } from '../models/Enums';
 import { TestResultService } from '../test-result/TestResultService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
@@ -20,11 +20,11 @@ class CertificateGenerationService {
 	private readonly config: Configuration = Configuration.getInstance();
 
 	constructor(
-		private lambdaClient: LambdaService,
-		private certificatePayloadGenerator: CertificatePayloadGenerator,
-		private testStationRepository: TestStationRepository,
-		private testResultService: TestResultService,
-		private certificateTypes: CertificateTypes
+		@Inject() private lambdaClient: LambdaService,
+		@Inject() private certificatePayloadGenerator: CertificatePayloadGenerator,
+		@Inject() private testStationRepository: TestStationRepository,
+		@Inject() private testResultService: TestResultService,
+		@Inject() private certificateTypes: CertificateTypes
 	) {}
 
 	/**
@@ -246,4 +246,4 @@ class CertificateGenerationService {
 	}
 }
 
-export { CertificateGenerationService, IGeneratedCertificateResponse };
+export { CertificateGenerationService, type IGeneratedCertificateResponse };
