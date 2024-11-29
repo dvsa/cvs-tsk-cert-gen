@@ -8437,7 +8437,7 @@ describe("cert-gen", () => {
                 context("and the testResultId is malformed", () => {
                     it("should thrown an error", async () => {
                         expect.assertions(1);
-                        jest.spyOn(CertificateRequestProcessor.prototype, 'preProcessSnsPayload').mockImplementation(
+                        jest.spyOn(CertificateRequestProcessor.prototype, 'preProcessPayload').mockImplementation(
                             () => { 
                                 return event[0]
                             }
