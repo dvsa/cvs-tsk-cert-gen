@@ -66,6 +66,10 @@ export class PassOrFailCertificateCommand extends BasePayloadCommand {
 				? moment(testType.lastSeatbeltInstallationCheckDate).format('DD.MM.YYYY')
 				: '\u00A0',
 			SeatBeltNumber: testType.numberOfSeatbeltsFitted,
+			Recalls: {
+				manufacturer: testResult.recalls?.manufacturer ?? null,
+				hasRecall: testResult.recalls?.hasRecall ?? false,
+			},
 		};
 	}
 }

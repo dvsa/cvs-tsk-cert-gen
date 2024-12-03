@@ -146,6 +146,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -208,6 +212,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -278,6 +286,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -323,6 +335,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -403,6 +419,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -513,6 +533,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -581,6 +605,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -662,6 +690,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -730,6 +762,10 @@ describe("cert-gen", () => {
                                             date: "17.01.2019",
                                         },
                                     ],
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 },
                                 Signature: {
                                     ImageType: "png",
@@ -800,6 +836,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -869,6 +909,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -921,7 +965,11 @@ describe("cert-gen", () => {
                                     "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
                                 ],
                                 Trn: "ABC123",
-                                IsTrailer: true
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -974,7 +1022,11 @@ describe("cert-gen", () => {
                                     "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
                                 ],
                                 Trn: "ABC123",
-                                IsTrailer: true
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1027,7 +1079,11 @@ describe("cert-gen", () => {
                                     "1.1 A registration plate: Note one"
                                 ],
                                 Trn: "ABC123",
-                                IsTrailer: true
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1080,7 +1136,11 @@ describe("cert-gen", () => {
                                     "1.1 A registration plate: Note one"
                                 ],
                                 Trn: "ABC123",
-                                IsTrailer: true
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1150,6 +1210,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1219,6 +1283,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1289,6 +1357,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1360,6 +1432,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1429,6 +1505,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1520,6 +1600,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1574,6 +1658,10 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1654,6 +1742,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1786,6 +1878,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1856,6 +1952,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1925,6 +2025,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1995,6 +2099,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2067,6 +2175,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2143,6 +2255,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2221,6 +2337,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2309,6 +2429,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2381,6 +2505,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2461,6 +2589,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2535,6 +2667,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2613,6 +2749,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2666,6 +2806,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2722,6 +2866,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2777,6 +2925,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2833,6 +2985,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2891,6 +3047,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2953,6 +3113,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3017,6 +3181,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3091,6 +3259,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3156,6 +3328,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3230,6 +3406,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3293,6 +3473,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3366,6 +3550,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3432,7 +3620,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3499,7 +3691,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3564,7 +3760,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3631,7 +3831,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3699,7 +3903,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3773,7 +3981,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3847,7 +4059,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -3935,7 +4151,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4003,7 +4223,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4077,7 +4301,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4145,7 +4373,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4219,7 +4451,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4278,7 +4514,11 @@ describe("cert-gen", () => {
                                     TestStationName: "Abshire-Kub",
                                     TestStationPNumber: "09-4129632",
                                     Trn: "ABC123",
-                                    VehicleEuClassification: "M1"
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 },
                                 FAIL_DATA: {
                                     CountryOfRegistrationCode: "gb",
@@ -4304,7 +4544,11 @@ describe("cert-gen", () => {
                                     TestStationName: "Abshire-Kub",
                                     TestStationPNumber: "09-4129632",
                                     Trn: "ABC123",
-                                    VehicleEuClassification: "M1"
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 },
                                 Signature: {
                                     ImageData: null,
@@ -4350,7 +4594,11 @@ describe("cert-gen", () => {
                                     TestStationName: "Abshire-Kub",
                                     TestStationPNumber: "09-4129632",
                                     Trn: "ABC123",
-                                    VehicleEuClassification: "M1"
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 },
                                 FAIL_DATA: {
                                     CountryOfRegistrationCode: "gb",
@@ -4379,7 +4627,11 @@ describe("cert-gen", () => {
                                     TestStationName: "Abshire-Kub",
                                     TestStationPNumber: "09-4129632",
                                     Trn: "ABC123",
-                                    VehicleEuClassification: "M1"
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 },
                                 Signature: {
                                     ImageData: null,
@@ -4447,7 +4699,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 CountryOfRegistrationCode: "gb",
@@ -4489,7 +4745,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4553,7 +4813,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 CountryOfRegistrationCode: "gb",
@@ -4598,7 +4862,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4666,7 +4934,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 CountryOfRegistrationCode: "gb",
@@ -4708,7 +4980,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4772,7 +5048,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 CountryOfRegistrationCode: "gb",
@@ -4817,7 +5097,11 @@ describe("cert-gen", () => {
                                 TestNumber: "W01A00310",
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
-                                VehicleEuClassification: "M1"
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageData: null,
@@ -4885,6 +5169,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -4925,6 +5213,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -4969,6 +5261,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -4990,6 +5286,10 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5062,6 +5362,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -5102,6 +5406,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5206,6 +5514,10 @@ describe("cert-gen", () => {
                                         "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                     ],
                                     PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 }
                             };
 
@@ -5270,6 +5582,10 @@ describe("cert-gen", () => {
                                     PRSDefects: [
                                         "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
                                     ],
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 }
                             };
 
@@ -5334,6 +5650,10 @@ describe("cert-gen", () => {
                                         "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                     ],
                                     PRSDefects: undefined,
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 }
                             };
 
@@ -6010,6 +6330,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6025,6 +6349,79 @@ describe("cert-gen", () => {
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+
+                    it("should return a VTG5 payload without signature but with a recalls object populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: 'manufacturer',
+                                    hasRecall: true
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        const duplicatedTestResult = cloneDeep(testResult);
+
+                        duplicatedTestResult.recalls = {
+                            manufacturer: 'manufacturer',
+                            hasRecall: true
+                        }
+
+                        return await certificateGenerationService
+                            .generatePayload(duplicatedTestResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 callGetTechRecordSpy.mockClear();
@@ -6056,6 +6453,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6127,6 +6528,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6243,6 +6648,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6283,6 +6692,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6328,6 +6741,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6349,6 +6766,10 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6420,6 +6841,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6460,6 +6885,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6579,6 +7008,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6632,6 +7065,10 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6712,6 +7149,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6806,7 +7247,11 @@ describe("cert-gen", () => {
                                 Make: "STANLEY",
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
-                                IsTrailer: true
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6853,6 +7298,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6908,6 +7357,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6996,6 +7449,10 @@ describe("cert-gen", () => {
                                 Make: "STANLEY",
                                 Model: "AUTOTRL",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7112,6 +7569,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -7136,6 +7597,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7183,6 +7648,10 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 Make: "STANLEY",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -7205,7 +7674,11 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
-                                Make: "STANLEY"
+                                Make: "STANLEY",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7260,6 +7733,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -7284,6 +7761,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7387,6 +7868,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7444,6 +7929,10 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7508,6 +7997,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -7606,6 +8099,10 @@ describe("cert-gen", () => {
                                 Make: "STANLEY",
                                 Model: "AUTOTRL",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
