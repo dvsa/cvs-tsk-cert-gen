@@ -9,7 +9,7 @@
       "type": "motorcycle",
       "testerName": "CVS Dev1",
       "date": "04/03/2024",
-      "retestDate": "03/09/2024",
+      "reapplicationDate": "27/05/2024",
       "station": "Abshire-Kub",
       "additionalDefects": [
         {
@@ -47,7 +47,7 @@
       "type": "motorcycle",
       "testerName": "CVS Dev1",
       "date": "04/03/2024",
-      "retestDate": "03/09/2024",
+      "reapplicationDate": "27/05/2024",
       "station": "Abshire-Kub",
       "additionalDefects": [
         {

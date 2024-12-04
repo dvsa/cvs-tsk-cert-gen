@@ -1,12 +1,23 @@
+import 'reflect-metadata';
+
+import { Container } from 'typedi';
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import { CertificateUploadService } from "../../src/services/CertificateUploadService";
 import { certGen } from "../../src/functions/certGen";
 import lambdaTester from "lambda-tester";
 import sinon from "sinon";
+import { S3BucketService } from "../../src/services/S3BucketService";
+import { LambdaService } from "../../src/services/LambdaService";
+import { S3BucketMockService } from "../models/S3BucketMockService";
+import { LambdaMockService } from "../models/LambdaMockService";
+import { SQSBatchResponse } from 'aws-lambda';
 // tslint:disable:max-line-length
 
 describe("Invoke certGen Function", () => {
+  Container.set(S3BucketService, new S3BucketMockService());
+  Container.set(LambdaService, new LambdaMockService());
   const sandbox = sinon.createSandbox();
+
   afterEach(() => {
     sandbox.restore();
   });
@@ -38,7 +49,8 @@ describe("Invoke certGen Function", () => {
         .stub(CertificateUploadService.prototype, "uploadCertificate")
         .resolvesThis();
 
-      return lambda.event(payload).expectResolve((response: any) => {
+      return lambda.event(payload).expectResolve((response: SQSBatchResponse) => {
+        expect(response.batchItemFailures.length).toBe(0);
         sinon.assert.callCount(certGenServiceStub, 1);
         sinon.assert.callCount(certUploadServiceStub, 1);
         certGenServiceStub.restore();
@@ -77,7 +89,8 @@ describe("Invoke certGen Function", () => {
           .stub(CertificateUploadService.prototype, "uploadCertificate")
           .resolvesThis();
 
-        return lambda.event(payload).expectResolve((response: any) => {
+        return lambda.event(payload).expectResolve((response: SQSBatchResponse) => {
+          expect(response.batchItemFailures.length).toBe(0);
           sinon.assert.callCount(certGenServiceStub, 1);
           sinon.assert.callCount(certUploadServiceStub, 1);
           certGenServiceStub.restore();
@@ -117,7 +130,8 @@ describe("Invoke certGen Function", () => {
           .stub(CertificateUploadService.prototype, "uploadCertificate")
           .resolvesThis();
 
-        return lambda.event(payload).expectResolve((response: any) => {
+        return lambda.event(payload).expectResolve((response: SQSBatchResponse) => {
+          expect(response.batchItemFailures.length).toBe(0);
           sinon.assert.callCount(certGenServiceStub, 1);
           sinon.assert.callCount(certUploadServiceStub, 1);
           certGenServiceStub.restore();
@@ -159,7 +173,8 @@ describe("Invoke certGen Function", () => {
           "uploadCertificate"
         );
 
-        return lambda.event(payload).expectReject((response: any) => {
+        return lambda.event(payload).expectResolve((response: SQSBatchResponse) => {
+          expect(response.batchItemFailures.length).toBe(1);
           sinon.assert.callCount(certGenServiceStub, 0);
           sinon.assert.callCount(certUploadServiceStub, 0);
           certGenServiceStub.restore();
