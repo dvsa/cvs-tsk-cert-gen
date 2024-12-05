@@ -1,10 +1,12 @@
 const mockUnmarshall = jest.fn();
 
 import { SQSRecord } from "aws-lambda";
+import 'reflect-metadata';
 import { CertificateRequestProcessor } from "../../src/functions/CertificateRequestProcessor";
 import { CertificateGenerationService } from "../../src/services/CertificateGenerationService";
 import { CertificateUploadService } from "../../src/services/CertificateUploadService";
 import { TestConvertorService } from "../../src/services/TestConvertorService";
+
 
 jest.mock('@aws-sdk/util-dynamodb', () => ({
     unmarshall: mockUnmarshall,
