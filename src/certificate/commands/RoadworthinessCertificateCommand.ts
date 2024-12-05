@@ -1,6 +1,6 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayload, IRoadworthinessCertificateData } from '../../models';
 import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../../models/Enums';
@@ -10,8 +10,8 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 @Service()
 export class RoadworthinessCertificateCommand extends BasePayloadCommand {
 	constructor(
-		private defectService: DefectService,
-		private techRecordService: TechRecordService
+		@Inject() private defectService: DefectService,
+		@Inject() private techRecordService: TechRecordService
 	) {
 		super();
 	}

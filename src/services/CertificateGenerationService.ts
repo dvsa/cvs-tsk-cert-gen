@@ -3,7 +3,7 @@ import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { CertificatePayloadGenerator } from '../certificate/CertificatePayloadGenerator';
 import { CertificateTypes } from '../certificate/CertificateTypes';
 import {
@@ -27,11 +27,11 @@ class CertificateGenerationService {
 	private readonly config: Configuration = Configuration.getInstance();
 
 	constructor(
-		private lambdaClient: LambdaService,
-		private certificatePayloadGenerator: CertificatePayloadGenerator,
-		private testStationRepository: TestStationRepository,
-		private testResultService: TestResultService,
-		private certificateTypes: CertificateTypes
+		@Inject() private lambdaClient: LambdaService,
+		@Inject() private certificatePayloadGenerator: CertificatePayloadGenerator,
+		@Inject() private testStationRepository: TestStationRepository,
+		@Inject() private testResultService: TestResultService,
+		@Inject() private certificateTypes: CertificateTypes
 	) {}
 
 	/**
@@ -245,4 +245,4 @@ class CertificateGenerationService {
 	}
 }
 
-export { CertificateGenerationService, IGeneratedCertificateResponse };
+export { CertificateGenerationService, type IGeneratedCertificateResponse };

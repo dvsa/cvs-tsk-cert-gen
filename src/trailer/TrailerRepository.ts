@@ -1,6 +1,6 @@
 import { InvocationRequest } from '@aws-sdk/client-lambda';
 import { toUint8Array } from '@smithy/util-utf8';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { IInvokeConfig, ITrailerRegistration } from '../models';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
@@ -12,7 +12,7 @@ import { IGetTrailerRegistrationResult } from './IGetTrailerRegistrationResult';
 export class TrailerRepository {
 	private readonly config: Configuration = Configuration.getInstance();
 
-	constructor(private lambdaClient: LambdaService) {}
+	constructor(@Inject() private lambdaClient: LambdaService) {}
 
 	/**
 	 * To fetch trailer registration

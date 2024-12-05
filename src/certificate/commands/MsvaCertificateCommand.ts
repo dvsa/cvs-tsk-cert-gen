@@ -1,6 +1,6 @@
 import { SpecialistCustomDefectsSchemaPut } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayload } from '../../models';
 import { CERTIFICATE_DATA } from '../../models/Enums';
@@ -8,7 +8,7 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
 export class MsvaCertificateCommand extends BasePayloadCommand {
-	constructor(private defectService: DefectService) {
+	constructor(@Inject() private defectService: DefectService) {
 		super();
 	}
 

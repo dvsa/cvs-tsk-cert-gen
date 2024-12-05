@@ -1,6 +1,6 @@
 import { InvocationRequest, InvocationResponse } from '@aws-sdk/client-lambda';
 import { toUint8Array } from '@smithy/util-utf8';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { IDefectParent, IInvokeConfig } from '../models';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
@@ -11,7 +11,7 @@ import { Configuration } from '../utils/Configuration';
 export class DefectRepository {
 	private readonly config: Configuration = Configuration.getInstance();
 
-	constructor(private lambdaClient: LambdaService) {}
+	constructor(@Inject() private lambdaClient: LambdaService) {}
 
 	/**
 	 * Method used to retrieve the Welsh translations for the certificates

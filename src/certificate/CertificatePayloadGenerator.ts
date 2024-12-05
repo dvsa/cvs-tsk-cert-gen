@@ -1,5 +1,5 @@
 import merge from 'lodash.merge';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ICertificatePayload, TestResultSchemaTestTypesAsObject } from '../models';
 import { CERTIFICATE_DATA } from '../models/Enums';
 import { CertificatePayloadStateBag } from './CertificatePayloadStateBag';
@@ -37,17 +37,17 @@ export class CertificatePayloadGenerator implements ICertificatePayloadCommand {
 	 * that can be used for generating a certificate.
 	 */
 	constructor(
-		private passOrFailGenerator: PassOrFailCertificateCommand,
-		private rwtGenerator: RoadworthinessCertificateCommand,
-		private adrGenerator: AdrCertificateCommand,
-		private ivaGenerator: IvaCertificateCommand,
-		private msvaGenerator: MsvaCertificateCommand,
-		private signatureCommand: SignatureCommand,
-		private watermarkCommand: WatermarkCommand,
-		private testHistoryCommand: TestHistoryCommand,
-		private defectsCommand: DefectsCommand,
-		private makeAndModelCommand: MakeAndModelCommand,
-		private odometerHistoryCommand: OdometerHistoryCommand
+		@Inject() private passOrFailGenerator: PassOrFailCertificateCommand,
+		@Inject() private rwtGenerator: RoadworthinessCertificateCommand,
+		@Inject() private adrGenerator: AdrCertificateCommand,
+		@Inject() private ivaGenerator: IvaCertificateCommand,
+		@Inject() private msvaGenerator: MsvaCertificateCommand,
+		@Inject() private signatureCommand: SignatureCommand,
+		@Inject() private watermarkCommand: WatermarkCommand,
+		@Inject() private testHistoryCommand: TestHistoryCommand,
+		@Inject() private defectsCommand: DefectsCommand,
+		@Inject() private makeAndModelCommand: MakeAndModelCommand,
+		@Inject() private odometerHistoryCommand: OdometerHistoryCommand
 	) {}
 
 	/**

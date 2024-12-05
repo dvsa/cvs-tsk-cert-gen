@@ -1,6 +1,6 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
 import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayload, IFlatDefect, TestResultSchemaTestTypesAsObject } from '../../models';
@@ -10,8 +10,8 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 @Service()
 export class DefectsCommand extends BasePayloadCommand {
 	constructor(
-		private defectService: DefectService,
-		private defectRepository: DefectRepository
+		@Inject() private defectService: DefectService,
+		@Inject() private defectRepository: DefectRepository
 	) {
 		super();
 	}

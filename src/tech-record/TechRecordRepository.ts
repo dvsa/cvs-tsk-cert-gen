@@ -1,6 +1,6 @@
 import { InvocationRequest } from '@aws-sdk/client-lambda';
 import { toUint8Array } from '@smithy/util-utf8';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { IInvokeConfig } from '../models';
 import { TechRecordGet, TechRecordType } from '../models/Types';
 import { LambdaService } from '../services/LambdaService';
@@ -13,7 +13,7 @@ import { Configuration } from '../utils/Configuration';
 export class TechRecordRepository {
 	private readonly config: Configuration = Configuration.getInstance();
 
-	constructor(private lambdaClient: LambdaService) {}
+	constructor(@Inject() private lambdaClient: LambdaService) {}
 
 	/**
 	 * Used to get a singular whole technical record.

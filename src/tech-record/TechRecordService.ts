@@ -1,5 +1,5 @@
 import { TechRecordSearchSchema } from '@dvsa/cvs-type-definitions/types/v3/tech-record/get/search';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { IWeightDetails } from '../models';
 import { VEHICLE_TYPES } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
@@ -8,7 +8,7 @@ import { TechRecordRepository } from './TechRecordRepository';
 
 @Service()
 export class TechRecordService {
-	constructor(private techRecordRepository: TechRecordRepository) {}
+	constructor(@Inject() private techRecordRepository: TechRecordRepository) {}
 
 	/**
 	 * Method for getting make and model based on the vehicle from a test-result

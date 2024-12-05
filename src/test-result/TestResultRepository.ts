@@ -2,7 +2,7 @@ import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sd
 import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { IInvokeConfig } from '../models';
 import { ERRORS } from '../models/Enums';
 import { HTTPError } from '../models/HTTPError';
@@ -13,7 +13,7 @@ import { Configuration } from '../utils/Configuration';
 export class TestResultRepository {
 	private readonly config: Configuration = Configuration.getInstance();
 
-	constructor(private lambdaClient: LambdaService) {}
+	constructor(@Inject() private lambdaClient: LambdaService) {}
 
 	/**
 	 * Retrieves the odometer history for a given VIN from the Test Results microservice

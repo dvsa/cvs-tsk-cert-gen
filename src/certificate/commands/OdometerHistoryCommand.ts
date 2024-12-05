@@ -1,5 +1,5 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 import { ICertificatePayload, TestResultSchemaTestTypesAsObject } from '../../models';
 import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../../models/Enums';
 import { TestResultRepository } from '../../test-result/TestResultRepository';
@@ -7,7 +7,7 @@ import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
 @Service()
 export class OdometerHistoryCommand extends BasePayloadCommand {
-	constructor(private testResultRepository: TestResultRepository) {
+	constructor(@Inject() private testResultRepository: TestResultRepository) {
 		super();
 	}
 
