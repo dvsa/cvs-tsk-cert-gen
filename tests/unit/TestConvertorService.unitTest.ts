@@ -43,8 +43,13 @@ describe('Test Convertor Service', () => {
         it('should return array length of one if testTypes has one object', () => {
             const test = {
                 foo: 'bar',
+                testStatus: 'submitted',
                 testTypes: [
-                    { object1: 'value1' }
+                    { 
+                        object1: 'value1',
+                        testResult: 'pass',
+                        testTypeClassification: 'Annual With Certificate'
+                    }
                 ]
             }
 
@@ -57,9 +62,19 @@ describe('Test Convertor Service', () => {
         it('should return array length of two if testTypes has two objects', () => {
             const test = {
                 foo: 'bar',
+                testStatus: 'submitted',
                 testTypes: [
-                    { object1: 'value1' },
-                    { object2: 'value2' },
+                    { 
+                        object1: 'value1',
+                        testResult: 'prs',
+                        testTypeClassification: 'Annual With Certificate'
+                    },
+                    { 
+                        object2: 'value2',
+                        testResult: 'fail',
+                        testTypeClassification: 'IVA With Certificate',
+                        requiredStandards: ['this is one', 'this is two']
+                    },
                 ]
             }
 
@@ -74,10 +89,25 @@ describe('Test Convertor Service', () => {
         it('should return array length of three if testTypes has three objects', () => {
             const test = {
                 foo: 'bar',
+                testStatus: 'submitted',
                 testTypes: [
-                    { object1: 'value1' },
-                    { object2: 'value2' },
-                    { object3: 'value3' },
+                    { 
+                        object1: 'value1',
+                        testResult: 'fail',
+                        testTypeClassification: 'Annual With Certificate' 
+                    },
+                    { 
+                        object2: 'value2',
+                        testResult: 'fail',
+                        testTypeClassification: 'IVA With Certificate',
+                        requiredStandards: ['this is one', 'this is two'] 
+                    },
+                    { 
+                        object3: 'value3',
+                        testResult: 'fail',
+                        testTypeClassification: 'MSVA With Certificate',
+                        requiredStandards: ['this is one', 'this is two'] 
+                    },
                 ]
             }
 
@@ -90,6 +120,65 @@ describe('Test Convertor Service', () => {
             expect((res[0] as any).foo).toBe('bar')
             expect((res[1] as any).foo).toBe('bar')
             expect((res[2] as any).foo).toBe('bar')
+        })
+        it('should return an array length of 1 if testTypes has three objects, but only one correct test types', () => {
+            const test = {
+                foo: 'bar',
+                testStatus: 'submitted',
+                testTypes: [
+                    { 
+                        object1: 'value1',
+                        testResult: 'fail',
+                        testTypeClassification: 'Bad test class'
+                    },
+                    { 
+                        object2: 'value2',
+                        testResult: 'fail',
+                        testTypeClassification: 'Not a test class'  
+                    },
+                    { 
+                        object3: 'value3',
+                        testResult: 'pass',
+                        testTypeClassification: 'Annual With Certificate' 
+                    },
+                ]
+            }
+
+            const res = TestConvertorService.expandRecords(test);
+
+            expect(res.length).toBe(1);
+            expect((res[0] as any).testTypes.object3).toBe('value3')
+            expect((res[0] as any).foo).toBe('bar')
+        })
+        it('should return an array length of 1 if testTypes has three objects with IVA, but only one with required standards', () => {
+            const test = {
+                foo: 'bar',
+                testStatus: 'submitted',
+                testTypes: [
+                    { 
+                        object1: 'value1',
+                        testResult: 'fail',
+                        testTypeClassification: 'IVA With Certificate',
+                        requiredStandards: ['this is one', 'this is two'] 
+                    },
+                    { 
+                        object2: 'value2',
+                        testResult: 'fail',
+                        testTypeClassification: 'IVA With Certificate',
+                    },
+                    { 
+                        object3: 'value3',
+                        testResult: 'pass',
+                        testTypeClassification: 'MSVA With Certificate',
+                    },
+                ]
+            }
+
+            const res = TestConvertorService.expandRecords(test);
+
+            expect(res.length).toBe(1);
+            expect((res[0] as any).testTypes.object1).toBe('value1')
+            expect((res[0] as any).foo).toBe('bar')
         })
     });
 })

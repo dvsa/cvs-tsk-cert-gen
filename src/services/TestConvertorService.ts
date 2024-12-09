@@ -35,7 +35,45 @@ class TestConvertorService {
 			});
 		}
 
-		return splitRecords.reduce((acc: any[], val: any) => acc.concat(val), []); // Flatten the array
+		const flatSplitRecords: TestResultSchemaTestTypesAsObject[] = splitRecords.reduce(
+			(acc: any[], val: any) => acc.concat(val),
+			[]
+		);
+		const filteredRecords = TestConvertorService.filterCertificateGenerationRecords(flatSplitRecords);
+
+		return filteredRecords;
+	}
+
+	private static filterCertificateGenerationRecords(
+		records: TestResultSchemaTestTypesAsObject[]
+	): TestResultSchemaTestTypesAsObject[] {
+		return records
+			.filter((record: any) => {
+				// Filter by testStatus
+				return record.testStatus === 'submitted';
+			})
+			.filter((record: any) => {
+				// Filter by testResult (abandoned tests are not allowed)
+				return (
+					record.testTypes.testResult === 'pass' ||
+					record.testTypes.testResult === 'fail' ||
+					record.testTypes.testResult === 'prs'
+				);
+			})
+			.filter((record: any) => {
+				// Filter by testTypeClassification or testTypeClassification, testResult and requiredStandards present and populated
+				const { testTypeClassification, testResult, requiredStandards } = record.testTypes;
+				const isTestResultFail = testResult === 'fail';
+				const hasNonEmptyRequiredStandards = !!requiredStandards?.length;
+
+				const isAnnualWithCertificate = testTypeClassification === 'Annual With Certificate';
+				const isIvaWithCertificate =
+					testTypeClassification === 'IVA With Certificate' && isTestResultFail && hasNonEmptyRequiredStandards;
+				const isMsvaWithCertificate =
+					testTypeClassification === 'MSVA With Certificate' && isTestResultFail && hasNonEmptyRequiredStandards;
+
+				return isAnnualWithCertificate || isIvaWithCertificate || isMsvaWithCertificate;
+			});
 	}
 }
 
