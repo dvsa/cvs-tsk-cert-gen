@@ -1,3 +1,4 @@
+import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum';
 import { Service } from 'typedi';
 import { TestResultSchemaTestTypesAsObject } from '../models';
 
@@ -16,64 +17,50 @@ class TestConvertorService {
 	}
 
 	public static expandRecords(record: any): TestResultSchemaTestTypesAsObject[] {
-		console.log('expanding records');
-		const splitRecords: TestResultSchemaTestTypesAsObject[] = [];
-		const templateRecord = Object.assign({}, record);
-		Object.assign(templateRecord, {});
-		if (Array.isArray(record.testTypes)) {
-			record.testTypes?.forEach((testType: any, i: number, array: any[]) => {
-				const clonedRecord: any = Object.assign({}, templateRecord); // Create record from template
-				Object.assign(clonedRecord, { testTypes: testType }); // Assign it the test type
-				Object.assign(clonedRecord, {
-					// Assign certificate order number
-					order: {
-						current: i + 1,
-						total: array.length,
-					},
-				});
-				splitRecords.push(clonedRecord);
-			});
+		{
+			if (!Array.isArray(record.testTypes)) {
+				return [];
+			}
+
+			const expandedRecords = record.testTypes.map((testType: any, i: number) => ({
+				...record,
+				testTypes: testType,
+				order: {
+					current: i + 1,
+					total: record.testTypes.length,
+				},
+			}));
+
+			return TestConvertorService.filterCertificateGenerationRecords(expandedRecords);
 		}
-
-		const flatSplitRecords: TestResultSchemaTestTypesAsObject[] = splitRecords.reduce(
-			(acc: any[], val: any) => acc.concat(val),
-			[]
-		);
-		const filteredRecords = TestConvertorService.filterCertificateGenerationRecords(flatSplitRecords);
-
-		return filteredRecords;
 	}
 
 	private static filterCertificateGenerationRecords(
 		records: TestResultSchemaTestTypesAsObject[]
 	): TestResultSchemaTestTypesAsObject[] {
-		return records
-			.filter((record: any) => {
-				// Filter by testStatus
-				return record.testStatus === 'submitted';
-			})
-			.filter((record: any) => {
-				// Filter by testResult (abandoned tests are not allowed)
-				return (
-					record.testTypes.testResult === 'pass' ||
-					record.testTypes.testResult === 'fail' ||
-					record.testTypes.testResult === 'prs'
-				);
-			})
-			.filter((record: any) => {
-				// Filter by testTypeClassification or testTypeClassification, testResult and requiredStandards present and populated
-				const { testTypeClassification, testResult, requiredStandards } = record.testTypes;
-				const isTestResultFail = testResult === 'fail';
-				const hasNonEmptyRequiredStandards = !!requiredStandards?.length;
+		return records.filter((record: any) => {
+			if (record.testStatus !== 'submitted') {
+				return false;
+			}
 
-				const isAnnualWithCertificate = testTypeClassification === 'Annual With Certificate';
-				const isIvaWithCertificate =
-					testTypeClassification === 'IVA With Certificate' && isTestResultFail && hasNonEmptyRequiredStandards;
-				const isMsvaWithCertificate =
-					testTypeClassification === 'MSVA With Certificate' && isTestResultFail && hasNonEmptyRequiredStandards;
+			const { testTypeClassification, testResult, requiredStandards } = record.testTypes;
 
-				return isAnnualWithCertificate || isIvaWithCertificate || isMsvaWithCertificate;
-			});
+			// Filter by testResult (abandoned tests are not allowed)
+			if (![TestResults.PASS, TestResults.FAIL, TestResults.PRS].includes(testResult)) {
+				return false;
+			}
+
+			// Filter by testTypeClassification or testTypeClassification, testResult and requiredStandards present and populated
+			if (testTypeClassification === 'Annual With Certificate') {
+				return true;
+			}
+
+			if (['IVA With Certificate', 'MSVA With Certificate'].includes(testTypeClassification)) {
+				return testResult === 'fail' && requiredStandards?.length;
+			}
+
+			return false;
+		});
 	}
 }
 
