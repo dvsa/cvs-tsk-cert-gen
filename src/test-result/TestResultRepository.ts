@@ -29,7 +29,7 @@ export class TestResultRepository {
 			Payload: toUint8Array(
 				JSON.stringify({
 					httpMethod: 'GET',
-					path: `/test-results/${systemNumber}?fromDateTime=${fromDateTime}`,
+					path: `/test-results/${systemNumber}`,
 					pathParameters: {
 						systemNumber,
 					},
