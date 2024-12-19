@@ -20,6 +20,7 @@ export class TestResultRepository {
 	 * @param systemNumber - systemNumber for which to retrieve odometer history
 	 */
 	public async getOdometerHistory(systemNumber: string) {
+		const fromDateTime = new Date('01-01-2019').toISOString();
 		const config: IInvokeConfig = this.config.getInvokeConfig();
 		const invokeParams: InvocationRequest = {
 			FunctionName: config.functions.testResults.name,
@@ -28,9 +29,12 @@ export class TestResultRepository {
 			Payload: toUint8Array(
 				JSON.stringify({
 					httpMethod: 'GET',
-					path: `/test-results/${systemNumber}`,
+					path: `/test-results/${systemNumber}?fromDateTime=${fromDateTime}`,
 					pathParameters: {
 						systemNumber,
+					},
+					queryStringParameters: {
+						fromDateTime,
 					},
 				})
 			),
