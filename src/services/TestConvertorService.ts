@@ -46,7 +46,7 @@ class TestConvertorService {
 			const { testTypeClassification, testResult, requiredStandards } = record.testTypes;
 
 			if (testResult === TestResults.ABANDONED) {
-				return true;
+				return false; //TODO - permanent fix in next release - 5.29 (CB2-15689)
 			}
 
 			if (![TestResults.PASS, TestResults.FAIL, TestResults.PRS].includes(testResult)) {
