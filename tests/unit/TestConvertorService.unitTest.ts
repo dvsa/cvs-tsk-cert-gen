@@ -1,8 +1,10 @@
-import { TestConvertorService } from "../../src/services/TestConvertorService";
+import "reflect-metadata";
 
+import { TestConvertorService } from "../../src/services/TestConvertorService";
+import { CertificateRequestProcessor } from "../../src/functions/CertificateRequestProcessor";
 
 describe('Test Convertor Service', () => {
-     describe('isProcessModifyEventsEnabled', () => {
+    describe('isProcessModifyEventsEnabled', () => {
         it('should throw an error when the environment variable is not set to true or false', () => {
             expect.assertions(1)
             process.env.PROCESS_MODIFY_EVENTS = 'lol';
@@ -45,7 +47,7 @@ describe('Test Convertor Service', () => {
                 foo: 'bar',
                 testStatus: 'submitted',
                 testTypes: [
-                    { 
+                    {
                         object1: 'value1',
                         testResult: 'pass',
                         testTypeClassification: 'Annual With Certificate'
@@ -64,12 +66,12 @@ describe('Test Convertor Service', () => {
                 foo: 'bar',
                 testStatus: 'submitted',
                 testTypes: [
-                    { 
+                    {
                         object1: 'value1',
                         testResult: 'prs',
                         testTypeClassification: 'Annual With Certificate'
                     },
-                    { 
+                    {
                         object2: 'value2',
                         testResult: 'fail',
                         testTypeClassification: 'IVA With Certificate',
@@ -91,22 +93,22 @@ describe('Test Convertor Service', () => {
                 foo: 'bar',
                 testStatus: 'submitted',
                 testTypes: [
-                    { 
+                    {
                         object1: 'value1',
                         testResult: 'fail',
-                        testTypeClassification: 'Annual With Certificate' 
+                        testTypeClassification: 'Annual With Certificate'
                     },
-                    { 
+                    {
                         object2: 'value2',
                         testResult: 'fail',
                         testTypeClassification: 'IVA With Certificate',
-                        requiredStandards: ['this is one', 'this is two'] 
+                        requiredStandards: ['this is one', 'this is two']
                     },
-                    { 
+                    {
                         object3: 'value3',
                         testResult: 'fail',
                         testTypeClassification: 'MSVA With Certificate',
-                        requiredStandards: ['this is one', 'this is two'] 
+                        requiredStandards: ['this is one', 'this is two']
                     },
                 ]
             }
@@ -126,20 +128,20 @@ describe('Test Convertor Service', () => {
                 foo: 'bar',
                 testStatus: 'submitted',
                 testTypes: [
-                    { 
+                    {
                         object1: 'value1',
                         testResult: 'fail',
                         testTypeClassification: 'Bad test class'
                     },
-                    { 
+                    {
                         object2: 'value2',
                         testResult: 'fail',
-                        testTypeClassification: 'Not a test class'  
+                        testTypeClassification: 'Not a test class'
                     },
-                    { 
+                    {
                         object3: 'value3',
                         testResult: 'pass',
-                        testTypeClassification: 'Annual With Certificate' 
+                        testTypeClassification: 'Annual With Certificate'
                     },
                 ]
             }
@@ -155,18 +157,18 @@ describe('Test Convertor Service', () => {
                 foo: 'bar',
                 testStatus: 'submitted',
                 testTypes: [
-                    { 
+                    {
                         object1: 'value1',
                         testResult: 'fail',
                         testTypeClassification: 'IVA With Certificate',
-                        requiredStandards: ['this is one', 'this is two'] 
+                        requiredStandards: ['this is one', 'this is two']
                     },
-                    { 
+                    {
                         object2: 'value2',
                         testResult: 'fail',
                         testTypeClassification: 'IVA With Certificate',
                     },
-                    { 
+                    {
                         object3: 'value3',
                         testResult: 'pass',
                         testTypeClassification: 'MSVA With Certificate',
@@ -180,5 +182,104 @@ describe('Test Convertor Service', () => {
             expect((res[0] as any).testTypes.object1).toBe('value1')
             expect((res[0] as any).foo).toBe('bar')
         })
+        it('should return an array length 1 if testTypes has 1 object that is abandoned and has valid testTypeId', () => {
+            const test = {
+                foo: 'bar',
+                testStatus: 'submitted',
+                testTypes: [
+                    {
+                        object1: 'value1',
+                        testResult: "abandoned",
+                        testTypeId: "1",
+                        testTypeClassification: 'Annual Test',
+                    }
+                ]
+            }
+
+            const spy = jest.spyOn(TestConvertorService, 'shouldGenerateAbandonedCerts').mockReturnValue(true);
+
+            const res = TestConvertorService.expandRecords(test);
+
+            expect(res.length).toBe(1);
+
+            spy.mockRestore();
+        });
+        it('should return an array length 0 if testTypes has 1 object that is abandoned and has invalid testTypeId', () => {
+            const test = {
+                foo: 'bar',
+                testStatus: 'submitted',
+                testTypes: [
+                    {
+                        object1: 'value1',
+                        testResult: "abandoned",
+                        testTypeId: "0",
+                        testTypeClassification: 'Annual Test',
+                    }
+                ]
+            }
+
+            const spy = jest.spyOn(TestConvertorService, 'shouldGenerateAbandonedCerts').mockReturnValue(true);
+
+            const res = TestConvertorService.expandRecords(test);
+
+            expect(res.length).toBe(0);
+
+            spy.mockRestore();
+        });
+        it('should return an array length 0 if testTypes has 1 object that is abandoned and has valid testTypeId but flag is off', () => {
+            const test = {
+                foo: 'bar',
+                testStatus: 'submitted',
+                testTypes: [
+                    {
+                        object1: 'value1',
+                        testResult: "abandoned",
+                        testTypeId: "1",
+                        testTypeClassification: 'Annual Test',
+                    }
+                ]
+            }
+
+            const spy = jest.spyOn(TestConvertorService, 'shouldGenerateAbandonedCerts').mockReturnValue(false);
+
+            const res = TestConvertorService.expandRecords(test);
+
+            expect(res.length).toBe(0);
+
+            spy.mockRestore();
+        });
+    });
+
+    describe('shouldGenerateAbandonedCerts', () => {
+        it('should return true if flag is enabled', () => {
+            CertificateRequestProcessor.flags = {
+                welshTranslation: {
+                    enabled: true,
+                    translatePassTestResult: true,
+                    translatePrsTestResult: true,
+                    translateFailTestResult: true,
+                },
+                abandonedCerts: {
+                    enabled: true,
+                },
+            };
+            const result = TestConvertorService.shouldGenerateAbandonedCerts();
+            expect(result).toBeTruthy();
+        });
+        it('should return false if flag is disabled', () => {
+            CertificateRequestProcessor.flags = {
+                welshTranslation: {
+                    enabled: true,
+                    translatePassTestResult: true,
+                    translatePrsTestResult: true,
+                    translateFailTestResult: true,
+                },
+                abandonedCerts: {
+                    enabled: false,
+                },
+            };
+            const result = TestConvertorService.shouldGenerateAbandonedCerts();
+            expect(result).toBeFalsy();
+        });
     });
 })

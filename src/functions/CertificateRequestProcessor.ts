@@ -1,10 +1,11 @@
 import { DeleteObjectCommandOutput, PutObjectCommandOutput } from '@aws-sdk/client-s3';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { TestStatus } from '@dvsa/cvs-type-definitions/types/v1/enums/testStatus.enum';
 import { DynamoDBRecord, SQSRecord } from 'aws-lambda';
 import { Inject, Service } from 'typedi';
 import { validate as uuidValidate } from 'uuid';
-import { TestResultSchemaTestTypesAsObject } from '../models';
+import { IFeatureFlags, TestResultSchemaTestTypesAsObject } from '../models';
 import { ERRORS } from '../models/Enums';
 import { CertificateGenerationService } from '../services/CertificateGenerationService';
 import { CertificateUploadService } from '../services/CertificateUploadService';
@@ -14,12 +15,16 @@ export type CertGenReturn = PutObjectCommandOutput | DeleteObjectCommandOutput;
 
 @Service()
 export class CertificateRequestProcessor {
+	public static flags: IFeatureFlags;
+
 	constructor(
 		@Inject() private certificateGenerationService: CertificateGenerationService,
 		@Inject() private certificateUploadService: CertificateUploadService
 	) {}
 
 	public async preProcessPayload(record: SQSRecord): Promise<TestResultSchemaTestTypesAsObject[]> {
+		await this.retrieveAndSetFlags();
+
 		console.log('pre processing SNS payload');
 		let records: TestResultSchemaTestTypesAsObject[] = [];
 		const dynamoRecord: DynamoDBRecord = JSON.parse(record.body) as DynamoDBRecord;
@@ -62,5 +67,25 @@ export class CertificateRequestProcessor {
 	private async create(testResult: TestResultSchemaTestTypesAsObject): Promise<PutObjectCommandOutput> {
 		const response = await this.certificateGenerationService.generateCertificate(testResult);
 		return this.certificateUploadService.uploadCertificate(response);
+	}
+
+	/**
+	 * Retrieve feature flags by using or setting cache
+	 */
+	public async retrieveAndSetFlags() {
+		if (CertificateRequestProcessor.flags) {
+			console.log('Feature flag cache already set', CertificateRequestProcessor.flags);
+			return;
+		}
+
+		console.log('Feature flag cache not set, retrieving feature flags');
+
+		try {
+			CertificateRequestProcessor.flags = await getProfile();
+		} catch (e) {
+			console.error(`Failed to retrieve feature flags - ${e}`);
+		}
+
+		console.log('Using feature flags ', CertificateRequestProcessor.flags);
 	}
 }

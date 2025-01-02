@@ -1,18 +1,12 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sdk/client-lambda';
-import { getProfile } from '@dvsa/cvs-feature-flags/profiles/vtx';
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
 import { Inject, Service } from 'typedi';
 import { CertificatePayloadGenerator } from '../certificate/CertificatePayloadGenerator';
 import { CertificateTypes } from '../certificate/CertificateTypes';
-import {
-	IFeatureFlags,
-	IGeneratedCertificateResponse,
-	IInvokeConfig,
-	IMOTConfig,
-	TestResultSchemaTestTypesAsObject,
-} from '../models';
+import { CertificateRequestProcessor } from '../functions/CertificateRequestProcessor';
+import { IGeneratedCertificateResponse, IInvokeConfig, IMOTConfig, TestResultSchemaTestTypesAsObject } from '../models';
 import { CERTIFICATE_DATA, VEHICLE_TYPES } from '../models/Enums';
 import { TestResultService } from '../test-result/TestResultService';
 import { TestStationRepository } from '../test-station/TestStationRepository';
@@ -25,7 +19,6 @@ import { LambdaService } from './LambdaService';
 @Service()
 class CertificateGenerationService {
 	private readonly config: Configuration = Configuration.getInstance();
-	private static flags: IFeatureFlags;
 
 	constructor(
 		@Inject() private lambdaClient: LambdaService,
@@ -44,26 +37,17 @@ class CertificateGenerationService {
 		const iConfig: IInvokeConfig = this.config.getInvokeConfig();
 		const testType: any = testResult.testTypes;
 		let shouldTranslateTestResult = false;
-		let shouldGenerateAbandonCertificate = false;
 
-		await this.retrieveAndSetFlags();
-
-		if (CertificateGenerationService.flags) {
+		if (CertificateRequestProcessor.flags) {
 			shouldTranslateTestResult = await this.shouldTranslateTestResult(testResult);
-			shouldGenerateAbandonCertificate = this.shouldGenerateAbandonedCerts();
 		}
 
 		console.log('shouldTranslateTestResult: ', shouldTranslateTestResult);
-		console.log('shouldGenerateAbandonCertificate: ', shouldGenerateAbandonCertificate);
 
 		const payload: string = JSON.stringify(await this.generatePayload(testResult, shouldTranslateTestResult));
 
 		let vehicleTestRes: string;
-		if (
-			this.testResultService.isValidForAbandonedCertificate(testType.testTypeId) &&
-			testType.testResult === 'abandoned' &&
-			shouldGenerateAbandonCertificate
-		) {
+		if (testType.testResult === 'abandoned') {
 			vehicleTestRes = `${testResult.vehicleType}_abandoned`;
 		} else if (this.testResultService.isRoadworthinessTestType(testType.testTypeId)) {
 			// CVSB-7677 is road-worthiness test
@@ -131,26 +115,6 @@ class CertificateGenerationService {
 	}
 
 	/**
-	 * Retrieve feature flags by using or setting cache
-	 */
-	public async retrieveAndSetFlags() {
-		if (CertificateGenerationService.flags) {
-			console.log('Feature flag cache already set');
-			return;
-		}
-
-		console.log('Feature flag cache not set, retrieving feature flags');
-
-		try {
-			CertificateGenerationService.flags = await getProfile();
-		} catch (e) {
-			console.error(`Failed to retrieve feature flags - ${e}`);
-		}
-
-		console.log('Using feature flags ', CertificateGenerationService.flags);
-	}
-
-	/**
 	 * Determine if Welsh translation is required for the given test result
 	 * @param testResult
 	 * @returns Promise<boolean>
@@ -165,22 +129,12 @@ class CertificateGenerationService {
 	}
 
 	/**
-	 * Determine if abandoned certificates should be generated for the given test result
-	 */
-	public shouldGenerateAbandonedCerts(): boolean {
-		if (!CertificateGenerationService.flags.abandonedCerts.enabled) {
-			console.warn(`Unable to generate abandoned certificates: global abandoned certificates flag disabled.`);
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * Method to check if Welsh translation is enabled.
 	 * @returns boolean
 	 */
 	public isGlobalWelshFlagEnabled(): boolean {
-		if (!CertificateGenerationService.flags.welshTranslation.enabled) {
+		console.log('Welsh translation enabled: ', CertificateRequestProcessor.flags.welshTranslation.enabled);
+		if (!CertificateRequestProcessor.flags.welshTranslation.enabled) {
 			console.warn(`Unable to translate any test results: global Welsh flag disabled.`);
 			return false;
 		}
@@ -196,13 +150,13 @@ class CertificateGenerationService {
 		let shouldTranslate = false;
 		switch (testResult) {
 			case TestResults.PRS:
-				shouldTranslate = CertificateGenerationService.flags.welshTranslation.translatePrsTestResult ?? false;
+				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation.translatePrsTestResult ?? false;
 				break;
 			case TestResults.PASS:
-				shouldTranslate = CertificateGenerationService.flags.welshTranslation.translatePassTestResult ?? false;
+				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation.translatePassTestResult ?? false;
 				break;
 			case TestResults.FAIL:
-				shouldTranslate = CertificateGenerationService.flags.welshTranslation.translateFailTestResult ?? false;
+				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation.translateFailTestResult ?? false;
 				break;
 			default:
 				console.warn('Translation not available for this test result type.');
@@ -234,10 +188,7 @@ class CertificateGenerationService {
 
 	private getTestType(testResult: TestResultSchemaTestTypesAsObject): CERTIFICATE_DATA {
 		const testType = testResult.testTypes;
-		if (
-			testType.testResult === TestResults.ABANDONED &&
-			this.testResultService.isValidForAbandonedCertificate(testType.testTypeId)
-		) {
+		if (testType.testResult === TestResults.ABANDONED) {
 			return CERTIFICATE_DATA.ABANDONED_DATA;
 		}
 

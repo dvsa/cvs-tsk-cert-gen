@@ -4,7 +4,6 @@ import {
 	HGV_TRL_RWT_TEST,
 	IVA_TEST,
 	MSVA_TEST,
-	VTG_VTP_12_TEST,
 } from '@dvsa/cvs-microservice-common/classes/testTypes/Constants';
 import { TestTypeHelper } from '@dvsa/cvs-microservice-common/classes/testTypes/testTypeHelper';
 import { Service } from 'typedi';
@@ -82,12 +81,4 @@ export class TestResultService {
 	public isWelshCertificateAvailable = (vehicleType: string, testResult: string): boolean => {
 		return AVAILABLE_WELSH.CERTIFICATES.includes(`${vehicleType}_${testResult}`);
 	};
-
-	/**
-	 * Check that the test type id is valid for an abandoned certificate
-	 * @param testTypeId
-	 */
-	public isValidForAbandonedCertificate(testTypeId: string): boolean {
-		return TestTypeHelper.validateTestTypeIdInLists([VTG_VTP_12_TEST], testTypeId);
-	}
 }

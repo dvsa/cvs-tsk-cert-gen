@@ -1,8 +1,5 @@
 import "reflect-metadata";
 
-/* eslint-disable import/first */
-const mockGetProfile = jest.fn();
-
 import Container from "typedi";
 import { cloneDeep } from "lodash";
 import sinon from "sinon";
@@ -23,7 +20,6 @@ import techRecordsRwt from "../resources/tech-records-response-rwt.json";
 import techRecordResp from "../resources/tech-records-response.json";
 import mockTestWithDefectResult from "../resources/test-result-with-defect.json";
 import mockIvaTestWithDefectResult from "../resources/test-result-with-iva-defect.json";
-import mockAbandonedTestResult from "../resources/test-result-abandoned.json";
 import testResultsRespEmpty from "../resources/test-results-empty-response.json";
 import testResultsRespFail from "../resources/test-results-fail-response.json";
 import testResultsRespNoCert from "../resources/test-results-nocert-response.json";
@@ -39,10 +35,27 @@ import { DefectRepository } from "../../src/defect/DefectRepository";
 import { TestResultService } from "../../src/test-result/TestResultService";
 import { TechRecordService } from "../../src/tech-record/TechRecordService";
 import { DefectService } from "../../src/defect/DefectService";
-import {IDefectParent, IFeatureFlags} from "../../src/models";
+import { IDefectParent, IFeatureFlags } from "../../src/models";
+import { CertificateRequestProcessor } from "../../src/functions/CertificateRequestProcessor";
 
 jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
-  getProfile: mockGetProfile
+  getProfile: jest.fn()
+}));
+
+jest.mock("../../src/functions/CertificateRequestProcessor", () => ({
+  CertificateRequestProcessor: {
+    flags: {
+      welshTranslation: {
+        enabled: true,
+        translatePassTestResult: true,
+        translatePrsTestResult: true,
+        translateFailTestResult: true,
+      },
+      abandonedCerts: {
+        enabled: true,
+      },
+    },
+  },
 }));
 
 describe("Certificate Generation Service", () => {
@@ -58,6 +71,7 @@ describe("Certificate Generation Service", () => {
 
   afterEach(() => {
     sandbox.restore();
+    jest.clearAllMocks();
   });
 
   describe("getVehicleMakeAndModel function", () => {
@@ -826,7 +840,21 @@ describe("Certificate Generation Service", () => {
     describe("Welsh feature flags", () => {
       let certGenSvc: CertificateGenerationService;
       let mockFlags: IFeatureFlags;
+
       beforeEach(() => {
+        mockFlags = {
+          welshTranslation: {
+            enabled: true,
+            translatePassTestResult: true,
+            translatePrsTestResult: true,
+            translateFailTestResult: true,
+          },
+          abandonedCerts: {
+            enabled: true,
+          },
+        };
+        (CertificateRequestProcessor as any).flags = mockFlags;
+
         certGenSvc = Container.get(CertificateGenerationService);
       });
       afterEach(() => {
@@ -874,7 +902,7 @@ describe("Certificate Generation Service", () => {
               enabled: false,
             },
           };
-          (CertificateGenerationService as any).flags = mockFlags;
+          (CertificateRequestProcessor as any).flags = mockFlags;
 
           const isWelsh = certGenSvc.isGlobalWelshFlagEnabled();
           expect(isWelsh).toBeTruthy();
@@ -891,7 +919,7 @@ describe("Certificate Generation Service", () => {
               enabled: false,
             },
           };
-          (CertificateGenerationService as any).flags = mockFlags;
+          (CertificateRequestProcessor as any).flags = mockFlags;
 
           const logSpy = jest.spyOn(console, "warn");
 
@@ -920,7 +948,7 @@ describe("Certificate Generation Service", () => {
                   enabled: false,
                 },
               };
-              (CertificateGenerationService as any).flags = mockFlags;
+              (CertificateRequestProcessor as any).flags = mockFlags;
 
               const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult);
               expect(isWelsh).toBeTruthy();
@@ -938,7 +966,7 @@ describe("Certificate Generation Service", () => {
                   enabled: false,
                 },
               };
-              (CertificateGenerationService as any).flags = mockFlags;
+              (CertificateRequestProcessor as any).flags = mockFlags;
 
               const logSpy = jest.spyOn(console, "warn");
 
@@ -965,7 +993,7 @@ describe("Certificate Generation Service", () => {
                   enabled: false,
                 },
               };
-              (CertificateGenerationService as any).flags = mockFlags;
+              (CertificateRequestProcessor as any).flags = mockFlags;
 
               const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult);
               expect(isWelsh).toBeTruthy();
@@ -983,7 +1011,7 @@ describe("Certificate Generation Service", () => {
                   enabled: false,
                 },
               };
-              (CertificateGenerationService as any).flags = mockFlags;
+              (CertificateRequestProcessor as any).flags = mockFlags;
 
               const logSpy = jest.spyOn(console, "warn");
 
@@ -1010,7 +1038,7 @@ describe("Certificate Generation Service", () => {
                   enabled: false,
                 },
               };
-              (CertificateGenerationService as any).flags = mockFlags;
+              (CertificateRequestProcessor as any).flags = mockFlags;
 
               const isWelsh = certGenSvc.isTestResultFlagEnabled(testResult.testTypes.testResult);
               expect(isWelsh).toBeTruthy();
@@ -1028,7 +1056,7 @@ describe("Certificate Generation Service", () => {
                   enabled: false,
                 },
               };
-              (CertificateGenerationService as any).flags = mockFlags;
+              (CertificateRequestProcessor as any).flags = mockFlags;
 
               const logSpy = jest.spyOn(console, "warn");
 
@@ -1263,137 +1291,6 @@ describe("Certificate Generation Service", () => {
         const result: boolean = testResultService.isBasicIvaTest(ivaTestResult.testTypes[0].testTypeId);
 
         expect(result).toBeFalsy();
-      });
-    });
-  });
-
-  describe("VTG12/VTP12 logic", () => {
-    context("test abandoned test logic", () => {
-      it('should return true if test type id on test result exists in allowable array', async () => {
-        const testResultService = Container.get(TestResultService);
-
-        const abandonedTestResult = cloneDeep(mockAbandonedTestResult);
-
-        const result: boolean = testResultService.isValidForAbandonedCertificate(abandonedTestResult.testTypes[0].testTypeId);
-
-        expect(result).toBeTruthy();
-      });
-      it('should return false if test type id on test result does not exist in allowable array', async () => {
-        const testResultService = Container.get(TestResultService);
-
-        const abandonedTestResult = cloneDeep(mockAbandonedTestResult);
-        abandonedTestResult.testTypes[0].testTypeId = "45";
-        abandonedTestResult.testTypes[0].testTypeName = "Low Emissions Certificate (LEC)";
-
-        const result: boolean = testResultService.isValidForAbandonedCertificate(abandonedTestResult.testTypes[0].testTypeId);
-
-        expect(result).toBeFalsy();
-      });
-    });
-  });
-
-  describe("Abandoned Certs feature flags", () => {
-    let certGenSvc: CertificateGenerationService;
-    let mockFlags: IFeatureFlags;
-
-    beforeEach(() => {
-      certGenSvc = Container.get(CertificateGenerationService);
-    });
-    afterEach(() => {
-      jest.resetAllMocks();
-    });
-
-    context("test shouldGenerateAbandonedCert method", () => {
-      it('should allow abandoned certificate to be generated when global flag is enabled', () => {
-        mockFlags = {
-          welshTranslation: {
-            enabled: true,
-            translatePassTestResult: false,
-            translatePrsTestResult: false,
-            translateFailTestResult: false,
-          },
-          abandonedCerts: {
-            enabled: true,
-          },
-        };
-        (CertificateGenerationService as any).flags = mockFlags;
-
-        const shouldGenerate = certGenSvc.shouldGenerateAbandonedCerts();
-        expect(shouldGenerate).toBeTruthy();
-      });
-
-      it('should prevent abandoned certificate from being generated when global flag is disabled and log', () => {
-        mockFlags = {
-          welshTranslation: {
-            enabled: true,
-            translatePassTestResult: false,
-            translatePrsTestResult: false,
-            translateFailTestResult: false,
-          },
-          abandonedCerts: {
-            enabled: false,
-          },
-        };
-        (CertificateGenerationService as any).flags = mockFlags;
-        const logSpy = jest.spyOn(console, "warn");
-
-        const shouldGenerate = certGenSvc.shouldGenerateAbandonedCerts();
-        expect(shouldGenerate).toBe(false);
-        expect(logSpy).toHaveBeenCalledWith(`Unable to generate abandoned certificates: global abandoned certificates flag disabled.`);
-        logSpy.mockClear();
-      });
-    });
-  });
-
-  describe("Retrieve and Set Flags", () => {
-    let certGenSvc: CertificateGenerationService;
-    let mockFlags: IFeatureFlags;
-
-    beforeEach(() => {
-      certGenSvc = Container.get(CertificateGenerationService);
-    });
-    afterEach(() => {
-      jest.resetAllMocks();
-    });
-
-    context("test shouldGenerateAbandonedCert method", () => {
-      it('should allow abandoned certificate to be generated when global flag is enabled', () => {
-        mockFlags = {
-          welshTranslation: {
-            enabled: true,
-            translatePassTestResult: false,
-            translatePrsTestResult: false,
-            translateFailTestResult: false,
-          },
-          abandonedCerts: {
-            enabled: true,
-          },
-        };
-        (CertificateGenerationService as any).flags = mockFlags;
-
-        const shouldGenerate = certGenSvc.shouldGenerateAbandonedCerts();
-        expect(shouldGenerate).toBeTruthy();
-      });
-
-      it('should prevent abandoned certificate from being generated when global flag is disabled and log', () => {
-        mockFlags = {
-          welshTranslation: {
-            enabled: true,
-            translatePassTestResult: false,
-            translatePrsTestResult: false,
-            translateFailTestResult: false,
-          },
-          abandonedCerts: {
-            enabled: false,
-          },
-        };
-        (CertificateGenerationService as any).flags = mockFlags;
-        const logSpy = jest.spyOn(console, "warn");
-
-        const shouldGenerate = certGenSvc.shouldGenerateAbandonedCerts();
-        expect(shouldGenerate).toBe(false);
-        expect(logSpy).toHaveBeenCalledWith(`Unable to generate abandoned certificates: global abandoned certificates flag disabled.`);
-        logSpy.mockClear();
       });
     });
   });
