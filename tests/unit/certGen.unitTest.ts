@@ -1,43 +1,75 @@
-import {Injector} from "../../src/models/injector/Injector";
+import "reflect-metadata";
+
+/* eslint-disable import/first */
+const mockGetProfile = jest.fn();
+
 import * as fs from "fs";
+import { cloneDeep } from "lodash";
 import * as path from "path";
+import sinon from "sinon";
+import { Container } from "typedi";
+import { CertificatePayloadStateBag } from "../../src/certificate/CertificatePayloadStateBag";
+import { DefectsCommand } from "../../src/certificate/commands/DefectsCommand";
+import { IvaCertificateCommand } from "../../src/certificate/commands/IvaCertificateCommand";
+import { MsvaCertificateCommand } from "../../src/certificate/commands/MsvaCertificateCommand";
+import { PassOrFailCertificateCommand } from "../../src/certificate/commands/PassOrFailCertificateCommand";
+import { DefectRepository } from "../../src/defect/DefectRepository";
+import { DefectService } from "../../src/defect/DefectService";
+import { CertificateRequestProcessor } from "../../src/functions/CertificateRequestProcessor";
+import { certGen } from "../../src/functions/certGen";
+import { ICertificatePayload, IFeatureFlags, TestResultSchemaTestTypesAsObject } from "../../src/models";
+import { CERTIFICATE_DATA } from "../../src/models/Enums";
 import {
     CertificateGenerationService,
     IGeneratedCertificateResponse,
 } from "../../src/services/CertificateGenerationService";
-import {S3BucketMockService} from "../models/S3BucketMockService";
-import {LambdaMockService} from "../models/LambdaMockService";
-import {CertificateUploadService} from "../../src/services/CertificateUploadService";
-import {ManagedUpload} from "aws-sdk/clients/s3";
-import {certGen} from "../../src/functions/certGen";
-import sinon from "sinon";
-import queueEventPass from "../resources/queue-event-pass.json";
-import queueEventFail from "../resources/queue-event-fail.json";
-import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
-import queueEventPRS from "../resources/queue-event-prs.json";
-import techRecordsRwt from "../resources/tech-records-response-rwt.json";
-import docGenRwt from "../resources/doc-gen-payload-rwt.json";
+import { CertificateUploadService } from "../../src/services/CertificateUploadService";
+import { LambdaService } from "../../src/services/LambdaService";
+import { S3BucketService } from "../../src/services/S3BucketService";
+import { TechRecordRepository } from "../../src/tech-record/TechRecordRepository";
+import { TestResultRepository } from "../../src/test-result/TestResultRepository";
+import { TrailerRepository } from "../../src/trailer/TrailerRepository";
+import { LambdaMockService } from "../models/LambdaMockService";
+import { S3BucketMockService } from "../models/S3BucketMockService";
 import docGenIva30 from "../resources/doc-gen-payload-iva30.json";
 import docGenMsva30 from "../resources/doc-gen-payload-msva30.json";
+import docGenRwt from "../resources/doc-gen-payload-rwt.json";
+import queueEventFailPRS from "../resources/queue-event-fail-prs.json";
+import queueEventFail from "../resources/queue-event-fail.json";
+import queueEventPass from "../resources/queue-event-pass.json";
+import queueEventAbandon from "../resources/queue-event-abandon.json";
+import techRecordsPsv from "../resources/tech-records-response-PSV.json";
+import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
+import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
+import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
+import techRecordsRwt from "../resources/tech-records-response-rwt.json";
+import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
 
 const sandbox = sinon.createSandbox();
-import {cloneDeep} from "lodash";
-import {ITestResult, ICertificatePayload} from "../../src/models";
-import techRecordsRwtSearch from "../resources/tech-records-response-rwt-search.json";
-import techRecordsRwtHgv from "../resources/tech-records-response-rwt-hgv.json";
-import techRecordsRwtHgvSearch from "../resources/tech-records-response-rwt-hgv-search.json";
-import techRecordsPsv from "../resources/tech-records-response-PSV.json";
-import techRecordsSearchPsv from "../resources/tech-records-response-search-PSV.json";
+
+jest.mock("@dvsa/cvs-feature-flags/profiles/vtx", () => ({
+    getProfile: mockGetProfile
+}));
 
 describe("cert-gen", () => {
     it("should pass", () => {
         expect(true).toBe(true);
     });
-    const certificateGenerationService: CertificateGenerationService =
-        Injector.resolve<CertificateGenerationService>(
-            CertificateGenerationService,
-            [S3BucketMockService, LambdaMockService]
-        );
+
+  Container.set(S3BucketService, new S3BucketMockService());
+  Container.set(LambdaService, new LambdaMockService());
+
+  const techRecordRepository = Container.get(TechRecordRepository);
+  const callGetTechRecordSpy = jest.spyOn(techRecordRepository, "callGetTechRecords");
+  const callSearchTechRecordSpy = jest.spyOn(techRecordRepository, "callSearchTechRecords");
+  Container.set(TechRecordRepository, techRecordRepository);
+
+  const testResultRepository = Container.get(TestResultRepository);
+  let callGetOdometerSpy = jest.spyOn(testResultRepository, 'getOdometerHistory');
+  Container.set(TestResultRepository, testResultRepository);
+
+  const certificateGenerationService = Container.get(CertificateGenerationService);
+
     beforeAll(() => {
         jest.setTimeout(10000);
     });
@@ -45,14 +77,33 @@ describe("cert-gen", () => {
         sandbox.restore();
         jest.setTimeout(5000);
     });
+    beforeEach(() => {
+        const featureFlags: IFeatureFlags = {
+            welshTranslation: {
+                enabled: false,
+                translatePassTestResult: false,
+                translatePrsTestResult: false,
+                translateFailTestResult: false,
+            },
+            abandonedCerts: {
+                enabled: false,
+            }
+        };
+
+        mockGetProfile.mockReturnValue(Promise.resolve(featureFlags));
+
+        callGetOdometerSpy = jest.spyOn(testResultRepository, "getOdometerHistory");
+    });
     afterEach(() => {
         sandbox.restore();
+        callGetOdometerSpy.mockRestore();
+        S3BucketMockService.buckets.pop();
     });
     context("CertificateGenerationService", () => {
         LambdaMockService.populateFunctions();
 
         context("when a passing test result is read from the queue", () => {
-            const event: any = {...queueEventPass};
+            const event: any = { ...queueEventPass };
             const testResult: any = JSON.parse(event.Records[3].body);
             const testResult2: any = JSON.parse(event.Records[4].body);
 
@@ -99,27 +150,27 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -165,28 +216,27 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult2)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -194,7 +244,7 @@ describe("cert-gen", () => {
         });
 
         context("when a passing test result is read from the queue", () => {
-            const event: any = {...queueEventPass};
+            const event: any = { ...queueEventPass };
             const testResult: any = JSON.parse(event.Records[0].body);
 
             context("and a payload is generated", () => {
@@ -240,28 +290,28 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -289,34 +339,29 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
 
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
                         // const getVehicleMakeAndModelStub = sandbox
                         //     .stub(
@@ -328,10 +373,10 @@ describe("cert-gen", () => {
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -378,6 +423,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -393,21 +442,17 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -419,14 +464,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -440,8 +481,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -449,7 +490,7 @@ describe("cert-gen", () => {
         });
 
         context("when a passing test result is read from the queue", () => {
-            const event: any = {...queueEventPass};
+            const event: any = { ...queueEventPass };
             const testResultWithTestHistoryForResult: any = JSON.parse(event.Records[5].body);
             const testResultWithTestHistoryForSomeotherResult: any = JSON.parse(event.Records[6].body);
 
@@ -496,6 +537,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -507,21 +552,17 @@ describe("cert-gen", () => {
                                 Date: "14.12.2022"
                             }
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResultWithTestHistoryForResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -568,6 +609,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -575,21 +620,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResultWithTestHistoryForSomeotherResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -597,912 +638,918 @@ describe("cert-gen", () => {
         });
 
         context("when a passing test result is read from the queue", () => {
-        const event: any = { ...queueEventPass };
-        const hgvTestResultWithMinorDefect: any = JSON.parse(event.Records[7].body);
-        const hgvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[8].body);
+            const event: any = { ...queueEventPass };
+            const hgvTestResultWithMinorDefect: any = JSON.parse(event.Records[7].body);
+            const hgvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[8].body);
 
-        const trlTestResultWithMinorDefect: any = JSON.parse(event.Records[9].body);
-        const trlTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[10].body);
+            const trlTestResultWithMinorDefect: any = JSON.parse(event.Records[9].body);
+            const trlTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[10].body);
 
-        const psvTestResultWithMinorDefect: any = JSON.parse(event.Records[11].body);
-        const psvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[12].body);
+            const psvTestResultWithMinorDefect: any = JSON.parse(event.Records[11].body);
+            const psvTestResultWithAdvisoryDefect: any = JSON.parse(event.Records[12].body);
 
-        context("and the hgv result has a minor defect", () => {
-          context("and the test station location is not in Wales", () => {
-            it("should return a VTG5 payload without the MinorDefectsWelsh array populated", async () => {
-              const expectedResult: any = {
-                Watermark: "NOT VALID",
-                DATA: {
-                  TestNumber: "W01A00310",
-                  TestStationPNumber: "09-4129632",
-                  TestStationName: "Abshire-Kub",
-                  CurrentOdometer: {
-                    value: 12312,
-                    unit: "kilometres",
-                  },
-                  IssuersName: "CVS Dev1",
-                  DateOfTheTest: "26.02.2019",
-                  CountryOfRegistrationCode: "gb",
-                  VehicleEuClassification: "M1",
-                  RawVIN: "P012301098765",
-                  RawVRM: "VM14MDT",
-                  ExpiryDate: "25.02.2020",
-                  EarliestDateOfTheNextTest: "01.11.2019",
-                  SeatBeltTested: "Yes",
-                  SeatBeltPreviousCheckDate: "26.02.2019",
-                  SeatBeltNumber: 2,
-                  Make: "Isuzu",
-                  MinorDefects: [
-                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
-                  ],
-                  Model: "FM",
-                  OdometerHistoryList: [
-                    {
-                      value: 400000,
-                      unit: "kilometres",
-                      date: "19.01.2019",
-                    },
-                    {
-                      value: 390000,
-                      unit: "kilometres",
-                      date: "18.01.2019",
-                    },
-                    {
-                      value: 380000,
-                      unit: "kilometres",
-                      date: "17.01.2019",
-                    },
-                  ],
-                },
-                Signature: {
-                    ImageType: "png",
-                    ImageData: null,
-                },
-              };
-
-              const getTechRecordSearchStub = sandbox
-                  .stub(certificateGenerationService, "callSearchTechRecords")
-                  .resolves(techRecordsRwtHgvSearch);
-              const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-              const getTechRecordStub = sandbox
-                  .stub(certificateGenerationService, "callGetTechRecords")
-                  .resolves((techRecordResponseRwtMock) as any);
-
-              return await certificateGenerationService
-                  .generatePayload(hgvTestResultWithMinorDefect)
-                  .then((payload: any) => {
-                    expect(payload).toEqual(expectedResult);
-                    getTechRecordStub.restore();
-                    getTechRecordSearchStub.restore();
-                  });
-            });
-
-            context("and the test station location is in Wales", () => {
-                it("should return a VTG5 payload with the MinorDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+            context("and the hgv result has a minor defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG5 payload without the MinorDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Isuzu",
+                                MinorDefects: [
+                                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                                ],
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "P012301098765",
-                            RawVRM: "VM14MDT",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "Isuzu",
-                            MinorDefects: [
-                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
-                            ],
-                            MinorDefectsWelsh: [
-                                "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
-                            ],
-                            Model: "FM",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
-                                },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return await certificateGenerationService
-                    .generatePayload(hgvTestResultWithMinorDefect, true)
-                    .then((payload: any) => {
-                      expect(payload).toEqual(expectedResult);
-                      getTechRecordStub.restore();
-                      getTechRecordSearchStub.restore();
+                        return await certificateGenerationService
+                            .generatePayload(hgvTestResultWithMinorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
                     });
-              });
-            });
-          });
-        });
 
-        context("and the hgv result has an advisory defect", () => {
-            context("and the test station location is not in Wales", () => {
-                it("should return a VTG5 payload without the AdvisoryDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
-                            },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "P012301098765",
-                            RawVRM: "VM14MDT",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "Isuzu",
-                            AdvisoryDefects: [
-                                "1.1 A registration plate: Note one"
-                            ],
-                            Model: "FM",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
+                    context("and the test station location is in Wales", () => {
+                        it("should return a VTG5 payload with the MinorDefectsWelsh array populated", async () => {
+                            const expectedResult: any = {
+                                Watermark: "NOT VALID",
+                                DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "P012301098765",
+                                    RawVRM: "VM14MDT",
+                                    ExpiryDate: "25.02.2020",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    Make: "Isuzu",
+                                    MinorDefects: [
+                                        "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                                    ],
+                                    MinorDefectsWelsh: [
+                                        "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
+                                    ],
+                                    Model: "FM",
+                                    OdometerHistoryList: [
+                                        {
+                                            value: 400000,
+                                            unit: "kilometres",
+                                            date: "19.01.2019",
+                                        },
+                                        {
+                                            value: 390000,
+                                            unit: "kilometres",
+                                            date: "18.01.2019",
+                                        },
+                                        {
+                                            value: 380000,
+                                            unit: "kilometres",
+                                            date: "17.01.2019",
+                                        },
+                                    ],
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
                                 },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
+                                Signature: {
+                                    ImageType: "png",
+                                    ImageData: null,
                                 },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
+                            };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtHgvSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    return await certificateGenerationService
-                        .generatePayload(hgvTestResultWithAdvisoryDefect)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            return await certificateGenerationService
+                                .generatePayload(hgvTestResultWithMinorDefect, true)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
+                                });
                         });
+                    });
                 });
             });
-            context("and the test station location is in Wales", () => {
-                it("should return a VTG5 payload with the AdvisoryDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+
+            context("and the hgv result has an advisory defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG5 payload without the AdvisoryDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Isuzu",
+                                AdvisoryDefects: [
+                                    "1.1 A registration plate: Note one"
+                                ],
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "P012301098765",
-                            RawVRM: "VM14MDT",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "Isuzu",
-                            AdvisoryDefects: [
-                                "1.1 A registration plate: Note one"
-                            ],
-                            AdvisoryDefectsWelsh: [
-                                "1.1 A registration plate: Note one"
-                            ],
-                            Model: "FM",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
-                                },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtHgvSearch);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return certificateGenerationService
-                        .generatePayload(hgvTestResultWithAdvisoryDefect, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-        });
-
-        context("and the trl result has a minor defect", () => {
-            context("and the test station location is not in Wales", () => {
-                it("should return a VTG5A payload without the MinorDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
                             },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "T12876765",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            MinorDefects: [
-                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
-                            ],
-                            Trn: "ABC123",
-                            IsTrailer: true
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
+                        };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    return await certificateGenerationService
-                        .generatePayload(trlTestResultWithMinorDefect)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                  });
+                        return await certificateGenerationService
+                            .generatePayload(hgvTestResultWithAdvisoryDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
                 });
-            });
-            context("and the test station location is in Wales", () => {
-                it("should return a VTG5A payload with the MinorDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG5 payload with the AdvisoryDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Isuzu",
+                                AdvisoryDefects: [
+                                    "1.1 A registration plate: Note one"
+                                ],
+                                AdvisoryDefectsWelsh: [
+                                    "1.1 A registration plate: Note one"
+                                ],
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "T12876765",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            MinorDefects: [
-                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
-                            ],
-                            MinorDefectsWelsh: [
-                                "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
-                            ],
-                            Trn: "ABC123",
-                            IsTrailer: true
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return await certificateGenerationService
-                        .generatePayload(trlTestResultWithMinorDefect, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-        });
-
-        context("and the trl result has an advisory defect", () => {
-            context("and the test station location is not in Wales", () => {
-                it("should return a VTG5A payload without the AdvisoryDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
                             },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "T12876765",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            AdvisoryDefects: [
-                                "1.1 A registration plate: Note one"
-                            ],
-                            Trn: "ABC123",
-                            IsTrailer: true
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
+                        };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    return await certificateGenerationService
-                        .generatePayload(trlTestResultWithAdvisoryDefect)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
+                        return certificateGenerationService
+                            .generatePayload(hgvTestResultWithAdvisoryDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
                 });
             });
-            context("and the test station location is in Wales", () => {
-                it("should return a VTG5A payload with the AdvisoryDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+
+            context("and the trl result has a minor defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG5A payload without the MinorDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                MinorDefects: [
+                                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                                ],
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            IssuersName: "CVS Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "T12876765",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "01.11.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            AdvisoryDefects: [
-                                "1.1 A registration plate: Note one"
-                            ],
-                            AdvisoryDefectsWelsh: [
-                                "1.1 A registration plate: Note one"
-                            ],
-                            Trn: "ABC123",
-                            IsTrailer: true
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        },
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return certificateGenerationService
-                        .generatePayload(trlTestResultWithAdvisoryDefect, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-        });
-
-        context("and the psv result has a minor defect", () => {
-            context("and the test station location is not in Wales", () => {
-                it("should return a VTP20 payload without the MinorDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
                             },
-                            IssuersName: "CVS, Test, Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "AEC",
-                            MinorDefects: [
-                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
-                            ],
-                            Model: "RELIANCE",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
-                                },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        }
-                    };
+                        };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    return await certificateGenerationService
-                        .generatePayload(psvTestResultWithMinorDefect)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
+                        return await certificateGenerationService
+                            .generatePayload(trlTestResultWithMinorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
                 });
-            });
-            context("and the test station location is in Wales", () => {
-                it("should return a VTP20 payload with the MinorDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG5A payload with the MinorDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                MinorDefects: [
+                                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front."
+                                ],
+                                MinorDefectsWelsh: [
+                                    "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen."
+                                ],
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            IssuersName: "CVS, Test, Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "AEC",
-                            MinorDefects: [
-                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
-                            ],
-                            MinorDefectsWelsh: [
-                                "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen.",
-                            ],
-                            Model: "RELIANCE",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
-                                },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        }
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return certificateGenerationService
-                        .generatePayload(psvTestResultWithMinorDefect, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-        });
-
-        context("and the psv result has an advisory defect", () => {
-            context("and the test station location is not in Wales", () => {
-                it("should return a VTP20 payload without the AdvisoryDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            AdvisoryDefects: [
-                                "1.1 A registration plate: Notes here",
-                                "6.3 A hub: Second advisory note"
-                            ],
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
                             },
-                            IssuersName: "CVS, Test, Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "AEC",
-                            Model: "RELIANCE",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
-                                },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        }
-                    };
+                        };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    return await certificateGenerationService
-                        .generatePayload(psvTestResultWithAdvisoryDefect)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
+                        return await certificateGenerationService
+                            .generatePayload(trlTestResultWithMinorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
                 });
             });
-            context("and the test station location is in Wales", () => {
-                it("should return a VTP20 payload with the AdvisoryDefectsWelsh array populated", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            AdvisoryDefects: [
-                                "1.1 A registration plate: Notes here",
-                                "6.3 A hub: Second advisory note"
-                            ],
-                            AdvisoryDefectsWelsh: [
-                                "1.1 A registration plate: Notes here",
-                                "6.3 A hub: Second advisory note"
-                            ],
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+
+            context("and the trl result has an advisory defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG5A payload without the AdvisoryDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                AdvisoryDefects: [
+                                    "1.1 A registration plate: Note one"
+                                ],
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            IssuersName: "CVS, Test, Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "AEC",
-                            Model: "RELIANCE",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
-                                    unit: "kilometres",
-                                    date: "19.01.2019",
-                                },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        }
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return certificateGenerationService
-                        .generatePayload(psvTestResultWithAdvisoryDefect, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-        });
-
-        context("and the test result has a defect", () => {
-            context("and the test station location is not in Wales", () => {
-                it("should return a VTP20 without calling getDefect or flattenDefects methods", async () => {
-                    const expectedResult: any = {
-                        Watermark: "NOT VALID",
-                        DATA: {
-                            TestNumber: "W01A00310",
-                            TestStationPNumber: "09-4129632",
-                            TestStationName: "Abshire-Kub",
-                            CurrentOdometer: {
-                                value: 12312,
-                                unit: "kilometres",
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
                             },
-                            IssuersName: "CVS, Test, Dev1",
-                            DateOfTheTest: "26.02.2019",
-                            CountryOfRegistrationCode: "gb",
-                            VehicleEuClassification: "M1",
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            ExpiryDate: "25.02.2020",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            SeatBeltTested: "Yes",
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltNumber: 2,
-                            Make: "AEC",
-                            MinorDefects: [
-                                "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
-                            ],
-                            Model: "RELIANCE",
-                            OdometerHistoryList: [
-                                {
-                                    value: 400000,
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(trlTestResultWithAdvisoryDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG5A payload with the AdvisoryDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
                                     unit: "kilometres",
-                                    date: "19.01.2019",
                                 },
-                                {
-                                    value: 390000,
-                                    unit: "kilometres",
-                                    date: "18.01.2019",
-                                },
-                                {
-                                    value: 380000,
-                                    unit: "kilometres",
-                                    date: "17.01.2019",
-                                },
-                            ],
-                        },
-                        Signature: {
-                            ImageType: "png",
-                            ImageData: null,
-                        }
-                    };
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "T12876765",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "STANLEY",
+                                Model: "AUTOTRL",
+                                AdvisoryDefects: [
+                                    "1.1 A registration plate: Note one"
+                                ],
+                                AdvisoryDefectsWelsh: [
+                                    "1.1 A registration plate: Note one"
+                                ],
+                                Trn: "ABC123",
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
-                    const defectSpy = jest.spyOn(certificateGenerationService, "getDefectTranslations");
-                    const flattenSpy = jest.spyOn(certificateGenerationService, "flattenDefectsFromApi");
-
-                    return await certificateGenerationService
-                        .generatePayload(psvTestResultWithMinorDefect)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            expect(defectSpy).not.toHaveBeenCalled();
-                            expect(flattenSpy).not.toHaveBeenCalled();
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
+                        return certificateGenerationService
+                            .generatePayload(trlTestResultWithAdvisoryDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
                 });
             });
-        });
+
+            context("and the psv result has a minor defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTP20 payload without the MinorDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS, Test, Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "AEC",
+                                MinorDefects: [
+                                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                                ],
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            }
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvTestResultWithMinorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTP20 payload with the MinorDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS, Test, Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "AEC",
+                                MinorDefects: [
+                                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                                ],
+                                MinorDefectsWelsh: [
+                                    "62.1.a.i Adlewyrchwyr, marciau amlygrwydd a/neu farcwyr cefn: wedi'i leoli'n anghywir. Ochr mewnol Blaen.",
+                                ],
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            }
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return certificateGenerationService
+                            .generatePayload(psvTestResultWithMinorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+            });
+
+            context("and the psv result has an advisory defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTP20 payload without the AdvisoryDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                AdvisoryDefects: [
+                                    "1.1 A registration plate: Notes here",
+                                    "6.3 A hub: Second advisory note"
+                                ],
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS, Test, Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            }
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvTestResultWithAdvisoryDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTP20 payload with the AdvisoryDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                AdvisoryDefects: [
+                                    "1.1 A registration plate: Notes here",
+                                    "6.3 A hub: Second advisory note"
+                                ],
+                                AdvisoryDefectsWelsh: [
+                                    "1.1 A registration plate: Notes here",
+                                    "6.3 A hub: Second advisory note"
+                                ],
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS, Test, Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            }
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return certificateGenerationService
+                            .generatePayload(psvTestResultWithAdvisoryDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+            });
+
+            context("and the test result has a defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTP20 without calling getDefect or flattenDefects methods", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS, Test, Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "AEC",
+                                MinorDefects: [
+                                    "62.1.a.i Reflectors, conspicuity markings and/or rear markers: incorrectly positioned. Nearside Front.",
+                                ],
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            }
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        const defectRepository = Container.get(DefectRepository);
+                        const getDefectTranslationsSpy = jest.spyOn(defectRepository, "getDefectTranslations");
+                        Container.set(DefectRepository, defectRepository);
+
+                        const defectService = Container.get(DefectService);
+                        const flattenSpy = jest.spyOn(defectService, "flattenDefectsFromApi");
+                        Container.set(DefectService, defectService);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvTestResultWithMinorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                expect(getDefectTranslationsSpy).not.toHaveBeenCalled();
+                                expect(flattenSpy).not.toHaveBeenCalled();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                                getDefectTranslationsSpy.mockRestore();
+                            });
+                    });
+                });
+            });
         });
 
         context("when a failing test result is read from the queue", () => {
-            const event: any = {...queueEventFail};
+            const event: any = { ...queueEventFail };
             const testResult: any = JSON.parse(event.Records[0].body);
 
             context("and a payload is generated", () => {
@@ -1557,6 +1604,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1564,21 +1615,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1615,40 +1662,35 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1704,6 +1746,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1719,22 +1765,18 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -1746,14 +1788,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -1767,8 +1805,8 @@ describe("cert-gen", () => {
                                     current: 2,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -1777,8 +1815,7 @@ describe("cert-gen", () => {
 
         context("when a failing test result is read from the queue", () => {
             const event: any = { ...queueEventFail };
-            const failWithPrsEvent: any = { ... queueEventFailPRS };
-            const prsEvent: any = { ... queueEventPRS };
+            const failWithPrsEvent: any = { ...queueEventFailPRS };
 
             const hgvFailWithDangerousDefect: any = JSON.parse(event.Records[11].body);
             const hgvFailWithMajorDefect: any = JSON.parse(event.Records[12].body);
@@ -1786,14 +1823,18 @@ describe("cert-gen", () => {
             const hgvFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[14].body);
             const hgvFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[3].body);
             const hgvFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[4].body);
-            const psvPrsNotAcceptableForBilingualCert: any = JSON.parse(prsEvent.Records[0].body);
-            const psvFailWithDefects: any = JSON.parse(event.Records[19].body);
             const trlFailWithDangerousDefect: any = JSON.parse(event.Records[15].body);
             const trlFailWithMajorDefect: any = JSON.parse(event.Records[16].body);
             const trlFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[17].body);
             const trlFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[18].body);
             const trlFailWithDangerousDefectMajorRectified: any = JSON.parse(failWithPrsEvent.Records[5].body);
             const trlFailWithMajorDefectDangerousRectified: any = JSON.parse(failWithPrsEvent.Records[6].body);
+            const psvFailWithDangerousDefect: any = JSON.parse(event.Records[22].body);
+            const psvFailWithMajorDefect: any = JSON.parse(event.Records[23].body);
+            const psvFailWithDangerousAndMajorDefect: any = JSON.parse(event.Records[24].body);
+            const psvFailWithAdvisoryMinorDangerousMajorDefect: any = JSON.parse(event.Records[19].body);
+            const psvFailWithMajorDefectDangerousRectified: any = JSON.parse(event.Records[25].body);
+            const psvFailWithDangerousDefectMajorRectified: any = JSON.parse(event.Records[26].body);
 
             context("and the hgv result has a dangerous defect", () => {
                 context("and the test station location is not in Wales", () => {
@@ -1841,6 +1882,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1848,21 +1893,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1915,6 +1956,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1922,21 +1967,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -1988,6 +2029,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -1995,21 +2040,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2062,6 +2103,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2069,21 +2114,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2138,6 +2179,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2145,21 +2190,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousAndMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2218,6 +2259,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2225,21 +2270,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousAndMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2300,6 +2341,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2307,21 +2352,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithAdvisoryMinorDangerousMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2392,6 +2433,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2399,21 +2444,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithAdvisoryMinorDangerousMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2468,6 +2509,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2475,21 +2520,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefectMajorRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2552,6 +2593,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2559,21 +2604,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithDangerousDefectMajorRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2630,6 +2671,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2637,21 +2682,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefectDangerousRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2712,6 +2753,10 @@ describe("cert-gen", () => {
                                         value: 380000
                                     }
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2719,21 +2764,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(hgvFailWithMajorDefectDangerousRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -2769,6 +2810,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2776,21 +2821,17 @@ describe("cert-gen", () => {
                             }
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2829,6 +2870,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2836,21 +2881,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2888,6 +2929,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2895,21 +2940,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -2948,6 +2989,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -2955,21 +3000,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3010,6 +3051,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3017,21 +3062,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousAndMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3076,6 +3117,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3083,21 +3128,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousAndMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3144,6 +3185,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3151,21 +3196,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithAdvisoryMinorDangerousMajorDefect)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3222,6 +3263,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3229,21 +3274,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithAdvisoryMinorDangerousMajorDefect, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -3291,6 +3332,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3298,21 +3343,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefectMajorRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -3369,6 +3410,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3376,21 +3421,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithDangerousDefectMajorRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -3436,6 +3477,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3443,21 +3488,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefectDangerousRectified)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -3513,6 +3554,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -3520,378 +3565,923 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(trlFailWithMajorDefectDangerousRectified, true)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
             });
 
-            context("and the vehicle type is not acceptable to generate a bilingual certificate", () => {
-                it("should return Certificate Data without any Welsh defect arrays populated", async () => {
-                    const expectedResult: any = {
-                        DATA: {
-                            CountryOfRegistrationCode: "gb",
-                            CurrentOdometer: {
-                                unit: "kilometres",
-                                value: 12312
-                            },
-                            DateOfTheTest: "26.02.2019",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            ExpiryDate: "25.02.2020",
-                            IssuersName: "CVS Dev1",
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            OdometerHistoryList: [
-                                {
-                                    date: "19.01.2019",
+            context("and the psv result has a dangerous defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without the DangerousDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
                                     unit: "kilometres",
-                                    value: 400000
+                                    value: 12312
                                 },
-                                {
-                                    date: "18.01.2019",
-                                    unit: "kilometres",
-                                    value: 390000
-                                },
-                                {
-                                    date: "17.01.2019",
-                                    unit: "kilometres",
-                                    value: 380000
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
                                 }
-                            ],
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            SeatBeltNumber: 2,
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltTested: "Yes",
-                            TestNumber: "W01A00310",
-                            TestStationName: "Abshire-Kub",
-                            TestStationPNumber: "09-4129632",
-                            VehicleEuClassification: "M1"
-                        },
-                        FAIL_DATA: {
-                            CountryOfRegistrationCode: "gb",
-                            CurrentOdometer: {
-                                unit: "kilometres",
-                                value: 12312
                             },
-                            DateOfTheTest: "26.02.2019",
-                            EarliestDateOfTheNextTest: "26.12.2019",
-                            ExpiryDate: "25.02.2020",
-                            IssuersName: "CVS Dev1",
-                            Make: "STANLEY",
-                            Model: "AUTOTRL",
-                            OdometerHistoryList: [
-                                {
-                                    date: "19.01.2019",
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with the DangerousDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
                                     unit: "kilometres",
-                                    value: 400000
+                                    value: 12312
                                 },
-                                {
-                                    date: "18.01.2019",
-                                    unit: "kilometres",
-                                    value: 390000
-                                },
-                                {
-                                    date: "17.01.2019",
-                                    unit: "kilometres",
-                                    value: 380000
+                                DangerousDefects: [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
                                 }
-                            ],
-                            PRSDefects: [
-                                "1.1.a A registration plate: missing. Front."
-                            ],
-                            RawVIN: "XMGDE02FS0H012345",
-                            RawVRM: "BQ91YHQ",
-                            SeatBeltNumber: 2,
-                            SeatBeltPreviousCheckDate: "26.02.2019",
-                            SeatBeltTested: "Yes",
-                            TestNumber: "W01A00310",
-                            TestStationName: "Abshire-Kub",
-                            TestStationPNumber: "09-4129632",
-                            VehicleEuClassification: "M1"
-                        },
-                        Signature: {
-                            ImageData: null,
-                            ImageType: "png"
-                        },
-                        Watermark: "NOT VALID"
-                    };
-
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
-
-                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
-
-                    return await certificateGenerationService
-                        .generatePayload(psvPrsNotAcceptableForBilingualCert, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
-                        });
-                });
-            });
-
-            context("should return Certificate Data without any Welsh defect arrays populated", () => {
-                let getTechRecordSearchStub: any;
-                let getTechRecordStub: any;
-                let techRecordsPsvStub: any;
-                const expectedResultEnglish: any = {
-                    FAIL_DATA: {
-                        AdvisoryDefects: [
-                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                        ],
-                        CountryOfRegistrationCode: "gb",
-                        CurrentOdometer: {
-                            unit: "kilometres",
-                            value: 12312
-                        },
-                        DangerousDefects: [
-                            "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
-                        ],
-
-                        DateOfTheTest: "26.02.2019",
-                        EarliestDateOfTheNextTest: "26.12.2019",
-                        ExpiryDate: "25.02.2020",
-                        IssuersName: "Dev1 CVS",
-                        MajorDefects: [
-                            "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
-                        ],
-                        MinorDefects: [
-                            "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
-                        ],
-                        OdometerHistoryList: [
-                            {
-                                date: "19.01.2019",
-                                unit: "kilometres",
-                                value: 400000
                             },
-                            {
-                                date: "18.01.2019",
-                                unit: "kilometres",
-                                value: 390000
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
                             },
-                            {
-                                date: "17.01.2019",
-                                unit: "kilometres",
-                                value: 380000
-                            }
-                        ],
-                        RawVIN: "XMGDE02FS0H012345",
-                        RawVRM: "BQ91YHQ",
-                        SeatBeltNumber: 2,
-                        SeatBeltPreviousCheckDate: "26.02.2019",
-                        SeatBeltTested: "Yes",
-                        TestNumber: "W01A00310",
-                        TestStationName: "Abshire-Kub",
-                        Make: "AEC",
-                        Model: "RELIANCE",
-                        TestStationPNumber: "09-4129632",
-                        VehicleEuClassification: "M1"
-                    },
-                    Signature: {
-                        ImageData: null,
-                        ImageType: "png"
-                    },
-                    Watermark: "NOT VALID"
-                };
-                beforeEach(() => {
-                    getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+                            Watermark: "NOT VALID"
+                        };
 
-                    techRecordsPsvStub = cloneDeep(psvFailWithDefects);
-                    getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordsPsv) as any);
-                });
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
-                afterEach(() => {
-                    getTechRecordStub.restore();
-                    getTechRecordSearchStub.restore();
-                });
-                it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
-                        });
-                });
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
 
-                it("should return a VTP30W payload with the MinorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.MinorDefectsWelsh).toBeUndefined();
-                        });
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
 
-                });
-
-                it("should return a VTP30W payload without the AdvisoryDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toBeUndefined();
-                        });
-                });
-                it("should return a VTP30W payload without the DangerousDefects array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultEnglish);
-                            expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
-                        });
-                });
-            });
-            context("should return certificate data with welsh defects array", () => {
-                let getTechRecordSearchStub: any;
-                let getTechRecordStub: any;
-                let techRecordsPsvStub: any;
-                const expectedResultWelsh: any = {
-                    FAIL_DATA: {
-                        AdvisoryDefects: [
-                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                        ],
-                        AdvisoryDefectsWelsh: [
-                            "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
-                        ],
-                        CountryOfRegistrationCode: "gb",
-                        CurrentOdometer: {
-                            unit: "kilometres",
-                            value: 12312
-                        },
-                        DangerousDefects: [
-                            "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
-                        ],
-                        DangerousDefectsWelsh: [
-                            "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
-                        ],
-                        DateOfTheTest: "26.02.2019",
-                        EarliestDateOfTheNextTest: "26.12.2019",
-                        ExpiryDate: "25.02.2020",
-                        IssuersName: "Dev1 CVS",
-                        MajorDefects: [
-                            "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
-                        ],
-                        MajorDefectsWelsh: [
-                            "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
-                        ],
-                        MinorDefects: [
-                            "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
-                        ],
-                        MinorDefectsWelsh: [
-                            "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
-                        ],
-                        OdometerHistoryList: [
-                            {
-                                date: "19.01.2019",
-                                unit: "kilometres",
-                                value: 400000
+            context("and the psv result has a major defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without the MajorDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
-                            {
-                                date: "18.01.2019",
-                                unit: "kilometres",
-                                value: 390000
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
                             },
-                            {
-                                date: "17.01.2019",
-                                unit: "kilometres",
-                                value: 380000
-                            }
-                        ],
-                        RawVIN: "XMGDE02FS0H012345",
-                        RawVRM: "BQ91YHQ",
-                        SeatBeltNumber: 2,
-                        SeatBeltPreviousCheckDate: "26.02.2019",
-                        SeatBeltTested: "Yes",
-                        TestNumber: "W01A00310",
-                        TestStationName: "Abshire-Kub",
-                        TestStationPNumber: "09-4129632",
-                        Model: "RELIANCE",
-                        Make: "AEC",
-                        VehicleEuClassification: "M1"
-                    },
-                    Signature: {
-                        ImageData: null,
-                        ImageType: "png"
-                    },
-                    Watermark: "NOT VALID"
-                };
-                beforeEach(() => {
-                    getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsSearchPsv);
+                            Watermark: "NOT VALID"
+                        };
 
-                    techRecordsPsvStub = cloneDeep(psvFailWithDefects);
-                    getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordsPsv) as any);
-                });
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
-                afterEach(() => {
-                    getTechRecordStub.restore();
-                    getTechRecordSearchStub.restore();
-                });
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
 
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
 
-                it("should return a VTP30W payload with the MajorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.MajorDefectsWelsh).toEqual(["6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"]);
-                        });
-                });
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with the MajorDefectsWelsh array populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
 
-                it("should return a VTP30W payload with the MinorDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.MinorDefectsWelsh).toEqual(["54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."]);
-                        });
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
-                });
-                it("should return a VTP30W payload with the AdvisoryDefectsWelsh array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toEqual(["5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"]);
-                        });
-                });
-                it("should return a VTP30W payload with the DangerousDefects array populated", async () => {
-                    return await certificateGenerationService
-                        .generatePayload(psvFailWithDefects, true)
-                        .then((payload: any) => {
-                            expect(payload).toEqual(expectedResultWelsh);
-                            expect(payload.FAIL_DATA.DangerousDefectsWelsh).toEqual(["54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"]);
-                        });
-                });
-            });
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a major and dangerous defect", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without the Major or DangerousDefectsWelsh arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousAndMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousAndMajorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with the Major and DangerousDefectsWelsh arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousAndMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousAndMajorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a advisory, minor, dangerous and major defects", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without any Welsh defect arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "AdvisoryDefects": [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "MinorDefects": [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithAdvisoryMinorDangerousMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithAdvisoryMinorDangerousMajorDefect)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.DangerousDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.AdvisoryDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MinorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with all Welsh defect arrays populated', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                "MinorDefects": [
+                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside."
+                                ],
+                                "MinorDefectsWelsh": [
+                                    "54.1.d.i Llywio pŵer: cronfa ddŵr yn is na'r lefel isaf. Echelau: 7. Allanol Ochr mewnol."
+                                ],
+                                "AdvisoryDefects": [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                "AdvisoryDefectsWelsh": [
+                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithAdvisoryMinorDangerousMajorDefect);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithAdvisoryMinorDangerousMajorDefect, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a dangerous defect with major rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "PRSDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefectMajorRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefectMajorRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.PRSDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "PRSDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "PRSDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "DangerousDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "DangerousDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithDangerousDefectMajorRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithDangerousDefectMajorRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
+
+            context("and the psv result has a major defect with dangerous rectified", () => {
+                context("and the test station location is not in Wales", () => {
+                    it('should return a VTP30 payload without PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "PRSDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefectDangerousRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefectDangerousRectified)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                                expect(payload.FAIL_DATA.PRSDefectsWelsh).toBeUndefined();
+                                expect(payload.FAIL_DATA.MajorDefectsWelsh).toBeUndefined();
+                            });
+                    });
+                })
+
+                context("and the test station location is in Wales", () => {
+                    it('should return a VTP30 payload with PRSDefectsWelsh list in fail data', async () => {
+                        const expectedResultEnglish: any = {
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                "MajorDefects": [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                "MajorDefectsWelsh": [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                "PRSDefects": [
+                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd"
+                                ],
+                                "PRSDefectsWelsh": [
+                                    "54.1.a.ii Llywio pŵer: ddim yn gweithio'n gywir ac yn amlwg yn effeithio ar reolaeth llywio. Echelau: 7. Mewnol Allanol. Asdasd"
+                                ],
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "Dev1 CVS",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordsPsvStub = cloneDeep(psvFailWithMajorDefectDangerousRectified);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordsPsvStub as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFailWithMajorDefectDangerousRectified, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResultEnglish);
+                            });
+                    });
+                })
+            })
         });
-
 
         context("when a prs test result is read from the queue", () => {
             const event: any = JSON.parse(
@@ -3900,8 +4490,645 @@ describe("cert-gen", () => {
                     "utf8"
                 )
             );
+            context("and the TRL has defects that is rectified at the test", () => {
+                const trlPRS = JSON.parse(event.Records[4].body);
+
+                context("and the test station is not in wales", () => {
+                    it("should return a TRL PRS certificate with the defects array populated", async () => {
+                            const expectedResult = {
+                                DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                },
+                                FAIL_DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    PRSDefects: [
+                                        "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                    ],
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                },
+                                Signature: {
+                                    ImageData: null,
+                                    ImageType: "png"
+                                },
+                                Watermark: "NOT VALID"
+                            };
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(trlPRS)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
+                                });
+                        }
+                    );
+                    context(" and the test station is in wales", () => {
+                        it("should return a TRL PRS bilingual certificate with the defects array populated", async () => {
+                            const expectedResult = {
+                                DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                },
+                                FAIL_DATA: {
+                                    CountryOfRegistrationCode: "gb",
+                                    CurrentOdometer: {
+                                        unit: "kilometres",
+                                        value: 12312
+                                    },
+                                    DateOfTheTest: "26.02.2019",
+                                    EarliestDateOfTheNextTest: "01.11.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    IsTrailer: true,
+                                    IssuersName: "CVS Dev1",
+                                    Make: "Isuzu",
+                                    Model: "FM",
+                                    PRSDefects: [
+                                        "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                    ],
+                                    PRSDefectsWelsh: [
+                                        "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                    ],
+                                    RawVIN: "T12876765",
+                                    SeatBeltNumber: 2,
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltTested: "Yes",
+                                    TestNumber: "W01A00310",
+                                    TestStationName: "Abshire-Kub",
+                                    TestStationPNumber: "09-4129632",
+                                    Trn: "ABC123",
+                                    VehicleEuClassification: "M1",
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                },
+                                Signature: {
+                                    ImageData: null,
+                                    ImageType: "png"
+                                },
+                                Watermark: "NOT VALID"
+                            };
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                            return await certificateGenerationService
+                                .generatePayload(trlPRS, true)
+                                .then((payload: any) => {
+                                    expect(payload).toEqual(expectedResult);
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
+                                });
+                        });
+                    });
+                });
+            });
+
+            context("and the PSV has defects that are rectified at the test", () => {
+                const psvPRS = JSON.parse(event.Records[5].body);
+
+                context("and the test station is not in wales", () => {
+                    it("should return a PSV certificate with the defects array", async () => {
+                        const expectedResult = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvPRS)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+
+                context("and the test station is in wales", () => {
+                    it("should return a PSV bilingual certificate with the defects array populated", async () => {
+                        const expectedResult = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "26.12.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "AEC",
+                                Model: "RELIANCE",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                RawVIN: "XMGDE02FS0H012345",
+                                RawVRM: "BQ91YHQ",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
+
+                        const techRecordResponseMock = cloneDeep(techRecordsPsv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(psvPRS, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+            });
             const testResult: any = JSON.parse(event.Records[0].body);
-            let resBody: string = "";
+            let resBody = "";
+
+            context("and the result has a defect that is rectified at test", () => {
+                const hgvWithDefectRectifiedAtTest: any = JSON.parse(event.Records[3].body);
+                context("and the test station location is not in Wales", () => {
+                    it("should return a VTG5 payload without the DangerousDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvWithDefectRectifiedAtTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+
+                context("and the test station location is in Wales", () => {
+                    it("should return a VTG5W payload with the DangerousDefectsWelsh array populated", async () => {
+                        const expectedResult: any = {
+                            DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            FAIL_DATA: {
+                                CountryOfRegistrationCode: "gb",
+                                CurrentOdometer: {
+                                    unit: "kilometres",
+                                    value: 12312
+                                },
+                                DateOfTheTest: "26.02.2019",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                ExpiryDate: "25.02.2020",
+                                IssuersName: "CVS Dev1",
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        date: "19.01.2019",
+                                        unit: "kilometres",
+                                        value: 400000
+                                    },
+                                    {
+                                        date: "18.01.2019",
+                                        unit: "kilometres",
+                                        value: 390000
+                                    },
+                                    {
+                                        date: "17.01.2019",
+                                        unit: "kilometres",
+                                        value: 380000
+                                    }
+                                ],
+                                PRSDefects: [
+                                    "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
+                                ],
+                                PRSDefectsWelsh: [
+                                    "6.1.a Cylch cadw teiar: wedi torri neu heb ei ffitio'n iawn fel bod datgysylltiad yn debygol. Echelau: 1. Mewnol Allanol. Asdasd"
+                                ],
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                SeatBeltNumber: 2,
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltTested: "Yes",
+                                TestNumber: "W01A00310",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                                VehicleEuClassification: "M1",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
+                            },
+                            Signature: {
+                                ImageData: null,
+                                ImageType: "png"
+                            },
+                            Watermark: "NOT VALID"
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvWithDefectRectifiedAtTest, true)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+            });
+
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", async () => {
@@ -3945,6 +5172,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -3985,27 +5216,27 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4033,6 +5264,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -4054,41 +5289,36 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_make = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4135,6 +5365,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -4175,6 +5409,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -4191,22 +5429,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 resBody = payload.body;
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -4218,14 +5452,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsSearchPsv);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsSearchPsv);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsPsv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -4239,8 +5469,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -4248,7 +5478,7 @@ describe("cert-gen", () => {
         });
 
         context("when a failing test result is read from the queue", () => {
-            const event: any = {...queueEventFailPRS};
+            const event: any = { ...queueEventFailPRS };
             const testResult: any = JSON.parse(event.Records[0].body);
 
             context("and certificate Data is generated", () => {
@@ -4257,42 +5487,62 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with PRSDefects list in Fail data", async () => {
                             const expectedResult: any = {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "BQ91YHQ",
-                                EarliestDateOfTheNextTest: "26.12.2019",
-                                ExpiryDate: "25.02.2020",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                DangerousDefects: [
-                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-                                ],
-                                MajorDefects: undefined,
-                                MinorDefects: [
-                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
-                                ],
-                                AdvisoryDefects: [
-                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
-                                ],
-                                PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                FAIL_DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "XMGDE02FS0H012345",
+                                    RawVRM: "BQ91YHQ",
+                                    EarliestDateOfTheNextTest: "26.12.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    DangerousDefects: [
+                                        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                    ],
+                                    MajorDefects: undefined,
+                                    MinorDefects: [
+                                        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                                    ],
+                                    AdvisoryDefects: [
+                                        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                                    ],
+                                    PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult, "FAIL_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult
+                            } as CertificatePayloadStateBag;
+
+                            const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
+                            passOrFailCommand.initialise(state);
+
+                            const defectsCommand = Container.get(DefectsCommand);
+                            defectsCommand.initialise(state);
+
+                            const payload = {
+                                FAIL_DATA: {
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
+                                }
+                            };
+
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4305,42 +5555,62 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with PRSDefects list in Fail Data", async () => {
                             const expectedResult: any = {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "BQ91YHQ",
-                                EarliestDateOfTheNextTest: "26.12.2019",
-                                ExpiryDate: "25.02.2020",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                DangerousDefects: undefined,
-                                MajorDefects: ["1.1.a A registration plate: missing. Front."],
-                                MinorDefects: [
-                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
-                                ],
-                                AdvisoryDefects: [
-                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
-                                ],
-                                PRSDefects: [
-                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-                                ],
+                                FAIL_DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "XMGDE02FS0H012345",
+                                    RawVRM: "BQ91YHQ",
+                                    EarliestDateOfTheNextTest: "26.12.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    DangerousDefects: undefined,
+                                    MajorDefects: ["1.1.a A registration plate: missing. Front."],
+                                    MinorDefects: [
+                                        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                                    ],
+                                    AdvisoryDefects: [
+                                        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                                    ],
+                                    PRSDefects: [
+                                        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                    ],
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult2, "FAIL_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult: testResult2
+                            } as CertificatePayloadStateBag;
+
+                            const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
+                            passOrFailCommand.initialise(state);
+
+                            const defectsCommand = Container.get(DefectsCommand);
+                            defectsCommand.initialise(state);
+
+                            const payload = {
+                                FAIL_DATA: {
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
+                                }
+                            };
+
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4353,42 +5623,62 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with 0 PRSDefects list in Fail Data", async () => {
                             const expectedResult: any = {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "XMGDE02FS0H012345",
-                                RawVRM: "BQ91YHQ",
-                                EarliestDateOfTheNextTest: "26.12.2019",
-                                ExpiryDate: "25.02.2020",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                DangerousDefects: [
-                                    "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
-                                ],
-                                MajorDefects: ["1.1.a A registration plate: missing. Front."],
-                                MinorDefects: [
-                                    "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
-                                ],
-                                AdvisoryDefects: [
-                                    "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
-                                ],
-                                PRSDefects: undefined,
+                                FAIL_DATA: {
+                                    TestNumber: "W01A00310",
+                                    TestStationPNumber: "09-4129632",
+                                    TestStationName: "Abshire-Kub",
+                                    CurrentOdometer: {
+                                        value: 12312,
+                                        unit: "kilometres",
+                                    },
+                                    IssuersName: "CVS Dev1",
+                                    DateOfTheTest: "26.02.2019",
+                                    CountryOfRegistrationCode: "gb",
+                                    VehicleEuClassification: "M1",
+                                    RawVIN: "XMGDE02FS0H012345",
+                                    RawVRM: "BQ91YHQ",
+                                    EarliestDateOfTheNextTest: "26.12.2019",
+                                    ExpiryDate: "25.02.2020",
+                                    SeatBeltTested: "Yes",
+                                    SeatBeltPreviousCheckDate: "26.02.2019",
+                                    SeatBeltNumber: 2,
+                                    DangerousDefects: [
+                                        "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
+                                    ],
+                                    MajorDefects: ["1.1.a A registration plate: missing. Front."],
+                                    MinorDefects: [
+                                        "54.1.d.i Power steering: reservoir is below minimum level. Axles: 7. Outer Nearside.",
+                                    ],
+                                    AdvisoryDefects: [
+                                        "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
+                                    ],
+                                    PRSDefects: undefined,
+                                    Recalls: {
+                                        manufacturer: null,
+                                        hasRecall: false
+                                    }
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult3, "FAIL_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.FAIL_DATA,
+                                testResult: testResult3
+                            } as CertificatePayloadStateBag;
+
+                            const passOrFailCommand = Container.get(PassOrFailCertificateCommand);
+                            passOrFailCommand.initialise(state);
+
+                            const defectsCommand = Container.get(DefectsCommand);
+                            defectsCommand.initialise(state);
+
+                            const payload = {
+                                FAIL_DATA: {
+                                    ...(await passOrFailCommand.generate()).FAIL_DATA,
+                                    ...(await defectsCommand.generate()).FAIL_DATA
+                                }
+                            };
+
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4396,8 +5686,9 @@ describe("cert-gen", () => {
         });
 
         context("when a failing test result is read from the queue", () => {
-            const event: any = {...queueEventFail};
+            const event: any = { ...queueEventFail };
             const testResult1: any = JSON.parse(event.Records[3].body);
+            const testResult21: any = JSON.parse(event.Records[20].body);
 
             context("and certificate Data is generated", () => {
                 context(
@@ -4405,47 +5696,120 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: ""
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "27/05/2024",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765",
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765",
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult1, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult1
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
+                        });
+
+                        it("should return Certificate Data with sorted requiredStandards in IVA_DATA", async () => {
+                            const expectedResult: any = {
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    bodyType: null,
+                                    date: "04/03/2024",
+                                    requiredStandards: [
+                                        {
+                                            sectionNumber: "01",
+                                            sectionDescription: "Noise",
+                                            rsNumber: 1,
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            refCalculation: "1.1",
+                                            additionalInfo: true,
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            additionalNotes: "The exhaust was held on with blue tac"
+                                        },
+                                        {
+                                            sectionNumber: "6a",
+                                            sectionDescription: "Lighting",
+                                            rsNumber: 2,
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            refCalculation: "6.2a",
+                                            additionalInfo: true,
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            additionalNotes: "The bulbs were slightly worn"
+                                        },
+                                    ],
+                                    make: null,
+                                    model: null,
+                                    reapplicationDate: "",
+                                    serialNumber: "ZX345CV",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "l1e-a",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "ZX345CV",
+                                    vin: "P0123010956789",
+                                }
+                            };
+
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult21
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4456,60 +5820,67 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    },
-                                    {
-                                        additionalInfo: false,
-                                        additionalNotes: null,
-                                        inspectionTypes: [
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.5",
-                                        requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
-                                        rsNumber: 5,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    },
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "27/05/2024",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        },
+                                        {
+                                            additionalInfo: false,
+                                            additionalNotes: null,
+                                            inspectionTypes: [
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.5",
+                                            requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            rsNumber: 5,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        },
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult2, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult2
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4520,45 +5891,51 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    "Some custom defect one",
-                                    "Some other custom defect two"
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "27/05/2024",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        "Some custom defect one",
+                                        "Some other custom defect two"
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult3, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult3
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4569,46 +5946,53 @@ describe("cert-gen", () => {
                     () => {
                         it("return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: false,
-                                        additionalNotes: null,
-                                        inspectionTypes: [
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.5",
-                                        requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
-                                        rsNumber: 5,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "27/05/2024",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Basic",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: false,
+                                            additionalNotes: null,
+                                            inspectionTypes: [
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.5",
+                                            requiredStandard: "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            rsNumber: 5,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Basic",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult4, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult4
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4619,47 +6003,54 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                bodyType: "some bodyType",
-                                date: "28/11/2023",
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The exhaust was held on with blue tac",
-                                        inspectionTypes: [
-                                            "normal",
-                                            "basic"
-                                        ],
-                                        prs: false,
-                                        refCalculation: "1.1",
-                                        requiredStandard: "The exhaust must be securely mounted",
-                                        rsNumber: 1,
-                                        sectionDescription: "Noise",
-                                        sectionNumber: "01"
-                                    }
-                                ],
-                                make: "some make",
-                                model: "some model",
-                                reapplicationDate: "27/05/2024",
-                                serialNumber: "C456789",
-                                station: "Abshire-Kub",
-                                testCategoryBasicNormal: "Normal",
-                                testCategoryClass: "m1",
-                                testerName: "CVS Dev1",
-                                vehicleTrailerNrNo: "C456789",
-                                vin: "T12876765"
+                                IVA_DATA: {
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    bodyType: "some bodyType",
+                                    date: "28/11/2023",
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The exhaust was held on with blue tac",
+                                            inspectionTypes: [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            prs: false,
+                                            refCalculation: "1.1",
+                                            requiredStandard: "The exhaust must be securely mounted",
+                                            rsNumber: 1,
+                                            sectionDescription: "Noise",
+                                            sectionNumber: "01"
+                                        }
+                                    ],
+                                    make: "some make",
+                                    model: "some model",
+                                    reapplicationDate: "",
+                                    serialNumber: "C456789",
+                                    station: "Abshire-Kub",
+                                    testCategoryBasicNormal: "Normal",
+                                    testCategoryClass: "m1",
+                                    testerName: "CVS Dev1",
+                                    vehicleTrailerNrNo: "C456789",
+                                    vin: "T12876765"
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult5, "IVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.IVA_DATA,
+                                testResult: testResult5
+                            } as CertificatePayloadStateBag;
+
+                            const ivaCommand = Container.get(IvaCertificateCommand);
+                            ivaCommand.initialise(state);
+                            const payload = await ivaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4670,42 +6061,49 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                retestDate: "03/09/2024",
-                                station: "Abshire-Kub",
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    }
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    station: "Abshire-Kub",
+                                    reapplicationDate: "",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        }
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult6, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult6
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4716,53 +6114,118 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards in MSVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                retestDate: "03/09/2024",
-                                station: "Abshire-Kub",
-                                additionalDefects: [
-                                    {
-                                        defectName: "N/A",
-                                        defectNotes: "",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    },
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "Switch was missing",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.3a",
-                                        requiredStandard: "Any light switch; missing",
-                                        rsNumber: 3,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "06"
-                                    },
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    reapplicationDate: "",
+                                    station: "Abshire-Kub",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "Switch was missing",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.3a",
+                                            requiredStandard: "Any light switch; missing",
+                                            rsNumber: 3,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult7, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult7
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
+                        });
+
+                        it("should return Certificate Data with sorted requiredStandards in MSVA_DATA", async () => {
+                            const expectedResult: any = {
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    reapplicationDate: "",
+                                    station: "Abshire-Kub",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "N/A",
+                                            defectNotes: "",
+                                            referenceNumber: ""
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "Switch was missing",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.3a",
+                                            requiredStandard: "Any light switch; missing",
+                                            rsNumber: 3,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "06"
+                                        },
+                                    ],
+                                }
+                            };
+
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult7
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
@@ -4773,52 +6236,426 @@ describe("cert-gen", () => {
                     () => {
                         it("should return Certificate Data with requiredStandards and additionalDefects in IVA_DATA", async () => {
                             const expectedResult: any = {
-                                vin: "P0123010956789",
-                                serialNumber: "ZX345CV",
-                                vehicleZNumber: "ZX345CV",
-                                make: null,
-                                model: null,
-                                type: "motorcycle",
-                                testerName: "CVS Dev1",
-                                date: "04/03/2024",
-                                retestDate: "03/09/2024",
-                                station: "Abshire-Kub",
-                                additionalDefects: [
-                                    {
-                                        defectName: "Rust",
-                                        defectNotes: "slight rust around the wheel arch",
-                                    }
-                                ],
-                                requiredStandards: [
-                                    {
-                                        additionalInfo: true,
-                                        additionalNotes: "The bulbs were slightly worn",
-                                        inspectionTypes: [],
-                                        prs: false,
-                                        refCalculation: "6.2a",
-                                        requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
-                                        rsNumber: 2,
-                                        sectionDescription: "Lighting",
-                                        sectionNumber: "6"
-                                    }
-                                ],
+                                MSVA_DATA: {
+                                    vin: "P0123010956789",
+                                    serialNumber: "ZX345CV",
+                                    vehicleZNumber: "ZX345CV",
+                                    make: null,
+                                    model: null,
+                                    type: "motorcycle",
+                                    testerName: "CVS Dev1",
+                                    date: "04/03/2024",
+                                    reapplicationDate: "",
+                                    station: "Abshire-Kub",
+                                    additionalDefects: [
+                                        {
+                                            defectName: "Rust",
+                                            defectNotes: "slight rust around the wheel arch"
+                                        }
+                                    ],
+                                    requiredStandards: [
+                                        {
+                                            additionalInfo: true,
+                                            additionalNotes: "The bulbs were slightly worn",
+                                            inspectionTypes: [],
+                                            prs: false,
+                                            refCalculation: "6.2a",
+                                            requiredStandard: "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
+                                            rsNumber: 2,
+                                            sectionDescription: "Lighting",
+                                            sectionNumber: "6"
+                                        }
+                                    ],
+                                }
                             };
 
-                            return await certificateGenerationService
-                                .generateCertificateData(testResult8, "MSVA_DATA")
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                });
+                            const state = {
+                                type: CERTIFICATE_DATA.MSVA_DATA,
+                                testResult: testResult8
+                            } as CertificatePayloadStateBag;
+
+                            const msvaCommand = Container.get(MsvaCertificateCommand);
+                            msvaCommand.initialise(state);
+                            const payload = await msvaCommand.generate();
+                            expect(payload).toEqual(expectedResult);
                         });
                     }
                 );
+            });
+        });
+
+        context("when an abandoned test result is read from the queue", () => {
+            const event: any = { ...queueEventAbandon };
+            const testResult: any = JSON.parse(event.Records[0].body);
+
+            context("and a payload is generated", () => {
+                context("and no signatures were found in the bucket", () => {
+                    it("should return a VTG12 payload without signature", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: "some additional",
+                                DateOfTheTest: "06.08.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "A Ministry Plate has been issued and is not fitted to the vehicle or trailer",
+                                    "Current Health and Safety legislation cannot be met in testing the vehicle",
+                                    "No proof was given that the vehicle used for carrying dangerous/toxic/corrosive or inflammable goods had been cleaned or otherwise rendered safe for test",
+                                    "The driver and/or presenter of the vehicle refused to or was unable to comply with the instructions of DVSA staff making it impractical or unsafe to continue the test",
+                                    "The examiner could not open the tachograph",
+                                    "The particulars of the motor vehicle or trailer (e.g. number of axles / axle weights) do not match the VTG6 Ministry Plate fitted to the vehicle."
+                                ],
+                                RegistrationNumber: "CT70VRL",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+
+                context("and signatures were found in the bucket", () => {
+                    it("should return a VTG12 payload with signature", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: "some additional",
+                                DateOfTheTest: "06.08.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "A Ministry Plate has been issued and is not fitted to the vehicle or trailer",
+                                    "Current Health and Safety legislation cannot be met in testing the vehicle",
+                                    "No proof was given that the vehicle used for carrying dangerous/toxic/corrosive or inflammable goods had been cleaned or otherwise rendered safe for test",
+                                    "The driver and/or presenter of the vehicle refused to or was unable to comply with the instructions of DVSA staff making it impractical or unsafe to continue the test",
+                                    "The examiner could not open the tachograph",
+                                    "The particulars of the motor vehicle or trailer (e.g. number of axles / axle weights) do not match the VTG6 Ministry Plate fitted to the vehicle."
+                                ],
+                                RegistrationNumber: "CT70VRL",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: fs
+                                    .readFileSync(
+                                        path.resolve(__dirname, `../resources/signatures/1.base64`)
+                                    )
+                                    .toString(),
+                            },
+                        };
+
+                        // Add a new signature
+                        S3BucketMockService.buckets.push({
+                            bucketName: `cvs-signature-${process.env.BUCKET}`,
+                            files: ["1.base64"],
+                        });
+                        return await certificateGenerationService
+                            .generatePayload(testResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                                // Remove the signature
+                                S3BucketMockService.buckets.pop();
+                            });
+                    });
+                });
+            });
+        });
+
+        context("when an abandoned test result is read from the queue", () => {
+            const event: any = { ...queueEventAbandon };
+            const hgvAnnualTest: any = JSON.parse(event.Records[0].body);
+            const hgvAdrTest: any = JSON.parse(event.Records[1].body);
+            const hgvRWTest: any = JSON.parse(event.Records[2].body);
+            const trlAnnualTest: any = JSON.parse(event.Records[3].body);
+            const hgvTIRTest: any = JSON.parse(event.Records[4].body);
+            const psvAnnualTest: any = JSON.parse(event.Records[5].body);
+            const psvFirstTest: any = JSON.parse(event.Records[6].body);
+            const psvDDATest: any = JSON.parse(event.Records[7].body);
+            const psvCOIFTest: any = JSON.parse(event.Records[8].body);
+
+            context("and a payload is generated", () => {
+                context("and the test is for a hgv or trailer", () => {
+                    it("should return a VTG12 payload for an hgv annual test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: "some additional",
+                                DateOfTheTest: "06.08.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "A Ministry Plate has been issued and is not fitted to the vehicle or trailer",
+                                    "Current Health and Safety legislation cannot be met in testing the vehicle",
+                                    "No proof was given that the vehicle used for carrying dangerous/toxic/corrosive or inflammable goods had been cleaned or otherwise rendered safe for test",
+                                    "The driver and/or presenter of the vehicle refused to or was unable to comply with the instructions of DVSA staff making it impractical or unsafe to continue the test",
+                                    "The examiner could not open the tachograph",
+                                    "The particulars of the motor vehicle or trailer (e.g. number of axles / axle weights) do not match the VTG6 Ministry Plate fitted to the vehicle."
+                                ],
+                                RegistrationNumber: "CT70VRL",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvAnnualTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTG12 payload for an hgv ADR test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "09.12.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "The examiner could not open the tachograph"
+                                ],
+                                RegistrationNumber: "QA07HGV",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvAdrTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTG12 payload for a hgv Road-worthiness test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "09.12.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "There is not permanently fixed to the chassis serial number as shown on the registration document (motor vehicle) or the identification mark issued by the Secretary of State (trailer)"
+                                ],
+                                RegistrationNumber: "QA06HGV",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvRWTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTG12 payload for a trl annual test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "06.04.2023",
+                                IssuersName: "CVS FullAccess",
+                                ReasonsForRefusal: [
+                                    "The vehicle was not submitted for test at the appointed time."
+                                ],
+                                RegistrationNumber: "C456789",
+                                TestStationName: "Larson, Nader and Okuneva",
+                                TestStationPNumber: "84-926821",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(trlAnnualTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTG12 payload for a hgv TIR test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "09.12.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "The relevant test fee has not been paid"
+                                ],
+                                RegistrationNumber: "QA08HGV",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(hgvTIRTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
+
+                context("and the test is for a psv", () => {
+                    it("should return a VTP12 payload for a psv annual test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "03.04.2023",
+                                IssuersName: "TST CVS PSVTester Dev 10",
+                                ReasonsForRefusal: [
+                                    "The vehicle was not submitted for test at the appointed time."
+                                ],
+                                RegistrationNumber: "AA56BCD",
+                                TestStationName: "Larson, Nader and Okuneva",
+                                TestStationPNumber: "84-926821",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(psvAnnualTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTP12 payload for a psv first test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "09.12.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "The vehicle exhaust outlet has been modified in such a way as to prevent a metered smoke check being conducted"
+                                ],
+                                RegistrationNumber: "QA09PSV",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(psvFirstTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTP12 payload for a psv first test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "11.12.2024",
+                                IssuersName: "Joseph Richards",
+                                ReasonsForRefusal: [
+                                    "The driver at the time of the examination did not remain with the vehicle and operate the controls, or did not comply with a reasonable request of the examiner in the course of his duties, or did not remove and refit panels as requested"
+                                ],
+                                RegistrationNumber: "QA07PSV",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(psvDDATest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                    it("should return a VTP12 payload for a psv COIF test", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            ABANDONED_DATA: {
+                                AdditionalComments: null,
+                                DateOfTheTest: "11.12.2024",
+                                IssuersName: "AN Other",
+                                ReasonsForRefusal: [
+                                    "The vehicle/trailer was presented at an incorrect test location (see conditions specified on IVA 30)"
+                                ],
+                                RegistrationNumber: "QA06PSV",
+                                TestStationName: "Abshire-Kub",
+                                TestStationPNumber: "09-4129632",
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null
+                            },
+                        };
+
+                        return await certificateGenerationService
+                            .generatePayload(psvCOIFTest)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+                });
             });
         });
     });
 
     context("CertGenService for HGV", () => {
         context("when a passing test result for HGV is read from the queue", () => {
-            const event: any = {...queueEventPass};
+            const event: any = { ...queueEventPass };
             const testResult: any = JSON.parse(event.Records[1].body);
 
             context("and a payload is generated", () => {
@@ -4864,6 +6701,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -4871,22 +6712,91 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                            });
+                    });
+
+                    it("should return a VTG5 payload without signature but with a recalls object populated", async () => {
+                        const expectedResult: any = {
+                            Watermark: "NOT VALID",
+                            DATA: {
+                                TestNumber: "W01A00310",
+                                TestStationPNumber: "09-4129632",
+                                TestStationName: "Abshire-Kub",
+                                CurrentOdometer: {
+                                    value: 12312,
+                                    unit: "kilometres",
+                                },
+                                IssuersName: "CVS Dev1",
+                                DateOfTheTest: "26.02.2019",
+                                CountryOfRegistrationCode: "gb",
+                                VehicleEuClassification: "M1",
+                                RawVIN: "P012301098765",
+                                RawVRM: "VM14MDT",
+                                ExpiryDate: "25.02.2020",
+                                EarliestDateOfTheNextTest: "01.11.2019",
+                                SeatBeltTested: "Yes",
+                                SeatBeltPreviousCheckDate: "26.02.2019",
+                                SeatBeltNumber: 2,
+                                Make: "Isuzu",
+                                Model: "FM",
+                                OdometerHistoryList: [
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
+                                        date: "19.01.2019",
+                                    },
+                                    {
+                                        value: 390000,
+                                        unit: "kilometres",
+                                        date: "18.01.2019",
+                                    },
+                                    {
+                                        value: 380000,
+                                        unit: "kilometres",
+                                        date: "17.01.2019",
+                                    },
+                                ],
+                                Recalls: {
+                                    manufacturer: 'manufacturer',
+                                    hasRecall: true
+                                }
+                            },
+                            Signature: {
+                                ImageType: "png",
+                                ImageData: null,
+                            },
+                        };
+
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
+
+                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                        const duplicatedTestResult = cloneDeep(testResult);
+
+                        duplicatedTestResult.recalls = {
+                            manufacturer: 'manufacturer',
+                            hasRecall: true
+                        }
+
+                        return await certificateGenerationService
+                            .generatePayload(duplicatedTestResult)
+                            .then((payload: any) => {
+                                expect(payload).toEqual(expectedResult);
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -4914,43 +6824,38 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
-                            .generatePayload(testResult)
-                            .then((payload: any) => {
-                                expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
-                            });
+                          .generatePayload(testResult)
+                          .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            callGetOdometerSpy.mockClear();
+                            // getVehicleMakeAndModelStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
+                          });
+                      });
                     });
-                });
 
                 context("and signatures were found in the bucket", () => {
                     it("should return a VTG5 payload with signature", async () => {
@@ -4994,6 +6899,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5010,22 +6919,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -5037,14 +6942,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -5058,8 +6959,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -5074,7 +6975,7 @@ describe("cert-gen", () => {
                 )
             );
             const testResult: any = JSON.parse(event.Records[1].body);
-            let resBody: string = "";
+            let resBody = "";
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", async () => {
@@ -5118,6 +7019,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -5158,6 +7063,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5165,21 +7074,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -5207,6 +7112,10 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -5228,40 +7137,35 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
-                            .generatePayload(testResult)
-                            .then((payload: any) => {
-                                expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                          .generatePayload(testResult)
+                          .then((payload: any) => {
+                              expect(payload).toEqual(expectedResult);
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -5308,6 +7212,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -5348,6 +7256,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5363,22 +7275,18 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 resBody = payload.body;
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -5390,14 +7298,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -5411,8 +7315,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -5420,7 +7324,7 @@ describe("cert-gen", () => {
         });
 
         context("when a failing test result is read from the queue", () => {
-            const event: any = {...queueEventFail};
+            const event: any = { ...queueEventFail };
             const testResult: any = JSON.parse(event.Records[1].body);
 
             context("and a payload is generated", () => {
@@ -5475,27 +7379,27 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -5532,41 +7436,36 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
+                        techRecordResponseRwtMock.techRecord_make = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         // Stub CertificateGenerationService getVehicleMakeAndModel method to return undefined value.
                         return await certificateGenerationService
-                            .generatePayload(testResult)
-                            .then((payload: any) => {
-                                expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
-                            });
+                          .generatePayload(testResult)
+                          .then((payload: any) => {
+                              expect(payload).toEqual(expectedResult);
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
+                          });
                     });
                 });
 
@@ -5621,6 +7520,10 @@ describe("cert-gen", () => {
                                         date: "17.01.2019",
                                     },
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5636,21 +7539,17 @@ describe("cert-gen", () => {
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -5662,14 +7561,10 @@ describe("cert-gen", () => {
                 "and the generated payload is used to call the MOT service",
                 () => {
                     it("successfully generate a certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtHgvSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtHgvSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwtHgv);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -5683,8 +7578,8 @@ describe("cert-gen", () => {
                                     current: 2,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -5694,7 +7589,7 @@ describe("cert-gen", () => {
 
     context("CertGenService for TRL", () => {
         context("when a passing test result for TRL is read from the queue", () => {
-            const event: any = {...queueEventPass};
+            const event: any = { ...queueEventPass };
             const testResult: any = JSON.parse(event.Records[2].body);
 
             context("and a payload is generated", () => {
@@ -5723,34 +7618,34 @@ describe("cert-gen", () => {
                                 Make: "STANLEY",
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
-                                IsTrailer: true
+                                IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
 
                 context("and lambda-to-lambda calls were unsuccessful", () => {
-                    it("should return a VTG5A payload without bodyMake, bodyModel and odometer history", async () => {
+                    it("should return a VTG5A payload without bodyModel and odometer history", async () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -5768,46 +7663,41 @@ describe("cert-gen", () => {
                                 CountryOfRegistrationCode: "gb",
                                 VehicleEuClassification: "M1",
                                 RawVIN: "T12876765",
+                                Make: "STANLEY",
                                 ExpiryDate: "25.02.2020",
                                 EarliestDateOfTheNextTest: "01.11.2019",
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
                                 ImageData: null,
                             },
                         };
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
+                        techRecordResponseRwtMock.techRecord_model = undefined;
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
+                                callGetOdometerSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -5838,6 +7728,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5854,22 +7748,18 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -5882,14 +7772,10 @@ describe("cert-gen", () => {
                 () => {
                     it("successfully generate a certificate", async () => {
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -5901,8 +7787,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -5934,6 +7820,10 @@ describe("cert-gen", () => {
                                 Make: "STANLEY",
                                 Model: "AUTOTRL",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -5952,26 +7842,22 @@ describe("cert-gen", () => {
 
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
-                            .resolves({Trn: undefined, IsTrailer: true});
+                            .resolves({ Trn: undefined, IsTrailer: true });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -5984,38 +7870,7 @@ describe("cert-gen", () => {
                 "and trailer registration lambda returns status code other than 200 or 404 not found",
                 () => {
                     it("should throw an error", async () => {
-                        const expectedResult: any = {
-                            Watermark: "NOT VALID",
-                            DATA: {
-                                TestNumber: "W01A00310",
-                                TestStationPNumber: "09-4129632",
-                                TestStationName: "Abshire-Kub",
-                                CurrentOdometer: {
-                                    value: 12312,
-                                    unit: "kilometres",
-                                },
-                                IssuersName: "CVS Dev1",
-                                DateOfTheTest: "26.02.2019",
-                                CountryOfRegistrationCode: "gb",
-                                VehicleEuClassification: "M1",
-                                RawVIN: "T12876765",
-                                ExpiryDate: "25.02.2020",
-                                EarliestDateOfTheNextTest: "01.11.2019",
-                                SeatBeltTested: "Yes",
-                                SeatBeltPreviousCheckDate: "26.02.2019",
-                                SeatBeltNumber: 2,
-                                Make: "STANLEY",
-                                Model: "AUTOTRL",
-                            },
-                            Signature: {
-                                ImageType: "png",
-                                ImageData: fs
-                                    .readFileSync(
-                                        path.resolve(__dirname, `../resources/signatures/1.base64`)
-                                    )
-                                    .toString(),
-                            },
-                        };
+
                         // Add a new signature
                         S3BucketMockService.buckets.push({
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
@@ -6024,26 +7879,22 @@ describe("cert-gen", () => {
 
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
-                            .rejects({statusCode: 500, body: "an error occured"});
+                            .rejects({ statusCode: 500, body: "an error occured" });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .catch((err: any) => {
                                 expect(err.statusCode).toEqual(500);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -6061,7 +7912,7 @@ describe("cert-gen", () => {
                 )
             );
             const testResult: any = JSON.parse(event.Records[2].body);
-            let resBody: string = "";
+            let resBody = "";
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
                     it("should return a PRS payload without signature", async () => {
@@ -6089,6 +7940,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6113,6 +7968,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6120,27 +7979,23 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
 
                 context("and lambda-to-lambda calls were unsuccessful", () => {
-                    it("should return a PRS payload without bodyMake, bodyModel and odometer history", async () => {
+                    it("should return a PRS payload without, bodyModel and odometer history", async () => {
                         const expectedResult: any = {
                             Watermark: "NOT VALID",
                             DATA: {
@@ -6163,6 +8018,11 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                Make: "STANLEY",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6185,6 +8045,11 @@ describe("cert-gen", () => {
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
                                 PRSDefects: ["1.1.a A registration plate: missing. Front."],
+                                Make: "STANLEY",
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6192,34 +8057,23 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
-                        // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6250,6 +8104,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             FAIL_DATA: {
                                 TestNumber: "W01A00310",
@@ -6274,6 +8132,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6290,14 +8152,10 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
@@ -6306,8 +8164,8 @@ describe("cert-gen", () => {
                                 resBody = payload.body;
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6318,14 +8176,10 @@ describe("cert-gen", () => {
                 () => {
                     it("successfully generate a certificate", async () => {
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -6337,8 +8191,8 @@ describe("cert-gen", () => {
                                     current: 1,
                                     total: 2,
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -6346,7 +8200,7 @@ describe("cert-gen", () => {
         });
 
         context("when a failing test result is read from the queue", () => {
-            const event: any = {...queueEventFail};
+            const event: any = { ...queueEventFail };
             const testResult: any = JSON.parse(event.Records[2].body);
 
             context("and a payload is generated", () => {
@@ -6385,6 +8239,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6392,21 +8250,17 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
 
                     });
@@ -6436,6 +8290,7 @@ describe("cert-gen", () => {
                                 SeatBeltTested: "Yes",
                                 SeatBeltPreviousCheckDate: "26.02.2019",
                                 SeatBeltNumber: 2,
+                                "Make": "STANLEY",
                                 DangerousDefects: [
                                     "54.1.a.ii Power steering: not working correctly and obviously affects steering control. Axles: 7. Inner Offside. Asdasd",
                                 ],
@@ -6445,6 +8300,10 @@ describe("cert-gen", () => {
                                 AdvisoryDefects: [
                                     "5.1 Compression Ignition Engines Statutory Smoke Meter Test: null Dasdasdccc",
                                 ],
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6452,34 +8311,23 @@ describe("cert-gen", () => {
                             },
                         };
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
                         // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_make;
-                        // @ts-ignore
-                        delete techRecordResponseRwtMock.techRecord_model;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        techRecordResponseRwtMock.techRecord_model = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         // Make the functions return undefined
                         // Stub CertificateGenerationService getOdometerHistory method to return undefined value.
-                        const getOdometerHistoryStub = sandbox
-                            .stub(
-                                CertificateGenerationService.prototype,
-                                "getOdometerHistory"
-                            )
-                            .resolves(undefined);
+                        callGetOdometerSpy.mockResolvedValue(undefined as any);
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getOdometerHistoryStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetOdometerSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // getVehicleMakeAndModelStub.restore();
                             });
                     });
@@ -6520,6 +8368,10 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 Trn: "ABC123",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6536,21 +8388,17 @@ describe("cert-gen", () => {
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                             });
@@ -6563,14 +8411,10 @@ describe("cert-gen", () => {
                 () => {
                     it("successfully generate a certificate", async () => {
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         expect.assertions(3);
                         return await certificateGenerationService
@@ -6583,8 +8427,8 @@ describe("cert-gen", () => {
                                     total: 2,
 
                                 });
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 }
@@ -6626,6 +8470,10 @@ describe("cert-gen", () => {
                                 Make: "STANLEY",
                                 Model: "AUTOTRL",
                                 IsTrailer: true,
+                                Recalls: {
+                                    manufacturer: null,
+                                    hasRecall: false
+                                }
                             },
                             Signature: {
                                 ImageType: "png",
@@ -6634,26 +8482,22 @@ describe("cert-gen", () => {
                         };
                         const getTrailerRegistrationStub = sandbox
                             .stub(
-                                CertificateGenerationService.prototype,
+                                TrailerRepository.prototype,
                                 "getTrailerRegistrationObject"
                             )
-                            .resolves({Trn: undefined, IsTrailer: true});
+                            .resolves({ Trn: undefined, IsTrailer: true });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordSearchStub.restore();
-                                getTechRecordStub.restore();
+                                callSearchTechRecordSpy.mockClear();
+                                callGetTechRecordSpy.mockClear();
                                 // Remove the signature
                                 S3BucketMockService.buckets.pop();
                                 getTrailerRegistrationStub.restore();
@@ -6683,34 +8527,20 @@ describe("cert-gen", () => {
                             )
                         );
 
-                        const techRecordResponseAdrMock = JSON.parse(
-                            fs.readFileSync(
-                                path.resolve(
-                                    __dirname,
-                                    "../resources/tech-records-response-adr.json"
-                                ),
-                                "utf8"
-                            )
-                        );
-
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        delete expectedResult.techRecord_make;
-                        delete expectedResult.techRecord_model;
-                        delete expectedResult.ApplicantDetails;
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        expectedResult.techRecord_make = undefined;
+                        expectedResult.techRecord_model = undefined;
+                        expectedResult.ApplicantDetails = undefined;
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                             });
                     });
                 });
@@ -6741,28 +8571,24 @@ describe("cert-gen", () => {
                                 "utf8"
                             )
                         );
-// Add a new signature
+                        // Add a new signature
                         S3BucketMockService.buckets.push({
                             bucketName: `cvs-signature-${process.env.BUCKET}`,
                             files: ["1.base64"],
                         });
 
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+                        callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                         const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                        callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                         return await certificateGenerationService
                             .generatePayload(testResult)
                             .then((payload: any) => {
                                 expect(payload).toEqual(expectedResult);
                                 // getTechRecordStub.restore();
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                                callGetTechRecordSpy.mockClear();
+                                callSearchTechRecordSpy.mockClear();
                                 S3BucketMockService.buckets.pop();
                             });
                     });
@@ -6776,7 +8602,7 @@ describe("cert-gen", () => {
             "when a passing test result for Roadworthiness test for HGV or TRL is read from the queue",
             () => {
                 const event: any = cloneDeep(queueEventPass);
-                const testResult: ITestResult = JSON.parse(event.Records[1].body);
+                const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[1].body);
                 testResult.testTypes.testTypeId = "122";
                 testResult.vin = "GYFC26269R240355";
                 testResult.vrm = "NKPILNCN";
@@ -6787,21 +8613,17 @@ describe("cert-gen", () => {
                                 docGenRwt[0]
                             );
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(testResult)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -6818,23 +8640,18 @@ describe("cert-gen", () => {
                                 files: ["1.base64"],
                             });
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
                                 .generatePayload(testResult)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
+                                    callGetTechRecordSpy.mockClear();
                                     S3BucketMockService.buckets.pop();
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
@@ -6846,27 +8663,23 @@ describe("cert-gen", () => {
             () => {
                 it("should pass certificateType as RWT", async () => {
                     const event: any = cloneDeep(queueEventPass);
-                    const testResult: ITestResult = JSON.parse(event.Records[1].body);
+                    const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[1].body);
                     testResult.testTypes.testTypeId = "122";
                     testResult.vin = "GYFC26269R240355";
                     testResult.vrm = "NKPILNCN";
 
-                    const getTechRecordSearchStub = sandbox
-                        .stub(certificateGenerationService, "callSearchTechRecords")
-                        .resolves(techRecordsRwtSearch);
+                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                     const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                    const getTechRecordStub = sandbox
-                        .stub(certificateGenerationService, "callGetTechRecords")
-                        .resolves((techRecordResponseRwtMock) as any);
+                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                     expect.assertions(1);
                     return await certificateGenerationService
                         .generateCertificate(testResult)
                         .then((response: any) => {
                             expect(response.certificateType).toEqual("RWT");
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
                         });
                 });
             }
@@ -6876,7 +8689,7 @@ describe("cert-gen", () => {
             "when a failing test result for Roadworthiness test for HGV or TRL is read from the queue",
             () => {
                 const event: any = cloneDeep(queueEventFail);
-                const testResult: ITestResult = JSON.parse(event.Records[2].body);
+                const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[2].body);
                 testResult.testTypes.testTypeId = "91";
                 testResult.vin = "T12768594";
                 testResult.trailerId = "0285678";
@@ -6886,21 +8699,16 @@ describe("cert-gen", () => {
                             const expectedResult: ICertificatePayload = cloneDeep(
                                 docGenRwt[4]
                             );
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             const payload = await certificateGenerationService
-                                .generatePayload(testResult);
+                              .generatePayload(testResult);
                             expect(payload).toEqual(expectedResult);
-                            getTechRecordStub.restore();
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
                         });
                     });
 
@@ -6916,21 +8724,17 @@ describe("cert-gen", () => {
                                 files: ["1.base64"],
                             });
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             const payload = await certificateGenerationService
                                 .generatePayload(testResult);
                             expect(payload).toEqual(expectedResult);
                             S3BucketMockService.buckets.pop();
-                            getTechRecordStub.restore();
-                            getTechRecordSearchStub.restore();
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
                         });
                     });
                 });
@@ -6939,332 +8743,607 @@ describe("cert-gen", () => {
     });
 
     context("CertGenService for IVA 30 test", () => {
-        context(
-            "when a failing test result for basic IVA test is read from the queue",
-            () => {
-                const event: any = cloneDeep(queueEventFail);
-                const testResult: ITestResult = JSON.parse(event.Records[3].body); // retrieve record
-                context("and a payload is generated", () => {
-                    context("and no signatures were found in the bucket", () => {
-                        it("should return an IVA_30 payload without signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenIva30[0]
-                            );
+        context("when a failing test result for basic IVA test is read from the queue", () => {
+            const event: any = cloneDeep(queueEventFail);
+            const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[3].body);
 
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+            describe("reapplication date handling", () => {
+                    testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";
+                    context("and reapplication date is provided", () => {
+                        const event: any = cloneDeep(queueEventFail);
+                        const testResultReapplication: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[21].body);
+
+                        it("should include reapplication date when provided", async () => {
+                            testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";
+                            const expectedResult: ICertificatePayload = {
+                                "IVA_DATA": {
+                                    "additionalDefects": [
+                                        {
+                                            "defectName": "N/A",
+                                            "defectNotes": "",
+                                            "referenceNumber": ""
+                                        }
+                                    ],
+                                    "bodyType": "some bodyType",
+                                    "date": "28/11/2023",
+                                    "make": "some make",
+                                    "model": "some model",
+                                    "reapplicationDate": "27/05/2024",
+                                    "requiredStandards": [
+                                        {
+                                            "additionalInfo": true,
+                                            "additionalNotes": "The exhaust was held on with blue tac",
+                                            "inspectionTypes": [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.1",
+                                            "requiredStandard": "The exhaust must be securely mounted",
+                                            "rsNumber": 1,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        },
+                                        {
+                                            "additionalInfo": false,
+                                            "additionalNotes": null,
+                                            "inspectionTypes": [
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.5",
+                                            "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            "rsNumber": 5,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        }
+                                    ],
+                                    "serialNumber": "C456789",
+                                    "station": "Abshire-Kub",
+                                    "testCategoryBasicNormal": "Basic",
+                                    "testCategoryClass": "m1",
+                                    "testerName": "CVS Dev1",
+                                    "vehicleTrailerNrNo": "C456789",
+                                    "vin": "T12876765"
+                                },
+                                "Signature": {
+                                    "ImageData": null,
+                                    "ImageType": "png"
+                                },
+                                "Watermark": "NOT VALID"
+                            };
+
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
-                                .generatePayload(testResult)
+                                .generatePayload(testResultReapplication)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
+                    context("and reapplication date is NOT provided", () => {
+                        const event: any = cloneDeep(queueEventFail);
+                        const testResultReapplication: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[21].body);
 
-                    context("and signatures were found in the bucket", () => {
-                        it("should return an IVA 30 payload with signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenIva30[1]
-                            );
+                        it("should return the IVA_30 payload with the reapplication date in the payload", async () => {
+                            testResultReapplication.testTypes.reapplicationDate = "";
+                            const expectedResult: ICertificatePayload = {
+                                "IVA_DATA": {
+                                    "additionalDefects": [
+                                        {
+                                            "defectName": "N/A",
+                                            "defectNotes": "",
+                                            "referenceNumber": ""
+                                        }
+                                    ],
+                                    "bodyType": "some bodyType",
+                                    "date": "28/11/2023",
+                                    "make": "some make",
+                                    "model": "some model",
+                                    "reapplicationDate": "",
+                                    "requiredStandards": [
+                                        {
+                                            "additionalInfo": true,
+                                            "additionalNotes": "The exhaust was held on with blue tac",
+                                            "inspectionTypes": [
+                                                "normal",
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.1",
+                                            "requiredStandard": "The exhaust must be securely mounted",
+                                            "rsNumber": 1,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        },
+                                        {
+                                            "additionalInfo": false,
+                                            "additionalNotes": null,
+                                            "inspectionTypes": [
+                                                "basic"
+                                            ],
+                                            "prs": false,
+                                            "refCalculation": "1.5",
+                                            "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                            "rsNumber": 5,
+                                            "sectionDescription": "Noise",
+                                            "sectionNumber": "01"
+                                        }
+                                    ],
+                                    "serialNumber": "C456789",
+                                    "station": "Abshire-Kub",
+                                    "testCategoryBasicNormal": "Basic",
+                                    "testCategoryClass": "m1",
+                                    "testerName": "CVS Dev1",
+                                    "vehicleTrailerNrNo": "C456789",
+                                    "vin": "T12876765"
+                                },
+                                "Signature": {
+                                    "ImageData": null,
+                                    "ImageType": "png"
+                                },
+                                "Watermark": "NOT VALID"
+                            };
 
-                            // Add a new signature
-                            S3BucketMockService.buckets.push({
-                                bucketName: `cvs-signature-${process.env.BUCKET}`,
-                                files: ["1.base64"],
-                            });
-
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
 
                             const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
 
                             return await certificateGenerationService
-                                .generatePayload(testResult)
+                                .generatePayload(testResultReapplication)
                                 .then((payload: any) => {
                                     expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    S3BucketMockService.buckets.pop();
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
                                 });
                         });
                     });
-
-                    context(
-                        "and the generated payload is used to call the MOT service",
-                        () => {
-                            it("successfully generate a certificate", async () => {
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
-
-                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
-
-                                expect.assertions(3);
-                                return await certificateGenerationService
-                                    .generateCertificate(testResult)
-                                    .then((response: any) => {
-                                        expect(response.fileName).toEqual(
-                                            "W01A00310_T12876765.pdf"
-                                        );
-                                        expect(response.certificateType).toEqual("IVA30");
-                                        expect(response.certificateOrder).toEqual({
-                                            current: 2,
-                                            total: 2,
-                                        });
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
-                                    });
-                            });
-                        }
-                    );
-                });
-            }
-        );
-    });
-
-    context("CertGenService for MSVA 30 test", () => {
-        context(
-            "when a failing test result MSVA test is read from the queue",
-            () => {
-                const event: any = cloneDeep(queueEventFail);
-                const testResult: ITestResult = JSON.parse(event.Records[8].body); // retrieve record
-                context("and a payload is generated", () => {
-                    context("and no signatures were found in the bucket", () => {
-                        it("should return an MSVA_30 payload without signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenMsva30[0]
-                            );
-
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
-
-                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
-
-                            return await certificateGenerationService
-                                .generatePayload(testResult)
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
-                                });
-                        });
-                    });
-
-                    context("and signatures were found in the bucket", () => {
-                        it("should return a MSVA 30 payload with signature", async () => {
-                            const expectedResult: ICertificatePayload = cloneDeep(
-                                docGenMsva30[1]
-                            );
-
-                            // Add a new signature
-                            S3BucketMockService.buckets.push({
-                                bucketName: `cvs-signature-${process.env.BUCKET}`,
-                                files: ["1.base64"],
-                            });
-
-                            const getTechRecordSearchStub = sandbox
-                                .stub(certificateGenerationService, "callSearchTechRecords")
-                                .resolves(techRecordsRwtSearch);
-
-                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                            const getTechRecordStub = sandbox
-                                .stub(certificateGenerationService, "callGetTechRecords")
-                                .resolves((techRecordResponseRwtMock) as any);
-
-                            return await certificateGenerationService
-                                .generatePayload(testResult)
-                                .then((payload: any) => {
-                                    expect(payload).toEqual(expectedResult);
-                                    getTechRecordStub.restore();
-                                    S3BucketMockService.buckets.pop();
-                                    getTechRecordStub.restore();
-                                    getTechRecordSearchStub.restore();
-                                });
-                        });
-                    });
-
-                    context(
-                        "and the generated payload is used to call the MOT service",
-                        () => {
-                            it("successfully generate a certificate", async () => {
-                                const getTechRecordSearchStub = sandbox
-                                    .stub(certificateGenerationService, "callSearchTechRecords")
-                                    .resolves(techRecordsRwtSearch);
-
-                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                                const getTechRecordStub = sandbox
-                                    .stub(certificateGenerationService, "callGetTechRecords")
-                                    .resolves((techRecordResponseRwtMock) as any);
-
-                                expect.assertions(3);
-                                return await certificateGenerationService
-                                    .generateCertificate(testResult)
-                                    .then((response: any) => {
-                                        expect(response.fileName).toEqual(
-                                            "W01A00128_P0123010956789.pdf"
-                                        );
-                                        expect(response.certificateType).toEqual("MSVA30");
-                                        expect(response.certificateOrder).toEqual({
-                                            current: 2,
-                                            total: 2,
-                                        });
-                                        getTechRecordStub.restore();
-                                        getTechRecordSearchStub.restore();
-                                    });
-                            });
-                        }
-                    );
-                });
-            }
-        );
-    });
-
-    context("CertificateUploadService", () => {
-        context("when a valid event is received", () => {
-            const event: any = JSON.parse(
-                fs.readFileSync(
-                    path.resolve(__dirname, "../resources/queue-event-prs.json"),
-                    "utf8"
-                )
-            );
-            const testResult: any = JSON.parse(event.Records[0].body);
-            const certificateUploadService: CertificateUploadService =
-                Injector.resolve<CertificateUploadService>(CertificateUploadService, [
-                    S3BucketMockService,
-                ]);
-
-            // tslint:disable-next-line:no-shadowed-variable
-            const certificateGenerationService: CertificateGenerationService =
-                Injector.resolve<CertificateGenerationService>(
-                    CertificateGenerationService,
-                    [S3BucketMockService, LambdaMockService]
-                );
-
-            context("when uploading a certificate", () => {
-                context("and the S3 bucket exists and is accesible", () => {
-                    it("should successfully upload the certificate", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
-
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
-
-                        const generatedCertificateResponse: IGeneratedCertificateResponse =
-                            await certificateGenerationService.generateCertificate(
-                                testResult
-                            );
-                        S3BucketMockService.buckets.push({
-                            bucketName: `cvs-cert-${process.env.BUCKET}`,
-                            files: [],
-                        });
-
-                        return certificateUploadService
-                            .uploadCertificate(generatedCertificateResponse)
-                            .then((response: ManagedUpload.SendData) => {
-                                expect(response.Key).toEqual(
-                                    `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
+                    context("and a payload is generated", () => {
+                        context("and no signatures were found in the bucket", () => {
+                            it("should return an IVA_30 payload without signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenIva30[0]
                                 );
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
-                                S3BucketMockService.buckets.pop();
+
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
+                                    });
                             });
+                        });
+
+                        context("and signatures were found in the bucket", () => {
+                            it("should return an IVA 30 payload with signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenIva30[1]
+                                );
+
+                                // Add a new signature
+                                S3BucketMockService.buckets.push({
+                                    bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                    files: ["1.base64"],
+                                });
+
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        callGetTechRecordSpy.mockClear();
+                                        S3BucketMockService.buckets.pop();
+                                        callSearchTechRecordSpy.mockClear();
+                                    });
+                            });
+                        });
+
+                        context(
+                            "and the generated payload is used to call the MOT service",
+                            () => {
+                                it("successfully generate a certificate", async () => {
+                                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                    expect.assertions(3);
+                                    return await certificateGenerationService
+                                        .generateCertificate(testResult)
+                                        .then((response: any) => {
+                                            expect(response.fileName).toEqual(
+                                                "W01A00310_T12876765.pdf"
+                                            );
+                                            expect(response.certificateType).toEqual("IVA30");
+                                            expect(response.certificateOrder).toEqual({
+                                                current: 2,
+                                                total: 2,
+                                            });
+                                            callGetTechRecordSpy.mockClear();
+                                            callSearchTechRecordSpy.mockClear();
+                                        });
+                                });
+                            }
+                        );
                     });
-                });
+                }
+            );
+        });
 
-                context("and the S3 bucket does not exist or is not accesible", () => {
-                    it("should throw an error", async () => {
-                        const getTechRecordSearchStub = sandbox
-                            .stub(certificateGenerationService, "callSearchTechRecords")
-                            .resolves(techRecordsRwtSearch);
+        context("CertGenService for MSVA 30 test", () => {
+            context(
+                "when a failing test result MSVA test is read from the queue",
+                () => {
+                    const event: any = cloneDeep(queueEventFail);
+                    const testResult: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[8].body); // retrieve record
 
-                        const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
-                        const getTechRecordStub = sandbox
-                            .stub(certificateGenerationService, "callGetTechRecords")
-                            .resolves((techRecordResponseRwtMock) as any);
+                    context("and a payload is generated", () => {
+                        context("and reapplication date is provided", () => {
+                            const event: any = cloneDeep(queueEventFail);
+                            const testResultReapplication: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[21].body);
 
-                        const generatedCertificateResponse: IGeneratedCertificateResponse =
-                            await certificateGenerationService.generateCertificate(
-                                testResult
-                            );
-                        expect.assertions(1);
-                        return certificateUploadService
-                            .uploadCertificate(generatedCertificateResponse)
-                            .catch((error: any) => {
-                                expect(error).toBeInstanceOf(Error);
-                                getTechRecordStub.restore();
-                                getTechRecordSearchStub.restore();
+                            it("should return the IVA_30 payload with the reapplication date in the payload", async () => {
+                                testResult.testTypes.reapplicationDate = "2024-05-27T00:00:00.000Z";
+                                const expectedResult: ICertificatePayload = {
+                                    "IVA_DATA": {
+                                        "additionalDefects": [
+                                            {
+                                                "defectName": "N/A",
+                                                "defectNotes": "",
+                                                "referenceNumber": ""
+                                            }
+                                        ],
+                                        "bodyType": "some bodyType",
+                                        "date": "28/11/2023",
+                                        "make": "some make",
+                                        "model": "some model",
+                                        "reapplicationDate": "27/05/2024",
+                                        "requiredStandards": [
+                                            {
+                                                "additionalInfo": true,
+                                                "additionalNotes": "The exhaust was held on with blue tac",
+                                                "inspectionTypes": [
+                                                    "normal",
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.1",
+                                                "requiredStandard": "The exhaust must be securely mounted",
+                                                "rsNumber": 1,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            },
+                                            {
+                                                "additionalInfo": false,
+                                                "additionalNotes": null,
+                                                "inspectionTypes": [
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.5",
+                                                "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                                "rsNumber": 5,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            }
+                                        ],
+                                        "serialNumber": "C456789",
+                                        "station": "Abshire-Kub",
+                                        "testCategoryBasicNormal": "Basic",
+                                        "testCategoryClass": "m1",
+                                        "testerName": "CVS Dev1",
+                                        "vehicleTrailerNrNo": "C456789",
+                                        "vin": "T12876765"
+                                    },
+                                    "Signature": {
+                                        "ImageData": null,
+                                        "ImageType": "png"
+                                    },
+                                    "Watermark": "NOT VALID"
+                                };
+
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResultReapplication)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
+                                    });
                             });
+                        });
+                        context("and reapplication date is NOT provided", () => {
+                            const event: any = cloneDeep(queueEventFail);
+                            const testResultReapplication: TestResultSchemaTestTypesAsObject = JSON.parse(event.Records[21].body);
+
+                            it("should return the IVA_30 payload with the reapplication date in the payload", async () => {
+                                testResultReapplication.testTypes.reapplicationDate = "";
+                                const expectedResult: ICertificatePayload = {
+                                    "IVA_DATA": {
+                                        "additionalDefects": [
+                                            {
+                                                "defectName": "N/A",
+                                                "defectNotes": "",
+                                                "referenceNumber": ""
+                                            }
+                                        ],
+                                        "bodyType": "some bodyType",
+                                        "date": "28/11/2023",
+                                        "make": "some make",
+                                        "model": "some model",
+                                        "reapplicationDate": "",
+                                        "requiredStandards": [
+                                            {
+                                                "additionalInfo": true,
+                                                "additionalNotes": "The exhaust was held on with blue tac",
+                                                "inspectionTypes": [
+                                                    "normal",
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.1",
+                                                "requiredStandard": "The exhaust must be securely mounted",
+                                                "rsNumber": 1,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            },
+                                            {
+                                                "additionalInfo": false,
+                                                "additionalNotes": null,
+                                                "inspectionTypes": [
+                                                    "basic"
+                                                ],
+                                                "prs": false,
+                                                "refCalculation": "1.5",
+                                                "requiredStandard": "The stationary noise must have a measured sound level not exceeding 99dbA. (see Notes 2 & 3).",
+                                                "rsNumber": 5,
+                                                "sectionDescription": "Noise",
+                                                "sectionNumber": "01"
+                                            }
+                                        ],
+                                        "serialNumber": "C456789",
+                                        "station": "Abshire-Kub",
+                                        "testCategoryBasicNormal": "Basic",
+                                        "testCategoryClass": "m1",
+                                        "testerName": "CVS Dev1",
+                                        "vehicleTrailerNrNo": "C456789",
+                                        "vin": "T12876765"
+                                    },
+                                    "Signature": {
+                                        "ImageData": null,
+                                        "ImageType": "png"
+                                    },
+                                    "Watermark": "NOT VALID"
+                                };
+
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResultReapplication)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
+                                    });
+                            });
+                        });
+
+                        context("and no signatures were found in the bucket", () => {
+                            it("should return an MSVA_30 payload without signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenMsva30[0]
+                                );
+
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        callGetTechRecordSpy.mockClear();
+                                        callSearchTechRecordSpy.mockClear();
+                                    });
+                            });
+                        });
+
+                        context("and signatures were found in the bucket", () => {
+                            it("should return a MSVA 30 payload with signature", async () => {
+                                const expectedResult: ICertificatePayload = cloneDeep(
+                                    docGenMsva30[1]
+                                );
+
+                                // Add a new signature
+                                S3BucketMockService.buckets.push({
+                                    bucketName: `cvs-signature-${process.env.BUCKET}`,
+                                    files: ["1.base64"],
+                                });
+
+                                callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                return await certificateGenerationService
+                                    .generatePayload(testResult)
+                                    .then((payload: any) => {
+                                        expect(payload).toEqual(expectedResult);
+                                        callGetTechRecordSpy.mockClear();
+                                        S3BucketMockService.buckets.pop();
+                                        callSearchTechRecordSpy.mockClear();
+                                    });
+                            });
+                        });
+
+                        context(
+                            "and the generated payload is used to call the MOT service",
+                            () => {
+                                it("successfully generate a certificate", async () => {
+                                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                                    expect.assertions(3);
+                                    return await certificateGenerationService
+                                        .generateCertificate(testResult)
+                                        .then((response: any) => {
+                                            expect(response.fileName).toEqual(
+                                                "W01A00128_P0123010956789.pdf"
+                                            );
+                                            expect(response.certificateType).toEqual("MSVA30");
+                                            expect(response.certificateOrder).toEqual({
+                                                current: 2,
+                                                total: 2,
+                                            });
+                                            callGetTechRecordSpy.mockClear();
+                                            callSearchTechRecordSpy.mockClear();
+                                        });
+                                });
+                            }
+                        );
+                    });
+                }
+            );
+        });
+
+        context("CertificateUploadService", () => {
+            context("when a valid event is received", () => {
+                const event: any = JSON.parse(
+                    fs.readFileSync(
+                        path.resolve(__dirname, "../resources/queue-event-prs.json"),
+                        "utf8"
+                    )
+                );
+                const testResult: any = JSON.parse(event.Records[0].body);
+                const certificateUploadService = Container.get(CertificateUploadService);
+
+                context("when uploading a certificate", () => {
+                    context("and the S3 bucket exists and is accesible", () => {
+                        it("should successfully upload the certificate", async () => {
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                            const generatedCertificateResponse: IGeneratedCertificateResponse =
+                                await certificateGenerationService.generateCertificate(
+                                    testResult
+                                );
+                            S3BucketMockService.buckets.push({
+                                bucketName: `cvs-cert-${process.env.BUCKET}`,
+                                files: [],
+                            });
+
+                            return certificateUploadService
+                                .uploadCertificate(generatedCertificateResponse)
+                                .then((response: any) => {
+                                    expect(response.Key).toEqual(
+                                        `${process.env.BRANCH}/${generatedCertificateResponse.fileName}`
+                                    );
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
+                                    S3BucketMockService.buckets.pop();
+                                });
+                        });
+                    });
+
+                    context("and the S3 bucket does not exist or is not accesible", () => {
+                        it("should throw an error", async () => {
+                            callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                            const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                            callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                            const generatedCertificateResponse: IGeneratedCertificateResponse =
+                                await certificateGenerationService.generateCertificate(
+                                    testResult
+                                );
+                            expect.assertions(1);
+                            return certificateUploadService
+                                .uploadCertificate(generatedCertificateResponse)
+                                .catch((error: any) => {
+                                    expect(error).toBeInstanceOf(Error);
+                                    callGetTechRecordSpy.mockClear();
+                                    callSearchTechRecordSpy.mockClear();
+                                });
+                        });
                     });
                 });
             });
         });
-    });
 
-    context("CertGen function", () => {
-        context("when a failing test result is read from the queue", () => {
-            const event: any = {...queueEventFail};
-            context("and the testResultId is malformed", () => {
-                it("should thrown an error", async () => {
-                    expect.assertions(1);
-                    try {
-                        await certGen(event, undefined as any, () => {
-                            return;
-                        });
-                    } catch (err) {
-                        expect((err as unknown as Error).message).toEqual("Bad Test Record: 1");
-                    }
-                });
-            });
-            context("and the event is empty", () => {
-                it("should thrown an error", async () => {
-                    expect.assertions(1);
-                    try {
-                        await certGen({}, undefined as any, () => {
-                            return;
-                        });
-                    } catch (err) {
-                        expect((err as unknown as Error).message).toEqual("Event is empty");
-                    }
-                });
-            });
-            context("and the event has no records", () => {
-                it("should thrown an error", async () => {
-                    expect.assertions(1);
-                    try {
-                        await certGen(
-                            {otherStuff: "hi", Records: []},
-                            undefined as any,
+        context("CertGen function", () => {
+            context("when a failing test result is read from the queue", () => {
+                const event: any = {...queueEventFail};
+                context("and the testResultId is malformed", () => {
+                    it("should thrown an error", async () => {
+                        expect.assertions(1);
+                        jest.spyOn(CertificateRequestProcessor.prototype, 'preProcessPayload').mockImplementation(
                             () => {
-                                return;
+                                return event[0]
                             }
-                        );
-                    } catch (err) {
-                        expect((err as unknown as Error).message).toEqual("Event is empty");
-                    }
+                        )
+                        const result = await certGen(event, undefined as any, () => {
+                            return;
+                        });
+
+                        expect(result.batchItemFailures).toHaveLength(event.Records.length);
+                    });
+                });
+                context("and the event is empty", () => {
+                    it("should thrown an error", async () => {
+                        expect.assertions(1);
+                        try {
+                            await certGen({}, undefined as any, () => {
+                                return;
+                            });
+                        } catch (err) {
+                            expect((err as unknown as Error).message).toEqual("Event is empty");
+                        }
+                    });
+                });
+                context("and the event has no records", () => {
+                    it("should thrown an error", async () => {
+                        expect.assertions(1);
+                        try {
+                            await certGen(
+                                {otherStuff: "hi", Records: []},
+                                undefined as any,
+                                () => {
+                                    return;
+                                }
+                            );
+                        } catch (err) {
+                            expect((err as unknown as Error).message).toEqual("Event is empty");
+                        }
+                    });
                 });
             });
         });
