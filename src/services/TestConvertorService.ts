@@ -76,7 +76,7 @@ class TestConvertorService {
 	 * Check the flag to see if abandoned certificates should be generated
 	 */
 	public static shouldGenerateAbandonedCerts(): boolean {
-		if (!CertificateRequestProcessor.flags.abandonedCerts.enabled) {
+		if (!CertificateRequestProcessor.flags.abandonedCerts?.enabled) {
 			console.warn(`Unable to generate abandoned certificates: global abandoned certificates flag disabled.`);
 			return false;
 		}

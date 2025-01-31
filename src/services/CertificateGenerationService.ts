@@ -133,8 +133,8 @@ class CertificateGenerationService {
 	 * @returns boolean
 	 */
 	public isGlobalWelshFlagEnabled(): boolean {
-		console.log('Welsh translation enabled: ', CertificateRequestProcessor.flags.welshTranslation.enabled);
-		if (!CertificateRequestProcessor.flags.welshTranslation.enabled) {
+		console.log('Welsh translation enabled: ', CertificateRequestProcessor.flags.welshTranslation?.enabled);
+		if (!CertificateRequestProcessor.flags.welshTranslation?.enabled) {
 			console.warn(`Unable to translate any test results: global Welsh flag disabled.`);
 			return false;
 		}
@@ -150,13 +150,13 @@ class CertificateGenerationService {
 		let shouldTranslate = false;
 		switch (testResult) {
 			case TestResults.PRS:
-				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation.translatePrsTestResult ?? false;
+				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation?.translatePrsTestResult ?? false;
 				break;
 			case TestResults.PASS:
-				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation.translatePassTestResult ?? false;
+				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation?.translatePassTestResult ?? false;
 				break;
 			case TestResults.FAIL:
-				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation.translateFailTestResult ?? false;
+				shouldTranslate = CertificateRequestProcessor.flags.welshTranslation?.translateFailTestResult ?? false;
 				break;
 			default:
 				console.warn('Translation not available for this test result type.');
