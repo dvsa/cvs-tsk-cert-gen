@@ -1,83 +1,84 @@
-import S3, { Metadata } from "aws-sdk/clients/s3";
-import { AWSError, config as AWSConfig } from "aws-sdk";
-import { Service } from "../models/injector/ServiceDecorator";
-import { Readable } from "stream";
-import { Configuration } from "../utils/Configuration";
-import { IS3Config } from "../models";
-import { ManagedUpload } from "aws-sdk/lib/s3/managed_upload";
-import { PromiseResult } from "aws-sdk/lib/request";
-import AWSXRay from "aws-xray-sdk";
+import { Readable } from 'stream';
+import {
+	DeleteObjectCommand,
+	DeleteObjectCommandOutput,
+	GetObjectCommand,
+	GetObjectCommandOutput,
+	PutObjectCommand,
+	PutObjectCommandOutput,
+	S3Client,
+} from '@aws-sdk/client-s3';
+import { Inject, Service } from 'typedi';
 
 /**
  * Service class for communicating with Simple Storage Service
  */
 @Service()
 class S3BucketService {
-  public readonly s3Client: S3;
+	constructor(@Inject() private s3Client: S3Client) {}
 
-  constructor(s3Client: S3) {
-    const config: IS3Config = Configuration.getInstance().getS3Config();
-    this.s3Client = AWSXRay.captureAWSClient(s3Client);
+	/**
+	 * Uploads a file to an S3 bucket
+	 * @param bucketName - the bucket to upload to
+	 * @param fileName - the name of the file
+	 * @param content - contents of the file
+	 * @param metadata - optional metadata
+	 */
+	public async upload(
+		bucketName: string,
+		fileName: string,
+		content: Buffer | Uint8Array | Blob | string | Readable,
+		metadata?: Record<string, string>
+	): Promise<PutObjectCommandOutput> {
+		const command = new PutObjectCommand({
+			Bucket: bucketName,
+			Key: `${process.env.BRANCH}/${fileName}`,
+			Body: content,
+			Metadata: metadata,
+		});
 
-    AWSConfig.s3 = config;
-  }
+		try {
+			return await this.s3Client.send(command);
+		} catch (err) {
+			throw err;
+		}
+	}
 
-  /**
-   * Uploads a file to an S3 bucket
-   * @param bucketName - the bucket to upload to
-   * @param fileName - the name of the file
-   * @param content - contents of the file
-   * @param metadata - optional metadata
-   */
-  public upload(
-    bucketName: string,
-    fileName: string,
-    content: Buffer | Uint8Array | Blob | string | Readable,
-    metadata?: Metadata
-  ): Promise<ManagedUpload.SendData> {
-    return this.s3Client
-      .upload({
-        Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
-        Body: content,
-        Metadata: metadata,
-      })
-      .promise();
-  }
+	/**
+	 * Downloads a file from an S3 bucket
+	 * @param bucketName - the bucket from which to download
+	 * @param fileName - the name of the file
+	 */
+	public async download(bucketName: string, fileName: string): Promise<GetObjectCommandOutput> {
+		const command = new GetObjectCommand({
+			Bucket: bucketName,
+			Key: `${process.env.BRANCH}/${fileName}`,
+		});
 
-  /**
-   * Downloads a file from an S3 bucket
-   * @param bucketName - the bucket from which to download
-   * @param fileName - the name of the file
-   */
-  public download(
-    bucketName: string,
-    fileName: string
-  ): Promise<PromiseResult<S3.Types.GetObjectOutput, AWSError>> {
-    return this.s3Client
-      .getObject({
-        Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
-      })
-      .promise();
-  }
+		try {
+			return await this.s3Client.send(command);
+		} catch (err) {
+			throw err;
+		}
+	}
 
-  /**
-   * Deletes a file from an S3 bucket
-   * @param bucketName - the bucket from which to download
-   * @param fileName - the name of the file
-   */
-  public delete(
-    bucketName: string,
-    fileName: string
-  ): Promise<PromiseResult<S3.DeleteObjectOutput, AWSError>> {
-    return this.s3Client
-      .deleteObject({
-        Bucket: bucketName,
-        Key: `${process.env.BRANCH}/${fileName}`,
-      })
-      .promise();
-  }
+	/**
+	 * Deletes a file from an S3 bucket
+	 * @param bucketName - the bucket from which to download
+	 * @param fileName - the name of the file
+	 */
+	public delete(bucketName: string, fileName: string): Promise<DeleteObjectCommandOutput> {
+		const command = new DeleteObjectCommand({
+			Bucket: bucketName,
+			Key: `${process.env.BRANCH}/${fileName}`,
+		});
+
+		try {
+			return this.s3Client.send(command);
+		} catch (err) {
+			throw err;
+		}
+	}
 }
 
 export { S3BucketService };

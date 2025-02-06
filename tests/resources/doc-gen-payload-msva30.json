@@ -9,15 +9,16 @@
       "type": "motorcycle",
       "testerName": "CVS Dev1",
       "date": "04/03/2024",
-      "retestDate": "03/09/2024",
+      "reapplicationDate": "27/05/2024",
       "station": "Abshire-Kub",
       "additionalDefects": [
         {
           "defectName": "N/A",
-          "defectNotes": ""
+          "defectNotes": "",
+          "referenceNumber": ""
         }
       ],
-      "requiredStandards":[
+      "requiredStandards": [
         {
           "prs": false,
           "requiredStandard": "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
@@ -47,15 +48,16 @@
       "type": "motorcycle",
       "testerName": "CVS Dev1",
       "date": "04/03/2024",
-      "retestDate": "03/09/2024",
+      "reapplicationDate": "27/05/2024",
       "station": "Abshire-Kub",
       "additionalDefects": [
         {
           "defectName": "N/A",
-          "defectNotes": ""
+          "defectNotes": "",
+          "referenceNumber": ""
         }
       ],
-      "requiredStandards":[
+      "requiredStandards": [
         {
           "prs": false,
           "requiredStandard": "An obligatory (or optional) lamp or reflector;  incorrect number fitted",
