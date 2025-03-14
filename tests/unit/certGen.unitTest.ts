@@ -135,6 +135,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -143,11 +148,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -201,6 +201,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -209,11 +214,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -275,6 +275,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -283,11 +288,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -408,6 +408,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -416,11 +421,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -522,6 +522,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -530,11 +535,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -594,6 +594,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -602,11 +607,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -679,6 +679,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -687,11 +692,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -751,6 +751,11 @@ describe("cert-gen", () => {
                                     Model: "FM",
                                     OdometerHistoryList: [
                                         {
+                                            value: 410000,
+                                            unit: "kilometres",
+                                            date: "20.01.2019"
+                                        },
+                                        {
                                             value: 400000,
                                             unit: "kilometres",
                                             date: "19.01.2019",
@@ -759,11 +764,6 @@ describe("cert-gen", () => {
                                             value: 390000,
                                             unit: "kilometres",
                                             date: "18.01.2019",
-                                        },
-                                        {
-                                            value: 380000,
-                                            unit: "kilometres",
-                                            date: "17.01.2019",
                                         },
                                     ],
                                     Recalls: {
@@ -825,6 +825,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -833,11 +838,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -898,6 +898,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -906,11 +911,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1199,6 +1199,11 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1207,11 +1212,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1272,6 +1272,11 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1280,11 +1285,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1346,6 +1346,11 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1354,11 +1359,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1421,6 +1421,11 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1429,11 +1434,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1494,6 +1494,11 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1502,11 +1507,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1589,6 +1589,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1597,11 +1602,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1731,6 +1731,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1739,11 +1744,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1867,6 +1867,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1875,11 +1880,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -1941,6 +1941,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -1949,11 +1954,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2014,6 +2014,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -2022,11 +2027,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2088,6 +2088,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -2096,11 +2101,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2164,6 +2164,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -2172,11 +2177,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2244,6 +2244,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -2252,11 +2257,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2326,6 +2326,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -2334,11 +2339,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2418,6 +2418,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -2426,11 +2431,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -2494,20 +2494,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 Recalls: {
                                     manufacturer: null,
@@ -2578,20 +2578,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 Recalls: {
                                     manufacturer: null,
@@ -2656,20 +2656,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 Recalls: {
                                     manufacturer: null,
@@ -2738,20 +2738,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 Recalls: {
                                     manufacturer: null,
@@ -3601,20 +3601,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -3672,20 +3672,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -3741,20 +3741,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -3812,20 +3812,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -3884,20 +3884,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -3962,20 +3962,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4040,20 +4040,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4132,20 +4132,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4204,20 +4204,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4282,20 +4282,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4354,20 +4354,20 @@ describe("cert-gen", () => {
                                 ],
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4432,20 +4432,20 @@ describe("cert-gen", () => {
                                 IssuersName: "Dev1 CVS",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4679,20 +4679,20 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4722,20 +4722,20 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 PRSDefects: [
                                     "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
@@ -4793,20 +4793,20 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "XMGDE02FS0H012345",
                                 RawVRM: "BQ91YHQ",
@@ -4836,20 +4836,20 @@ describe("cert-gen", () => {
                                 Model: "RELIANCE",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 PRSDefects: [
                                     "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
@@ -4914,20 +4914,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "P012301098765",
                                 RawVRM: "VM14MDT",
@@ -4957,20 +4957,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 PRSDefects: [
                                     "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
@@ -5028,20 +5028,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 RawVIN: "P012301098765",
                                 RawVRM: "VM14MDT",
@@ -5071,20 +5071,20 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
+                                        value: 400000,
+                                        unit: "kilometres",
                                         date: "19.01.2019",
-                                        unit: "kilometres",
-                                        value: 400000
                                     },
                                     {
+                                        value: 390000,
+                                        unit: "kilometres",
                                         date: "18.01.2019",
-                                        unit: "kilometres",
-                                        value: 390000
                                     },
-                                    {
-                                        date: "17.01.2019",
-                                        unit: "kilometres",
-                                        value: 380000
-                                    }
                                 ],
                                 PRSDefects: [
                                     "6.1.a A tyre retaining ring: fractured or not properly fitted such that detachment is likely. Axles: 1. Inner Offside. Asdasd"
@@ -5157,6 +5157,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -5165,11 +5170,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -5201,6 +5201,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -5209,11 +5214,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -5350,6 +5350,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -5358,11 +5363,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -5394,6 +5394,11 @@ describe("cert-gen", () => {
                                 Model: "AUTOTRL",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -5402,11 +5407,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -6535,6 +6535,81 @@ describe("cert-gen", () => {
                 });
             });
         });
+
+        context("when an historical test result that has been updated is read from the queue", () => {
+            const event: any = { ...queueEventPass };
+            const testResult: any = JSON.parse(event.Records[3].body);
+            testResult.testEndTimestamp = "2019-01-18T00:00:00Z";
+            testResult.testExpiryDate = "2020-01-17";
+
+            context("and a payload is generated", () => {
+                it('should not include any odometer data from tests completed after test being updated', async () => {
+                    callSearchTechRecordSpy.mockResolvedValue(techRecordsRwtSearch);
+
+                    const techRecordResponseRwtMock = cloneDeep(techRecordsRwt);
+                    callGetTechRecordSpy.mockResolvedValue(techRecordResponseRwtMock as any);
+
+                    const expectedResult: any = {
+                        Watermark: "NOT VALID",
+                        DATA: {
+                            TestNumber: "W01A00310",
+                            TestStationPNumber: "09-4129632",
+                            TestStationName: "Abshire-Kub",
+                            CurrentOdometer: {
+                                value: 12312,
+                                unit: "kilometres",
+                            },
+                            IssuersName: "Dev1 CVS",
+                            DateOfTheTest: "18.01.2019",
+                            CountryOfRegistrationCode: "gb",
+                            VehicleEuClassification: "M1",
+                            RawVIN: "XMGDE02FS0H012345",
+                            RawVRM: "BQ91YHQ",
+                            ExpiryDate: "25.02.2020",
+                            EarliestDateOfTheNextTest: "26.12.2019",
+                            SeatBeltTested: "Yes",
+                            SeatBeltPreviousCheckDate: "26.02.2019",
+                            SeatBeltNumber: 2,
+                            Make: "STANLEY",
+                            Model: "AUTOTRL",
+                            OdometerHistoryList: [
+                                {
+                                    value: 380000,
+                                    unit: "kilometres",
+                                    date: "17.01.2019"
+                                },
+                                {
+                                    value: 370000,
+                                    unit: "kilometres",
+                                    date: "16.01.2019",
+                                },
+                                {
+                                    value: 360000,
+                                    unit: "kilometres",
+                                    date: "15.01.2019",
+                                },
+                            ],
+                            Recalls: {
+                                manufacturer: null,
+                                hasRecall: false
+                            }
+                        },
+                        Signature: {
+                            ImageType: "png",
+                            ImageData: null,
+                        },
+                    };
+
+                    return await certificateGenerationService
+                        .generatePayload(testResult)
+                        .then((payload: any) => {
+                            expect(payload).toEqual(expectedResult);
+                            callGetTechRecordSpy.mockClear();
+                            callSearchTechRecordSpy.mockClear();
+                        });
+                });
+            })
+        });
     });
 
     context("CertGenService for HGV", () => {
@@ -6570,6 +6645,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -6578,11 +6658,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -6637,6 +6712,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -6645,11 +6725,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -6768,6 +6843,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -6776,11 +6856,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -6888,6 +6963,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -6896,11 +6976,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -6932,6 +7007,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -6940,11 +7020,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -7081,6 +7156,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -7089,11 +7169,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -7125,6 +7200,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -7133,11 +7213,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -7248,6 +7323,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -7256,11 +7336,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {
@@ -7389,6 +7464,11 @@ describe("cert-gen", () => {
                                 Model: "FM",
                                 OdometerHistoryList: [
                                     {
+                                        value: 410000,
+                                        unit: "kilometres",
+                                        date: "20.01.2019"
+                                    },
+                                    {
                                         value: 400000,
                                         unit: "kilometres",
                                         date: "19.01.2019",
@@ -7397,11 +7477,6 @@ describe("cert-gen", () => {
                                         value: 390000,
                                         unit: "kilometres",
                                         date: "18.01.2019",
-                                    },
-                                    {
-                                        value: 380000,
-                                        unit: "kilometres",
-                                        date: "17.01.2019",
                                     },
                                 ],
                                 Recalls: {

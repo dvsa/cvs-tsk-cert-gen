@@ -18,8 +18,9 @@ export class TestResultRepository {
 	/**
 	 * Retrieves the odometer history for a given VIN from the Test Results microservice
 	 * @param systemNumber - systemNumber for which to retrieve odometer history
+	 * @param testEndTimestamp - testEndTimestamp of the test result being processed
 	 */
-	public async getOdometerHistory(systemNumber: string) {
+	public async getOdometerHistory(systemNumber: string, testEndTimestamp: string) {
 		const fromDateTime = new Date('01-01-2019').toISOString();
 		const config: IInvokeConfig = this.config.getInvokeConfig();
 		const invokeParams: InvocationRequest = {
@@ -62,11 +63,13 @@ export class TestResultRepository {
 					return 0;
 				});
 
-				// Remove the first result as it should be the current one.
-				testResults.shift();
+				// Only keep test results that occurred before the testEndTimestamp of test result being processed
+				const testsPriorToTestResult = testResults.filter((testResult) =>
+					moment(testResult.testEndTimestamp).isBefore(testEndTimestamp)
+				);
 
 				// Set the array to only submitted tests (exclude cancelled)
-				const submittedTests = testResults.filter((testResult) => testResult.testStatus === 'submitted');
+				const submittedTests = testsPriorToTestResult.filter((testResult) => testResult.testStatus === 'submitted');
 
 				const filteredTestResults = submittedTests
 					.filter(({ testTypes }) =>

@@ -354,8 +354,10 @@ describe("Certificate Generation Service", () => {
 
         const testResultRepository = Container.get(TestResultRepository);
         const systemNumberMock = "12345678";
+        const testEndTimestampMock = "2021-01-01T00:00:00Z";
         const odometerHistory = await testResultRepository.getOdometerHistory(
-          systemNumberMock,
+            systemNumberMock,
+            testEndTimestampMock
         );
 
         expect(invokeSpy).toHaveBeenCalledTimes(1);
@@ -370,14 +372,21 @@ describe("Certificate Generation Service", () => {
 
         const testResultRepository = Container.get(TestResultRepository);
         const systemNumberMock = "12345678";
+        const testEndTimestampMock = "2020-01-01T00:00:00Z";
         const odometerHistory = await testResultRepository.getOdometerHistory(
-          systemNumberMock,
+            systemNumberMock,
+            testEndTimestampMock
         );
 
         expect(invokeSpy).toHaveBeenCalledTimes(1);
         expect(invokeSpy).toBeTruthy();
         expect(odometerHistory).toEqual({
           OdometerHistoryList: [
+            {
+              value: 410000,
+              unit: "kilometres",
+              date: "20.01.2019"
+            },
             {
               value: 400000,
               unit: "kilometres",
@@ -388,30 +397,32 @@ describe("Certificate Generation Service", () => {
               unit: "kilometres",
               date: "18.01.2019",
             },
-            {
-              value: 380000,
-              unit: "kilometres",
-              date: "17.01.2019",
-            },
-          ]
+          ],
         });
       });
     });
 
     context("when given a systemNumber which returns tests which include those that are not Annual With Certificate", () => {
-      it("should omiting results that are not Annual With Certificate", async () => {
+      it("should omit results that are not Annual With Certificate", async () => {
         invokeSpy.mockResolvedValue(AWSResolve(JSON.stringify(testResultsRespNoCert)));
 
         const testResultRepository = Container.get(TestResultRepository);
         const systemNumberMock = "12345678";
+        const testEndTimestampMock = "2021-01-01T00:00:00Z";
         const odometerHistory = await testResultRepository.getOdometerHistory(
-          systemNumberMock,
+            systemNumberMock,
+            testEndTimestampMock
         );
 
         expect(invokeSpy).toHaveBeenCalledTimes(1);
         expect(invokeSpy).toBeTruthy();
         expect(odometerHistory).toEqual({
           OdometerHistoryList: [
+            {
+              value: 410000,
+              unit: "kilometres",
+              date: "20.01.2019"
+            },
             {
               value: 400000,
               unit: "kilometres",
@@ -422,12 +433,7 @@ describe("Certificate Generation Service", () => {
               unit: "kilometres",
               date: "17.01.2019",
             },
-            {
-              value: 360000,
-              unit: "kilometres",
-              date: "15.01.2019",
-            },
-          ]
+          ],
         });
       });
     });
@@ -438,8 +444,10 @@ describe("Certificate Generation Service", () => {
 
         const testResultRepository = Container.get(TestResultRepository);
         const systemNumberMock = "12345678";
+        const testEndTimestampMock = "2021-01-01T00:00:00Z";
         const odometerHistory = await testResultRepository.getOdometerHistory(
-          systemNumberMock,
+            systemNumberMock,
+            testEndTimestampMock
         );
 
         expect(invokeSpy).toHaveBeenCalledTimes(1);
@@ -462,8 +470,10 @@ describe("Certificate Generation Service", () => {
 
         const testResultRepository = Container.get(TestResultRepository);
         const systemNumberMock = "12345678";
+        const testEndTimestampMock = "2019-01-20";
         const odometerHistory = await testResultRepository.getOdometerHistory(
-          systemNumberMock,
+            systemNumberMock,
+            testEndTimestampMock
         );
 
         expect(invokeSpy).toHaveBeenCalledTimes(1);

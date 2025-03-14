@@ -31,7 +31,10 @@ export class OdometerHistoryCommand extends BasePayloadCommand {
 			return result;
 		}
 
-		const odometerHistory = await this.testResultRepository.getOdometerHistory(testResult.systemNumber);
+		const odometerHistory = await this.testResultRepository.getOdometerHistory(
+			testResult.systemNumber,
+			testResult.testEndTimestamp
+		);
 
 		if (testTypes.testResult !== TestResults.FAIL) {
 			result.DATA = {
