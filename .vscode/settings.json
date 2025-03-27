@@ -1,2 +1,6 @@
 {
+  "testing.openTesting": "neverOpen",
+  "search.exclude": {
+    "**/node_modules": false
+  }
 }
