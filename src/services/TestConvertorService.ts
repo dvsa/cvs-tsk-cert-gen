@@ -1,4 +1,4 @@
-import { VTG_VTP_12_TEST } from '@dvsa/cvs-microservice-common/classes/testTypes/Constants';
+import { VOLUNTARY_IVA_TEST, VTG_VTP_12_TEST } from '@dvsa/cvs-microservice-common/classes/testTypes/Constants';
 import { TestTypeHelper } from '@dvsa/cvs-microservice-common/classes/testTypes/testTypeHelper';
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum';
 import { Service } from 'typedi';
@@ -38,6 +38,11 @@ class TestConvertorService {
 		}
 	}
 
+	/**
+	 * Filters out records that should not generate a certificate
+	 * @param records - array of test result records
+	 * @returns filtered array of test result records
+	 */
 	private static filterCertificateGenerationRecords(
 		records: TestResultSchemaTestTypesAsObject[]
 	): TestResultSchemaTestTypesAsObject[] {
@@ -46,13 +51,17 @@ class TestConvertorService {
 				return false;
 			}
 
-			const { testTypeClassification, testResult, requiredStandards } = record.testTypes;
+			const { testTypeClassification, testResult, requiredStandards, testTypeId } = record.testTypes;
 
 			if (testResult === TestResults.ABANDONED) {
 				return (
 					TestConvertorService.shouldGenerateAbandonedCerts() &&
 					TestConvertorService.isValidForAbandonedCertificate(record.testTypes.testTypeId)
 				);
+			}
+
+			if (TestTypeHelper.validateTestTypeIdInList(VOLUNTARY_IVA_TEST, testTypeId) && testResult === TestResults.FAIL) {
+				return false;
 			}
 
 			if (![TestResults.PASS, TestResults.FAIL, TestResults.PRS].includes(testResult)) {
