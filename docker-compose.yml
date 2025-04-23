@@ -18,3 +18,9 @@ services:
     ports:
       - "7000:7000" # s3 server
       - "9991:9991" # data store
+  sqs:
+    container_name: sqs
+    image: softwaremill/elasticmq
+    ports:
+      - "9324:9324"
+      - "9325:9325"
