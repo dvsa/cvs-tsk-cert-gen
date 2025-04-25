@@ -4,6 +4,7 @@ import { Inject, Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
 import { ICertificatePayload, IFlatDefect, TestResultSchemaTestTypesAsObject } from '../../models';
+import { DefectsPayload } from '../../models/DefectsPayload';
 import { CERTIFICATE_DATA } from '../../models/Enums';
 import { BasePayloadCommand } from '../ICertificatePayloadCommand';
 
@@ -16,11 +17,13 @@ export class DefectsCommand extends BasePayloadCommand {
 		super();
 	}
 
-	private certificateIsAnPassOrFail = (): boolean =>
-		this.state.type === CERTIFICATE_DATA.PASS_DATA || this.state.type === CERTIFICATE_DATA.FAIL_DATA;
+	private certificateIsAnPassOrFailOrAbandoned = (): boolean =>
+		this.state.type === CERTIFICATE_DATA.PASS_DATA ||
+		this.state.type === CERTIFICATE_DATA.FAIL_DATA ||
+		this.state.type === CERTIFICATE_DATA.ABANDONED_DATA;
 
 	public async generate(): Promise<ICertificatePayload> {
-		if (!this.certificateIsAnPassOrFail()) {
+		if (!this.certificateIsAnPassOrFailOrAbandoned()) {
 			return {} as ICertificatePayload;
 		}
 
@@ -29,12 +32,24 @@ export class DefectsCommand extends BasePayloadCommand {
 
 		const result = {} as ICertificatePayload;
 
+		if (testTypes.testResult === TestResults.ABANDONED) {
+			const defects = await this.getPayloadData(testResult, CERTIFICATE_DATA.ABANDONED_DATA);
+			result.ABANDONED_DATA = {
+				Defects: {
+					DangerousDefects: defects.DangerousDefects ?? [],
+					MajorDefects: defects.MajorDefects ?? [],
+					MinorDefects: defects.MinorDefects ?? [],
+					AdvisoryDefects: defects.AdvisoryDefects ?? [],
+					PRSDefects: defects.PRSDefects ?? [],
+				},
+			};
+			return result;
+		}
 		if (testTypes.testResult !== TestResults.FAIL) {
 			result.DATA = {
 				...(await this.getPayloadData(testResult, CERTIFICATE_DATA.PASS_DATA)),
 			};
 		}
-
 		if (testTypes.testResult !== TestResults.PASS) {
 			result.FAIL_DATA = {
 				...(await this.getPayloadData(testResult, CERTIFICATE_DATA.FAIL_DATA)),
@@ -44,7 +59,10 @@ export class DefectsCommand extends BasePayloadCommand {
 		return result;
 	}
 
-	private async getPayloadData(testResult: TestResultSchemaTestTypesAsObject, type: CERTIFICATE_DATA): Promise<any> {
+	private async getPayloadData(
+		testResult: TestResultSchemaTestTypesAsObject,
+		type: CERTIFICATE_DATA
+	): Promise<DefectsPayload> {
 		const { isWelsh } = this.state;
 
 		let flattenedDefects: IFlatDefect[] = [];
@@ -78,7 +96,7 @@ export class DefectsCommand extends BasePayloadCommand {
 		vehicleType: string,
 		flattenedDefects: IFlatDefect[],
 		isWelsh = false
-	) {
+	): DefectsPayload {
 		const defects = {
 			DangerousDefects: [],
 			MajorDefects: [],

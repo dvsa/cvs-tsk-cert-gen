@@ -228,13 +228,16 @@ export class DefectService {
 		isWelsh: boolean,
 		flattenedDefects: IFlatDefect[]
 	) {
-		if ((testResult === TestResults.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+		if (
+			(testResult === TestResults.PRS || defect.prs) &&
+			(type === CERTIFICATE_DATA.FAIL_DATA || type === CERTIFICATE_DATA.ABANDONED_DATA)
+		) {
 			defects.PRSDefects.push(this.formatDefect(defect));
 
 			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
 				defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 			}
-		} else if (testResult === TestResults.FAIL) {
+		} else if (testResult === TestResults.FAIL || testResult === TestResults.ABANDONED) {
 			defects.DangerousDefects.push(this.formatDefect(defect));
 
 			// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list
@@ -253,13 +256,16 @@ export class DefectService {
 		isWelsh: boolean,
 		flattenedDefects: IFlatDefect[]
 	) {
-		if ((testResult === TestResults.PRS || defect.prs) && type === CERTIFICATE_DATA.FAIL_DATA) {
+		if (
+			(testResult === TestResults.PRS || defect.prs) &&
+			(type === CERTIFICATE_DATA.FAIL_DATA || type === CERTIFICATE_DATA.ABANDONED_DATA)
+		) {
 			defects.PRSDefects.push(this.formatDefect(defect));
 
 			if (this.testResultService.isWelshCertificateAvailable(vehicleType, testResult) && isWelsh) {
 				defects.PRSDefectsWelsh.push(this.formatDefectWelsh(defect, vehicleType, flattenedDefects));
 			}
-		} else if (testResult === TestResults.FAIL) {
+		} else if (testResult === TestResults.FAIL || testResult === TestResults.ABANDONED) {
 			defects.MajorDefects.push(this.formatDefect(defect));
 
 			// If the test was conducted in Wales and is valid vehicle type, format and add the welsh defects to the list

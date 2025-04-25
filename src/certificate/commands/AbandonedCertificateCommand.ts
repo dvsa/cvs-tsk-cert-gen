@@ -27,6 +27,7 @@ export class AbandonedCertificateCommand extends BasePayloadCommand {
 
 	private getPayloadData(testResult: TestResultSchemaTestTypesAsObject): any {
 		const testType = testResult.testTypes;
+		//Defects part of the payload is handled in the DefectsCommand for abandoned certs
 		return {
 			RegistrationNumber: this.determineIdentifier(testResult),
 			ReasonsForRefusal: this.formatReasonsForRefusal(testType.reasonForAbandoning),
