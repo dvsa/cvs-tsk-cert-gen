@@ -6509,8 +6509,11 @@ describe("cert-gen", () => {
                                 TestStationName: "Abshire-Kub",
                                 TestStationPNumber: "09-4129632",
                                 Defects: {
-                                    ...Defects,
-                                  MajorDefects: ['1.2.a A registration mark: missing..']
+                                  DangerousDefects: ['1.2.a A registration mark: missing..'],
+                                  MajorDefects: ['1.2.a A registration mark: missing..'],
+                                  MinorDefects: ['1.2.a A registration mark: missing..'],
+                                  AdvisoryDefects: ['1.2.a A registration mark: missing..'],
+                                  PRSDefects: ['1.2.a A registration mark: missing..']
                                 }
                             },
                             Signature: {
