@@ -33,15 +33,8 @@ export class DefectsCommand extends BasePayloadCommand {
 		const result = {} as ICertificatePayload;
 
 		if (testTypes.testResult === TestResults.ABANDONED) {
-			const defects = await this.getPayloadData(testResult, CERTIFICATE_DATA.ABANDONED_DATA);
 			result.ABANDONED_DATA = {
-				Defects: {
-					DangerousDefects: defects.DangerousDefects ?? [],
-					MajorDefects: defects.MajorDefects ?? [],
-					MinorDefects: defects.MinorDefects ?? [],
-					AdvisoryDefects: defects.AdvisoryDefects ?? [],
-					PRSDefects: defects.PRSDefects ?? [],
-				},
+				Defects: await this.getPayloadData(testResult, CERTIFICATE_DATA.ABANDONED_DATA),
 			};
 			return result;
 		}

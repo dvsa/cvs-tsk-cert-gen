@@ -6287,13 +6287,7 @@ describe("cert-gen", () => {
         context("when an abandoned test result is read from the queue", () => {
             const event: any = { ...queueEventAbandon };
             const testResult: any = JSON.parse(event.Records[0].body);
-            const Defects = {
-                AdvisoryDefects: [],
-                DangerousDefects: [],
-                MajorDefects: [],
-                MinorDefects: [],
-                PRSDefects: [],
-            };
+            const Defects = {};
 
             context("and a payload is generated", () => {
                 context("and no signatures were found in the bucket", () => {
@@ -6390,13 +6384,7 @@ describe("cert-gen", () => {
             const psvAnnualTest: any = JSON.parse(event.Records[2].body);
             const psvFirstTest: any = JSON.parse(event.Records[3].body);
             const psvCOIFTest: any = JSON.parse(event.Records[4].body);
-            const Defects = {
-                AdvisoryDefects: [],
-                DangerousDefects: [],
-                MajorDefects: [],
-                MinorDefects: [],
-                PRSDefects: [],
-            };
+            const Defects = {};
 
             context("and a payload is generated", () => {
                 context("and the test is for a hgv or trailer", () => {
