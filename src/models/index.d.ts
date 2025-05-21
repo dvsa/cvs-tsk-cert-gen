@@ -1,8 +1,9 @@
-import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { TestResultSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { TestResultTestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result-test-type';
 
 //Create custom type of test result schema with flat test type array for this service.
 interface TestResultSchemaTestTypesAsObject extends Omit<TestResultSchema, 'testTypes'> {
-	testTypes: TestTypeSchema;
+	testTypes: TestResultTestTypeSchema;
 }
 
 interface IInvokeConfig {

@@ -1,5 +1,5 @@
 import { TestResults } from '@dvsa/cvs-type-definitions/types/v1/enums/testResult.enum.js';
-import { TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { TestResultTestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result-test-type';
 import { Inject, Service } from 'typedi';
 import { DefectRepository } from '../../defect/DefectRepository';
 import { DefectService } from '../../defect/DefectService';
@@ -84,7 +84,7 @@ export class DefectsCommand extends BasePayloadCommand {
 	 * @param isWelsh - determines whether the atf in which the test result was conducted resides in Wales
 	 */
 	private generateDefects(
-		testTypes: TestTypeSchema,
+		testTypes: TestResultTestTypeSchema,
 		type: CERTIFICATE_DATA,
 		vehicleType: string,
 		flattenedDefects: IFlatDefect[],

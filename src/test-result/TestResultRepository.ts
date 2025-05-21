@@ -1,5 +1,6 @@
 import { InvocationRequest, InvocationResponse, ServiceException } from '@aws-sdk/client-lambda';
-import { TestResultSchema, TestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { TestResultSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result';
+import { TestResultTestTypeSchema } from '@dvsa/cvs-type-definitions/types/v1/test-result-test-type';
 import { toUint8Array } from '@smithy/util-utf8';
 import moment from 'moment';
 import { Inject, Service } from 'typedi';
@@ -74,7 +75,7 @@ export class TestResultRepository {
 				const filteredTestResults = submittedTests
 					.filter(({ testTypes }) =>
 						testTypes?.some(
-							(testType: TestTypeSchema) =>
+							(testType: TestResultTestTypeSchema) =>
 								testType.testTypeClassification === 'Annual With Certificate' &&
 								(testType.testResult === 'pass' || testType.testResult === 'prs')
 						)
