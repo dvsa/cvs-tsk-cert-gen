@@ -1,74 +1,30 @@
-import { Callback, Context, Handler, SQSEvent, SQSRecord } from "aws-lambda";
-import { Injector } from "../models/injector/Injector";
-import S3, { ManagedUpload } from "aws-sdk/clients/s3";
-import {
-  CertificateGenerationService,
-  IGeneratedCertificateResponse,
-} from "../services/CertificateGenerationService";
-import { CertificateUploadService } from "../services/CertificateUploadService";
-import { ERRORS } from "../models/Enums";
+import { Callback, Context, Handler, SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
+import { Container } from 'typedi';
+import { CertificateRequestProcessor } from './CertificateRequestProcessor';
 
-type CertGenReturn = S3.ManagedUpload.SendData | S3.DeleteObjectOutput;
+const certGen: Handler = async (event: SQSEvent, context?: Context, callback?: Callback): Promise<SQSBatchResponse> => {
+	if (!event?.Records?.length) {
+		console.error('ERROR: event is not defined.');
+		throw new Error('Event is empty');
+	}
 
-/**
- * λ function to process an SQS message detailing info for certificate generation
- * @param event - DynamoDB Stream event
- * @param context - λ Context
- * @param callback - callback function
- */
-const certGen: Handler = async (
-  event: SQSEvent,
-  context?: Context,
-  callback?: Callback
-): Promise<CertGenReturn[]> => {
-  if (
-    !event ||
-    !event.Records ||
-    !Array.isArray(event.Records) ||
-    !event.Records.length
-  ) {
-    console.error("ERROR: event is not defined.");
-    throw new Error("Event is empty");
-  }
+	const processRequest = Container.get(CertificateRequestProcessor);
 
-  const certificateGenerationService: CertificateGenerationService =
-    Injector.resolve<CertificateGenerationService>(
-      CertificateGenerationService
-    );
-  const certificateUploadService: CertificateUploadService =
-    Injector.resolve<CertificateUploadService>(CertificateUploadService);
-  const certificateUploadPromises: Array<Promise<CertGenReturn>> = [];
+	const batchItemFailures: SQSBatchItemFailure[] = [];
 
-  event.Records.forEach((record: SQSRecord) => {
-    const testResult: any = JSON.parse(record.body);
-    if (testResult.testStatus === "cancelled") {
-      const s3DeletePromise =
-        certificateUploadService.removeCertificate(testResult);
-      certificateUploadPromises.push(s3DeletePromise);
-    } else if (
-      testResult.testResultId.match(
-        "\\b[a-zA-Z0-9]{8}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{4}\\b-\\b[a-zA-Z0-9]{12}\\b"
-      )
-    ) {
-      // Check for retroError flag for a testResult and cvsTestUpdated for the test-type and do not generate certificates if set to true
-      const generatedCertificateResponse: Promise<ManagedUpload.SendData> =
-        certificateGenerationService
-          .generateCertificate(testResult)
-          .then((response: IGeneratedCertificateResponse) => {
-            return certificateUploadService.uploadCertificate(response);
-          });
+	for (const record of event.Records) {
+		try {
+			const individualTestTypes = await processRequest.preProcessPayload(record);
+			for (const test of individualTestTypes) {
+				await processRequest.process(test);
+			}
+		} catch (error) {
+			console.error(error);
+			batchItemFailures.push({ itemIdentifier: record.messageId });
+		}
+	}
 
-      certificateUploadPromises.push(generatedCertificateResponse);
-    } else {
-      console.error(`${ERRORS.TESTRESULT_ID}`, testResult.testResultId);
-      throw new Error("Bad Test Record: " + testResult.testResultId);
-    }
-  });
-
-  return Promise.all(certificateUploadPromises).catch((error: Error) => {
-    console.error(error);
-    throw error;
-  });
+	return { batchItemFailures: batchItemFailures };
 };
 
 export { certGen };

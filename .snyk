@@ -1,0 +1,5 @@
+version: v1.5.0
+ignore:
+    'SNYK-JS-RAILROADDIAGRAMS-6282875':
+     - '* > railroad-diagrams':
+        reason: 'No fix available - file with vulnerability not used'
