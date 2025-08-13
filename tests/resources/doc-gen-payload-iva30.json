@@ -16,10 +16,11 @@
       "additionalDefects": [
         {
           "defectName": "N/A",
-          "defectNotes": ""
+          "defectNotes": "",
+          "referenceNumber": ""
         }
       ],
-      "requiredStandards":[
+      "requiredStandards": [
         {
           "prs": false,
           "requiredStandard": "The exhaust must be securely mounted",
@@ -28,7 +29,10 @@
           "additionalInfo": true,
           "sectionDescription": "Noise",
           "rsNumber": 1,
-          "inspectionTypes": ["normal","basic"],
+          "inspectionTypes": [
+            "normal",
+            "basic"
+          ],
           "additionalNotes": "The exhaust was held on with blue tac"
         }
       ]
@@ -56,10 +60,11 @@
       "additionalDefects": [
         {
           "defectName": "N/A",
-          "defectNotes": ""
+          "defectNotes": "",
+          "referenceNumber": ""
         }
       ],
-      "requiredStandards":[
+      "requiredStandards": [
         {
           "prs": false,
           "requiredStandard": "The exhaust must be securely mounted",
@@ -68,7 +73,10 @@
           "additionalInfo": true,
           "sectionDescription": "Noise",
           "rsNumber": 1,
-          "inspectionTypes": ["normal","basic"],
+          "inspectionTypes": [
+            "normal",
+            "basic"
+          ],
           "additionalNotes": "The exhaust was held on with blue tac"
         }
       ]

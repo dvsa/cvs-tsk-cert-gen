@@ -1,14 +1,8 @@
-import { certGen } from "./functions/certGen";
-import { config as AWSConfig } from "aws-sdk";
+import 'reflect-metadata';
 
-const isOffline: boolean =
-  !process.env.BRANCH || process.env.BRANCH === "local";
+import { DependencyInjection } from './config/DependencyInjection';
+import { certGen } from './functions/certGen';
 
-if (isOffline) {
-  AWSConfig.credentials = {
-    accessKeyId: "accessKey1",
-    secretAccessKey: "verySecretKey1",
-  };
-}
+DependencyInjection.register();
 
 export { certGen as handler };
